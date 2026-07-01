@@ -1,0 +1,93 @@
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Arro — Implementation Spec</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Literata:ital,opsz,wght@0,7..72,500;0,7..72,600;1,7..72,500&family=Nunito:wght@600;700;800&display=swap" rel="stylesheet">
+<style>
+  *{box-sizing:border-box}
+  body{margin:0;background:#F3ECE0;font-family:'Nunito',system-ui,sans-serif;color:#40312A;-webkit-font-smoothing:antialiased;padding:48px 20px}
+  .sheet{max-width:920px;margin:0 auto;background:#FFFDF9;border-radius:24px;box-shadow:0 24px 60px rgba(150,90,40,.12);overflow:hidden}
+  .head{display:flex;align-items:center;gap:16px;padding:40px 48px;background:linear-gradient(120deg,#FFF1DE,#FFFDF9)}
+  .logo{width:56px;height:56px;border-radius:16px;background:linear-gradient(155deg,#FF9E52,#EE7B3A);display:flex;align-items:center;justify-content:center}
+  h1{font-family:'Literata',serif;font-weight:600;font-size:32px;margin:0}
+  .sub{font-weight:600;font-size:14px;color:#9A8676;margin-top:2px}
+  .body{padding:8px 48px 48px}
+  section{padding:30px 0;border-top:1px solid #F1E7D8}
+  h2{font-family:'Literata',serif;font-weight:600;font-size:21px;margin:0 0 4px}
+  .desc{font-weight:600;font-size:13px;color:#9A8676;margin:0 0 18px}
+  table{width:100%;border-collapse:collapse;font-size:13px}
+  th{text-align:left;font-weight:800;font-size:11px;letter-spacing:.5px;text-transform:uppercase;color:#B0997F;padding:8px 12px;border-bottom:2px solid #F1E7D8}
+  td{padding:9px 12px;border-bottom:1px solid #F4EEE3;font-weight:600;vertical-align:middle}
+  code{font-family:ui-monospace,Menlo,monospace;font-size:12px;background:#F6EEE1;padding:2px 6px;border-radius:6px;color:#8A5A2E}
+  .chip{display:inline-block;width:16px;height:16px;border-radius:5px;vertical-align:-3px;margin-right:8px;box-shadow:inset 0 0 0 1px rgba(0,0,0,.06)}
+  .grid2{display:grid;grid-template-columns:1fr 1fr;gap:32px}
+  .grid3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:20px}
+  pre{background:#2C221B;color:#F3E7D8;border-radius:14px;padding:18px 20px;overflow:auto;font-family:ui-monospace,Menlo,monospace;font-size:12px;line-height:1.6}
+  pre .k{color:#F6A45E}pre .fn{color:#8FD0A6}pre .s{color:#E6B37E}pre .c{color:#9A8676;font-style:italic}
+  .note{font-weight:600;font-size:12.5px;color:#9A8676;margin-top:10px}
+  ul{margin:0;padding-left:18px}li{font-weight:600;font-size:13px;margin:5px 0;color:#5B4636}
+  li b{font-weight:800;color:#40312A}
+  @media print{body{background:#fff;padding:0}.sheet{box-shadow:none;border-radius:0;max-width:none}}
+</style></head>
+<body><div class="sheet">
+  <div class="head"><div class="logo"><svg viewBox="0 0 48 48" width="30" height="30" fill="none"><path d="M11.5 38.5 L24 10.5 L36.5 38.5" stroke="#fff" stroke-width="4.6" stroke-linejoin="round" stroke-linecap="round"/><circle cx="17.6" cy="28.5" r="3" fill="#fff"/><circle cx="24" cy="28.5" r="3" fill="#fff"/><circle cx="30.4" cy="28.5" r="3" fill="#fff"/></svg></div><div><h1>Arro — Implementation Spec</h1><div class="sub">A warm family running ritual · production tokens & components for Expo / React Native</div></div></div>
+  <div class="body">
+    <section><h2>1 · Color tokens</h2><p class="desc">Warm cream / orange system. Neutrals carry low warm chroma; accents share saturation.</p>
+      <div class="grid2"><div><table><tr><th>Token</th><th>Hex</th><th>Role</th></tr><tr><td><span class="chip" style="background:#FBF3E7"></span><code>--cream</code></td><td><code>#FBF3E7</code></td><td>App background</td></tr><tr><td><span class="chip" style="background:#FFFBF4"></span><code>--surface</code></td><td><code>#FFFBF4</code></td><td>Screen / primary card</td></tr><tr><td><span class="chip" style="background:#FFFDF9"></span><code>--surface-2</code></td><td><code>#FFFDF9</code></td><td>Raised card</td></tr><tr><td><span class="chip" style="background:#FFF1DE"></span><code>--warm-fill</code></td><td><code>#FFF1DE</code></td><td>Info panel / streak card</td></tr><tr><td><span class="chip" style="background:#FFEBD6"></span><code>--peach</code></td><td><code>#FFEBD6</code></td><td>Soft button / kept tile</td></tr><tr><td><span class="chip" style="background:#40312A"></span><code>--ink</code></td><td><code>#40312A</code></td><td>Primary text</td></tr><tr><td><span class="chip" style="background:#5B4636"></span><code>--ink-soft</code></td><td><code>#5B4636</code></td><td>Secondary text</td></tr><tr><td><span class="chip" style="background:#9A8676"></span><code>--muted</code></td><td><code>#9A8676</code></td><td>Body / captions</td></tr><tr><td><span class="chip" style="background:#B0997F"></span><code>--faint</code></td><td><code>#B0997F</code></td><td>Labels / meta</td></tr><tr><td><span class="chip" style="background:#F1E7D8"></span><code>--hairline</code></td><td><code>#F1E7D8</code></td><td>Dividers</td></tr><tr><td><span class="chip" style="background:#EE7B3A"></span><code>--primary</code></td><td><code>#EE7B3A</code></td><td>Brand / actions / accents</td></tr><tr><td><span class="chip" style="background:#D4691F"></span><code>--primary-press</code></td><td><code>#D4691F</code></td><td>Pressed / deep accent</td></tr><tr><td><span class="chip" style="background:#6FB98A"></span><code>--kept</code></td><td><code>#6FB98A</code></td><td>Kept-today / success</td></tr><tr><td><span class="chip" style="background:#6FA6CE"></span><code>--freeze</code></td><td><code>#6FA6CE</code></td><td>Freeze day</td></tr><tr><td><span class="chip" style="background:#C9A24E"></span><code>--warn</code></td><td><code>#C9A24E</code></td><td>Still-to-run</td></tr></table></div>
+      <div><div style="font-weight:800;font-size:11px;letter-spacing:.5px;text-transform:uppercase;color:#B0997F;margin-bottom:10px">Family colours — one hue per person</div><table><tr><th>Member</th><th>Hex</th></tr><tr><td><span class="chip" style="background:#EE7B3A"></span>Bryce</td><td><code>#EE7B3A</code></td></tr><tr><td><span class="chip" style="background:#E58AA0"></span>Darcey</td><td><code>#E58AA0</code></td></tr><tr><td><span class="chip" style="background:#6FA6CE"></span>Whit</td><td><code>#6FA6CE</code></td></tr><tr><td><span class="chip" style="background:#6FB98A"></span>Julie</td><td><code>#6FB98A</code></td></tr><tr><td><span class="chip" style="background:#E0A94E"></span>Greg</td><td><code>#E0A94E</code></td></tr></table><p class="note">Member hue drives avatar rings, streak numerals, and legend dots. Never reassign.</p></div></div>
+    </section>
+    <section><h2>2 · Type scale</h2><p class="desc">Literata (display serif, warmth + milestones) · Nunito (UI sans, rounded + friendly). Two families only.</p>
+      <table><tr><th>Style</th><th>Family</th><th>Weight</th><th>Size / LH</th><th>Tracking</th><th>Usage</th></tr><tr><td>Streak hero</td><td>Literata</td><td>600</td><td>52 / 52</td><td>-0.5</td><td>Current streak numerals</td></tr><tr><td>Display</td><td>Literata</td><td>600</td><td>32 / 36</td><td>-0.4</td><td>Milestone titles</td></tr><tr><td>Title</td><td>Literata</td><td>600</td><td>26 / 30</td><td>-0.4</td><td>Screen titles</td></tr><tr><td>Greeting</td><td>Literata</td><td>600</td><td>27 / 30</td><td>-0.4</td><td>Home greeting</td></tr><tr><td>Serif quote</td><td>Literata italic</td><td>500</td><td>17 / 24</td><td>0</td><td>Emotional lines</td></tr><tr><td>Name / heading</td><td>Nunito</td><td>800</td><td>15–17 / 20</td><td>0</td><td>Names, card titles</td></tr><tr><td>Label</td><td>Nunito</td><td>700</td><td>13–14 / 18</td><td>0</td><td>Rows, values, timestamps</td></tr><tr><td>Body</td><td>Nunito</td><td>600</td><td>12–13 / 17</td><td>0</td><td>Copy, captions</td></tr><tr><td>Overline</td><td>Nunito</td><td>800</td><td>11–12 / 14</td><td>+0.6 (UPPER)</td><td>Section headers</td></tr></table>
+    </section>
+    <section><h2>3 · Spacing, radii & elevation</h2>
+      <div class="grid3">
+        <div><div style="font-weight:800;font-size:11px;letter-spacing:.5px;text-transform:uppercase;color:#B0997F;margin-bottom:10px">Spacing (pt)</div><table><tr><th></th><th>use</th></tr><tr><td>4</td><td>hairline gaps</td></tr><tr><td>8</td><td>icon/label</td></tr><tr><td>12</td><td>card inner gap</td></tr><tr><td>16</td><td>card padding</td></tr><tr><td>20</td><td>screen padding</td></tr><tr><td>22</td><td>large card padding</td></tr><tr><td>24</td><td>section gap</td></tr></table></div>
+        <div><div style="font-weight:800;font-size:11px;letter-spacing:.5px;text-transform:uppercase;color:#B0997F;margin-bottom:10px">Radii</div><table><tr><th>token</th><th>px</th><th>use</th></tr><tr><td>pill</td><td>999</td><td>buttons, chips, avatars-badges</td></tr><tr><td>tile</td><td>12–15</td><td>day tiles, icon tiles</td></tr><tr><td>card</td><td>20–22</td><td>list cards</td></tr><tr><td>card-lg</td><td>26–28</td><td>hero/recap cards</td></tr><tr><td>device</td><td>46</td><td>phone frame</td></tr></table></div>
+        <div><div style="font-weight:800;font-size:11px;letter-spacing:.5px;text-transform:uppercase;color:#B0997F;margin-bottom:10px">Shadows</div><table><tr><th>token</th><th>value</th><th>use</th></tr><tr><td>card</td><td>0 8px 20px rgba(150,90,40,.05)</td><td>default cards</td></tr><tr><td>raised</td><td>0 12px 28px rgba(150,90,40,.08)</td><td>emphasis cards</td></tr><tr><td>hero</td><td>0 20px 44px rgba(150,90,40,.14)</td><td>recap / share cards</td></tr><tr><td>button</td><td>0 8px 18px rgba(238,123,58,.28)</td><td>primary button</td></tr></table></div>
+      </div>
+      <p class="note">Screen padding 20–24 · card padding 16 · card gap 10–14. One shadow per surface; never stack glows.</p>
+    </section>
+    <section><h2>4 · Avatar states</h2><p class="desc">The core visual system. Photo avatars, member-color ring, state expressed by ring + badge.</p>
+      <table><tr><th>State</th><th>Treatment</th><th>Badge</th></tr><tr><td>kept</td><td>Member-color ring 2.5px + green check badge (br). Full opacity.</td><td>#6FB98A badge</td></tr><tr><td>today</td><td>Member-color ring, no badge, opacity .92. Pairs with Cheer.</td><td>ring only</td></tr><tr><td>missed</td><td>Desaturated ring #D9C9B4, no badge, avatar dimmed .7.</td><td>neutral</td></tr><tr><td>freeze</td><td>Ring #9BC3E0 + blue snow badge (br).</td><td>#6FA6CE badge</td></tr></table>
+    </section>
+    <section><h2>5 · Button states</h2>
+      <table><tr><th>Button</th><th>Default</th><th>Pressed</th><th>Disabled</th></tr><tr><td>Primary</td><td>Gradient #FF974A→#EE7B3A, radius 18–20, h56, Nunito 800 17.5, white</td><td>pressed: scale .97, no bounce</td><td>disabled: opacity .4, no shadow</td></tr><tr><td>Soft / Cheer</td><td>#FFEAD6 bg, #D4691F text, pill, 800 13</td><td>pressed: bg #FFDDBE</td><td>—</td></tr><tr><td>Reaction chip</td><td>#FBEFDD pill, emoji + count</td><td>tap: count+1, pop .45s + rising 🧡</td><td>—</td></tr><tr><td>Icon</td><td>Surface #fff, 54², radius 18, orange glyph</td><td>pressed: bg #FBEFDD</td><td>—</td></tr></table>
+      <p class="note">Press = scale 0.97 + slight darken (120ms). No spring/bounce. Full-width CTAs h56–58, radius 18–20.</p>
+    </section>
+    <section><h2>6 · Tab bar behavior</h2>
+      <ul>
+        <li><b>Tabs:</b> Today · Trail · Feed · Me (4, fixed order).</li>
+        <li><b>Height</b> 84 incl. safe area; background <code>--surface</code> with a top fade so content scrolls under.</li>
+        <li><b>Active:</b> <code>--primary</code>, filled icon, label Nunito 800 / 11. <b>Inactive:</b> <code>--faint</code> #C2AE97, outline icon, 700.</li>
+        <li>No badges on tabs; family nudges surface inside Today, not as red dots.</li>
+      </ul>
+    </section>
+    <section><h2>7 · Motion principles</h2>
+      <ul>
+        <li><b>Entrances</b> — cards fade + rise 12–18pt, 450–620ms, <code>cubic-bezier(.2,.7,.3,1)</code>. Reveal on scroll-into-view; base state stays visible (export-safe).</li>
+        <li><b>Streak count-up</b> — 900–1200ms easeOutCubic, once, then rest.</li>
+        <li><b>Cheer</b> — chip pop 450ms + a single rising 🧡; optimistic count.</li>
+        <li><b>Glow = meaning</b> — reserved for kept-today, milestones, live progress. Nowhere decorative.</li>
+        <li><b>No</b> confetti, spinners, parallax, or looping ambient motion. Warmth over spectacle.</li>
+      </ul>
+    </section>
+    <section><h2>8 · Reusable components (React Native)</h2><p class="desc">Compose every screen from these. Props are the public API.</p>
+      <table><tr><th>Component</th><th>Props</th><th>Purpose</th></tr><tr><td>AvatarRing</td><td>member, photoUri, size=50, state="kept|today|missed|freeze"</td><td>Photo avatar with member-color ring + state badge.</td></tr><tr><td>StreakRing</td><td>value, goal=30, size=74, label</td><td>Conic progress ring; inner shows goal or n/total.</td></tr><tr><td>MemberRow</td><td>member, streak, subtitle, trailing</td><td>Row: avatar + name + subtitle + trailing (streak / check / cheer).</td></tr><tr><td>RunCard</td><td>member, day, title, meta, reactions[]</td><td>Feed card: header + line + CheerBar.</td></tr><tr><td>CheerBar</td><td>reactions[{emoji,count}], onCheer</td><td>Row of reaction chips; optimistic increment.</td></tr><tr><td>DayPill</td><td>state="kept|freeze|today|future", label</td><td>Weekly strip tile (check / blue dot / ring).</td></tr><tr><td>SectionHeader</td><td>title, count, tint</td><td>Overline label + optional count, tinted by context.</td></tr><tr><td>PrimaryButton</td><td>title, icon, onPress, disabled</td><td>Gradient CTA with press scale.</td></tr><tr><td>TabBar</td><td>active, onChange</td><td>4 tabs: Today, Trail, Feed, Me.</td></tr><tr><td>MilestoneShareCard</td><td>photoUri, person, milestone, location, cheers[], onShare</td><td>6b-based photo card + share action.</td></tr><tr><td>WeeklyRecapCard</td><td>week, days[], members[], summary</td><td>Shareable recap (Weekly Recap direction).</td></tr></table>
+      <pre><span class="k">function</span> <span class="fn">AvatarRing</span>({ member, photoUri, size = 50, state = <span class="s">'today'</span> }) {
+  <span class="k">const</span> ring = MEMBER_COLOR[member.id];        <span class="c">// one hue per person</span>
+  <span class="k">const</span> badge = { kept: <span class="s">'check'</span>, freeze: <span class="s">'snow'</span> }[state] ?? <span class="s">null</span>;
+  <span class="k">const</span> dim  = state === <span class="s">'missed'</span> ? 0.7 : 1;
+  <span class="k">return</span> (
+    &lt;View style={{ padding: 2.5, borderRadius: 999,
+      backgroundColor: state === <span class="s">'missed'</span> ? tokens.ringMuted
+        : state === <span class="s">'freeze'</span> ? tokens.freeze : ring }}&gt;
+      &lt;Avatar uri={photoUri} size={size} style={{ opacity: dim }} /&gt;
+      {badge &amp;&amp; &lt;StateBadge kind={badge} /&gt;}
+    &lt;/View&gt;
+  );
+}</pre>
+    </section>
+    <section><h2>9 · Final screens</h2><p class="desc">Locked directions in <code>Arro.dc.html</code> — build these; no new experimental screens.</p>
+      <table><tr><th>Screen</th><th>Key components</th><th>Notes</th></tr><tr><td>Onboarding (1a)</td><td>AppIcon, PrimaryButton, feature rows</td><td>Connect Strava · join family · keep streak</td></tr><tr><td>Today / Family Home (2a)</td><td>StreakRing, SectionHeader, MemberRow, CheerBar, TabBar</td><td>Locked main home</td></tr><tr><td>Activity Feed (4a)</td><td>RunCard, CheerBar, TabBar</td><td>Locked feed</td></tr><tr><td>Weekly Trail / Recap</td><td>WeeklyRecapCard, DayPill, AvatarRing</td><td>Simple recap direction</td></tr><tr><td>Milestone Photo Card (6b)</td><td>MilestoneShareCard, AvatarRing, PrimaryButton</td><td>Locked share direction</td></tr><tr><td>Profile (5a)</td><td>AvatarRing, StreakRing, milestone badges, RunCard</td><td>Streak + longest + cheers</td></tr><tr><td>Settings (7a)</td><td>Grouped list, Toggle, Chevron rows</td><td>Strava, family, rules, notifications</td></tr></table>
+    </section>
+  </div>
+</div></body></html>
