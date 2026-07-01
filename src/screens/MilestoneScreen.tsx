@@ -97,7 +97,7 @@ const styles = StyleSheet.create({
   actions: { flexDirection: 'row', gap: 12, marginTop: 18, alignItems: 'center' },
   shareBtn: {
     width: 54,
-    height: 52,
+    height: 54,
     borderRadius: radii.button,
     backgroundColor: colors.card,
     borderWidth: 1,

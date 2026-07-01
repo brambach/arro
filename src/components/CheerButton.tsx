@@ -44,9 +44,11 @@ export function CheerButton({
 
   useEffect(() => {
     let m = true;
-    AccessibilityInfo.isReduceMotionEnabled().then((v) => {
-      if (m) reduceMotion.current = v;
-    });
+    AccessibilityInfo.isReduceMotionEnabled()
+      .then((v) => {
+        if (m) reduceMotion.current = v;
+      })
+      .catch(() => {});
     return () => {
       m = false;
     };

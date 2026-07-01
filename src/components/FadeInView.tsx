@@ -18,9 +18,10 @@ export function FadeInView({ delay = 0, rise = 8, duration = 280, style, childre
 
   useEffect(() => {
     let mounted = true;
-    AccessibilityInfo.isReduceMotionEnabled().then((enabled) => {
-      if (mounted) setReduceMotion(enabled);
-    });
+    AccessibilityInfo.isReduceMotionEnabled()
+      .then((enabled) => mounted && setReduceMotion(enabled))
+      // If the probe ever rejects, fall back to animating — never leave content invisible.
+      .catch(() => mounted && setReduceMotion(false));
     return () => {
       mounted = false;
     };

@@ -93,7 +93,7 @@ export const feed: FeedItem[] = [
     kind: 'still',
     title: 'Darcey still has today',
     meta: 'Usually an evening run · 5:30 PM',
-    cheer: 'Go Darce',
+    cheer: 'Go Darce 💪',
   },
 ];
 

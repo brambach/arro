@@ -43,7 +43,10 @@ export function StreakRing({
 
   useEffect(() => {
     let m = true;
-    AccessibilityInfo.isReduceMotionEnabled().then((v) => m && setReduceMotion(v));
+    AccessibilityInfo.isReduceMotionEnabled()
+      .then((v) => m && setReduceMotion(v))
+      // On rejection, fall back to the animated fill so the ring always reaches its target.
+      .catch(() => m && setReduceMotion(false));
     return () => {
       m = false;
     };
