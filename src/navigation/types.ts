@@ -11,7 +11,7 @@ export type RootStackParamList = {
 
 export type MainTabParamList = {
   Today: undefined;
-  Trail: undefined;
+  ThisWeek: undefined;
   Feed: undefined;
   Me: undefined;
 };

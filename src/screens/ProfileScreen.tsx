@@ -1,219 +1,145 @@
 import React from 'react';
-import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
-import { LinearGradient } from 'expo-linear-gradient';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { colors, radii, shadows } from '../theme/tokens';
-import { fonts, type } from '../theme/typography';
+import { Pressable, StyleSheet, Text, View } from 'react-native';
+import { colors, radii, spacing } from '../theme/tokens';
+import { type, weights } from '../theme/typography';
 import { AvatarRing } from '../components/AvatarRing';
-import { Card } from '../components/Card';
-import { CountUp } from '../components/CountUp';
+import { CogIcon } from '../components/Icons';
 import { FadeInView } from '../components/FadeInView';
+import { Screen } from '../components/Screen';
 import { SectionHeader } from '../components/SectionHeader';
-import { SettingsIcon } from '../components/Icons';
-import { StreakRing } from '../components/StreakRing';
-import { TAB_BAR_HEIGHT } from '../components/TabBar';
 import { members, profile } from '../data/family';
-import { ProfileBadge, RecentRun } from '../data/types';
 import { MainTabScreenProps } from '../navigation/types';
 
 export function ProfileScreen({ navigation }: MainTabScreenProps<'Me'>) {
-  const insets = useSafeAreaInsets();
   const me = members[profile.memberId];
 
   return (
-    <View style={styles.root}>
-      <ScrollView
-        showsVerticalScrollIndicator={false}
-        contentContainerStyle={{
-          paddingTop: insets.top + 8,
-          paddingBottom: TAB_BAR_HEIGHT + insets.bottom + 12,
-          paddingHorizontal: 22,
-        }}
-      >
-        {/* Identity */}
-        <FadeInView delay={40} style={styles.identity}>
-          <AvatarRing
-            member={me}
-            size={96}
-            ringWidth={3.5}
-            state="kept"
-            glow
-            badgeSize={32}
-          />
+    <Screen>
+      <View style={styles.topBar}>
+        <Pressable onPress={() => navigation.navigate('Settings')} hitSlop={10} accessibilityLabel="Settings">
+          <CogIcon />
+        </Pressable>
+      </View>
+
+      <FadeInView style={styles.identity}>
+        <AvatarRing member={me} size={64} />
+        <View style={{ flex: 1 }}>
           <Text style={styles.name}>{me.name}</Text>
-          <Text style={styles.tagline}>{profile.tagline}</Text>
-        </FadeInView>
+          <Text style={styles.location}>{profile.location}</Text>
+          <Pressable style={styles.editPill}>
+            <Text style={styles.editText}>Edit profile</Text>
+          </Pressable>
+        </View>
+      </FadeInView>
 
-        {/* Current streak */}
-        <FadeInView delay={140}>
-          <Card background={colors.warmFill} radius={26} padding={20} style={styles.streakCard}>
-            <View>
-              <Text style={styles.streakOverline}>Current streak</Text>
-              <View style={styles.streakValueRow}>
-                <CountUp
-                  value={profile.currentStreak}
-                  duration={1100}
-                  style={styles.streakNumber}
-                />
-                <Text style={styles.streakDays}>days</Text>
-              </View>
-            </View>
-            <StreakRing
-              value={profile.currentStreak}
-              goal={profile.goal}
-              size={74}
-              strokeWidth={8}
-              innerBg="#FFE9D0"
+      <FadeInView delay={60} style={styles.section}>
+        <View style={styles.statsCard}>
+          {profile.stats.map((s, i) => (
+            <View
+              key={s.label}
+              style={[styles.statCell, i % 2 === 0 && styles.cellRight, i < 2 && styles.cellBottom]}
             >
-              <Text style={styles.goalNumber}>{profile.goal}</Text>
-              <Text style={styles.goalLabel}>GOAL</Text>
-            </StreakRing>
-          </Card>
-        </FadeInView>
-
-        {/* Stats */}
-        <FadeInView delay={200} style={styles.statsRow}>
-          {profile.stats.map((s) => (
-            <View key={s.label} style={styles.statCard}>
-              <CountUp value={s.value} duration={1150} style={styles.statValue} />
               <Text style={styles.statLabel}>{s.label}</Text>
+              <Text style={[styles.statValue, s.accent && { color: colors.primary }]}>
+                {s.value}
+                {s.unit ? <Text style={styles.statUnit}> {s.unit}</Text> : null}
+              </Text>
             </View>
           ))}
-        </FadeInView>
-
-        {/* Milestones */}
-        <FadeInView delay={250}>
-          <SectionHeader title="Milestones" style={styles.sectionHeader} />
-          <View style={styles.badges}>
-            {profile.badges.map((b) => (
-              <MilestoneBadge
-                key={b.day}
-                badge={b}
-                onPress={b.reached ? () => navigation.navigate('Milestone') : undefined}
-              />
-            ))}
-          </View>
-        </FadeInView>
-
-        {/* Recent runs */}
-        <FadeInView delay={320}>
-          <SectionHeader title="Recent runs" style={styles.sectionHeader} />
-          <View style={{ gap: 8 }}>
-            {profile.recentRuns.map((r) => (
-              <RecentRunRow key={r.title} run={r} />
-            ))}
-          </View>
-        </FadeInView>
-      </ScrollView>
-
-      {/* Settings entry */}
-      <Pressable
-        onPress={() => navigation.navigate('Settings')}
-        hitSlop={10}
-        style={[styles.settingsBtn, { top: insets.top + 10 }]}
-        accessibilityLabel="Settings"
-      >
-        <SettingsIcon size={22} color={colors.faint} />
-      </Pressable>
-    </View>
-  );
-}
-
-function MilestoneBadge({ badge, onPress }: { badge: ProfileBadge; onPress?: () => void }) {
-  return (
-    <Pressable style={styles.badgeCol} onPress={onPress} disabled={!onPress}>
-      <View style={[styles.badgeCircle, badge.reached ? styles.badgeReached : styles.badgeLocked]}>
-        <Text style={[styles.badgeNumber, !badge.reached && { color: colors.tabInactive }]}>
-          {badge.day}
-        </Text>
-      </View>
-      <Text style={[styles.badgeLabel, !badge.reached && { color: colors.tabInactive }]}>
-        {badge.label}
-      </Text>
-    </Pressable>
-  );
-}
-
-function RecentRunRow({ run }: { run: RecentRun }) {
-  return (
-    <Card radius={18} padding={0}>
-      <View style={styles.recentRow}>
-        <LinearGradient colors={run.tint} style={styles.recentTile} />
-        <View style={{ flex: 1 }}>
-          <Text style={type.name}>{run.title}</Text>
-          <Text style={styles.recentMeta}>{run.meta}</Text>
         </View>
-        <Text style={styles.recentDay}>Day {run.day}</Text>
-      </View>
-    </Card>
+      </FadeInView>
+
+      <FadeInView delay={120} style={styles.section}>
+        <SectionHeader title="Recent runs" action="See all" titleColor={colors.ink} style={styles.sectionHead} />
+        {profile.recentRuns.map((r, i) => (
+          <View key={r.when} style={[styles.runRow, i < profile.recentRuns.length - 1 && styles.runBorder]}>
+            <AvatarRing member={members[r.memberId]} size={34} />
+            <View style={{ flex: 1 }}>
+              <Text style={styles.runWhen}>{r.when}</Text>
+              <Text style={styles.runMeta}>
+                {r.dist} · {r.place}
+              </Text>
+            </View>
+          </View>
+        ))}
+      </FadeInView>
+
+      <FadeInView delay={160} style={styles.section}>
+        <SectionHeader title="Milestones" action="See all" titleColor={colors.ink} style={styles.sectionHead} />
+        <View style={styles.milestones}>
+          {profile.milestones.map((n, i) => (
+            <Pressable
+              key={n}
+              style={styles.msCol}
+              accessibilityRole={i === 0 ? 'button' : undefined}
+              accessibilityLabel={i === 0 ? `${n} day milestone` : undefined}
+              onPress={i === 0 ? () => navigation.navigate('Milestone') : undefined}
+            >
+              <View style={styles.msCircle}>
+                <Text style={styles.msNumber}>{n}</Text>
+              </View>
+              <Text style={styles.msLabel}>days</Text>
+            </Pressable>
+          ))}
+        </View>
+      </FadeInView>
+    </Screen>
   );
 }
 
 const styles = StyleSheet.create({
-  root: { flex: 1, backgroundColor: colors.surface },
-  settingsBtn: {
-    position: 'absolute',
-    right: 20,
-    width: 40,
-    height: 40,
-    borderRadius: 20,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  identity: { alignItems: 'center', paddingTop: 8 },
-  name: { fontFamily: fonts.serif, fontSize: 24, color: colors.ink, marginTop: 12 },
-  tagline: { fontFamily: fonts.sansLabel, fontSize: 13, color: colors.faint, marginTop: 2 },
-  streakCard: {
-    marginTop: 16,
+  topBar: { alignItems: 'flex-end', paddingHorizontal: spacing.gutter, paddingTop: 2 },
+  identity: {
     flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'space-between',
+    gap: 15,
+    paddingHorizontal: spacing.gutter,
+    paddingTop: 2,
   },
-  streakOverline: {
-    fontFamily: fonts.sansHeavy,
-    fontSize: 12,
-    letterSpacing: 0.6,
-    textTransform: 'uppercase',
-    color: '#C88A3A',
+  name: { ...type.stat, fontSize: 22 },
+  location: { fontSize: 13, color: colors.faint, marginTop: 2 },
+  editPill: {
+    alignSelf: 'flex-start',
+    marginTop: 9,
+    borderWidth: 1,
+    borderColor: '#E5DCCD',
+    borderRadius: radii.pill,
+    paddingVertical: 5,
+    paddingHorizontal: 14,
   },
-  streakValueRow: { flexDirection: 'row', alignItems: 'baseline', gap: 6, marginTop: 2 },
-  streakNumber: { fontFamily: fonts.serif, fontSize: 52, lineHeight: 54, color: colors.primary },
-  streakDays: { fontFamily: fonts.serif, fontSize: 20, color: colors.primaryPress },
-  goalNumber: { fontFamily: fonts.serif, fontSize: 17, color: colors.ink, lineHeight: 19 },
-  goalLabel: {
-    fontFamily: fonts.sansHeavy,
-    fontSize: 8,
-    letterSpacing: 0.4,
-    color: '#C88A3A',
-    marginTop: 1,
+  editText: { fontSize: 12.5, fontWeight: weights.semibold, color: colors.inkSoft },
+  section: { paddingHorizontal: spacing.gutter, marginTop: 18 },
+  sectionHead: { marginBottom: 4 },
+  statsCard: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    backgroundColor: colors.card,
+    borderWidth: 1,
+    borderColor: colors.border,
+    borderRadius: radii.card,
+    overflow: 'hidden',
   },
-  statsRow: { flexDirection: 'row', gap: 10, marginTop: 12 },
-  statCard: {
-    flex: 1,
-    backgroundColor: colors.white,
-    borderRadius: 20,
-    padding: 14,
-    alignItems: 'center',
-    ...shadows.card,
-  },
-  statValue: { fontFamily: fonts.serif, fontSize: 26, color: colors.ink },
-  statLabel: { fontFamily: fonts.sansLabel, fontSize: 11.5, color: colors.faint, marginTop: 2 },
-  sectionHeader: { marginTop: 18, marginBottom: 10 },
-  badges: { flexDirection: 'row', gap: 12 },
-  badgeCol: { flex: 1, alignItems: 'center', gap: 6 },
-  badgeCircle: {
-    width: 54,
-    height: 54,
-    borderRadius: 27,
+  statCell: { width: '50%', padding: 14 },
+  cellRight: { borderRightWidth: 1, borderRightColor: colors.divider },
+  cellBottom: { borderBottomWidth: 1, borderBottomColor: colors.divider },
+  statLabel: { fontSize: 12, color: colors.muted },
+  statValue: { fontSize: 22, fontWeight: weights.bold, color: colors.ink, marginTop: 3 },
+  statUnit: { fontSize: 13, fontWeight: weights.semibold, color: colors.faint2 },
+  runRow: { flexDirection: 'row', alignItems: 'center', gap: 12, paddingVertical: 8.5 },
+  runBorder: { borderBottomWidth: 1, borderBottomColor: colors.divider },
+  runWhen: { fontSize: 14, fontWeight: weights.semibold, color: colors.ink },
+  runMeta: { fontSize: 12.5, color: colors.faint, marginTop: 1 },
+  milestones: { flexDirection: 'row', gap: 16, marginTop: 4 },
+  msCol: { alignItems: 'center', gap: 6 },
+  msCircle: {
+    width: 56,
+    height: 56,
+    borderRadius: 28,
+    borderWidth: 2.5,
+    borderColor: colors.primary,
     alignItems: 'center',
     justifyContent: 'center',
   },
-  badgeReached: { backgroundColor: colors.primary, ...shadows.card },
-  badgeLocked: { backgroundColor: '#F3E7D5', borderWidth: 2, borderColor: '#E4CFB2' },
-  badgeNumber: { fontFamily: fonts.serif, fontSize: 18, color: colors.white },
-  badgeLabel: { fontFamily: fonts.sansLabel, fontSize: 11, color: colors.reactionInk },
-  recentRow: { flexDirection: 'row', alignItems: 'center', gap: 12, padding: 12, paddingHorizontal: 15 },
-  recentTile: { width: 36, height: 36, borderRadius: 12 },
-  recentMeta: { fontFamily: fonts.sansBody, fontSize: 12, color: colors.muted, marginTop: 1 },
-  recentDay: { fontFamily: fonts.sansLabel, fontSize: 12, color: colors.kept },
+  msNumber: { fontSize: 18, fontWeight: weights.bold, color: colors.primary },
+  msLabel: { fontSize: 11, color: colors.faint2 },
 });

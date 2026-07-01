@@ -4,80 +4,73 @@ export type { MemberId };
 
 /**
  * A photo source. Use a URL string, or a bundled local image via
- * `require('../../assets/mum.jpg')` (which resolves to a number). null → the
- * colored-initials placeholder is shown.
+ * `require('../../assets/mum.jpg')`. null → the solid-color initial avatar.
  */
 export type PhotoSource = string | number | null;
 
-/** kept = ran today · still = still has today · missed = broke chain · freeze = rest-day freeze */
-export type DayState = 'kept' | 'still' | 'missed' | 'freeze';
-
-/** Avatar ring/badge state (Spec §4). */
-export type AvatarState = 'kept' | 'today' | 'missed' | 'freeze';
+export type DayStatus = 'kept' | 'still';
 
 export interface Member {
   id: MemberId;
   name: string;
   color: string;
-  soft: string;
   streak: number;
-  /** Whether they've kept today or still have it. */
-  today: 'kept' | 'still';
+  today: DayStatus; // kept it today, or still has today
+  meta: string; // one-line status for the Today list
   location?: string;
-  /** Real photo (URL or bundled require()); null → colored initials placeholder. */
+  relationship?: string; // "You", "Sister", "Brother"
   photoUri?: PhotoSource;
-}
-
-export interface KeptRun {
-  memberId: MemberId;
-  day: number;
-  meta: string; // e.g. "3.2 mi sunrise run · Brisbane"
-}
-
-export interface Reaction {
-  emoji: string;
-  count: number;
 }
 
 export interface FeedItem {
   id: string;
   memberId: MemberId;
-  day: number;
-  detail: string;
-  time?: string; // "2h" — omit for the freshest item
-  keptBadge?: boolean; // green check instead of a timestamp
-  note?: string; // "Darcey & Whit cheered"
-  reactions: Reaction[];
+  kind: 'kept' | 'still';
+  title: string; // "Bryce kept Day 24" / "Darcey still has today"
+  meta: string;
+  time?: string; // "6:21 AM"
+  cheer?: string; // a cheer line, or nudge prompt
+  hearts?: number; // heart count (kept posts)
 }
 
-export type WeekDayState = 'kept' | 'freeze' | 'today' | 'future' | 'missed';
+export type WeekState = 'kept' | 'freeze' | 'today' | 'missed';
 
-export interface WeekDay {
+/** One dot in the compact 7-day strip. */
+export interface WeekStripDay {
   label: string; // M T W T F S S
-  state: WeekDayState;
+  state: WeekState;
+}
+
+/** One row in the day-by-day list. */
+export interface WeekRow {
+  dow: string; // Mon
+  date: string; // 24
+  state: WeekState;
+  avatars: MemberId[];
+  badge?: string; // "Freeze day" | "Today"
 }
 
 export interface MilestoneData {
   memberId: MemberId;
   day: number;
   title: string; // "Bryce kept\n30 days"
-  subtitle: string; // "One month running in Brisbane 🌅"
-  quote: string;
+  subtitle: string; // "One month running in Brisbane."
+  motto: string; // "Every day forward, together."
   dateLine: string; // "June 30 · streak still alive"
   cheeredBy: MemberId[];
   photoUri?: PhotoSource;
 }
 
-export interface ProfileBadge {
-  day: number;
+export interface ProfileStat {
   label: string;
-  reached: boolean;
-  toGo?: number;
+  value: string;
+  unit?: string;
+  accent?: boolean;
 }
 
 export interface RecentRun {
-  title: string;
-  meta: string; // "Today · 3.2 mi"
-  day: number;
-  tint: readonly [string, string]; // gradient for the icon tile
+  memberId: MemberId;
+  when: string; // "Today · 6:21 AM"
+  dist: string; // "3.2 mi"
+  place: string; // "Brisbane"
 }

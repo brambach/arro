@@ -1,117 +1,71 @@
 import React from 'react';
-import { ScrollView, StyleSheet, Text, View } from 'react-native';
-import { LinearGradient } from 'expo-linear-gradient';
+import { StyleSheet, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { colors, gradients, radii, shadows } from '../theme/tokens';
-import { fonts } from '../theme/typography';
-import { ArroMark, StarIcon, StravaWave, UsersIcon } from '../components/Icons';
+import { colors, radii } from '../theme/tokens';
+import { weights } from '../theme/typography';
+import { ArroMark, FlameIcon, SyncIcon, UsersIcon } from '../components/Icons';
 import { FadeInView } from '../components/FadeInView';
 import { PrimaryButton } from '../components/PrimaryButton';
 import { RootStackScreenProps } from '../navigation/types';
 
 const FEATURES = [
-  {
-    title: 'Connect Strava',
-    body: 'Your daily runs sync automatically.',
-    tint: ['#FF9A52', '#F0803C'] as const,
-    icon: <StravaWave size={22} />,
-  },
-  {
-    title: 'Join your family',
-    body: "See everyone's streak in one place.",
-    tint: ['#84C79A', '#6FB98A'] as const,
-    icon: <UsersIcon size={24} />,
-  },
-  {
-    title: 'Keep your daily streak',
-    body: 'One run a day keeps the chain alive.',
-    tint: ['#7FB4DA', '#6FA6CE'] as const,
-    icon: <StarIcon size={22} />,
-  },
+  { title: 'Connect Strava', body: 'Your daily runs sync automatically.', icon: <SyncIcon /> },
+  { title: 'Join your family', body: "See everyone's streak in one place.", icon: <UsersIcon /> },
+  { title: 'Keep your daily streak', body: 'One run a day keeps the chain alive.', icon: <FlameIcon /> },
 ];
 
 export function OnboardingScreen({ navigation }: RootStackScreenProps<'Onboarding'>) {
   const insets = useSafeAreaInsets();
 
   return (
-    <LinearGradient colors={gradients.onboarding} style={styles.root}>
-      <ScrollView
-        showsVerticalScrollIndicator={false}
-        contentContainerStyle={[
-          styles.content,
-          { paddingTop: insets.top + 40, paddingBottom: insets.bottom + 28 },
-        ]}
-      >
-        <FadeInView style={styles.iconWrap}>
-          <LinearGradient colors={gradients.appIcon} style={styles.appIcon}>
-            <ArroMark size={90} color="#fff" />
-          </LinearGradient>
-        </FadeInView>
+    <View style={[styles.root, { paddingTop: insets.top, paddingBottom: insets.bottom + 24 }]}>
+      <FadeInView style={styles.hero}>
+        <ArroMark size={60} />
+        <Text style={styles.wordmark}>Arro</Text>
+        <Text style={styles.tagline}>Every day forward, together.</Text>
+      </FadeInView>
 
-        <FadeInView delay={120} style={styles.titleWrap}>
-          <Text style={styles.wordmark}>Arro</Text>
-          <Text style={styles.tagline}>Every day forward, together.</Text>
-        </FadeInView>
+      <View style={styles.spacer} />
 
-        <View style={styles.features}>
+      <FadeInView delay={120} style={styles.bottom}>
+        <View style={styles.card}>
           {FEATURES.map((f, i) => (
-            <FadeInView key={f.title} delay={220 + i * 100}>
-              <View style={styles.featureCard}>
-                <LinearGradient colors={f.tint} style={styles.featureIcon}>
-                  {f.icon}
-                </LinearGradient>
-                <View style={{ flex: 1 }}>
-                  <Text style={styles.featureTitle}>{f.title}</Text>
-                  <Text style={styles.featureBody}>{f.body}</Text>
-                </View>
+            <View key={f.title} style={[styles.row, i < FEATURES.length - 1 && styles.rowBorder]}>
+              <View style={styles.icon}>{f.icon}</View>
+              <View style={{ flex: 1 }}>
+                <Text style={styles.featureTitle}>{f.title}</Text>
+                <Text style={styles.featureBody}>{f.body}</Text>
               </View>
-            </FadeInView>
+            </View>
           ))}
         </View>
 
-        <FadeInView delay={560} style={styles.ctaWrap}>
-          <PrimaryButton title="Connect Strava" onPress={() => navigation.replace('Main')} />
-          <Text style={styles.ctaNote}>Free for your whole family · no ads</Text>
-        </FadeInView>
-      </ScrollView>
-    </LinearGradient>
+        <PrimaryButton title="Connect Strava" onPress={() => navigation.replace('Main')} style={styles.cta} />
+        <Text style={styles.note}>Free for your whole family · no ads</Text>
+      </FadeInView>
+    </View>
   );
 }
 
 const styles = StyleSheet.create({
-  root: { flex: 1 },
-  content: { paddingHorizontal: 26, alignItems: 'center' },
-  iconWrap: { marginBottom: 24 },
-  appIcon: {
-    width: 100,
-    height: 100,
-    borderRadius: 28,
-    alignItems: 'center',
-    justifyContent: 'center',
-    ...shadows.button,
+  root: { flex: 1, backgroundColor: colors.screen, paddingHorizontal: 26 },
+  hero: { alignItems: 'center', paddingTop: 48 },
+  wordmark: { fontSize: 34, fontWeight: weights.bold, letterSpacing: -0.6, color: colors.ink, marginTop: 20 },
+  tagline: { fontSize: 15, color: '#8A8177', marginTop: 8 },
+  spacer: { flex: 1 },
+  bottom: {},
+  card: {
+    backgroundColor: colors.card,
+    borderWidth: 1,
+    borderColor: colors.border,
+    borderRadius: radii.cardLg,
+    paddingHorizontal: 18,
   },
-  titleWrap: { alignItems: 'center', gap: 12, marginBottom: 30 },
-  wordmark: { fontFamily: fonts.serif, fontSize: 42, color: '#3A2B22', letterSpacing: -0.6 },
-  tagline: { fontFamily: fonts.serifItalic, fontSize: 19, color: '#B06A34', textAlign: 'center' },
-  features: { alignSelf: 'stretch', gap: 12 },
-  featureCard: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 15,
-    backgroundColor: colors.white,
-    borderRadius: radii.card,
-    padding: 16,
-    ...shadows.card,
-  },
-  featureIcon: {
-    width: 46,
-    height: 46,
-    borderRadius: radii.tile,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  featureTitle: { fontFamily: fonts.sansHeavy, fontSize: 16, color: colors.ink },
-  featureBody: { fontFamily: fonts.sansBody, fontSize: 13.5, color: colors.muted, marginTop: 2 },
-  ctaWrap: { alignSelf: 'stretch', alignItems: 'center', gap: 14, marginTop: 32 },
-  ctaNote: { fontFamily: fonts.sansBody, fontSize: 13, color: '#A9977F' },
+  row: { flexDirection: 'row', alignItems: 'center', gap: 15, paddingVertical: 15 },
+  rowBorder: { borderBottomWidth: 1, borderBottomColor: colors.dividerSoft },
+  icon: { width: 26, alignItems: 'center' },
+  featureTitle: { fontSize: 15, fontWeight: weights.semibold, color: colors.ink },
+  featureBody: { fontSize: 13, color: colors.faint, marginTop: 2 },
+  cta: { marginTop: 22 },
+  note: { textAlign: 'center', fontSize: 12.5, color: '#A49B8F', marginTop: 15 },
 });

@@ -1,51 +1,29 @@
 import React from 'react';
 import { Image, StyleProp, StyleSheet, Text, View, ViewStyle } from 'react-native';
-import { LinearGradient } from 'expo-linear-gradient';
 import { colors } from '../theme/tokens';
-import { fonts } from '../theme/typography';
+import { weights } from '../theme/typography';
 import { PhotoSource } from '../data/types';
 
 /**
- * Photo area used by milestone / trail cards. Renders the image when a uri is
- * present; otherwise a warm sunrise-toned placeholder so the layout reads as a
- * real photo card (never a broken image). Drop real uris in later.
+ * Photo area (milestone). Renders the image when a uri is set; otherwise a
+ * flat neutral placeholder — never a broken image. Drop real uris in later.
  */
 type Props = {
   uri?: PhotoSource;
   placeholderLabel?: string;
-  gradient?: readonly [string, string, ...string[]];
   children?: React.ReactNode;
   style?: StyleProp<ViewStyle>;
 };
 
-export function PhotoSlot({
-  uri,
-  placeholderLabel,
-  gradient = ['#FFD7A6', '#F2A15C', '#D9793B'],
-  children,
-  style,
-}: Props) {
+export function PhotoSlot({ uri, placeholderLabel, children, style }: Props) {
   return (
     <View style={[styles.wrap, style]}>
       {uri ? (
-        <Image
-          source={typeof uri === 'string' ? { uri } : uri}
-          style={StyleSheet.absoluteFill}
-          resizeMode="cover"
-        />
+        <Image source={typeof uri === 'string' ? { uri } : uri} style={StyleSheet.absoluteFill} resizeMode="cover" />
       ) : (
-        <LinearGradient
-          colors={gradient}
-          start={{ x: 0.1, y: 0 }}
-          end={{ x: 0.9, y: 1 }}
-          style={StyleSheet.absoluteFill}
-        >
-          {placeholderLabel && (
-            <View style={styles.labelWrap}>
-              <Text style={styles.label}>{placeholderLabel}</Text>
-            </View>
-          )}
-        </LinearGradient>
+        <View style={[StyleSheet.absoluteFill, styles.placeholder]}>
+          {placeholderLabel ? <Text style={styles.label}>{placeholderLabel}</Text> : null}
+        </View>
       )}
       {children}
     </View>
@@ -53,12 +31,7 @@ export function PhotoSlot({
 }
 
 const styles = StyleSheet.create({
-  wrap: { overflow: 'hidden', backgroundColor: colors.warmFill },
-  labelWrap: { flex: 1, alignItems: 'center', justifyContent: 'center', padding: 12 },
-  label: {
-    fontFamily: fonts.sansLabel,
-    fontSize: 12,
-    color: 'rgba(255,255,255,0.9)',
-    textAlign: 'center',
-  },
+  wrap: { overflow: 'hidden', backgroundColor: '#C7BCAE' },
+  placeholder: { alignItems: 'center', justifyContent: 'center', padding: 16, backgroundColor: '#C7BCAE' },
+  label: { fontSize: 12.5, fontWeight: weights.medium, color: 'rgba(255,255,255,0.85)', textAlign: 'center' },
 });

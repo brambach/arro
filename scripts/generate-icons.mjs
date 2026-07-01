@@ -1,6 +1,6 @@
 /**
- * Generates the Arro app icons from the brand mark (the "A" running trail with
- * three footfall dots) + the orange gradient, so all launcher/splash art is on-brand.
+ * Generates the Arro app icons from the final production mark (lowercase-"a"
+ * route mark, Arro Brand & Logo handoff) on the flat Arro-orange tile.
  *
  * sharp is only needed to rasterize and is NOT a project dependency. Run with:
  *   npm install --no-save sharp && node scripts/generate-icons.mjs
@@ -10,43 +10,39 @@ import { fileURLToPath } from 'node:url';
 import { dirname, join } from 'node:path';
 
 const assets = join(dirname(fileURLToPath(import.meta.url)), '..', 'assets');
+const ORANGE = '#F26A1B';
 
-/** Build a square SVG: optional orange-gradient fill + optional centered white/dark mark. */
-function svg(N, { bg = 'none', mark = true, markColor = '#fff', frac = 0.6 } = {}) {
-  const S = (frac * N) / 48; // scale the 48-unit mark viewBox
-  const T = (N * (1 - frac)) / 2; // center it
-  const defs = `<defs><linearGradient id="g" x1="0.15" y1="0" x2="0.85" y2="1"><stop offset="0" stop-color="#FF9E52"/><stop offset="1" stop-color="#EE7B3A"/></linearGradient></defs>`;
-  const rect = bg === 'gradient' ? `<rect width="${N}" height="${N}" fill="url(#g)"/>` : '';
-  const markG = mark
-    ? `<g transform="translate(${T} ${T}) scale(${S})">` +
-      `<path d="M11.5 38.5 L24 10.5 L36.5 38.5" stroke="${markColor}" stroke-width="4.6" stroke-linejoin="round" stroke-linecap="round" fill="none"/>` +
-      `<circle cx="17.6" cy="28.5" r="3" fill="${markColor}"/>` +
-      `<circle cx="24" cy="28.5" r="3" fill="${markColor}"/>` +
-      `<circle cx="30.4" cy="28.5" r="3" fill="${markColor}"/>` +
-      `</g>`
-    : '';
-  return `<svg xmlns="http://www.w3.org/2000/svg" width="${N}" height="${N}" viewBox="0 0 ${N} ${N}">${defs}${rect}${markG}</svg>`;
+/** The mark in a 120 viewBox, scaled+centered into an N canvas at `frac` of the canvas. */
+function mark(N, frac, color) {
+  const S = (frac * N) / 120;
+  const T = (N - 120 * S) / 2;
+  return (
+    `<g transform="translate(${T} ${T}) scale(${S})">` +
+    `<circle cx="53" cy="59" r="25.5" fill="none" stroke="${color}" stroke-width="13" stroke-linecap="round"/>` +
+    `<path d="M78.5 35 V78 Q78.5 86 88 84.5" fill="none" stroke="${color}" stroke-width="13" stroke-linecap="round" stroke-linejoin="round"/>` +
+    `</g>`
+  );
+}
+
+function svg(N, { bg, markColor, frac }) {
+  const rect = bg ? `<rect width="${N}" height="${N}" fill="${bg}"/>` : '';
+  const m = markColor ? mark(N, frac, markColor) : '';
+  return `<svg xmlns="http://www.w3.org/2000/svg" width="${N}" height="${N}" viewBox="0 0 ${N} ${N}">${rect}${m}</svg>`;
 }
 
 const targets = [
-  // iOS + general master: full-bleed gradient, white mark (OS masks the corners)
-  { file: 'icon.png', n: 1024, opts: { bg: 'gradient', markColor: '#fff', frac: 0.6 } },
-  // Android adaptive: gradient background layer + white mark foreground within the safe zone
-  { file: 'android-icon-background.png', n: 1024, opts: { bg: 'gradient', mark: false } },
-  { file: 'android-icon-foreground.png', n: 1024, opts: { bg: 'none', markColor: '#fff', frac: 0.44 } },
-  { file: 'android-icon-monochrome.png', n: 1024, opts: { bg: 'none', markColor: '#000', frac: 0.44 } },
-  // Web + splash
-  { file: 'favicon.png', n: 48, opts: { bg: 'gradient', markColor: '#fff', frac: 0.62 } },
-  { file: 'splash-icon.png', n: 1024, opts: { bg: 'gradient', markColor: '#fff', frac: 0.55 } },
+  { file: 'icon.png', n: 1024, opts: { bg: ORANGE, markColor: '#fff', frac: 0.587 } },
+  { file: 'android-icon-background.png', n: 1024, opts: { bg: ORANGE } },
+  { file: 'android-icon-foreground.png', n: 1024, opts: { markColor: '#fff', frac: 0.46 } },
+  { file: 'android-icon-monochrome.png', n: 1024, opts: { markColor: '#000', frac: 0.46 } },
+  { file: 'favicon.png', n: 48, opts: { bg: ORANGE, markColor: '#fff', frac: 0.6 } },
+  { file: 'splash-icon.png', n: 1024, opts: { bg: ORANGE, markColor: '#fff', frac: 0.55 } },
 ];
 
 for (const { file, n, opts } of targets) {
-  const out = join(assets, file);
   let img = sharp(Buffer.from(svg(n, opts)));
-  // Opaque, alpha-free PNGs for the launcher/splash/web icons; transparency is
-  // only kept for the Android foreground/monochrome layers.
-  if (opts.bg === 'gradient') img = img.flatten({ background: '#EE7B3A' });
-  await img.png().toFile(out);
+  if (opts.bg) img = img.flatten({ background: ORANGE });
+  await img.png().toFile(join(assets, file));
   console.log('wrote', file, `(${n}x${n})`);
 }
 console.log('done');

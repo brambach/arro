@@ -1,18 +1,17 @@
 /**
- * ALL fake data for the Arro prototype lives here.
- * No backend, no Strava, no auth — every screen reads from these constants.
- * Values are transcribed from the setup brief + the locked frames in Arro.dc.html.
+ * ALL fake data for the Arro prototype. No backend, Strava, auth, or maps.
+ * Values transcribed from the final "Arro Mockups.dc.html" direction.
  */
 import { memberColors } from '../theme/tokens';
 import {
   FeedItem,
-  KeptRun,
   Member,
   MemberId,
   MilestoneData,
-  ProfileBadge,
+  ProfileStat,
   RecentRun,
-  WeekDay,
+  WeekRow,
+  WeekStripDay,
 } from './types';
 
 export const members: Record<MemberId, Member> = {
@@ -22,15 +21,9 @@ export const members: Record<MemberId, Member> = {
     ...memberColors.bryce,
     streak: 24,
     today: 'kept',
+    meta: '3.2 mi · Brisbane · 6:21 AM',
     location: 'Brisbane',
-    photoUri: null,
-  },
-  darcey: {
-    id: 'darcey',
-    name: 'Darcey',
-    ...memberColors.darcey,
-    streak: 12,
-    today: 'kept',
+    relationship: 'You',
     photoUri: null,
   },
   whit: {
@@ -39,151 +32,137 @@ export const members: Record<MemberId, Member> = {
     ...memberColors.whit,
     streak: 31,
     today: 'kept',
+    meta: '4.0 mi · lunch loop · 12:45 PM',
+    relationship: 'Brother',
+    photoUri: null,
+  },
+  darcey: {
+    id: 'darcey',
+    name: 'Darcey',
+    ...memberColors.darcey,
+    streak: 12,
+    today: 'still',
+    meta: 'Still has today · usually evenings',
+    relationship: 'Sister',
     photoUri: null,
   },
 };
 
 /** Family in display order (host first). */
-export const familyOrder: MemberId[] = ['bryce', 'darcey', 'whit'];
+export const familyOrder: MemberId[] = ['bryce', 'whit', 'darcey'];
 export const familyList: Member[] = familyOrder.map((id) => members[id]);
-
-/** The signed-in person. */
 export const currentUser = members.bryce;
 
-// ─── Today ──────────────────────────────────────────────────────────────────
+// ─── Today ───────────────────────────────────────────────────────────────────
 export const today = {
-  dateLabel: 'Sunday · June 30',
-  greeting: 'Good morning',
-  keptCount: 3,
+  dateLabel: 'Sunday, June 30',
+  greeting: 'Good morning, Bryce.',
+  keptCount: 2,
   total: 3,
-  /** Members who've kept it today, in the order the Today screen lists them. */
-  onTheBoard: ['bryce', 'whit', 'darcey'] as MemberId[],
-  /** Members who still have today. */
-  stillToday: [] as MemberId[],
+  /** The person who still has today (drives the "cheer her on" CTA). */
+  pendingId: 'darcey' as MemberId,
+  cheerPrompt: 'Darcey’s still got today',
+  cheerCta: 'cheer her on',
 };
 
-/** One-line run summaries for the members who kept today. */
-export const keptRuns: Record<string, KeptRun> = {
-  bryce: { memberId: 'bryce', day: 24, meta: '3.2 mi sunrise run · Brisbane' },
-  whit: { memberId: 'whit', day: 31, meta: '4.0 mi lunch run' },
-  darcey: { memberId: 'darcey', day: 12, meta: '2.1 mi around the park' },
-};
-
-// ─── Activity Feed (frame 4a) ─────────────────────────────────────────────────
+// ─── Family Feed ─────────────────────────────────────────────────────────────
 export const feed: FeedItem[] = [
   {
     id: 'f1',
     memberId: 'bryce',
-    day: 24,
-    detail: 'a 3.2 mi sunrise run along the Brisbane River',
-    keptBadge: true,
-    reactions: [
-      { emoji: '👏', count: 4 },
-      { emoji: '🔥', count: 3 },
-      { emoji: '🧡', count: 6 },
-      { emoji: '🏃', count: 2 },
-    ],
+    kind: 'kept',
+    title: 'Bryce kept Day 24',
+    meta: '3.2 mi before work · Brisbane',
+    time: '6:21 AM',
+    cheer: 'Darcey cheered: “Already tomorrow over here 🌏”',
+    hearts: 4,
   },
   {
     id: 'f2',
     memberId: 'whit',
-    day: 31,
-    detail: 'longest streak in the family right now',
-    time: '5h',
-    reactions: [
-      { emoji: '🔥', count: 11 },
-      { emoji: '👏', count: 7 },
-      { emoji: '🏃', count: 3 },
-    ],
+    kind: 'kept',
+    title: 'Whit kept Day 31',
+    meta: '4.0 mi lunch loop',
+    time: '12:45 PM',
+    cheer: 'Bryce cheered: “machine 💪”',
+    hearts: 3,
   },
   {
     id: 'f3',
     memberId: 'darcey',
-    day: 12,
-    detail: 'a 2.1 mi loop around the park',
-    time: '6h',
-    reactions: [
-      { emoji: '🧡', count: 4 },
-      { emoji: '👏', count: 2 },
-    ],
+    kind: 'still',
+    title: 'Darcey still has today',
+    meta: 'Usually an evening run · 5:30 PM',
+    cheer: 'Go Darce',
   },
 ];
 
-// ─── Weekly Recap / Trail (frame 3a) ──────────────────────────────────────────
+// ─── This Week ───────────────────────────────────────────────────────────────
 export const week = {
-  range: 'Week of Jun 24 – 30',
-  headline: 'Every day forward,\ntogether.',
-  keptDays: 6,
-  totalDays: 7,
-  runsTogether: 17,
-  quote: 'Nobody ran alone this week.',
-  days: [
+  headline: 'This week, your family moved 6 of 7 days.',
+  summary: 'Bryce kept the streak alive in Brisbane. Darcey still has today.',
+  /** Compact strip: 5 kept, 1 freeze (Sat), today (Sun). */
+  strip: [
     { label: 'M', state: 'kept' },
     { label: 'T', state: 'kept' },
-    { label: 'W', state: 'freeze' },
+    { label: 'W', state: 'kept' },
     { label: 'T', state: 'kept' },
     { label: 'F', state: 'kept' },
-    { label: 'S', state: 'kept' },
+    { label: 'S', state: 'freeze' },
     { label: 'S', state: 'today' },
-  ] as WeekDay[],
+  ] as WeekStripDay[],
+  rows: [
+    { dow: 'Mon', date: '24', state: 'kept', avatars: ['bryce', 'darcey', 'whit'] },
+    { dow: 'Tue', date: '25', state: 'kept', avatars: ['bryce', 'whit'] },
+    { dow: 'Wed', date: '26', state: 'kept', avatars: ['bryce', 'darcey', 'whit'] },
+    { dow: 'Thu', date: '27', state: 'kept', avatars: ['bryce', 'whit'] },
+    { dow: 'Fri', date: '28', state: 'kept', avatars: ['bryce', 'darcey'] },
+    { dow: 'Sat', date: '29', state: 'freeze', avatars: ['bryce'], badge: 'Freeze day' },
+    { dow: 'Sun', date: '30', state: 'today', avatars: ['bryce', 'whit'], badge: 'Today' },
+  ] as WeekRow[],
 };
 
-// ─── Milestone Photo Card (frame 6b) ──────────────────────────────────────────
+// ─── Milestone ───────────────────────────────────────────────────────────────
 export const milestone: MilestoneData = {
   memberId: 'bryce',
   day: 30,
   title: 'Bryce kept\n30 days',
-  subtitle: 'One month running in Brisbane 🌅',
-  quote: 'Every day forward, together.',
+  subtitle: 'One month running in Brisbane.',
+  motto: 'Every day forward, together.',
   dateLine: 'June 30 · streak still alive',
-  cheeredBy: ['whit', 'darcey'],
+  cheeredBy: ['darcey', 'whit'],
   photoUri: null,
 };
 
-// ─── Profile / Me (frame 5a) — Bryce ─────────────────────────────────────────
+// ─── Profile / Me — Bryce ────────────────────────────────────────────────────
 export const profile = {
   memberId: 'bryce' as MemberId,
-  tagline: 'Running daily in Brisbane',
-  currentStreak: 24,
-  goal: 30,
+  location: 'Brisbane, Australia',
   stats: [
-    { value: 41, label: 'Longest streak' },
-    { value: 128, label: 'Cheers received' },
-    { value: 86, label: 'Total runs' },
-  ],
-  badges: [
-    { day: 7, label: 'first week', reached: true },
-    { day: 14, label: 'two weeks', reached: true },
-    { day: 30, label: 'one month', reached: true },
-    { day: 50, label: '26 to go', reached: false, toGo: 26 },
-  ] as ProfileBadge[],
+    { label: 'Current streak', value: '24', unit: 'days', accent: true },
+    { label: 'Longest streak', value: '31', unit: 'days' },
+    { label: 'Runs this month', value: '18' },
+    { label: 'Total miles', value: '86.4', unit: 'mi' },
+  ] as ProfileStat[],
   recentRuns: [
-    {
-      title: 'Sunrise run · Kangaroo Point',
-      meta: 'Today · 3.2 mi',
-      day: 24,
-      tint: ['#FFCF9E', '#F79A4E'],
-    },
-    {
-      title: 'Riverside loop',
-      meta: 'Yesterday · 2.8 mi',
-      day: 23,
-      tint: ['#CFE6D6', '#8FC7A2'],
-    },
+    { memberId: 'bryce', when: 'Today · 6:21 AM', dist: '3.2 mi', place: 'Brisbane' },
+    { memberId: 'bryce', when: 'Yesterday · 6:10 AM', dist: '3.0 mi', place: 'Brisbane' },
+    { memberId: 'bryce', when: 'Fri, Jun 28 · 6:42 AM', dist: '3.1 mi', place: 'Brisbane' },
   ] as RecentRun[],
+  milestones: [30, 20, 10, 7],
 };
 
-// ─── Settings (frame 7a) ─────────────────────────────────────────────────────
+// ─── Settings ────────────────────────────────────────────────────────────────
 export const settings = {
-  strava: { handle: 'bryce_runs', connected: true },
-  family: { name: 'The Family', memberCount: 3, role: "you're the host" },
-  rules: {
-    minDistance: '1.0 mi',
-    freezeDaysLeft: 2,
-    dailyReminders: true,
-  },
-  notifications: {
-    familyKeeps: true,
-    someoneCheers: false,
-  },
+  connection: [
+    { key: 'strava', label: 'Strava connection', value: 'Connected', icon: 'strava', tint: '#F26A1B' },
+    { key: 'members', label: 'Family members', value: '3 members', icon: 'users', tint: '#4F97CF' },
+    { key: 'rules', label: 'Streak rules', value: '1 run per day', icon: 'target', tint: '#4FA06B' },
+    { key: 'notifications', label: 'Notifications', value: '', icon: 'bell', tint: '#E0654E' },
+    { key: 'privacy', label: 'Privacy', value: 'Family only', icon: 'lock', tint: '#7B7FD0' },
+  ],
+  about: [
+    { key: 'help', label: 'Help & FAQ', value: '', glyph: '?' },
+    { key: 'about', label: 'About Arro', value: 'Version 1.0.0', glyph: 'i' },
+  ],
 };

@@ -2,9 +2,9 @@ import React, { useEffect, useRef, useState } from 'react';
 import { AccessibilityInfo, Animated, Easing, ViewProps } from 'react-native';
 
 /**
- * Entrance motion (Spec §7): cards fade in and rise 14pt over ~520ms
- * with cubic-bezier(.2,.7,.3,1). Runs once on mount; base state stays visible.
- * Honours the OS "Reduce Motion" setting.
+ * Entry primitive (Motion Handoff Spec §1): opacity 0→1 + translateY 8→0,
+ * 220–320ms, Easing.out(cubic). Stagger via `delay` (rows 40ms apart).
+ * Reduced Motion → cross-fade only, no rise. Resolves to a calm final state.
  */
 type Props = ViewProps & {
   delay?: number;
@@ -12,14 +12,7 @@ type Props = ViewProps & {
   duration?: number;
 };
 
-export function FadeInView({
-  delay = 0,
-  rise = 14,
-  duration = 520,
-  style,
-  children,
-  ...rest
-}: Props) {
+export function FadeInView({ delay = 0, rise = 8, duration = 280, style, children, ...rest }: Props) {
   const progress = useRef(new Animated.Value(0)).current;
   const [reduceMotion, setReduceMotion] = useState<boolean | null>(null);
 
@@ -35,39 +28,23 @@ export function FadeInView({
 
   useEffect(() => {
     if (reduceMotion === null) return;
-    if (reduceMotion) {
-      progress.setValue(1);
-      return;
-    }
     const anim = Animated.timing(progress, {
       toValue: 1,
-      duration,
-      delay,
-      easing: Easing.bezier(0.2, 0.7, 0.3, 1),
+      duration: reduceMotion ? 120 : duration,
+      delay: reduceMotion ? 0 : delay,
+      easing: Easing.out(Easing.cubic),
       useNativeDriver: true,
     });
     anim.start();
     return () => anim.stop();
   }, [reduceMotion, progress, delay, duration]);
 
+  const translateY = reduceMotion
+    ? 0
+    : progress.interpolate({ inputRange: [0, 1], outputRange: [rise, 0] });
+
   return (
-    <Animated.View
-      style={[
-        {
-          opacity: progress,
-          transform: [
-            {
-              translateY: progress.interpolate({
-                inputRange: [0, 1],
-                outputRange: [rise, 0],
-              }),
-            },
-          ],
-        },
-        style,
-      ]}
-      {...rest}
-    >
+    <Animated.View style={[{ opacity: progress, transform: [{ translateY }] }, style]} {...rest}>
       {children}
     </Animated.View>
   );

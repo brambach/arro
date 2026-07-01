@@ -3,12 +3,11 @@ import { Pressable, StyleProp, View, ViewStyle } from 'react-native';
 import { colors, radii, shadows } from '../theme/tokens';
 
 /**
- * Rounded warm surface with a single soft shadow. One shadow per surface
- * (Spec §3). Becomes pressable when onPress is provided.
+ * Flat card: white surface, hairline border, near-zero shadow (the border does
+ * the work, not depth). Becomes pressable when onPress is provided.
  */
 type Props = {
   children: React.ReactNode;
-  elevation?: keyof typeof shadows;
   radius?: number;
   padding?: number;
   background?: string;
@@ -18,25 +17,27 @@ type Props = {
 
 export function Card({
   children,
-  elevation = 'card',
-  radius = radii.card,
+  radius = radii.cardLg,
   padding = 16,
-  background = colors.white,
+  background = colors.card,
   onPress,
   style,
 }: Props) {
   const surface: StyleProp<ViewStyle> = [
-    { backgroundColor: background, borderRadius: radius, padding },
-    shadows[elevation],
+    {
+      backgroundColor: background,
+      borderRadius: radius,
+      padding,
+      borderWidth: 1,
+      borderColor: colors.border,
+    },
+    shadows.card,
     style,
   ];
 
   if (onPress) {
     return (
-      <Pressable
-        onPress={onPress}
-        style={({ pressed }) => [surface, pressed && { opacity: 0.85 }]}
-      >
+      <Pressable onPress={onPress} style={({ pressed }) => [surface, pressed && { opacity: 0.9 }]}>
         {children}
       </Pressable>
     );

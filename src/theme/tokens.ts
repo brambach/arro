@@ -1,115 +1,93 @@
 /**
- * Arro design tokens — transcribed 1:1 from "Arro Spec.html" §1, §3.
- * Warm cream / orange system. One shadow per surface; never stack glows.
+ * Arro design tokens — final "clean native iOS" direction (Arro Mockups.dc.html).
+ * Flat off-white surfaces, white cards with a hairline border and near-zero shadow,
+ * orange used intentionally. No warm gradients, no heavy glows.
  */
 
 export const colors = {
-  // Surfaces & neutrals
-  cream: '#FBF3E7', // app background
-  surface: '#FFFBF4', // screen / primary card
-  surface2: '#FFFDF9', // raised card
-  warmFill: '#FFF1DE', // info panel / streak card
-  peach: '#FFEBD6', // soft button / kept tile
-  white: '#FFFFFF',
+  // Surfaces
+  screen: '#FBF9F5', // app / screen background
+  card: '#FFFFFF', // cards
+  cardAlt: '#FCFAF6', // tab bar, subtle panels
+
+  // Borders & dividers (warm hairlines)
+  border: '#F0E7DA', // card border
+  divider: '#F2EBE0', // row divider inside cards
+  dividerSoft: '#F3ECE1',
 
   // Text
-  ink: '#40312A', // primary text
-  inkSoft: '#5B4636', // secondary text
-  muted: '#9A8676', // body / captions
-  faint: '#B0997F', // labels / meta
-  hairline: '#F1E7D8', // dividers
+  ink: '#221D17', // primary text
+  inkSoft: '#6F665C', // secondary / emphasis body
+  muted: '#877E72', // body / captions
+  faint: '#948B80', // meta
+  faint2: '#A89E90', // values, timestamps
+  faint3: '#A99F90', // faint labels
 
-  // Accents
-  primary: '#EE7B3A', // brand / actions / accents
-  primaryPress: '#D4691F', // pressed / deep accent
-  kept: '#6FB98A', // kept-today / success
-  freeze: '#6FA6CE', // freeze day
-  warn: '#C9A24E', // still-to-run
+  // Accent — used intentionally, not everywhere
+  primary: '#F26A1B',
+  primaryPress: '#D9631A',
 
-  // Derived tones used in the visual frames
-  tabInactive: '#C2AE97',
-  ringMuted: '#D9C9B4',
-  freezeRing: '#9BC3E0',
-  cheerBg: '#FFEAD6',
-  cheerBgPress: '#FFDDBE',
-  reactionChip: '#FBEFDD',
-  reactionInk: '#8B7867',
-  goldChipBg: '#FBEFD6',
-  ringTrack: '#F1DDC2',
-  keptTileBg: '#FFEBD6',
-  freezeTileBg: '#E9F1F8',
-  freezeDot: '#7FB0D6',
-  shadowWarm: '#965A28', // rgb(150,90,40) — base for warm card shadows
+  // Semantic states
+  kept: '#4A8A5D',
+  keptBg: '#E6F0E8',
+  keptCheck: '#4C8A5F',
+  freeze: '#4F8FC4',
+  freezeBg: '#E6EEF5',
+  freezeIcon: '#4F97CF',
+  todayPillBg: '#FBE6D2',
+  todayPillText: '#D9631A',
+
+  // Tab bar
+  tabInactive: '#A79E90',
+  tabBarBg: '#FCFAF6',
+  tabBarBorder: '#EFE6D9',
+
+  white: '#FFFFFF',
+  shadowWarm: '#463219', // rgb(70,50,25) — base for the micro card shadow
 } as const;
 
-/**
- * One hue per person — drives avatar rings, streak numerals, legend dots. Never reassign.
- * To add a family member (e.g. a parent), give them a hue here and add them to
- * `members` in src/data/family.ts. Spare on-brand hues: green #6FB98A / #D8EDE0,
- * gold #E0A94E / #F6E7C7.
- */
+/** One solid hue per person — avatar circles and status dots. */
 export const memberColors = {
-  bryce: { color: '#EE7B3A', soft: '#FBE2CE' },
-  darcey: { color: '#E58AA0', soft: '#F7DBE3' },
-  whit: { color: '#6FA6CE', soft: '#D7E6F1' },
+  bryce: { color: '#EF6C1A' },
+  darcey: { color: '#DF6B96' },
+  whit: { color: '#4F97CF' },
 } as const;
-
-/** Linear-gradient stops used across the app. */
-export const gradients = {
-  primaryButton: ['#FF974A', '#EE7B3A'] as const,
-  appIcon: ['#FF9E52', '#EE7B3A'] as const,
-  avatarYou: ['#FF9A52', '#EE7B3A'] as const,
-  cheerButton: ['#FFEAD6', '#FFDDBE'] as const,
-  onboarding: ['#FFE7C8', '#FFEFDD', '#FFF8F0', '#FFFCF8'] as const,
-  recapStrip: ['#EE7B3A', '#F6A45E', '#6FB98A', '#6FA6CE'] as const,
-};
 
 export const spacing = {
-  xs: 4, // hairline gaps
-  sm: 8, // icon / label
-  md: 12, // card inner gap
-  card: 16, // card padding
-  screen: 20, // screen padding
-  lg: 22, // large card padding
-  section: 24, // section gap
+  xs: 4,
+  sm: 8,
+  md: 12,
+  card: 16,
+  gutter: 22, // screen horizontal padding
+  section: 18,
 } as const;
 
 export const radii = {
-  pill: 999, // buttons, chips, avatar badges
-  tile: 14, // day tiles, icon tiles
-  card: 22, // list cards
-  cardLg: 28, // hero / recap cards
+  pill: 999,
+  icon: 8, // settings icon tiles
+  button: 16,
+  card: 20,
+  cardLg: 22,
 } as const;
 
-/** RN shadow presets (iOS shadow* + Android elevation). */
+/**
+ * Shadows are deliberately minimal — cards rely on the hairline border, not depth.
+ * card ≈ `0 1px 2px rgba(70,50,25,.05)`; button is a soft orange lift.
+ */
 export const shadows = {
   card: {
     shadowColor: colors.shadowWarm,
-    shadowOpacity: 0.06,
-    shadowRadius: 12,
-    shadowOffset: { width: 0, height: 8 },
-    elevation: 2,
-  },
-  raised: {
-    shadowColor: colors.shadowWarm,
-    shadowOpacity: 0.1,
-    shadowRadius: 16,
-    shadowOffset: { width: 0, height: 12 },
-    elevation: 5,
-  },
-  hero: {
-    shadowColor: colors.shadowWarm,
-    shadowOpacity: 0.16,
-    shadowRadius: 24,
-    shadowOffset: { width: 0, height: 18 },
-    elevation: 10,
+    shadowOpacity: 0.05,
+    shadowRadius: 2,
+    shadowOffset: { width: 0, height: 1 },
+    elevation: 1,
   },
   button: {
     shadowColor: colors.primary,
     shadowOpacity: 0.32,
-    shadowRadius: 14,
-    shadowOffset: { width: 0, height: 10 },
-    elevation: 8,
+    shadowRadius: 10,
+    shadowOffset: { width: 0, height: 6 },
+    elevation: 4,
   },
 } as const;
 

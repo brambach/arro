@@ -1,40 +1,25 @@
 import React, { useRef } from 'react';
-import {
-  Animated,
-  Pressable,
-  StyleProp,
-  StyleSheet,
-  Text,
-  View,
-  ViewStyle,
-} from 'react-native';
-import { LinearGradient } from 'expo-linear-gradient';
-import { colors, gradients, radii, shadows } from '../theme/tokens';
-import { fonts } from '../theme/typography';
+import { Animated, Pressable, StyleProp, StyleSheet, Text, View, ViewStyle } from 'react-native';
+import { colors, radii, shadows } from '../theme/tokens';
+import { weights } from '../theme/typography';
 
 /**
- * PrimaryButton (Spec §5) — gradient CTA. Press = scale 0.97 + slight darken
- * over 120ms, no spring/bounce. Full-width by default; h58, radius 20.
+ * PrimaryButton — flat solid Arro-orange CTA. Press primitive (Motion §3):
+ * scale 1→0.96 over 90ms down, back to 1 over 140ms up. No gradient, no bounce.
  */
 type Props = {
   title: string;
   onPress?: () => void;
   icon?: React.ReactNode;
   disabled?: boolean;
-  height?: number;
   style?: StyleProp<ViewStyle>;
 };
 
-export function PrimaryButton({ title, onPress, icon, disabled, height = 58, style }: Props) {
+export function PrimaryButton({ title, onPress, icon, disabled, style }: Props) {
   const scale = useRef(new Animated.Value(1)).current;
-  const darken = useRef(new Animated.Value(0)).current;
 
-  const animate = (toScale: number, toDark: number) => {
-    Animated.parallel([
-      Animated.timing(scale, { toValue: toScale, duration: 120, useNativeDriver: true }),
-      Animated.timing(darken, { toValue: toDark, duration: 120, useNativeDriver: true }),
-    ]).start();
-  };
+  const press = (to: number, duration: number) =>
+    Animated.timing(scale, { toValue: to, duration, useNativeDriver: true }).start();
 
   return (
     <Pressable
@@ -42,55 +27,30 @@ export function PrimaryButton({ title, onPress, icon, disabled, height = 58, sty
       accessibilityState={{ disabled }}
       disabled={disabled}
       onPress={onPress}
-      onPressIn={() => animate(0.97, 1)}
-      onPressOut={() => animate(1, 0)}
+      onPressIn={() => press(0.96, 90)}
+      onPressOut={() => press(1, 140)}
       style={style}
     >
       <Animated.View
-        style={[
-          { transform: [{ scale }], borderRadius: 20, height },
-          !disabled && shadows.button,
-          disabled && { opacity: 0.4 },
-        ]}
+        style={[styles.btn, shadows.button, { transform: [{ scale }] }, disabled && { opacity: 0.45 }]}
       >
-        <LinearGradient
-          colors={gradients.primaryButton}
-          start={{ x: 0, y: 0 }}
-          end={{ x: 1, y: 1 }}
-          style={[styles.grad, { height, borderRadius: 20 }]}
-        >
-          {icon}
-          <Text style={styles.label}>{title}</Text>
-          <Animated.View
-            pointerEvents="none"
-            style={[
-              StyleSheet.absoluteFill,
-              {
-                borderRadius: 20,
-                backgroundColor: colors.primaryPress,
-                opacity: darken.interpolate({ inputRange: [0, 1], outputRange: [0, 0.18] }),
-              },
-            ]}
-          />
-        </LinearGradient>
+        {icon ? <View style={styles.icon}>{icon}</View> : null}
+        <Text style={styles.label}>{title}</Text>
       </Animated.View>
     </Pressable>
   );
 }
 
 const styles = StyleSheet.create({
-  grad: {
+  btn: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
     gap: 8,
-    paddingHorizontal: radii.card,
-    overflow: 'hidden',
+    height: 52,
+    borderRadius: radii.button,
+    backgroundColor: colors.primary,
   },
-  label: {
-    fontFamily: fonts.sansHeavy,
-    fontSize: 17.5,
-    letterSpacing: 0.2,
-    color: colors.white,
-  },
+  icon: { marginRight: 2 },
+  label: { color: colors.white, fontSize: 16, fontWeight: weights.semibold },
 });

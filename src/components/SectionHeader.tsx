@@ -1,36 +1,35 @@
 import React from 'react';
-import { StyleProp, StyleSheet, Text, View, ViewStyle } from 'react-native';
+import { Pressable, StyleProp, StyleSheet, Text, View, ViewStyle } from 'react-native';
 import { colors } from '../theme/tokens';
-import { type } from '../theme/typography';
+import { weights } from '../theme/typography';
 
 /**
- * SectionHeader (Spec §8) — overline label + optional count, tinted by context.
+ * SectionHeader — a bold section label with an optional accent action on the right
+ * (e.g. "Family today · Nudge", "Recent runs · See all").
  */
 type Props = {
   title: string;
-  count?: number | string;
-  tint?: string;
+  action?: string;
+  onAction?: () => void;
+  titleColor?: string;
   style?: StyleProp<ViewStyle>;
 };
 
-export function SectionHeader({ title, count, tint = colors.faint, style }: Props) {
+export function SectionHeader({ title, action, onAction, titleColor = colors.muted, style }: Props) {
   return (
     <View style={[styles.row, style]}>
-      <Text style={[type.overline, { color: tint }]}>{title}</Text>
-      {count !== undefined && <Text style={styles.count}>{count}</Text>}
+      <Text style={[styles.title, { color: titleColor }]}>{title}</Text>
+      {action ? (
+        <Pressable onPress={onAction} hitSlop={8}>
+          <Text style={styles.action}>{action}</Text>
+        </Pressable>
+      ) : null}
     </View>
   );
 }
 
 const styles = StyleSheet.create({
-  row: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    paddingHorizontal: 4,
-  },
-  count: {
-    ...type.label,
-    color: colors.faint,
-  },
+  row: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
+  title: { fontSize: 13, fontWeight: weights.semibold },
+  action: { fontSize: 13, fontWeight: weights.semibold, color: colors.primary },
 });

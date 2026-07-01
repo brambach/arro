@@ -1,20 +1,21 @@
 import React from 'react';
 import { StyleProp, View, ViewStyle } from 'react-native';
+import { colors } from '../theme/tokens';
 import { Member } from '../data/types';
 import { AvatarRing } from './AvatarRing';
 
-/** Overlapping row of member avatars with white borders. */
+/** Overlapping row of flat avatars with white borders. */
 export function AvatarStack({
   members,
-  size = 40,
-  overlap = 10,
-  whiteBorder = 2,
+  size = 28,
+  overlap = 8,
+  borderColor = colors.white,
   style,
 }: {
   members: Member[];
   size?: number;
   overlap?: number;
-  whiteBorder?: number;
+  borderColor?: string;
   style?: StyleProp<ViewStyle>;
 }) {
   return (
@@ -24,10 +25,8 @@ export function AvatarStack({
           key={m.id}
           member={m}
           size={size}
-          ringWidth={2.5}
-          whiteBorder={whiteBorder}
-          state="today"
-          badge="none"
+          border={2}
+          borderColor={borderColor}
           style={i > 0 ? { marginLeft: -overlap } : undefined}
         />
       ))}

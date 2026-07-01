@@ -1,60 +1,72 @@
 import React from 'react';
 import { StyleSheet, Text, View } from 'react-native';
-import { colors } from '../theme/tokens';
-import { fonts, type } from '../theme/typography';
+import { colors, radii } from '../theme/tokens';
+import { weights } from '../theme/typography';
 import { FeedItem } from '../data/types';
 import { members } from '../data/family';
 import { AvatarRing } from './AvatarRing';
-import { CheerBar } from './CheerBar';
 import { Card } from './Card';
-import { Check } from './Icons';
+import { CheerButton } from './CheerButton';
+import { Heart } from './Icons';
 
 /**
- * RunCard (Spec §8) — a feed entry: header (who kept which day + what they ran)
- * plus a CheerBar. The freshest item carries a green check; older ones a timestamp.
+ * RunCard — a feed entry. A kept post shows a cheer line + heart count; a
+ * still-has-today post shows a nudge line + a Cheer button.
  */
-export function RunCard({ item, onPress }: { item: FeedItem; onPress?: () => void }) {
+export function RunCard({ item }: { item: FeedItem }) {
   const member = members[item.memberId];
 
   return (
-    <Card
-      radius={24}
-      onPress={onPress}
-      style={item.keptBadge && { borderWidth: 1, borderColor: 'rgba(238,123,58,0.1)' }}
-    >
+    <Card radius={radii.card} padding={14} style={styles.card}>
       <View style={styles.header}>
-        <AvatarRing member={member} size={44} state="today" badge="none" />
+        <AvatarRing member={member} size={38} />
         <View style={styles.middle}>
-          <Text style={type.name}>
-            {member.name} kept Day {item.day}
-          </Text>
-          <Text style={styles.detail}>{item.detail}</Text>
-        </View>
-        {item.keptBadge ? (
-          <View style={styles.checkBadge}>
-            <Check size={13} />
+          <View style={styles.titleRow}>
+            <Text style={styles.title}>{item.title}</Text>
+            {item.time ? <Text style={styles.time}>{item.time}</Text> : null}
           </View>
-        ) : (
-          <Text style={styles.time}>{item.time}</Text>
-        )}
+          <Text style={styles.meta}>{item.meta}</Text>
+        </View>
       </View>
-      <CheerBar reactions={item.reactions} note={item.note} style={styles.cheer} />
+
+      {item.cheer ? (
+        <View style={styles.footer}>
+          <Text style={styles.cheerLine} numberOfLines={1}>
+            {item.cheer}
+          </Text>
+          {item.kind === 'kept' ? (
+            <View style={styles.hearts}>
+              <Heart size={15} color={colors.primary} />
+              <Text style={styles.heartCount}>{item.hearts}</Text>
+            </View>
+          ) : (
+            <CheerButton variant="outline" />
+          )}
+        </View>
+      ) : null}
     </Card>
   );
 }
 
 const styles = StyleSheet.create({
-  header: { flexDirection: 'row', alignItems: 'center', gap: 12 },
-  middle: { flex: 1 },
-  detail: { fontFamily: fonts.sansBody, fontSize: 12.5, color: colors.muted, marginTop: 2 },
-  time: { fontFamily: fonts.sansLabel, fontSize: 12, color: colors.tabInactive },
-  checkBadge: {
-    width: 26,
-    height: 26,
-    borderRadius: 13,
-    backgroundColor: colors.kept,
+  card: { paddingHorizontal: 16 },
+  header: { flexDirection: 'row', alignItems: 'flex-start', gap: 12 },
+  middle: { flex: 1, minWidth: 0 },
+  titleRow: { flexDirection: 'row', alignItems: 'baseline', justifyContent: 'space-between', gap: 8 },
+  title: { fontSize: 15, fontWeight: weights.semibold, color: colors.ink },
+  time: { fontSize: 12, color: colors.faint2 },
+  meta: { fontSize: 13, color: colors.muted, marginTop: 2 },
+  footer: {
+    flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'center',
+    justifyContent: 'space-between',
+    gap: 10,
+    marginTop: 12,
+    paddingTop: 11,
+    borderTopWidth: 1,
+    borderTopColor: colors.dividerSoft,
   },
-  cheer: { marginTop: 13 },
+  cheerLine: { flex: 1, minWidth: 0, fontSize: 13, color: colors.inkSoft },
+  hearts: { flexDirection: 'row', alignItems: 'center', gap: 5 },
+  heartCount: { fontSize: 12.5, fontWeight: weights.semibold, color: colors.faint2 },
 });
