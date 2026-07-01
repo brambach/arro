@@ -2,6 +2,13 @@ import { MemberId } from '../theme/tokens';
 
 export type { MemberId };
 
+/**
+ * A photo source. Use a URL string, or a bundled local image via
+ * `require('../../assets/mum.jpg')` (which resolves to a number). null → the
+ * colored-initials placeholder is shown.
+ */
+export type PhotoSource = string | number | null;
+
 /** kept = ran today · still = still has today · missed = broke chain · freeze = rest-day freeze */
 export type DayState = 'kept' | 'still' | 'missed' | 'freeze';
 
@@ -17,8 +24,8 @@ export interface Member {
   /** Whether they've kept today or still have it. */
   today: 'kept' | 'still';
   location?: string;
-  /** Drop a real image URL here later; null → colored initials placeholder. */
-  photoUri?: string | null;
+  /** Real photo (URL or bundled require()); null → colored initials placeholder. */
+  photoUri?: PhotoSource;
 }
 
 export interface KeptRun {
@@ -58,7 +65,7 @@ export interface MilestoneData {
   quote: string;
   dateLine: string; // "June 30 · streak still alive"
   cheeredBy: MemberId[];
-  photoUri?: string | null;
+  photoUri?: PhotoSource;
 }
 
 export interface ProfileBadge {

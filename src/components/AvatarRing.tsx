@@ -10,7 +10,7 @@ import {
 } from 'react-native';
 import { colors } from '../theme/tokens';
 import { fonts } from '../theme/typography';
-import { AvatarState, Member } from '../data/types';
+import { AvatarState, Member, PhotoSource } from '../data/types';
 import { Check, Snowflake } from './Icons';
 
 /**
@@ -26,7 +26,7 @@ type Props = {
   name?: string;
   color?: string;
   soft?: string;
-  photoUri?: string | null;
+  photoUri?: PhotoSource;
   size?: number;
   ringWidth?: number;
   state?: AvatarState;
@@ -90,7 +90,7 @@ export function AvatarRing({
       >
         {resolvedPhoto ? (
           <Image
-            source={{ uri: resolvedPhoto }}
+            source={typeof resolvedPhoto === 'string' ? { uri: resolvedPhoto } : resolvedPhoto}
             style={{ width: size, height: size, borderRadius: size / 2, opacity: avatarOpacity }}
           />
         ) : (

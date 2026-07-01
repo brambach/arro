@@ -1,6 +1,6 @@
 import React from 'react';
 import { StyleProp, StyleSheet, View, ViewStyle } from 'react-native';
-import Svg, { Circle, G } from 'react-native-svg';
+import Svg, { Circle } from 'react-native-svg';
 import { colors } from '../theme/tokens';
 
 /**
@@ -41,19 +41,20 @@ export function StreakRing({
     <View style={[{ width: size, height: size }, style]}>
       <Svg width={size} height={size}>
         <Circle cx={cx} cy={cy} r={r} stroke={track} strokeWidth={strokeWidth} fill="none" />
-        <G rotation={-90} origin={`${cx}, ${cy}`}>
-          <Circle
-            cx={cx}
-            cy={cy}
-            r={r}
-            stroke={color}
-            strokeWidth={strokeWidth}
-            fill="none"
-            strokeLinecap="round"
-            strokeDasharray={circumference}
-            strokeDashoffset={circumference * (1 - progress)}
-          />
-        </G>
+        {/* Bake the center into the rotate() string so progress starts at 12
+            o'clock without a separate transform-origin (clean on web + native). */}
+        <Circle
+          cx={cx}
+          cy={cy}
+          r={r}
+          stroke={color}
+          strokeWidth={strokeWidth}
+          fill="none"
+          strokeLinecap="round"
+          strokeDasharray={circumference}
+          strokeDashoffset={circumference * (1 - progress)}
+          transform={`rotate(-90 ${cx} ${cy})`}
+        />
       </Svg>
       <View style={StyleSheet.absoluteFill}>
         <View style={styles.center}>

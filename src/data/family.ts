@@ -41,26 +41,10 @@ export const members: Record<MemberId, Member> = {
     today: 'kept',
     photoUri: null,
   },
-  julie: {
-    id: 'julie',
-    name: 'Julie',
-    ...memberColors.julie,
-    streak: 18,
-    today: 'still',
-    photoUri: null,
-  },
-  greg: {
-    id: 'greg',
-    name: 'Greg',
-    ...memberColors.greg,
-    streak: 7,
-    today: 'still',
-    photoUri: null,
-  },
 };
 
 /** Family in display order (host first). */
-export const familyOrder: MemberId[] = ['bryce', 'darcey', 'whit', 'julie', 'greg'];
+export const familyOrder: MemberId[] = ['bryce', 'darcey', 'whit'];
 export const familyList: Member[] = familyOrder.map((id) => members[id]);
 
 /** The signed-in person. */
@@ -71,11 +55,11 @@ export const today = {
   dateLabel: 'Sunday · June 30',
   greeting: 'Good morning',
   keptCount: 3,
-  total: 5,
+  total: 3,
   /** Members who've kept it today, in the order the Today screen lists them. */
   onTheBoard: ['bryce', 'whit', 'darcey'] as MemberId[],
   /** Members who still have today. */
-  stillToday: ['julie', 'greg'] as MemberId[],
+  stillToday: [] as MemberId[],
 };
 
 /** One-line run summaries for the members who kept today. */
@@ -102,18 +86,6 @@ export const feed: FeedItem[] = [
   },
   {
     id: 'f2',
-    memberId: 'julie',
-    day: 18,
-    detail: 'an easy 3.2 mi before work',
-    time: '2h',
-    note: 'Darcey & Whit cheered',
-    reactions: [
-      { emoji: '👏', count: 5 },
-      { emoji: '🧡', count: 8 },
-    ],
-  },
-  {
-    id: 'f3',
     memberId: 'whit',
     day: 31,
     detail: 'longest streak in the family right now',
@@ -125,7 +97,7 @@ export const feed: FeedItem[] = [
     ],
   },
   {
-    id: 'f4',
+    id: 'f3',
     memberId: 'darcey',
     day: 12,
     detail: 'a 2.1 mi loop around the park',
@@ -143,7 +115,7 @@ export const week = {
   headline: 'Every day forward,\ntogether.',
   keptDays: 6,
   totalDays: 7,
-  runsTogether: 26,
+  runsTogether: 17,
   quote: 'Nobody ran alone this week.',
   days: [
     { label: 'M', state: 'kept' },
@@ -164,7 +136,7 @@ export const milestone: MilestoneData = {
   subtitle: 'One month running in Brisbane 🌅',
   quote: 'Every day forward, together.',
   dateLine: 'June 30 · streak still alive',
-  cheeredBy: ['whit', 'darcey', 'julie', 'greg'],
+  cheeredBy: ['whit', 'darcey'],
   photoUri: null,
 };
 
@@ -204,7 +176,7 @@ export const profile = {
 // ─── Settings (frame 7a) ─────────────────────────────────────────────────────
 export const settings = {
   strava: { handle: 'bryce_runs', connected: true },
-  family: { name: 'The Family', memberCount: 5, role: "you're the host" },
+  family: { name: 'The Family', memberCount: 3, role: "you're the host" },
   rules: {
     minDistance: '1.0 mi',
     freezeDaysLeft: 2,

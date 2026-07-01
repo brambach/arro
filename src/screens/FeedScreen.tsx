@@ -5,15 +5,19 @@ import { fonts, type } from '../theme/typography';
 import { FadeInView } from '../components/FadeInView';
 import { RunCard } from '../components/RunCard';
 import { Screen } from '../components/Screen';
-import { feed } from '../data/family';
+import { familyList, feed } from '../data/family';
 import { MainTabScreenProps } from '../navigation/types';
+
+const COUNT_WORDS = ['zero', 'one', 'two', 'three', 'four', 'five', 'six', 'seven', 'eight', 'nine'];
 
 export function FeedScreen({ navigation }: MainTabScreenProps<'Feed'>) {
   return (
     <Screen>
       <FadeInView delay={40} style={styles.header}>
         <Text style={type.title}>Family activity</Text>
-        <Text style={styles.subtitle}>Just the five of you, one run at a time</Text>
+        <Text style={styles.subtitle}>
+          Just the {COUNT_WORDS[familyList.length] ?? familyList.length} of you, one run at a time
+        </Text>
       </FadeInView>
 
       <View style={styles.list}>

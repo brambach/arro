@@ -3,6 +3,7 @@ import { Image, StyleProp, StyleSheet, Text, View, ViewStyle } from 'react-nativ
 import { LinearGradient } from 'expo-linear-gradient';
 import { colors } from '../theme/tokens';
 import { fonts } from '../theme/typography';
+import { PhotoSource } from '../data/types';
 
 /**
  * Photo area used by milestone / trail cards. Renders the image when a uri is
@@ -10,7 +11,7 @@ import { fonts } from '../theme/typography';
  * real photo card (never a broken image). Drop real uris in later.
  */
 type Props = {
-  uri?: string | null;
+  uri?: PhotoSource;
   placeholderLabel?: string;
   gradient?: readonly [string, string, ...string[]];
   children?: React.ReactNode;
@@ -27,7 +28,11 @@ export function PhotoSlot({
   return (
     <View style={[styles.wrap, style]}>
       {uri ? (
-        <Image source={{ uri }} style={StyleSheet.absoluteFill} resizeMode="cover" />
+        <Image
+          source={typeof uri === 'string' ? { uri } : uri}
+          style={StyleSheet.absoluteFill}
+          resizeMode="cover"
+        />
       ) : (
         <LinearGradient
           colors={gradient}

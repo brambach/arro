@@ -18,6 +18,13 @@ export function TodayScreen({ navigation }: MainTabScreenProps<'Today'>) {
   const boardMembers = today.onTheBoard.map((id) => members[id]);
   const stillMembers = today.stillToday.map((id) => members[id]);
 
+  const summarySub =
+    stillMembers.length === 0
+      ? 'Everyone’s on the board today.'
+      : `${stillMembers.map((m) => m.name).join(' & ')} still ${
+          stillMembers.length === 1 ? 'has' : 'have'
+        } today.`;
+
   return (
     <Screen>
       {/* Header */}
@@ -49,7 +56,7 @@ export function TodayScreen({ navigation }: MainTabScreenProps<'Today'>) {
                 <CountUp value={today.keptCount} duration={700} /> of {today.total} have kept it
                 today
               </Text>
-              <Text style={styles.summarySub}>Two to go — Julie & Greg still have today.</Text>
+              <Text style={styles.summarySub}>{summarySub}</Text>
             </View>
           </View>
         </Card>
@@ -81,29 +88,31 @@ export function TodayScreen({ navigation }: MainTabScreenProps<'Today'>) {
       </FadeInView>
 
       {/* Still has today */}
-      <FadeInView delay={260} style={styles.section}>
-        <SectionHeader
-          title="Still has today"
-          count={stillMembers.length}
-          tint={colors.warn}
-          style={styles.sectionHeader}
-        />
-        <Card radius={22} padding={0}>
-          {stillMembers.map((m, i) => (
-            <View key={m.id}>
-              {i > 0 && <View style={styles.divider} />}
-              <MemberRow
-                member={m}
-                avatarState="today"
-                subtitle={`Day ${m.streak} · still has today`}
-                subtitleColor={colors.warn}
-                trailing={<CheerButton />}
-                style={styles.rowInset}
-              />
-            </View>
-          ))}
-        </Card>
-      </FadeInView>
+      {stillMembers.length > 0 && (
+        <FadeInView delay={260} style={styles.section}>
+          <SectionHeader
+            title="Still has today"
+            count={stillMembers.length}
+            tint={colors.warn}
+            style={styles.sectionHeader}
+          />
+          <Card radius={22} padding={0}>
+            {stillMembers.map((m, i) => (
+              <View key={m.id}>
+                {i > 0 && <View style={styles.divider} />}
+                <MemberRow
+                  member={m}
+                  avatarState="today"
+                  subtitle={`Day ${m.streak} · still has today`}
+                  subtitleColor={colors.warn}
+                  trailing={<CheerButton />}
+                  style={styles.rowInset}
+                />
+              </View>
+            ))}
+          </Card>
+        </FadeInView>
+      )}
     </Screen>
   );
 }

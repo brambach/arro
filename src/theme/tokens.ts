@@ -42,13 +42,16 @@ export const colors = {
   shadowWarm: '#965A28', // rgb(150,90,40) — base for warm card shadows
 } as const;
 
-/** One hue per person — drives avatar rings, streak numerals, legend dots. Never reassign. */
+/**
+ * One hue per person — drives avatar rings, streak numerals, legend dots. Never reassign.
+ * To add a family member (e.g. a parent), give them a hue here and add them to
+ * `members` in src/data/family.ts. Spare on-brand hues: green #6FB98A / #D8EDE0,
+ * gold #E0A94E / #F6E7C7.
+ */
 export const memberColors = {
   bryce: { color: '#EE7B3A', soft: '#FBE2CE' },
   darcey: { color: '#E58AA0', soft: '#F7DBE3' },
   whit: { color: '#6FA6CE', soft: '#D7E6F1' },
-  julie: { color: '#6FB98A', soft: '#D8EDE0' },
-  greg: { color: '#E0A94E', soft: '#F6E7C7' },
 } as const;
 
 /** Linear-gradient stops used across the app. */
