@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useCallback, useState } from 'react';
 import { StatusBar } from 'expo-status-bar';
 import { NavigationContainer, DefaultTheme, Theme } from '@react-navigation/native';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
@@ -14,13 +14,14 @@ const arroTheme: Theme = {
 
 export default function App() {
   const [splashDone, setSplashDone] = useState(false);
+  const handleSplashDone = useCallback(() => setSplashDone(true), []);
 
   return (
     <SafeAreaProvider>
       <NavigationContainer theme={arroTheme}>
         <StatusBar style="dark" />
         <RootNavigator />
-        {!splashDone && <AnimatedSplash onDone={() => setSplashDone(true)} />}
+        {!splashDone && <AnimatedSplash onDone={handleSplashDone} />}
       </NavigationContainer>
     </SafeAreaProvider>
   );

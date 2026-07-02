@@ -1,11 +1,11 @@
 import React from 'react';
 import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { colors, radii } from '../theme/tokens';
+import { colors, radii, shadows } from '../theme/tokens';
 import { weights } from '../theme/typography';
 import { AvatarRing } from '../components/AvatarRing';
 import { ChevronLeft, ChevronRight, PlusIcon, UserPlusIcon } from '../components/Icons';
-import { familyList, familyRelationships } from '../data/family';
+import { familyMembersList, familyRelationships } from '../data/family';
 import { RootStackScreenProps } from '../navigation/types';
 
 export function FamilyMembersScreen({ navigation }: RootStackScreenProps<'FamilyMembers'>) {
@@ -26,8 +26,8 @@ export function FamilyMembersScreen({ navigation }: RootStackScreenProps<'Family
       <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{ padding: 22, paddingBottom: insets.bottom + 24 }}>
         <Text style={styles.groupLabel}>The crew</Text>
         <View style={styles.card}>
-          {familyList.map((m, i) => (
-            <View key={m.id} style={[styles.row, i < familyList.length - 1 && styles.rowBorder]}>
+          {familyMembersList.map((m, i) => (
+            <View key={m.id} style={[styles.row, i < familyMembersList.length - 1 && styles.rowBorder]}>
               <AvatarRing member={m} size={40} />
               <View style={{ flex: 1 }}>
                 <Text style={styles.name}>{m.name}</Text>
@@ -64,6 +64,7 @@ const styles = StyleSheet.create({
     borderColor: colors.border,
     borderRadius: 18,
     paddingHorizontal: 16,
+    ...shadows.card,
   },
   row: { flexDirection: 'row', alignItems: 'center', gap: 13, paddingVertical: 12 },
   rowBorder: { borderBottomWidth: 1, borderBottomColor: colors.divider },

@@ -46,6 +46,11 @@ const styles = StyleSheet.create({
     paddingTop: 28,
     paddingBottom: 18,
     alignItems: 'center',
+    shadowColor: '#000',
+    shadowOpacity: 0.5,
+    shadowRadius: 32,
+    shadowOffset: { width: 0, height: 24 },
+    elevation: 20,
   },
   avatar: {
     shadowColor: '#DF6B96',

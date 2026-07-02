@@ -175,6 +175,10 @@ export const familyRelationships: Record<MemberId, string> = {
   whit: 'Brother',
 };
 
+/** Family Members screen order (Bryce, Darcey, Whit) — differs from Today's list. */
+export const familyMembersOrder: MemberId[] = ['bryce', 'darcey', 'whit'];
+export const familyMembersList: Member[] = familyMembersOrder.map((id) => members[id]);
+
 // ─── Settings ────────────────────────────────────────────────────────────────
 export const settings = {
   connection: [

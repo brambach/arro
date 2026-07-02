@@ -16,27 +16,28 @@ const DASH = 340;
 export function RunDetailScreen({ navigation }: RootStackScreenProps<'RunDetail'>) {
   const insets = useSafeAreaInsets();
   const offset = useRef(new Animated.Value(DASH)).current;
-  const [reduceMotion, setReduceMotion] = useState(false);
+  const [reduceMotion, setReduceMotion] = useState<boolean | null>(null);
 
   useEffect(() => {
     let m = true;
     AccessibilityInfo.isReduceMotionEnabled()
       .then((v) => m && setReduceMotion(v))
-      .catch(() => {});
+      .catch(() => m && setReduceMotion(false));
     return () => {
       m = false;
     };
   }, []);
 
   useEffect(() => {
+    if (reduceMotion === null) return; // wait for the probe so reduce-motion never sees a partial draw
     if (reduceMotion) {
       offset.setValue(0);
       return;
     }
-    // C6 route reveal: the route draws across the map (ease-in-out ~800ms).
+    // C6 route reveal: the route draws across the map, then the stats fade in.
     const anim = Animated.timing(offset, {
       toValue: 0,
-      duration: 800,
+      duration: 560,
       easing: Easing.inOut(Easing.cubic),
       useNativeDriver: false,
     });
@@ -87,7 +88,7 @@ export function RunDetailScreen({ navigation }: RootStackScreenProps<'RunDetail'
           </Text>
         </View>
 
-        <FadeInView delay={reduceMotion ? 0 : 520} style={styles.statsWrap}>
+        <FadeInView delay={580} style={styles.statsWrap}>
           <View style={styles.stats}>
             <Stat value={runDetail.time} label="Time" first />
             <Stat value={`${runDetail.pace}`} unit="/mi" label="Avg pace" />
@@ -95,7 +96,7 @@ export function RunDetailScreen({ navigation }: RootStackScreenProps<'RunDetail'
           </View>
         </FadeInView>
 
-        <FadeInView delay={reduceMotion ? 0 : 640} style={styles.noteWrap}>
+        <FadeInView delay={700} style={styles.noteWrap}>
           <Text style={styles.note}>{runDetail.note}</Text>
           <View style={styles.cheered}>
             <AvatarStack members={cheerers} size={26} overlap={6} borderColor={colors.screen} />
@@ -152,7 +153,7 @@ const styles = StyleSheet.create({
     transform: [{ rotate: '-9deg' }],
     opacity: 0.9,
   },
-  pin: { position: 'absolute', left: 246, top: 34 },
+  pin: { position: 'absolute', left: 246, top: 38 },
   mapLabel: {
     position: 'absolute',
     left: 12,

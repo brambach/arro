@@ -24,6 +24,13 @@ export function AnimatedSplash({ onDone }: { onDone: () => void }) {
   const cover = useRef(new Animated.Value(1)).current;
   const [reduceMotion, setReduceMotion] = useState<boolean | null>(null);
 
+  // Keep the latest onDone without making it an animation-effect dependency
+  // (App passes a fresh arrow each render; we never want to restart the draw).
+  const onDoneRef = useRef(onDone);
+  useEffect(() => {
+    onDoneRef.current = onDone;
+  }, [onDone]);
+
   useEffect(() => {
     let m = true;
     AccessibilityInfo.isReduceMotionEnabled()
@@ -43,7 +50,7 @@ export function AnimatedSplash({ onDone }: { onDone: () => void }) {
       stem.setValue(0);
       word.setValue(1);
       const t = Animated.timing(cover, { toValue: 0, duration: 220, delay: 500, useNativeDriver: true });
-      t.start(() => onDone());
+      t.start(({ finished }) => finished && onDoneRef.current());
       return () => t.stop();
     }
 
@@ -54,12 +61,12 @@ export function AnimatedSplash({ onDone }: { onDone: () => void }) {
       Animated.delay(250),
       Animated.timing(cover, { toValue: 0, duration: 240, useNativeDriver: true }),
     ]);
-    seq.start(({ finished }) => finished && onDone());
+    seq.start(({ finished }) => finished && onDoneRef.current());
     return () => seq.stop();
-  }, [reduceMotion, circle, stem, word, cover, onDone]);
+  }, [reduceMotion, circle, stem, word, cover]);
 
   return (
-    <Animated.View style={[styles.root, { opacity: cover }]} pointerEvents="none">
+    <Animated.View style={[styles.root, { opacity: cover }]}>
       <Svg width={SIZE} height={SIZE} viewBox="0 0 120 120" fill="none">
         <AnimatedCircle
           cx={53}
