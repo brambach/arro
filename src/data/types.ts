@@ -74,3 +74,20 @@ export interface RecentRun {
   dist: string; // "3.2 mi"
   place: string; // "Brisbane"
 }
+
+export interface RunDetail {
+  memberId: MemberId;
+  when: string; // "Today · 6:21 AM"
+  distance: string; // "3.2"
+  place: string; // "Brisbane, Australia"
+  time: string; // "23:45"
+  pace: string; // "7:25"
+  cal: string; // "312"
+  note: string;
+  cheeredBy: MemberId[];
+  /** SVG route path in a 0 0 320 194 viewBox, plus the start marker. */
+  routePath: string;
+  start: { x: number; y: number };
+  pin: { x: number; y: number };
+}
+

@@ -13,11 +13,11 @@ import { Heart } from './Icons';
  * RunCard — a feed entry. A kept post shows a cheer line + heart count; a
  * still-has-today post shows a nudge line + a Cheer button.
  */
-export function RunCard({ item }: { item: FeedItem }) {
+export function RunCard({ item, onPress }: { item: FeedItem; onPress?: () => void }) {
   const member = members[item.memberId];
 
   return (
-    <Card radius={radii.card} padding={14} style={styles.card}>
+    <Card radius={radii.card} padding={14} style={styles.card} onPress={onPress}>
       <View style={styles.header}>
         <AvatarRing member={member} size={38} />
         <View style={styles.middle}>

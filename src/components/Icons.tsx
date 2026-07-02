@@ -149,6 +149,27 @@ export const LockIcon = ({ size = 18, color = '#fff', strokeWidth = 1.9 }: IconP
   </Stroke>
 );
 
+export const PlusIcon = ({ size = 22, color = colors.primary, strokeWidth = 2.1 }: IconProps) => (
+  <Stroke size={size} color={color} strokeWidth={strokeWidth}>
+    <Path d="M12 5v14M5 12h14" />
+  </Stroke>
+);
+
+export const UserPlusIcon = ({ size = 21, color = colors.primary, strokeWidth = 1.9 }: IconProps) => (
+  <Stroke size={size} color={color} strokeWidth={strokeWidth}>
+    <Circle cx={10} cy={8} r={3.4} />
+    <Path d="M4 19c.7-3.2 3.1-4.7 6-4.7 1 0 1.9.2 2.7.5" />
+    <Path d="M18 13.5v6M15 16.5h6" />
+  </Stroke>
+);
+
+export const MapPin = ({ size = 26, color = colors.primary }: IconProps) => (
+  <Svg width={size} height={size} viewBox="0 0 24 24" fill={color}>
+    <Path d="M12 2c-3.9 0-7 3-7 6.9 0 4.7 6.1 12.1 6.4 12.4a.8.8 0 0 0 1.2 0C13 21 19 13.6 19 8.9 19 5 15.9 2 12 2z" />
+    <Circle cx={12} cy={9} r={2.6} fill="#fff" />
+  </Svg>
+);
+
 // ── Tab bar icons ─────────────────────────────────────────────────────────
 export const TabToday = ({ size = 23, color = colors.tabInactive, strokeWidth = 1.9 }: IconProps) => (
   <Stroke size={size} color={color} strokeWidth={strokeWidth}>

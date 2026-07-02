@@ -152,6 +152,29 @@ export const profile = {
   milestones: [30, 20, 10, 7],
 };
 
+// ─── Run detail (frame 07) ───────────────────────────────────────────────────
+export const runDetail: import('./types').RunDetail = {
+  memberId: 'bryce',
+  when: 'Today · 6:21 AM',
+  distance: '3.2',
+  place: 'Brisbane, Australia',
+  time: '23:45',
+  pace: '7:25',
+  cal: '312',
+  note: 'Before work. Already tomorrow over here 🌏',
+  cheeredBy: ['darcey', 'whit'],
+  routePath: 'M58 158 C 66 120, 104 132, 128 108 C 150 86, 150 62, 186 60 C 214 58, 236 74, 258 66',
+  start: { x: 58, y: 158 },
+  pin: { x: 258, y: 60 },
+};
+
+// ─── Family members (frame 10) ───────────────────────────────────────────────
+export const familyRelationships: Record<MemberId, string> = {
+  bryce: 'You',
+  darcey: 'Sister',
+  whit: 'Brother',
+};
+
 // ─── Settings ────────────────────────────────────────────────────────────────
 export const settings = {
   connection: [

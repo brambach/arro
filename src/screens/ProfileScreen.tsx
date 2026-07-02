@@ -52,7 +52,13 @@ export function ProfileScreen({ navigation }: MainTabScreenProps<'Me'>) {
       <FadeInView delay={120} style={styles.section}>
         <SectionHeader title="Recent runs" action="See all" titleColor={colors.ink} style={styles.sectionHead} />
         {profile.recentRuns.map((r, i) => (
-          <View key={r.when} style={[styles.runRow, i < profile.recentRuns.length - 1 && styles.runBorder]}>
+          <Pressable
+            key={r.when}
+            onPress={() => navigation.navigate('RunDetail')}
+            accessibilityRole="button"
+            accessibilityLabel={`Run ${r.when}`}
+            style={[styles.runRow, i < profile.recentRuns.length - 1 && styles.runBorder]}
+          >
             <AvatarRing member={members[r.memberId]} size={34} />
             <View style={{ flex: 1 }}>
               <Text style={styles.runWhen}>{r.when}</Text>
@@ -60,7 +66,7 @@ export function ProfileScreen({ navigation }: MainTabScreenProps<'Me'>) {
                 {r.dist} · {r.place}
               </Text>
             </View>
-          </View>
+          </Pressable>
         ))}
       </FadeInView>
 

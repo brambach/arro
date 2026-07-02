@@ -1,5 +1,5 @@
 import React from 'react';
-import { StyleSheet, Text, View } from 'react-native';
+import { Pressable, StyleSheet, Text, View } from 'react-native';
 import { colors, radii, spacing } from '../theme/tokens';
 import { type, weights } from '../theme/typography';
 import { AvatarRing } from '../components/AvatarRing';
@@ -12,8 +12,9 @@ import { SectionHeader } from '../components/SectionHeader';
 import { StreakRing } from '../components/StreakRing';
 import { currentUser, familyList, today } from '../data/family';
 import { Member } from '../data/types';
+import { MainTabScreenProps } from '../navigation/types';
 
-export function TodayScreen(_props: unknown) {
+export function TodayScreen({ navigation }: MainTabScreenProps<'Today'>) {
   return (
     <Screen>
       <FadeInView delay={0} style={styles.header}>
@@ -44,11 +45,20 @@ export function TodayScreen(_props: unknown) {
       </FadeInView>
 
       <FadeInView delay={120} style={styles.section}>
-        <SectionHeader title="Family today" action="Nudge" style={{ marginBottom: 2 }} />
+        <SectionHeader
+          title="Family today"
+          action="Nudge"
+          onAction={() => navigation.navigate('Nudge')}
+          style={{ marginBottom: 2 }}
+        />
         <View>
           {familyList.map((m, i) => (
             <FadeInView key={m.id} delay={160 + i * 40}>
-              <MemberRow member={m} last={i === familyList.length - 1} />
+              <MemberRow
+                member={m}
+                last={i === familyList.length - 1}
+                onPress={m.today === 'still' ? () => navigation.navigate('Nudge') : undefined}
+              />
             </FadeInView>
           ))}
         </View>
@@ -57,10 +67,16 @@ export function TodayScreen(_props: unknown) {
   );
 }
 
-function MemberRow({ member, last }: { member: Member; last: boolean }) {
+function MemberRow({ member, last, onPress }: { member: Member; last: boolean; onPress?: () => void }) {
   const kept = member.today === 'kept';
+  const Wrapper: any = onPress ? Pressable : View;
   return (
-    <View style={[styles.row, !last && styles.rowBorder]}>
+    <Wrapper
+      onPress={onPress}
+      accessibilityRole={onPress ? 'button' : undefined}
+      accessibilityLabel={onPress ? `Nudge ${member.name}` : undefined}
+      style={[styles.row, !last && styles.rowBorder]}
+    >
       <AvatarRing member={member} size={40} />
       <View style={styles.rowMiddle}>
         <Text style={styles.name}>{member.name}</Text>
@@ -76,7 +92,7 @@ function MemberRow({ member, last }: { member: Member; last: boolean }) {
         </View>
         <Text style={styles.streak}>{member.streak}</Text>
       </View>
-    </View>
+    </Wrapper>
   );
 }
 

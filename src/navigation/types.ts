@@ -7,6 +7,9 @@ export type RootStackParamList = {
   Main: undefined;
   Milestone: undefined;
   Settings: undefined;
+  RunDetail: undefined;
+  Nudge: undefined;
+  FamilyMembers: undefined;
 };
 
 export type MainTabParamList = {

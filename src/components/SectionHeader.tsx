@@ -20,7 +20,7 @@ export function SectionHeader({ title, action, onAction, titleColor = colors.mut
     <View style={[styles.row, style]}>
       <Text style={[styles.title, { color: titleColor }]}>{title}</Text>
       {action ? (
-        <Pressable onPress={onAction} hitSlop={8}>
+        <Pressable onPress={onAction} hitSlop={8} accessibilityRole="button" accessibilityLabel={action}>
           <Text style={styles.action}>{action}</Text>
         </Pressable>
       ) : null}

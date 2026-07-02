@@ -38,12 +38,18 @@ export function SettingsScreen({ navigation }: RootStackScreenProps<'Settings'>)
 
         <View style={[styles.card, { marginTop: 16 }]}>
           {settings.connection.map((row, i) => (
-            <View key={row.key} style={[styles.row, i < settings.connection.length - 1 && styles.rowBorder]}>
+            <Pressable
+              key={row.key}
+              onPress={row.key === 'members' ? () => navigation.navigate('FamilyMembers') : undefined}
+              accessibilityRole="button"
+              accessibilityLabel={row.label}
+              style={[styles.row, i < settings.connection.length - 1 && styles.rowBorder]}
+            >
               <View style={[styles.iconTile, { backgroundColor: row.tint }]}>{ICONS[row.icon]}</View>
               <Text style={styles.label}>{row.label}</Text>
               {row.value ? <Text style={styles.value}>{row.value}</Text> : null}
               <ChevronRight />
-            </View>
+            </Pressable>
           ))}
         </View>
 

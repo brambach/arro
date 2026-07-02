@@ -7,10 +7,11 @@ import { ListIcon } from '../components/Icons';
 import { RunCard } from '../components/RunCard';
 import { Screen } from '../components/Screen';
 import { familyList, feed } from '../data/family';
+import { MainTabScreenProps } from '../navigation/types';
 
 const COUNT_WORDS = ['zero', 'one', 'two', 'three', 'four', 'five', 'six', 'seven'];
 
-export function FeedScreen(_props: unknown) {
+export function FeedScreen({ navigation }: MainTabScreenProps<'Feed'>) {
   const count = COUNT_WORDS[familyList.length] ?? familyList.length;
   return (
     <Screen>
@@ -25,7 +26,10 @@ export function FeedScreen(_props: unknown) {
       <View style={styles.list}>
         {feed.map((item, i) => (
           <FadeInView key={item.id} delay={60 + i * 40} style={{ marginBottom: 12 }}>
-            <RunCard item={item} />
+            <RunCard
+              item={item}
+              onPress={item.kind === 'kept' ? () => navigation.navigate('RunDetail') : undefined}
+            />
           </FadeInView>
         ))}
       </View>
