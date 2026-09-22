@@ -2,15 +2,15 @@
 
 A warm, private running-streak ritual for families. Each member eventually connects
 Strava; for now this is a **static, high-fidelity front-end prototype** running on
-**fake data only** — no backend, no auth, no Strava, no database.
+**fake data only**. There's no backend, auth, Strava connection or database yet.
 
 > Design source of truth: `Arro Spec.html` (tokens, components, motion) and
-> `Arro.dc.html` (locked visual frames). This app translates those, it does not redesign them.
+> `Arro.dc.html` (locked visual frames). This app translates those, it doesn't redesign them.
 
 ## Run it
 
 ```bash
-npm install         # already run during setup
+npm install
 npx expo start      # then press "i" for the iOS simulator (or "a" for Android)
 # or go straight to a simulator:
 npx expo start --ios
@@ -21,11 +21,11 @@ Requires the Expo Go app (or a dev build) / an iOS Simulator or Android emulator
 ## Stack
 
 - **Expo SDK 57** · React Native 0.86 · React 19 · TypeScript
-- **React Navigation 7** — native-stack (Onboarding → Tabs → Milestone modal / Settings)
+- **React Navigation 7**: native-stack (Onboarding → Tabs → Milestone modal / Settings)
   with a fully custom bottom tab bar
-- **react-native-svg** — logo, checks, tab icons, conic streak rings
-- **expo-linear-gradient** — buttons, avatars, hero bands, photo overlays
-- **@expo-google-fonts/literata + /nunito** — the two type families from the spec
+- **react-native-svg**: logo, checks, tab icons, conic streak rings
+- **expo-linear-gradient**: buttons, avatars, hero bands, photo overlays
+- **@expo-google-fonts/literata + /nunito**: the two type families from the spec
 - Animations use the built-in RN `Animated` API (no Reanimated)
 
 ## Structure
@@ -58,7 +58,7 @@ src/screens/            Onboarding · Today · Trail · Feed · Milestone · Pro
 
 ## What's intentionally fake / static
 
-- **Everyone's data** — members, streaks, runs, feed, week, milestone, profile stats, and
+- **Everyone's data**: members, streaks, runs, feed, week, milestone, profile stats, and
   settings all come from `src/data/family.ts`.
 - **Avatars** are colored-initials placeholders. Every avatar accepts an optional
   `photoUri`; set it (in `family.ts` / component props) and real photos appear with no
