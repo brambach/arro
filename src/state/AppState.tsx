@@ -67,8 +67,8 @@ const emptyDraft = (role: Draft['role']): Draft => ({
   photoUri: null,
   moveMethod: 'manual',
   reminder: 'evening',
-  // On the server the founder's code comes from the invites table.
-  joinCode: role === 'founder' && !backend.backendEnabled ? makeJoinCode() : '',
+  // Signed in, saveFamilyName swaps this for the real code from the invites table.
+  joinCode: role === 'founder' ? makeJoinCode() : '',
   invited: [],
   userId: null,
   remote: null,
