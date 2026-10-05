@@ -88,12 +88,12 @@ you submit, since phase 4 may add onboarding steps.
 
 Found while checking the code. These are app changes, outside this thread.
 
-1. **The comment bar on Workout detail is a placeholder.**
-   `src/screens/WorkoutDetailScreen.tsx` shows "Add a comment…" in a bar that
-   does nothing. Reviewers reject visible features that don't work
-   (Guideline 2.1, app completeness). Hide it until comments exist.
-2. **Vague photo, camera and microphone purpose strings.** See
-   `app-privacy.md`, last section, and the app.json change in `testflight.md`.
+1. **Done: the placeholder comment bar is gone.** The phase 4 thread removed
+   the "Add a comment…" bar from `src/screens/WorkoutDetailScreen.tsx`, so
+   there's no visible feature that does nothing (Guideline 2.1).
+2. **Done: photo, camera and microphone purpose strings.** app.json now sets a
+   specific photo text and turns camera and microphone off. Check the
+   generated `Info.plist` before archiving (`testflight.md`, step 3).
 3. **Invite link points at a domain that doesn't exist yet.** See `hosting.md`.
 
 Already fine: in-app account deletion (Settings > Delete account, Guideline

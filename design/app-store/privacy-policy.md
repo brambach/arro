@@ -45,6 +45,13 @@ Health, such as Strava or Apple Watch, are read the same way.
 workout, it's kept on your phone only. It isn't uploaded, and your family
 doesn't see it.
 
+**Notifications, only if you allow them.** Arro reminds you once a day at the
+time you pick. That reminder is set up on your phone. If you allow
+notifications, Arro also saves a push token for your phone, an address Apple
+gives Arro for sending notifications to it, so it can tell you when someone
+cheers you, joins your family, or hasn't moved yet that evening. Each notification's text is
+kept for up to 7 days, then deleted.
+
 **What we don't collect.** No location, contacts, advertising identifier,
 analytics, crash reporting or tracking of any kind.
 
@@ -68,6 +75,9 @@ purpose other than running Arro. It isn't stored in iCloud.
 - **Our hosting provider.** Arro's data is stored with Supabase, a database
   provider, on servers in the United States (California). Supabase processes
   it on our behalf and may not use it for anything else.
+- **Expo**, which delivers Arro's push notifications. It receives your phone's
+  push token and the notification's text, passes them to Apple, and processes
+  them on our behalf only.
 - **Apple** handles Sign in with Apple and Apple Health under Apple's own
   privacy policy.
 - Nobody else, unless the law requires it.
@@ -76,7 +86,7 @@ purpose other than running Arro. It isn't stored in iCloud.
 
 Your data is kept while you have an account. To delete everything, open
 **Settings > Delete account** in Arro. That removes your account, your place in
-the family, your workouts, cheers and nudges. If you were the last person in a
+the family, your workouts, cheers, nudges and push tokens. If you were the last person in a
 family, the family is deleted too. Data can remain in the hosting provider's
 backups for a short time before it's overwritten.
 

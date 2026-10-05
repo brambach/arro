@@ -22,9 +22,13 @@ done in the Apple account.
    install so the files can be regenerated.
 2. **Buy arrofamily.com** and choose a host for the two pages (`hosting.md`).
    Then replace `{{SUPPORT_EMAIL}}` and `{{DATE}}` in the pages.
-3. **App changes before review** (other threads): hide the placeholder comment
-   bar on Workout detail, and apply the app.json changes in `testflight.md`.
-4. **Demo family** on the server for App Review (`review-notes.md`), made on
+3. **Demo family** on the server for App Review (`review-notes.md`), made on
    the day you submit for external testing.
-5. **Re-check `app-privacy.md`** after phase 4 lands (push tokens) and when
-   photos start uploading.
+4. **Re-check `app-privacy.md`** when photos start uploading. Push tokens from
+   phase 4 are already covered there and in the privacy policy; if a build
+   ships without notifications, the policy's notifications paragraph can stay,
+   since it only applies "if you allow them".
+
+Done by the phase 4 thread: the placeholder comment bar is gone from Workout
+detail, and app.json has the build number, encryption flag and photo text from
+`testflight.md`.

@@ -101,8 +101,7 @@ All "None" or "No", which should give 4+, except:
 
 - **User-generated content: Yes.** Workout notes and the family name are typed
   by people and shown to their family. It's private and invite-only.
-- **Messaging and chat: No** while the comment bar on Workout detail is a
-  placeholder (see `review-notes.md`, before submitting). Answer Yes once real
-  comments exist.
+- **Messaging and chat: No.** Workout detail has no comment bar now. Answer
+  Yes once real comments exist.
 - **Health or wellness topics: Yes** if the questionnaire asks, since workouts
   come from Apple Health. It doesn't raise the rating.

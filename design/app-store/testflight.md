@@ -51,10 +51,10 @@ The EAS steps are at the end in case you'd rather.
 5. **App Privacy.** Answer it from `app-privacy.md`. It's needed before App
    Store submission; doing it now means it's done.
 
-## 2. app.json changes (phase 4 thread or You)
+## 2. app.json changes (done)
 
-app.json belongs to the phase 4 thread right now, so these are written here,
-not applied. Merge them into the existing `expo` object:
+The phase 4 thread applied these to app.json. They're kept here so you know
+what each one is for:
 
 ```json
 {
