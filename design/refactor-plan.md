@@ -2,7 +2,9 @@
 
 From the product review (positioning, design, UX, onboarding), October 2026.
 This is a plan, not a spec. Check each library against the Expo SDK 57 docs
-(https://docs.expo.dev/versions/v57.0.0/) before writing code for it.
+(https://docs.expo.dev/versions/v57.0.0/) before writing code for it. Read with
+`design/market-research.md` (competitors, evidence, healthy-contact rules) and
+`design/paid-plan.md` (how Arro charges).
 
 ## Decisions made
 
@@ -17,22 +19,58 @@ This is a plan, not a spec. Check each library against the Expo SDK 57 docs
   `src/theme/typography.ts`). `Arro-Spec.html` and `Arro.dc.html` describe an
   older warm/serif direction and get updated to match, not the other way round.
 - **Design onboarding for the invited family member first**, not the founder.
+- **Positioning: staying in touch with family in a healthy way.** The seven
+  healthy-contact rules in `design/market-research.md` are product rules: no
+  feed to scroll, no public shame for a missed day, no rankings, capped nudges,
+  no red badges, private by design, easy to pause.
+- **Backend: Supabase** (Postgres, Sign in with Apple, row-level security to keep
+  each family private, edge functions to send pushes). Arro gets its own project
+  in a new personal Supabase org on the free plan, not the existing `dervo-beta`
+  one.
+- **Family streak rule.** The family streak is the main number. A day counts when
+  everyone moved or used a freeze. Personal streaks are secondary. The family
+  streak starts when the second member joins.
+- **What counts as a workout.** Any Health workout or any manual check-in, no
+  minimum. Reconsider only if it gets gamed.
+- **Freeze days.** One automatic freeze per person, used without asking on a
+  missed day. Cadence still to confirm (recommendation: one per week).
+- **"Today" across timezones.** Each person's own local calendar day.
+- **iPhone only for v1.** Set `ios.supportsTablet` to `false` in `app.json` so
+  there's no iPad review or iPad screenshots.
 
 ## Open decisions
 
-1. **Backend.** Recommendation: Supabase (Postgres, Sign in with Apple, row-level
-   security to keep each family private, edge functions to send pushes).
-   Alternatives: Firebase, Convex.
-2. **Family streak rule.** Recommendation: the family streak is the main number,
-   and a day counts when everyone moved or used a freeze. Personal streaks are
-   secondary. Starts when the second member joins.
-3. **What counts as a workout.** Recommendation: any Health workout or any manual
-   check-in, no minimum. Reconsider if it gets gamed.
-4. **Freeze days.** Recommendation: one automatic freeze per person per week.
-5. **"Today" across timezones.** Recommendation: each person's local calendar day.
-6. **Platforms for v1.** Recommendation: iPhone only. Apple Health is iOS-only, and
-   `supportsTablet: true` in `app.json` means iPad screenshots and iPad review.
-7. **A domain** for invite links, the privacy policy and a simple landing page.
+1. **A domain** for invite links, the privacy policy and a simple landing page.
+   See "Domain" below.
+2. **Freeze cadence.** One automatic freeze per person; how often it refills.
+   Recommendation: once a week.
+3. **The paid plan.** Recommendation in `design/paid-plan.md`: v1 free, then
+   Arro Family ($39.99 a year per family) in the first update.
+4. **The App Store name.** "Arro" on its own is taken (a travel app, a taxi app,
+   a credit card app). It needs a suffix, such as "Arro: Family Move Streak".
+   Decide before buying a domain.
+
+## Domain
+
+Yes, a domain costs money, but not much: about $10.46 a year for a .com at
+Cloudflare, which sells at cost. A .app is $8.20 the first year, then $14.20. The
+Apple Developer Program ($99 a year) is the bigger cost.
+
+What it's for:
+- Invite links (universal links need an `apple-app-site-association` file on a
+  domain Arro controls).
+- The privacy policy and support URLs App Store Connect requires.
+- A one-page landing site for the App Store listing.
+
+**Free option:** a Vercel subdomain (`arro-something.vercel.app`) can serve the
+association file, the privacy policy and a landing page. Vercel's own guide uses
+`applinks:<name>.vercel.app`; it needs a `vercel.json` rule to serve the file as
+JSON. The catch: moving to a real domain later breaks every invite link already
+sent. Join codes would still work.
+
+**Recommendation:** buy one once the App Store name is settled (open decision 4).
+It's the cheapest part of the launch and it's in every invite your family gets.
+Until then, nothing in phases 0-4 needs it.
 
 ## Phase 0 - Clean up drift (Expo Go is fine)
 
@@ -40,6 +78,7 @@ This is a plan, not a spec. Check each library against the Expo SDK 57 docs
   Me, Run detail, Nudge, Family members, Settings, Milestone).
 - Remove the unused `@expo-google-fonts/literata` and `@expo-google-fonts/nunito`
   dependencies (nothing in `src/` imports them).
+- `app.json`: `ios.supportsTablet: false` (iPhone only).
 - Rename runs to workouts across the code:
   - `src/data/types.ts`: `RecentRun` -> `RecentWorkout`, `RunDetail` ->
     `WorkoutDetail`, add a `WorkoutType` (walk, run, gym, yoga, swim, ride, other)
@@ -87,6 +126,14 @@ Also in this phase:
 - **Empty and waiting states** on Today, Feed and This Week for a family of one
   and for invited-but-not-joined members. The "2 of 3 kept it today" card needs a
   version for 1 of 1.
+- **Design for the day the streak breaks** (see the evidence in the market scan):
+  - "Days together this year" under the family streak, a number that never
+    resets. After a break, Today leads with it and the longest streak, never a 0.
+  - A "Back at it, together" card on day 1 after a break. No copy says who missed.
+  - A starter goal for every new family, "Your first 30 days together", with a
+    milestone card at the end.
+- **"I moved today" leads.** It's the first choice in "How you move" and the
+  biggest button on Today. No other app in the market scan accepts it.
 - Wire up the dead controls: the "+" and "Invite a family member" in
   `FamilyMembersScreen.tsx`, "Edit profile" on `ProfileScreen.tsx`, "Sign out" in
   `SettingsScreen.tsx`.
@@ -101,7 +148,11 @@ Also in this phase:
   time), invites (code, family, expiry), workouts (member, local date, type,
   duration, source, Health id for dedupe, photo, note), cheers, nudges.
 - Row-level security so members only read their own family.
-- Streak and freeze calculation on the server, per local day.
+- Streak and freeze calculation on the server, per local day, plus "days together
+  this year".
+- A `family_plans` table (family, payer, product, status, expiry) that members
+  can read and only the service role writes. It stays empty until phase 7, but
+  having it now means the paid plan needs no schema change.
 - In-app account deletion (App Store requirement) in Settings.
 - Replace `src/data/family.ts` with data hooks. Keep the fake data as a preview
   family for App Review and for empty-state previews.
@@ -135,11 +186,31 @@ Also in this phase:
 
 ## Phase 6 - App Store
 
-- `app.json`: add `ios.bundleIdentifier` (missing now), set `supportsTablet`
-  per open decision 6, and add a Health usage description.
+- `app.json`: add `ios.bundleIdentifier` (missing now) and a Health usage
+  description. `supportsTablet` is already `false` from phase 0.
+- Reserve the App Store name with a suffix (open decision 4).
 - Real launcher icon (`assets/icon.png` is still the Expo template).
-- Privacy policy URL, App Privacy labels (health, photos, name, email).
+- Privacy policy and support URLs, App Privacy labels (health, photos, name,
+  email). Health data is never used for ads (Guideline 5.1.3).
 - Review notes with a demo account that's already in a family, so the reviewer
   isn't stuck at the invite step.
 - Screenshots: Today, Log today, Feed with cheers, a milestone card.
 - EAS Build and Submit, then TestFlight with the family before public release.
+- v1 ships free, with no in-app purchases (see `design/paid-plan.md`, Timing).
+
+## Phase 7 - Arro Family (first update after launch)
+
+Details in `design/paid-plan.md`.
+
+- App Store Connect: Paid Applications Agreement, tax and banking, Small Business
+  Program, one subscription group with annual ($39.99) and monthly ($5.99)
+  products, a 7-day trial on the annual one.
+- RevenueCat (`react-native-purchases`, development build), app user id = the
+  Supabase user id, one `family` entitlement.
+- An edge function for the RevenueCat webhook that writes `family_plans`.
+- The paid features: history past the current month, monthly and yearly recaps,
+  custom family goals, a second circle, alternate app icons.
+- Our own paywall screen in the flat theme, with the disclosures and Restore
+  Purchases button App Review requires.
+- First paywall: the first monthly recap. Never in invitee onboarding or on a
+  missed day.
