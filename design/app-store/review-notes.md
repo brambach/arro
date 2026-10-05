@@ -94,7 +94,8 @@ Found while checking the code. These are app changes, outside this thread.
 2. **Done: photo, camera and microphone purpose strings.** app.json now sets a
    specific photo text and turns camera and microphone off. Check the
    generated `Info.plist` before archiving (`testflight.md`, step 3).
-3. **Invite link points at a domain that doesn't exist yet.** See `hosting.md`.
+3. **Done: no dead invite link.** The invite message carries only the join
+   code until arrofamily.com exists. See `hosting.md`.
 
 Already fine: in-app account deletion (Settings > Delete account, Guideline
 5.1.1(v)), Sign in with Apple as the only login (4.8 is satisfied), the

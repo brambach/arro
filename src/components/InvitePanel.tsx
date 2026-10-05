@@ -24,7 +24,7 @@ export function InvitePanel({
         <Text style={styles.code} accessibilityLabel={`Join code ${code.split('').join(' ')}`}>
           {code}
         </Text>
-        <Text style={styles.codeNote}>The link in the message works too. The code is for when a link doesn’t open.</Text>
+        <Text style={styles.codeNote}>It’s in the message. They tap “I have an invite” in Arro and type it in.</Text>
       </Card>
       <TextField
         label="Who’s it for? (optional)"

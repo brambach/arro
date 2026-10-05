@@ -50,7 +50,7 @@ export function FamilyMembersScreen({ navigation }: RootStackScreenProps<'Family
           </View>
           <View style={{ flex: 1 }}>
             <Text style={styles.name}>Invite a family member</Text>
-            <Text style={styles.rel}>Send an invite link</Text>
+            <Text style={styles.rel}>Send your family’s code</Text>
           </View>
           <ChevronRight />
         </Pressable>

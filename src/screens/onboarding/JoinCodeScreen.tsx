@@ -34,7 +34,7 @@ export function JoinCodeScreen({ navigation }: RootStackScreenProps<'JoinCode'>)
   return (
     <OnboardingFrame
       title="Enter your code"
-      subtitle="It’s in the message your family member sent. If you opened a link, it’s the last part."
+      subtitle="It’s in the message your family member sent."
       step={stepOf('invitee', 'JoinCode')}
       onBack={() => navigation.goBack()}
       primaryLabel="Find my family"

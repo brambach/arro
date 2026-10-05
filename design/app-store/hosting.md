@@ -35,14 +35,14 @@ One way that keeps it all in one free account:
 Each of these is a purchase or deploy, so it's yours to do or to ask for
 explicitly. Until then, the pages use `{{SUPPORT_EMAIL}}` as a placeholder.
 
-## The invite link already points here
+## Invites don't link here yet
 
-Invites the app sends today contain `https://arrofamily.com/join/<code>`
-(`src/state/invite.ts`), a placeholder until universal links in phase 5. Until
-the domain exists, that link is dead for your TestFlight family; the code in
-the same message still works. Once the domain is up, a simple `/join/*` page
-that says "Open Arro and enter code XXXXXX" (or an App Store link) fixes it
-before phase 5.
+Invites the app sends today carry only the code: "Open Arro, tap “I have an
+invite” and enter the code XXXXXX" (`src/state/invite.ts`). The
+`https://arrofamily.com/join/<code>` link was taken out of the message because
+the domain doesn't exist yet, so it would open a Safari error. `inviteLink()`
+still builds it; put it back in the message once the domain is up with a
+`/join/*` page, or with universal links in phase 5.
 
 ## URLs to put in App Store Connect
 
