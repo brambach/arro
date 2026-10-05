@@ -46,6 +46,12 @@
           "microphonePermission": false
         }
       ]
-    ]
+    ],
+    "extra": {
+      "eas": {
+        "projectId": "6540bde3-31ae-4511-8506-8604be1f7820"
+      }
+    },
+    "owner": "brycerambach"
   }
 }
