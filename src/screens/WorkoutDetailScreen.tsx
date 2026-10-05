@@ -2,10 +2,10 @@ import React, { useEffect, useRef, useState } from 'react';
 import { AccessibilityInfo, Animated, Easing, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Svg, { Circle, Path } from 'react-native-svg';
-import { colors, radii, shadows, spacing } from '../theme/tokens';
+import { colors, radii, spacing } from '../theme/tokens';
 import { type, weights } from '../theme/typography';
 import { AvatarStack } from '../components/AvatarStack';
-import { ChevronLeft, Heart, MapPin } from '../components/Icons';
+import { ChevronLeft, MapPin } from '../components/Icons';
 import { FadeInView } from '../components/FadeInView';
 import { PhotoSlot } from '../components/PhotoSlot';
 import { useView } from '../state/AppState';
@@ -75,7 +75,7 @@ export function WorkoutDetailScreen({ navigation, route }: RootStackScreenProps<
         <View style={{ width: 22 }} />
       </View>
 
-      <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{ paddingBottom: 12 }}>
+      <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{ paddingBottom: insets.bottom + 24 }}>
         {workout.route ? (
           <View style={styles.mapWrap}>
             <View style={styles.river} />
@@ -140,15 +140,6 @@ export function WorkoutDetailScreen({ navigation, route }: RootStackScreenProps<
           ) : null}
         </FadeInView>
       </ScrollView>
-
-      <View style={[styles.commentBar, { paddingBottom: insets.bottom + 15 }]}>
-        <View style={styles.commentInput}>
-          <Text style={styles.commentPlaceholder}>Add a comment…</Text>
-        </View>
-        <Pressable style={styles.sendBtn} accessibilityLabel="Send">
-          <Heart size={20} color={colors.white} />
-        </Pressable>
-      </View>
     </View>
   );
 }
@@ -213,33 +204,4 @@ const styles = StyleSheet.create({
   note: { ...type.body, color: colors.inkSoft },
   cheered: { flexDirection: 'row', alignItems: 'center', gap: 11, marginTop: 15 },
   cheeredText: { ...type.meta, color: colors.muted },
-  commentBar: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 10,
-    paddingHorizontal: spacing.gutter,
-    paddingTop: 11,
-    borderTopWidth: 1,
-    borderTopColor: colors.tabBarBorder,
-    backgroundColor: colors.screen,
-  },
-  commentInput: {
-    flex: 1,
-    backgroundColor: colors.card,
-    borderWidth: 1,
-    borderColor: colors.border,
-    borderRadius: 22,
-    paddingVertical: 11,
-    paddingHorizontal: 16,
-  },
-  commentPlaceholder: { fontSize: 15, color: colors.faint2 },
-  sendBtn: {
-    width: 44,
-    height: 44,
-    borderRadius: 22,
-    backgroundColor: colors.primary,
-    alignItems: 'center',
-    justifyContent: 'center',
-    ...shadows.button,
-  },
 });
