@@ -68,22 +68,28 @@ Checked in code:
 ## Push notifications (phase 4)
 
 Checked in `supabase/migrations/20261005000007_push.sql`,
-`20261005000008_evening_nudge.sql` and `supabase/functions/send-push/index.ts`.
-None of it is live yet: the migrations aren't applied to the hosted project,
-send-push isn't deployed, and the app doesn't register a token
-(`expo-notifications` isn't in `package.json`, nothing in `src/` calls
-`register_push_token`). Once it is, Supabase stores:
+`20261005000008_evening_nudge.sql`, `20261005000009_nudge_push.sql`,
+`supabase/functions/send-push/index.ts` and the app side: `expo-notifications`
+is in `package.json`, `registerPushToken()` and `forgetPushToken()` are in
+`src/state/backend.ts`, called from `src/state/AppState.tsx`. Supabase stores:
 
 - **`public.push_tokens`:** the phone's Expo push token
   (`ExponentPushToken[...]`), the signed-in user's id and when it was last
-  updated. Each person can only read or delete their own. The migration expects
-  sign-out to delete the phone's token (the app side isn't written yet, so check
-  it then); deleting the account deletes it (`on delete cascade`).
+  updated. Each person can only read or delete their own. Signing out deletes
+  the phone's token (`signOut()` in `AppState.tsx`); deleting the account
+  deletes it (`on delete cascade`).
 - **`private.push_outbox`:** each queued push: the recipient's user id, the
-  kind (cheer, joined, evening), the title and body (which include a family
-  member's display name, the family name or the workout kind), a workout or
-  member id, and when it was sent. Rows are deleted after 7 days
+  kind (cheer, joined, evening or nudge), the title and body (which include a
+  family member's display name, the family name or the workout kind), a
+  workout or member id, and when it was sent. Rows are deleted after 7 days
   (`run_evening_nudges()`) and with the account.
+
+The four kinds: a **cheer** on someone's workout, someone **joined** the
+family, the **evening** "X still has today" message to people who already
+moved, and a **nudge** ("Mum is cheering you on") when someone taps "Send a
+cheer" for a person who hasn't moved yet. A nudge is saved in
+`public.nudges` (sender, recipient, date) as before; its push is only queued
+between 07:00 and 21:00 in the recipient's time zone.
 
 Pushes go out through Expo's push service (`exp.host`), which hands the token
 and message to Apple's APNs. Expo processes them on Arro's behalf.

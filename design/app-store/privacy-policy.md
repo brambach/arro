@@ -49,7 +49,8 @@ doesn't see it.
 time you pick. That reminder is set up on your phone. If you allow
 notifications, Arro also saves a push token for your phone, an address Apple
 gives Arro for sending notifications to it, so it can tell you when someone
-cheers you, joins your family, or hasn't moved yet that evening. Each notification's text is
+cheers your workout, cheers you on before you've moved, joins your family, or
+hasn't moved yet that evening. Each notification's text is
 kept for up to 7 days, then deleted.
 
 **What we don't collect.** No location, contacts, advertising identifier,
