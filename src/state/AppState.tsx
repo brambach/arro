@@ -6,13 +6,18 @@ import * as backend from './backend';
 import { InvitePreview, RemoteFamily } from './backend';
 import { AppView, Preview, buildView } from './buildView';
 import { dayKey, addDays, deviceTimezone } from './dates';
+import { connectHealth, onHealthWorkoutsChanged, readRecentHealthWorkouts } from './health';
+import { syncHealthWorkouts } from './healthSync';
 import {
   LoggedWorkout,
   SavedSession,
+  clearMoveMethod,
   clearSession,
   loadCachedFamily,
+  loadMoveMethod,
   loadSession,
   saveCachedFamily,
+  saveMoveMethod,
   saveSession,
 } from './session';
 
@@ -96,6 +101,8 @@ interface AppContextValue {
   /** Throws backend.WorkoutDateError when the server refuses the date. */
   logWorkout: (input: LogInput) => Promise<void>;
   updateProfile: (patch: { name?: string; photoUri?: string | null }) => Promise<void>;
+  /** Settings: switch how moving counts. Apple Health shows Apple's sheet, then syncs. */
+  setMoveMethod: (method: MoveMethod) => Promise<void>;
   /** Invite someone (name optional). Works during onboarding and afterwards. */
   addInvite: (name: string) => Promise<void>;
   refresh: () => Promise<void>;
@@ -123,6 +130,7 @@ export function AppStateProvider({ children }: { children: React.ReactNode }) {
     setSession(next);
     try {
       await saveSession(next);
+      await saveMoveMethod(next.me.moveMethod);
     } catch {
       // Storage full or unavailable: the app keeps working for this launch.
     }
@@ -146,6 +154,29 @@ export function AppStateProvider({ children }: { children: React.ReactNode }) {
       // Offline or the server is down: the cached family stays on screen.
     }
   }, []);
+
+  /**
+   * Sends today's and yesterday's Apple Health workouts to the server, for people
+   * who chose Apple Health. Reads the session from storage when it hasn't loaded
+   * yet, because iOS can wake Arro in the background for a new workout.
+   */
+  const syncHealth = useCallback(async () => {
+    const current = sessionRef.current ?? (await loadSession());
+    if (!current?.remote || current.me.moveMethod !== 'health') return;
+    try {
+      const workouts = await readRecentHealthWorkouts();
+      const result = await syncHealthWorkouts(current.remote.memberId, workouts);
+      if (result.added > 0) await refresh();
+    } catch {
+      // Offline or Health unavailable: the next launch or Health update tries again.
+    }
+  }, [refresh]);
+
+  // Register early: on a background relaunch, iOS's queued Health update waits for this listener.
+  useEffect(() => {
+    const sub = onHealthWorkoutsChanged(syncHealth);
+    return () => sub.remove();
+  }, [syncHealth]);
 
   const clearAll = useCallback(async () => {
     setPreview(null);
@@ -179,19 +210,28 @@ export function AppStateProvider({ children }: { children: React.ReactNode }) {
       sessionRef.current = saved;
       setReady(true);
       if (saved?.remote) refresh();
+      if (saved?.remote && saved.me.moveMethod === 'health') {
+        // Asks once for people who chose Apple Health before it connected; iOS skips the sheet after that.
+        connectHealth()
+          .catch(() => undefined)
+          .then(() => syncHealth());
+      }
     })();
     return () => {
       alive = false;
     };
-  }, [refresh]);
+  }, [refresh, syncHealth]);
 
-  // Coming back to the app picks up what the family did meanwhile.
+  // Coming back to the app picks up what the family did meanwhile, and any new Health workouts.
   useEffect(() => {
     const sub = RNAppState.addEventListener('change', (state) => {
-      if (state === 'active') refresh();
+      if (state === 'active') {
+        refresh();
+        syncHealth();
+      }
     });
     return () => sub.remove();
-  }, [refresh]);
+  }, [refresh, syncHealth]);
 
   const startFlow = useCallback((role: Draft['role']) => setDraft(emptyDraft(role)), []);
   const updateDraft = useCallback((patch: Partial<Draft>) => setDraft((d) => ({ ...d, ...patch })), []);
@@ -226,8 +266,10 @@ export function AppStateProvider({ children }: { children: React.ReactNode }) {
     const existing = await backend.myMembership(result.userId);
     if (existing) {
       // Signed in before, on this phone or another: straight to the family.
+      // Onboarding's "How you move" was skipped, so keep what this phone chose last.
+      const moveMethod = (await loadMoveMethod()) ?? d.moveMethod;
       const next = remoteSession(
-        { ...d, name: d.name || result.givenName || '' },
+        { ...d, name: d.name || result.givenName || '', moveMethod },
         { userId: result.userId, ...existing },
         false,
         '',
@@ -235,11 +277,16 @@ export function AppStateProvider({ children }: { children: React.ReactNode }) {
       sessionRef.current = next;
       await persist(next);
       await refresh();
+      if (moveMethod === 'health') {
+        connectHealth()
+          .catch(() => undefined)
+          .then(() => syncHealth());
+      }
       return 'done';
     }
     setDraft((cur) => ({ ...cur, userId: result.userId, name: cur.name || result.givenName || '' }));
     return 'continue';
-  }, [persist, refresh, remoteSession]);
+  }, [persist, refresh, remoteSession, syncHealth]);
 
   const saveFamilyName = useCallback(async () => {
     const d = draftRef.current;
@@ -277,6 +324,8 @@ export function AppStateProvider({ children }: { children: React.ReactNode }) {
         sessionRef.current = next;
         await persist(next);
         await refresh();
+        // Health access was asked for at "How you move"; a workout from today counts straight away.
+        if (d.moveMethod === 'health') await syncHealth();
         return;
       }
 
@@ -301,7 +350,7 @@ export function AppStateProvider({ children }: { children: React.ReactNode }) {
         workouts: [],
       });
     },
-    [persist, refresh, remoteSession],
+    [persist, refresh, remoteSession, syncHealth],
   );
 
   const logWorkout = useCallback(
@@ -358,6 +407,21 @@ export function AppStateProvider({ children }: { children: React.ReactNode }) {
     [persist, refresh],
   );
 
+  const setMoveMethod = useCallback(
+    async (method: MoveMethod) => {
+      const current = sessionRef.current;
+      if (!current) return;
+      const next = { ...current, me: { ...current.me, moveMethod: method } };
+      sessionRef.current = next;
+      await persist(next);
+      if (method !== 'health') return;
+      // iOS shows the sheet only the first time; after that this just starts watching.
+      await connectHealth().catch(() => false);
+      await syncHealth();
+    },
+    [persist, syncHealth],
+  );
+
   const addInvite = useCallback(
     async (name: string) => {
       const person = { id: `invite-${Date.now()}`, name: name.trim() };
@@ -379,6 +443,7 @@ export function AppStateProvider({ children }: { children: React.ReactNode }) {
 
   const deleteAccount = useCallback(async () => {
     if (sessionRef.current?.remote) await backend.deleteAccount();
+    await clearMoveMethod().catch(() => undefined);
     await clearAll();
   }, [clearAll]);
 
@@ -403,6 +468,7 @@ export function AppStateProvider({ children }: { children: React.ReactNode }) {
       completeOnboarding,
       logWorkout,
       updateProfile,
+      setMoveMethod,
       addInvite,
       refresh,
       signOut,
@@ -423,6 +489,7 @@ export function AppStateProvider({ children }: { children: React.ReactNode }) {
       completeOnboarding,
       logWorkout,
       updateProfile,
+      setMoveMethod,
       addInvite,
       refresh,
       signOut,

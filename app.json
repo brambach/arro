@@ -25,7 +25,15 @@
     },
     "plugins": [
       "expo-font",
-      "expo-apple-authentication"
+      "expo-apple-authentication",
+      [
+        "@appeeky/expo-healthkit",
+        {
+          "healthSharePermission": "Arro reads your workouts from Apple Health so moving counts toward your family streak. It only reads workouts, and only today's and yesterday's.",
+          "healthUpdatePermission": false,
+          "isBackgroundDeliveryEnabled": true
+        }
+      ]
     ]
   }
 }

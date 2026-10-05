@@ -21,6 +21,7 @@ export type RootStackParamList = {
   Milestone: { kind?: 'family' } | undefined;
   Settings: undefined;
   StreakRules: undefined;
+  MoveMethod: undefined;
   WorkoutDetail: { workoutId: string };
   Nudge: { memberId?: string } | undefined;
   FamilyMembers: undefined;

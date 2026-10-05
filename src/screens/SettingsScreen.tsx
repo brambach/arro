@@ -87,11 +87,13 @@ export function SettingsScreen({ navigation }: RootStackScreenProps<'Settings'>)
             <Pressable
               key={row.key}
               onPress={
-                row.key === 'members'
-                  ? () => navigation.navigate('FamilyMembers')
-                  : row.key === 'rules'
-                    ? () => navigation.navigate('StreakRules')
-                    : undefined
+                row.key === 'moving'
+                  ? () => navigation.navigate('MoveMethod')
+                  : row.key === 'members'
+                    ? () => navigation.navigate('FamilyMembers')
+                    : row.key === 'rules'
+                      ? () => navigation.navigate('StreakRules')
+                      : undefined
               }
               accessibilityRole="button"
               accessibilityLabel={row.label}

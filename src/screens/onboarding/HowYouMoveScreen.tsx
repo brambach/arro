@@ -1,17 +1,34 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { StyleSheet, Text } from 'react-native';
 import { colors } from '../../theme/tokens';
 import { ChoiceRow } from '../../components/ChoiceRow';
 import { OnboardingFrame } from '../../components/OnboardingFrame';
 import { PulseIcon, TargetIcon } from '../../components/Icons';
 import { useApp } from '../../state/AppState';
+import { connectHealth, healthAvailable } from '../../state/health';
 import { RootStackScreenProps } from '../../navigation/types';
 import { nextAfter, stepOf } from './steps';
 
-/** "I moved today" leads. Apple Health is the automatic option and arrives in phase 3. */
+/** "I moved today" leads. Apple Health asks for read access to workouts when they continue with it. */
 export function HowYouMoveScreen({ navigation }: RootStackScreenProps<'HowYouMove'>) {
   const { draft, updateDraft } = useApp();
   const next = nextAfter(draft.role, 'HowYouMove');
+  const [asking, setAsking] = useState(false);
+  const canUseHealth = healthAvailable();
+
+  const onContinue = async () => {
+    if (draft.moveMethod === 'health' && canUseHealth) {
+      setAsking(true);
+      try {
+        await connectHealth();
+      } catch {
+        // Onboarding goes on either way; "I moved today" still works.
+      } finally {
+        setAsking(false);
+      }
+    }
+    if (next) navigation.navigate(next as 'ReminderTime');
+  };
 
   return (
     <OnboardingFrame
@@ -20,7 +37,8 @@ export function HowYouMoveScreen({ navigation }: RootStackScreenProps<'HowYouMov
       step={stepOf(draft.role, 'HowYouMove')}
       onBack={() => navigation.goBack()}
       primaryLabel="Continue"
-      onPrimary={() => next && navigation.navigate(next as 'ReminderTime')}
+      primaryDisabled={asking}
+      onPrimary={onContinue}
     >
       <ChoiceRow
         title="I moved today"
@@ -39,7 +57,9 @@ export function HowYouMoveScreen({ navigation }: RootStackScreenProps<'HowYouMov
       />
       {draft.moveMethod === 'health' ? (
         <Text style={styles.note}>
-          Apple Health connects in a later update. Until then, “I moved today” is always there too.
+          {canUseHealth
+            ? 'Arro only reads your workouts, never anything else. “I moved today” is always there too.'
+            : 'Apple Health isn’t available here. “I moved today” is always there instead.'}
         </Text>
       ) : null}
     </OnboardingFrame>
