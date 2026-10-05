@@ -9,7 +9,11 @@
     "ios": {
       "supportsTablet": false,
       "bundleIdentifier": "com.arrofamily.arro",
-      "usesAppleSignIn": true
+      "buildNumber": "1",
+      "usesAppleSignIn": true,
+      "config": {
+        "usesNonExemptEncryption": false
+      }
     },
     "android": {
       "adaptiveIcon": {
@@ -32,6 +36,14 @@
           "healthSharePermission": "Arro reads your workouts from Apple Health so moving counts toward your family streak. It only reads workouts, and only today's and yesterday's.",
           "healthUpdatePermission": false,
           "isBackgroundDeliveryEnabled": true
+        }
+      ],
+      [
+        "expo-image-picker",
+        {
+          "photosPermission": "Arro uses a photo only when you pick one for your profile or a workout. Photos stay on your phone.",
+          "cameraPermission": false,
+          "microphonePermission": false
         }
       ]
     ]
