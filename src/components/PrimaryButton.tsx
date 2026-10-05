@@ -12,10 +12,12 @@ type Props = {
   onPress?: () => void;
   icon?: React.ReactNode;
   disabled?: boolean;
+  /** 'large' is the one big action on a screen ("I moved today"). */
+  size?: 'default' | 'large';
   style?: StyleProp<ViewStyle>;
 };
 
-export function PrimaryButton({ title, onPress, icon, disabled, style }: Props) {
+export function PrimaryButton({ title, onPress, icon, disabled, size = 'default', style }: Props) {
   const scale = useRef(new Animated.Value(1)).current;
 
   const press = (to: number, duration: number) =>
@@ -32,10 +34,16 @@ export function PrimaryButton({ title, onPress, icon, disabled, style }: Props) 
       style={style}
     >
       <Animated.View
-        style={[styles.btn, shadows.button, { transform: [{ scale }] }, disabled && { opacity: 0.45 }]}
+        style={[
+          styles.btn,
+          size === 'large' && styles.btnLarge,
+          shadows.button,
+          { transform: [{ scale }] },
+          disabled && { opacity: 0.45 },
+        ]}
       >
         {icon ? <View style={styles.icon}>{icon}</View> : null}
-        <Text style={styles.label}>{title}</Text>
+        <Text style={[styles.label, size === 'large' && styles.labelLarge]}>{title}</Text>
       </Animated.View>
     </Pressable>
   );
@@ -51,6 +59,8 @@ const styles = StyleSheet.create({
     borderRadius: radii.button,
     backgroundColor: colors.primary,
   },
+  btnLarge: { height: 68, borderRadius: radii.card },
   icon: { marginRight: 2 },
   label: { color: colors.white, fontSize: 16, fontWeight: weights.semibold },
+  labelLarge: { fontSize: 19, fontWeight: weights.bold },
 });

@@ -8,12 +8,17 @@ import { AvatarStack } from '../components/AvatarStack';
 import { ChevronLeft, ShareIcon } from '../components/Icons';
 import { PhotoSlot } from '../components/PhotoSlot';
 import { PrimaryButton } from '../components/PrimaryButton';
-import { members, milestone } from '../data/family';
+import { milestone as personalMilestone } from '../data/family';
+import { joinNames } from '../data/workouts';
+import { useView } from '../state/AppState';
 import { RootStackScreenProps } from '../navigation/types';
 
-export function MilestoneScreen({ navigation }: RootStackScreenProps<'Milestone'>) {
+export function MilestoneScreen({ navigation, route }: RootStackScreenProps<'Milestone'>) {
   const insets = useSafeAreaInsets();
-  const cheerers = milestone.cheeredBy.map((id) => members[id]);
+  const view = useView();
+  // "Your first 30 days together" ends on the family card; the Me tab shows Bryce's own.
+  const milestone = route.params?.kind === 'family' ? view.milestone : personalMilestone;
+  const cheerers = milestone.cheeredBy.map((id) => view.members[id]).filter(Boolean);
 
   return (
     <View style={styles.root}>
@@ -51,7 +56,7 @@ export function MilestoneScreen({ navigation }: RootStackScreenProps<'Milestone'
         <Text style={styles.dateLine}>{milestone.dateLine}</Text>
         <View style={styles.cheered}>
           <AvatarStack members={cheerers} size={26} overlap={6} borderColor={colors.screen} />
-          <Text style={styles.cheeredText}>Cheered on by Darcey and Whit</Text>
+          <Text style={styles.cheeredText}>Cheered on by {joinNames(cheerers.map((c) => c.name))}</Text>
         </View>
         <View style={styles.actions}>
           <PrimaryButton title="Send a cheer" onPress={() => {}} style={{ flex: 1 }} />

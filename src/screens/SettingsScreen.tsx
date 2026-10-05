@@ -5,7 +5,10 @@ import { colors, radii } from '../theme/tokens';
 import { type, weights } from '../theme/typography';
 import { AvatarRing } from '../components/AvatarRing';
 import { BellIcon, ChevronLeft, ChevronRight, LockIcon, PulseIcon, TargetIcon, UsersIcon } from '../components/Icons';
-import { currentUser, settings } from '../data/family';
+import { settings } from '../data/family';
+import { Preview } from '../state/buildView';
+import { confirmAction } from '../state/confirm';
+import { useApp, useView } from '../state/AppState';
 import { RootStackScreenProps } from '../navigation/types';
 
 const ICONS: Record<string, React.ReactNode> = {
@@ -16,8 +19,27 @@ const ICONS: Record<string, React.ReactNode> = {
   lock: <LockIcon />,
 };
 
+/** Prototype only: look at the fake family in different moments. Gone from release builds. */
+const PREVIEWS: { label: string; value: Preview | null }[] = [
+  { label: 'My family', value: null },
+  { label: 'Demo family', value: 'demo' },
+  { label: 'Day 1 after a break', value: 'afterBreak' },
+  { label: 'First 30 days done', value: 'goalDone' },
+];
+
 export function SettingsScreen({ navigation }: RootStackScreenProps<'Settings'>) {
   const insets = useSafeAreaInsets();
+  const { session, signOut, preview, setPreview } = useApp();
+  const view = useView();
+  const rows = settings.connection.map((row) =>
+    row.key === 'moving' ? { ...row, value: session?.me.moveMethod === 'health' ? 'Apple Health' : 'I moved today' }
+    : row.key === 'members' ? { ...row, value: `${view.allMembers.length} ${view.allMembers.length === 1 ? 'member' : 'members'}` }
+    : row,
+  );
+  const onSignOut = async () => {
+    const ok = await confirmAction('Sign out?', 'This preview keeps your family on this phone only, so signing out clears it.', 'Sign out');
+    if (ok) await signOut();
+  };
 
   return (
     <View style={[styles.root, { paddingTop: insets.top }]}>
@@ -33,17 +55,23 @@ export function SettingsScreen({ navigation }: RootStackScreenProps<'Settings'>)
       >
         <View style={styles.titleRow}>
           <Text style={type.title}>Settings</Text>
-          <AvatarRing member={currentUser} size={36} />
+          <AvatarRing member={view.me} size={36} />
         </View>
 
         <View style={[styles.card, { marginTop: 16 }]}>
-          {settings.connection.map((row, i) => (
+          {rows.map((row, i) => (
             <Pressable
               key={row.key}
-              onPress={row.key === 'members' ? () => navigation.navigate('FamilyMembers') : undefined}
+              onPress={
+                row.key === 'members'
+                  ? () => navigation.navigate('FamilyMembers')
+                  : row.key === 'rules'
+                    ? () => navigation.navigate('StreakRules')
+                    : undefined
+              }
               accessibilityRole="button"
               accessibilityLabel={row.label}
-              style={[styles.row, i < settings.connection.length - 1 && styles.rowBorder]}
+              style={[styles.row, i < rows.length - 1 && styles.rowBorder]}
             >
               <View style={[styles.iconTile, { backgroundColor: row.tint }]}>{ICONS[row.icon]}</View>
               <Text style={styles.label}>{row.label}</Text>
@@ -66,7 +94,27 @@ export function SettingsScreen({ navigation }: RootStackScreenProps<'Settings'>)
           ))}
         </View>
 
-        <Pressable style={styles.signOut}>
+        {__DEV__ ? (
+          <>
+            <Text style={styles.previewLabel}>Prototype preview</Text>
+            <View style={styles.card}>
+              {PREVIEWS.map((p, i) => (
+                <Pressable
+                  key={p.label}
+                  onPress={() => setPreview(p.value)}
+                  accessibilityRole="button"
+                  accessibilityLabel={p.label}
+                  style={[styles.row, i < PREVIEWS.length - 1 && styles.rowBorder]}
+                >
+                  <Text style={styles.label}>{p.label}</Text>
+                  {preview === p.value ? <Text style={styles.value}>Showing</Text> : null}
+                </Pressable>
+              ))}
+            </View>
+          </>
+        ) : null}
+
+        <Pressable onPress={onSignOut} accessibilityRole="button" accessibilityLabel="Sign out" style={styles.signOut}>
           <Text style={styles.signOutText}>Sign out</Text>
         </Pressable>
       </ScrollView>
@@ -91,6 +139,7 @@ const styles = StyleSheet.create({
   glyph: { color: '#fff', fontSize: 15, fontWeight: weights.bold },
   label: { flex: 1, fontSize: 15, fontWeight: weights.medium, color: colors.ink },
   value: { fontSize: 13, color: colors.faint2 },
+  previewLabel: { fontSize: 13, fontWeight: weights.semibold, color: colors.muted, marginTop: 20, marginBottom: 6 },
   signOut: {
     marginTop: 14,
     backgroundColor: colors.card,

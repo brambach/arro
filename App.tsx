@@ -5,6 +5,7 @@ import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { colors } from './src/theme/tokens';
 import { RootNavigator } from './src/navigation/RootNavigator';
 import { AnimatedSplash } from './src/components/AnimatedSplash';
+import { AppStateProvider } from './src/state/AppState';
 
 /** Flat, warm-neutral navigation theme — no white flash between screens. */
 const arroTheme: Theme = {
@@ -18,11 +19,13 @@ export default function App() {
 
   return (
     <SafeAreaProvider>
-      <NavigationContainer theme={arroTheme}>
-        <StatusBar style="dark" />
-        <RootNavigator />
-        {!splashDone && <AnimatedSplash onDone={handleSplashDone} />}
-      </NavigationContainer>
+      <AppStateProvider>
+        <NavigationContainer theme={arroTheme}>
+          <StatusBar style="dark" />
+          <RootNavigator />
+          {!splashDone && <AnimatedSplash onDone={handleSplashDone} />}
+        </NavigationContainer>
+      </AppStateProvider>
     </SafeAreaProvider>
   );
 }

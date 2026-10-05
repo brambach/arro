@@ -8,7 +8,7 @@ import { AvatarStack } from '../components/AvatarStack';
 import { ChevronLeft, Heart, MapPin } from '../components/Icons';
 import { FadeInView } from '../components/FadeInView';
 import { PhotoSlot } from '../components/PhotoSlot';
-import { members, workouts } from '../data/family';
+import { useView } from '../state/AppState';
 import { WorkoutDetail } from '../data/types';
 import { joinNames, workoutSourceLabels, workoutTypeLabels } from '../data/workouts';
 import { RootStackScreenProps } from '../navigation/types';
@@ -19,7 +19,8 @@ const MAP_W = 320;
 
 export function WorkoutDetailScreen({ navigation, route }: RootStackScreenProps<'WorkoutDetail'>) {
   const insets = useSafeAreaInsets();
-  const workout: WorkoutDetail | undefined = workouts[route.params.workoutId];
+  const view = useView();
+  const workout: WorkoutDetail | undefined = view.workouts[route.params.workoutId];
   const hasRoute = !!workout?.route;
   const offset = useRef(new Animated.Value(DASH)).current;
   const [reduceMotion, setReduceMotion] = useState<boolean | null>(null);
@@ -54,7 +55,7 @@ export function WorkoutDetailScreen({ navigation, route }: RootStackScreenProps<
   if (!workout) return null;
 
   const label = workoutTypeLabels[workout.type];
-  const cheerers = workout.cheeredBy.map((id) => members[id]);
+  const cheerers = workout.cheeredBy.map((id) => view.members[id]).filter(Boolean);
   const stats = [
     workout.duration ? { value: workout.duration, label: 'Time' } : null,
     { value: workoutSourceLabels[workout.source], label: 'Logged with' },

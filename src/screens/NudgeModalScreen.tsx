@@ -4,12 +4,14 @@ import { colors, radii } from '../theme/tokens';
 import { weights } from '../theme/typography';
 import { AvatarRing } from '../components/AvatarRing';
 import { PrimaryButton } from '../components/PrimaryButton';
-import { members, today } from '../data/family';
+import { useView } from '../state/AppState';
 import { RootStackScreenProps } from '../navigation/types';
 
-export function NudgeModalScreen({ navigation }: RootStackScreenProps<'Nudge'>) {
-  const member = members[today.pendingId];
+export function NudgeModalScreen({ navigation, route }: RootStackScreenProps<'Nudge'>) {
+  const view = useView();
+  const member = (route.params?.memberId && view.members[route.params.memberId]) || view.nudgeTarget;
   const close = () => navigation.goBack();
+  if (!member || member.invited) return null;
 
   return (
     <View style={styles.root}>
@@ -17,7 +19,7 @@ export function NudgeModalScreen({ navigation }: RootStackScreenProps<'Nudge'>) 
       <View style={styles.card}>
         <AvatarRing member={member} size={70} style={styles.avatar} />
         <Text style={styles.title}>{member.name} still has today.</Text>
-        <Text style={styles.sub}>Usually moves in the evening.</Text>
+        <Text style={styles.sub}>It’s still today for them.</Text>
         <View style={styles.divider} />
         <Text style={styles.prompt}>A little nudge?</Text>
         <Text style={styles.promptSub}>It’s never too late.</Text>

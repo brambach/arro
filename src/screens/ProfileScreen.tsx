@@ -7,12 +7,14 @@ import { CogIcon } from '../components/Icons';
 import { FadeInView } from '../components/FadeInView';
 import { Screen } from '../components/Screen';
 import { SectionHeader } from '../components/SectionHeader';
-import { members, profile } from '../data/family';
+import { useView } from '../state/AppState';
 import { workoutSourceLabels, workoutSummary, workoutTypeLabels } from '../data/workouts';
 import { MainTabScreenProps } from '../navigation/types';
 
 export function ProfileScreen({ navigation }: MainTabScreenProps<'Me'>) {
-  const me = members[profile.memberId];
+  const view = useView();
+  const me = view.me;
+  const profile = view.profile;
 
   return (
     <Screen>
@@ -26,8 +28,13 @@ export function ProfileScreen({ navigation }: MainTabScreenProps<'Me'>) {
         <AvatarRing member={me} size={64} />
         <View style={{ flex: 1 }}>
           <Text style={styles.name}>{me.name}</Text>
-          <Text style={styles.location}>{profile.location}</Text>
-          <Pressable style={styles.editPill}>
+          <Text style={styles.location}>{profile.subtitle}</Text>
+          <Pressable
+            onPress={() => navigation.navigate('EditProfile')}
+            accessibilityRole="button"
+            accessibilityLabel="Edit profile"
+            style={styles.editPill}
+          >
             <Text style={styles.editText}>Edit profile</Text>
           </Pressable>
         </View>
@@ -52,6 +59,9 @@ export function ProfileScreen({ navigation }: MainTabScreenProps<'Me'>) {
 
       <FadeInView delay={120} style={styles.section}>
         <SectionHeader title="Recent workouts" action="See all" titleColor={colors.ink} style={styles.sectionHead} />
+        {profile.recentWorkouts.length === 0 ? (
+          <Text style={styles.empty}>Your workouts show up here once you log one.</Text>
+        ) : null}
         {profile.recentWorkouts.map((w, i) => (
           <Pressable
             key={w.id}
@@ -60,7 +70,7 @@ export function ProfileScreen({ navigation }: MainTabScreenProps<'Me'>) {
             accessibilityLabel={`${workoutTypeLabels[w.type]} ${w.when}`}
             style={[styles.workoutRow, i < profile.recentWorkouts.length - 1 && styles.workoutBorder]}
           >
-            <AvatarRing member={members[w.memberId]} size={34} />
+            <AvatarRing member={view.members[w.memberId] ?? me} size={34} />
             <View style={{ flex: 1 }}>
               <Text style={styles.workoutWhen}>{w.when}</Text>
               <Text style={styles.workoutMeta}>
@@ -73,6 +83,9 @@ export function ProfileScreen({ navigation }: MainTabScreenProps<'Me'>) {
 
       <FadeInView delay={160} style={styles.section}>
         <SectionHeader title="Milestones" action="See all" titleColor={colors.ink} style={styles.sectionHead} />
+        {profile.milestones.length === 0 ? (
+          <Text style={styles.empty}>Your first one is 7 days in a row.</Text>
+        ) : null}
         <View style={styles.milestones}>
           {profile.milestones.map((n, i) => (
             <Pressable
@@ -136,6 +149,7 @@ const styles = StyleSheet.create({
   workoutBorder: { borderBottomWidth: 1, borderBottomColor: colors.divider },
   workoutWhen: { fontSize: 14, fontWeight: weights.semibold, color: colors.ink },
   workoutMeta: { fontSize: 12.5, color: colors.faint, marginTop: 1 },
+  empty: { fontSize: 13.5, lineHeight: 19, color: colors.muted, marginTop: 6 },
   milestones: { flexDirection: 'row', gap: 16, marginTop: 4 },
   msCol: { alignItems: 'center', gap: 6 },
   msCircle: {

@@ -2,8 +2,7 @@ import React from 'react';
 import { StyleSheet, Text, View } from 'react-native';
 import { colors, radii } from '../theme/tokens';
 import { weights } from '../theme/typography';
-import { FeedItem } from '../data/types';
-import { members } from '../data/family';
+import { FeedItem, Member } from '../data/types';
 import { AvatarRing } from './AvatarRing';
 import { Card } from './Card';
 import { CheerButton } from './CheerButton';
@@ -13,9 +12,7 @@ import { Heart } from './Icons';
  * WorkoutCard — a feed entry. A kept post shows a cheer line + heart count; a
  * still-has-today post shows a nudge line + a Cheer button.
  */
-export function WorkoutCard({ item, onPress }: { item: FeedItem; onPress?: () => void }) {
-  const member = members[item.memberId];
-
+export function WorkoutCard({ item, member, onPress }: { item: FeedItem; member: Member; onPress?: () => void }) {
   return (
     <Card radius={radii.card} padding={14} style={styles.card} onPress={onPress}>
       <View style={styles.header}>

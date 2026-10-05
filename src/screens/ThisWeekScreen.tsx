@@ -8,10 +8,15 @@ import { CalendarIcon } from '../components/Icons';
 import { DayPill } from '../components/DayPill';
 import { FadeInView } from '../components/FadeInView';
 import { Screen } from '../components/Screen';
-import { members, week } from '../data/family';
-import { WeekRow } from '../data/types';
+import { TextButton } from '../components/TextButton';
+import { Member, WeekRow } from '../data/types';
+import { useView } from '../state/AppState';
+import { MainTabScreenProps } from '../navigation/types';
 
-export function ThisWeekScreen(_props: unknown) {
+export function ThisWeekScreen({ navigation }: MainTabScreenProps<'ThisWeek'>) {
+  const view = useView();
+  const { week } = view;
+  const solo = view.joinedCount === 1;
   return (
     <Screen>
       <FadeInView style={styles.header}>
@@ -28,13 +33,21 @@ export function ThisWeekScreen(_props: unknown) {
             ))}
           </View>
           <Text style={styles.summary}>{week.summary}</Text>
+          {solo ? (
+            <View style={{ marginTop: 10, alignSelf: 'flex-start' }}>
+              <TextButton
+                label={view.invitedList.length ? 'Send the invite again' : 'Invite a family member'}
+                onPress={() => navigation.navigate('Invite')}
+              />
+            </View>
+          ) : null}
         </Card>
       </FadeInView>
 
       <FadeInView delay={120} style={styles.section}>
         <Card radius={radii.cardLg} padding={0} style={{ paddingHorizontal: 18 }}>
           {week.rows.map((r, i) => (
-            <DayRow key={r.dow} row={r} last={i === week.rows.length - 1} />
+            <DayRow key={r.dow} row={r} members={view.members} last={i === week.rows.length - 1} />
           ))}
         </Card>
       </FadeInView>
@@ -42,7 +55,7 @@ export function ThisWeekScreen(_props: unknown) {
   );
 }
 
-function DayRow({ row, last }: { row: WeekRow; last: boolean }) {
+function DayRow({ row, members, last }: { row: WeekRow; members: Record<string, Member>; last: boolean }) {
   const isToday = row.state === 'today';
   const dowColor = isToday ? colors.primary : colors.ink;
   const badgeColor = row.state === 'freeze' ? colors.freeze : colors.todayPillText;
@@ -53,7 +66,7 @@ function DayRow({ row, last }: { row: WeekRow; last: boolean }) {
       <Text style={[styles.dow, { color: dowColor }]}>{row.dow}</Text>
       <Text style={styles.date}>{row.date}</Text>
       <View style={styles.avatars}>
-        <AvatarStack members={row.avatars.map((id) => members[id])} size={24} overlap={6} />
+        <AvatarStack members={row.avatars.map((id) => members[id]).filter(Boolean)} size={24} overlap={6} />
       </View>
       {row.badge ? (
         <View style={[styles.badge, { backgroundColor: badgeBg }]}>

@@ -192,6 +192,18 @@ export const milestone: MilestoneData = {
   photoUri: null,
 };
 
+/** The card at the end of "Your first 30 days together". */
+export const familyMilestone: MilestoneData = {
+  memberId: 'bryce',
+  day: 30,
+  title: '30 days\ntogether',
+  subtitle: 'Your first month, the whole family.',
+  motto: 'Every day forward, together.',
+  dateLine: 'June 30 · streak still alive',
+  cheeredBy: ['darcey', 'whit'],
+  photoUri: null,
+};
+
 // ─── Profile / Me — Bryce ────────────────────────────────────────────────────
 export const profile = {
   memberId: 'bryce' as MemberId,

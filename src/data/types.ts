@@ -15,6 +15,12 @@ export type PhotoSource = string | number | null;
 
 export type DayStatus = 'kept' | 'still';
 
+/** How a person logs: Apple Health (automatic) or the manual "I moved today" check-in. */
+export type MoveMethod = 'manual' | 'health';
+
+/** When a person usually moves. Sets their reminder and the "usually evenings" line. */
+export type ReminderSlot = 'morning' | 'lunch' | 'evening';
+
 export interface Member {
   id: MemberId;
   name: string;
@@ -25,6 +31,8 @@ export interface Member {
   location?: string;
   relationship?: string; // "You", "Sister", "Brother"
   photoUri?: PhotoSource;
+  /** Invited but hasn't joined yet. Doesn't count towards "x of y kept it today". */
+  invited?: boolean;
 }
 
 export interface FeedItem {

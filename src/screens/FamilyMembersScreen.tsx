@@ -5,11 +5,12 @@ import { colors, radii, shadows } from '../theme/tokens';
 import { weights } from '../theme/typography';
 import { AvatarRing } from '../components/AvatarRing';
 import { ChevronLeft, ChevronRight, PlusIcon, UserPlusIcon } from '../components/Icons';
-import { familyMembersList } from '../data/family';
+import { useView } from '../state/AppState';
 import { RootStackScreenProps } from '../navigation/types';
 
 export function FamilyMembersScreen({ navigation }: RootStackScreenProps<'FamilyMembers'>) {
   const insets = useSafeAreaInsets();
+  const { allMembers } = useView();
 
   return (
     <View style={[styles.root, { paddingTop: insets.top }]}>
@@ -18,7 +19,7 @@ export function FamilyMembersScreen({ navigation }: RootStackScreenProps<'Family
           <ChevronLeft />
         </Pressable>
         <Text style={styles.headerTitle}>Family members</Text>
-        <Pressable hitSlop={10} accessibilityLabel="Add member">
+        <Pressable onPress={() => navigation.navigate('Invite')} hitSlop={10} accessibilityRole="button" accessibilityLabel="Add member">
           <PlusIcon />
         </Pressable>
       </View>
@@ -26,19 +27,24 @@ export function FamilyMembersScreen({ navigation }: RootStackScreenProps<'Family
       <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{ padding: 22, paddingBottom: insets.bottom + 24 }}>
         <Text style={styles.groupLabel}>The crew</Text>
         <View style={styles.card}>
-          {familyMembersList.map((m, i) => (
-            <View key={m.id} style={[styles.row, i < familyMembersList.length - 1 && styles.rowBorder]}>
+          {allMembers.map((m, i) => (
+            <View key={m.id} style={[styles.row, i < allMembers.length - 1 && styles.rowBorder]}>
               <AvatarRing member={m} size={40} />
               <View style={{ flex: 1 }}>
                 <Text style={styles.name}>{m.name}</Text>
-                <Text style={styles.rel}>{m.relationship}</Text>
+                {m.relationship ? <Text style={styles.rel}>{m.relationship}</Text> : null}
               </View>
               <View style={[styles.dot, { backgroundColor: m.color }]} />
             </View>
           ))}
         </View>
 
-        <Pressable style={[styles.card, styles.inviteRow]}>
+        <Pressable
+          onPress={() => navigation.navigate('Invite')}
+          accessibilityRole="button"
+          accessibilityLabel="Invite a family member"
+          style={[styles.card, styles.inviteRow]}
+        >
           <View style={styles.inviteIcon}>
             <UserPlusIcon size={21} color={colors.primary} />
           </View>
