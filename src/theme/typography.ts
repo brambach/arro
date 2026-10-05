@@ -1,10 +1,11 @@
-import { TextStyle } from 'react-native';
+import { Platform, TextStyle } from 'react-native';
 import { colors } from './tokens';
 
 /**
- * Typography — system font only (SF Pro on iOS / Roboto on Android), which reads
- * as clean, native, Albert-Sans-adjacent. No serif, no decorative type: hierarchy
- * comes from weight, size, and letter-spacing. `fontFamily: undefined` = system.
+ * Typography — system fonts only, nothing to install. Headings use the system
+ * serif (New York on iOS, via React Native's 'ui-serif' design); everything else
+ * is the system sans (SF Pro). Body starts at 15 so it's easy to read for
+ * everyone in the family. `fontFamily: undefined` = system sans.
  */
 export const weights = {
   regular: '400',
@@ -13,22 +14,30 @@ export const weights = {
   bold: '700',
 } as const;
 
+export const fonts = {
+  serif: Platform.select({
+    ios: 'ui-serif',
+    web: 'ui-serif, "New York", Georgia, serif',
+    default: 'serif',
+  }),
+} as const;
+
 export const type = {
   /** Milestone hero — "Bryce kept 30 days" (color applied inline, usually white). */
-  display: { fontSize: 33, lineHeight: 36, fontWeight: weights.bold, letterSpacing: -0.6 },
+  display: { fontFamily: fonts.serif, fontSize: 34, lineHeight: 39, fontWeight: weights.semibold },
   /** Screen titles — "This Week", "Family feed", "Settings". */
-  title: { fontSize: 25, lineHeight: 29, fontWeight: weights.bold, letterSpacing: -0.5, color: colors.ink },
+  title: { fontFamily: fonts.serif, fontSize: 28, lineHeight: 33, fontWeight: weights.semibold, color: colors.ink },
   /** Home greeting — "Good morning, Bryce." */
-  greeting: { fontSize: 20, lineHeight: 24, fontWeight: weights.bold, letterSpacing: -0.4, color: colors.ink },
+  greeting: { fontFamily: fonts.serif, fontSize: 22, lineHeight: 27, fontWeight: weights.medium, color: colors.ink },
   /** Big count — "2 of 3", profile stat numbers use `stat`. */
-  bigNumber: { fontSize: 30, lineHeight: 34, fontWeight: weights.bold, letterSpacing: -0.5, color: colors.ink },
-  stat: { fontSize: 22, lineHeight: 26, fontWeight: weights.bold, letterSpacing: -0.3, color: colors.ink },
+  bigNumber: { fontFamily: fonts.serif, fontSize: 32, lineHeight: 37, fontWeight: weights.semibold, color: colors.ink },
+  stat: { fontFamily: fonts.serif, fontSize: 24, lineHeight: 28, fontWeight: weights.semibold, color: colors.ink },
   /** Names / card titles. */
-  name: { fontSize: 15, lineHeight: 19, fontWeight: weights.semibold, color: colors.ink },
+  name: { fontSize: 16, lineHeight: 21, fontWeight: weights.semibold, color: colors.ink },
   /** Row labels, section headers. */
-  label: { fontSize: 13, lineHeight: 17, fontWeight: weights.semibold, color: colors.inkSoft },
+  label: { fontSize: 14, lineHeight: 19, fontWeight: weights.semibold, color: colors.inkSoft },
   /** Body copy. */
-  body: { fontSize: 13, lineHeight: 18, fontWeight: weights.regular, color: colors.muted },
+  body: { fontSize: 15, lineHeight: 21, fontWeight: weights.regular, color: colors.muted },
   /** Meta / timestamps. */
-  meta: { fontSize: 12.5, lineHeight: 16, fontWeight: weights.regular, color: colors.faint },
+  meta: { fontSize: 13, lineHeight: 18, fontWeight: weights.regular, color: colors.faint },
 } satisfies Record<string, TextStyle>;

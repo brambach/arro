@@ -183,3 +183,30 @@ Stage 3 (after phase 2 is committed): the hard-coded colours and font sizes in
 `src/screens/` (about 25 values across WorkoutDetail, Milestone, Today,
 Settings, NudgeModal, ThisWeek, Profile, FamilyMembers, LogToday and Welcome),
 plus the settings tile colours in `src/data/family.ts`.
+
+## Applied: direction A (stage 2)
+
+Direction A is in `src/theme/tokens.ts`, `src/theme/typography.ts` and the
+shared components. Clay replaces orange everywhere `colors.primary` is read,
+cards and buttons have no shadow, the "Today" pill is neutral, headings that
+use `type.*` are serif, and the shared components' small text went up a step.
+`TextButton` and `SectionHeader` actions are ink, not accent.
+
+What still looks like the old design, all of it in screen files, for stage 3:
+
+- **Headings set by hand.** Welcome's "Arro", Today's "Day 24" and a few other
+  headings set their own size and weight instead of using `type.*`, so
+  they're still bold sans.
+- **Small text set by hand.** About 50 font sizes under 14 px in
+  `src/screens/` (Today's member rows, Log today's subtitle, Settings rows).
+  These should move to `type.body` and `type.meta`.
+- **Clay used as a link colour.** About 14 places in `src/screens/` colour text
+  with `colors.primary` ("Add another", "24 of 30", "Log yesterday"). Most
+  should be ink.
+- **Settings tiles** are still five bright hues (`src/data/family.ts`). A
+  single paper tile with an ink icon would match.
+- **Milestone** still has the grey-brown photo gradient. With a real photo it
+  may be fine; the placeholder needs its own treatment.
+- **Spacing.** `spacing.section` (28) and `spacing.gutter` (20) changed, but
+  most screens set their own gaps, so vertical rhythm is unchanged until the
+  screens use the tokens.

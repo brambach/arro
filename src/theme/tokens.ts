@@ -1,49 +1,56 @@
 /**
- * Arro design tokens — final "clean native iOS" direction (Arro Mockups.dc.html).
- * Flat off-white surfaces, white cards with a hairline border and near-zero shadow,
- * orange used intentionally. No warm gradients, no heavy glows.
+ * Arro design tokens — "Paper and clay" (design/visual-direction.md, direction A).
+ * Warm paper surfaces, dark ink, flat cards with a hairline border and no shadow.
+ * One muted clay accent, kept for the main action on a screen and the active tab.
  */
 
 export const colors = {
   // Surfaces
-  screen: '#FBF9F5', // app / screen background
-  card: '#FFFFFF', // cards
-  cardAlt: '#FCFAF6', // tab bar, subtle panels
+  screen: '#F5F1E8', // app / screen background (paper)
+  card: '#FFFDF8', // cards
+  cardAlt: '#F5F1E8', // tab bar, subtle panels
 
   // Borders & dividers (warm hairlines)
-  border: '#F0E7DA', // card border
-  divider: '#F2EBE0', // row divider inside cards
-  dividerSoft: '#F3ECE1',
+  border: '#E6DFD2', // card border
+  borderStrong: '#D6CEC0', // radio rings, inputs that need a firmer edge
+  divider: '#ECE5D9', // row divider inside cards
+  dividerSoft: '#ECE5D9',
+  track: '#E9E2D6', // empty part of rings and progress bars
 
   // Text
-  ink: '#221D17', // primary text
-  inkSoft: '#6F665C', // secondary / emphasis body
-  muted: '#877E72', // body / captions
-  faint: '#948B80', // meta
-  faint2: '#A89E90', // values, timestamps
-  faint3: '#A99F90', // faint labels
+  ink: '#2B2722', // primary text
+  inkSoft: '#575049', // secondary / emphasis body
+  muted: '#6B645B', // body / captions
+  faint: '#7D766C', // meta
+  faint2: '#8C8478', // values, timestamps
+  faint3: '#8C8478', // faint labels
+  chevron: '#B3AA9C', // row chevrons
 
-  // Accent — used intentionally, not everywhere
-  primary: '#F26A1B',
-  primaryPress: '#D9631A',
+  // Accent — clay, used rarely
+  primary: '#A65A3C',
+  primaryPress: '#8A4A31',
+  accentTint: '#F2E6DD', // selected chip background
 
   // Semantic states
-  kept: '#4A8A5D',
-  keptBg: '#E6F0E8',
-  keptCheck: '#4C8A5F',
-  freeze: '#4F8FC4',
-  freezeBg: '#E6EEF5',
-  freezeIcon: '#4F97CF',
-  todayPillBg: '#FBE6D2',
-  todayPillText: '#D9631A',
+  kept: '#5D7A63',
+  keptBg: '#E8ECE3',
+  keptCheck: '#5D7A63',
+  freeze: '#5E7C93',
+  freezeBg: '#E6EAEE',
+  freezeIcon: '#5E7C93',
+  // "Still has today" is neutral on purpose: not moving yet is not an alert.
+  todayPillBg: '#EDE6DA',
+  todayPillText: '#575049',
 
   // Tab bar
-  tabInactive: '#A79E90',
-  tabBarBg: '#FCFAF6',
-  tabBarBorder: '#EFE6D9',
+  tabInactive: '#958D81',
+  tabBarBg: '#F5F1E8',
+  tabBarBorder: '#E6DFD2',
+
+  photoPlaceholder: '#CFC6B8',
 
   white: '#FFFFFF',
-  shadowWarm: '#463219', // rgb(70,50,25) — base for the micro card shadow
+  shadowWarm: '#463219', // rgb(70,50,25), base for shadows if one is ever needed
 } as const;
 
 /**
@@ -67,36 +74,36 @@ export const spacing = {
   xs: 4,
   sm: 8,
   md: 12,
-  card: 16,
-  gutter: 22, // screen horizontal padding
-  section: 18,
+  card: 18,
+  gutter: 20, // screen horizontal padding
+  section: 28,
 } as const;
 
 export const radii = {
   pill: 999,
   icon: 8, // settings icon tiles
-  button: 16,
-  card: 20,
-  cardLg: 22,
+  button: 14,
+  card: 16,
+  cardLg: 16,
 } as const;
 
 /**
- * Shadows are deliberately minimal — cards rely on the hairline border, not depth.
- * card ≈ `0 1px 2px rgba(70,50,25,.05)`; button is a soft orange lift.
+ * No shadows: cards are paper sections edged by a hairline, and the button is a
+ * flat block of clay. Kept as objects so screens can still spread them.
  */
 export const shadows = {
   card: {
     shadowColor: colors.shadowWarm,
-    shadowOpacity: 0.05,
-    shadowRadius: 2,
-    shadowOffset: { width: 0, height: 1 },
-    elevation: 1,
+    shadowOpacity: 0,
+    shadowRadius: 0,
+    shadowOffset: { width: 0, height: 0 },
+    elevation: 0,
   },
   button: {
-    shadowColor: colors.primary,
-    shadowOpacity: 0.32,
-    shadowRadius: 10,
-    shadowOffset: { width: 0, height: 6 },
-    elevation: 4,
+    shadowColor: colors.shadowWarm,
+    shadowOpacity: 0,
+    shadowRadius: 0,
+    shadowOffset: { width: 0, height: 0 },
+    elevation: 0,
   },
 } as const;
