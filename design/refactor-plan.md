@@ -205,6 +205,10 @@ Also in this phase:
 - Send: someone cheered you; a family member joined; daily reminder at the chosen
   time if you haven't moved; a gentle evening "X still has today" nudge, at most
   once a day.
+- The evening nudge goes to people who already moved today, about family members
+  who haven't, between 19:00 and 21:00 in the recipient's own zone (user's
+  decision). pg_cron queues it every 15 minutes and calls `send-push` with the
+  Vault secrets `project_url` and `anon_key` (migration 20261005000008).
 - No tab badges or red dots (keeps the existing spec rule).
 
 ## Phase 5 - Invite links
