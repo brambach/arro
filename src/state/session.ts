@@ -1,7 +1,8 @@
 /**
  * The saved session — the ONLY place the app reads or writes what survives a
- * restart. Phase 1 keeps it on the phone in AsyncStorage. Phase 2 replaces these
- * three functions with the real Supabase session; nothing else should touch storage.
+ * restart, apart from the Supabase login, which supabase-js keeps under its own key.
+ * With `remote` set, the family lives on the server and `workouts` stays empty;
+ * without it, everything is on this phone as in phase 1.
  */
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { MoveMethod, ReminderSlot, WorkoutType } from '../data/types';
@@ -40,6 +41,26 @@ export interface SavedSession {
     invited: { id: string; name: string }[];
   };
   workouts: LoggedWorkout[];
+  /** Set once signed in with Apple and in a family on the server. */
+  remote?: { userId: string; memberId: string; familyId: string };
+  /** Photos for server workouts, by workout id. They stay on this phone until Storage is set up. */
+  photos?: Record<string, string>;
+}
+
+const FAMILY_KEY = 'arro.family.v1';
+
+/** The last family the server sent, so Today opens straight away and works offline. */
+export async function loadCachedFamily<T>(): Promise<T | null> {
+  try {
+    const raw = await AsyncStorage.getItem(FAMILY_KEY);
+    return raw ? (JSON.parse(raw) as T) : null;
+  } catch {
+    return null;
+  }
+}
+
+export async function saveCachedFamily(family: unknown): Promise<void> {
+  await AsyncStorage.setItem(FAMILY_KEY, JSON.stringify(family));
 }
 
 export async function loadSession(): Promise<SavedSession | null> {
@@ -58,5 +79,5 @@ export async function saveSession(session: SavedSession): Promise<void> {
 }
 
 export async function clearSession(): Promise<void> {
-  await AsyncStorage.removeItem(KEY);
+  await AsyncStorage.multiRemove([KEY, FAMILY_KEY]);
 }

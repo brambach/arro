@@ -17,6 +17,7 @@ import { joinNames } from '../data/workouts';
 import { Member } from '../data/types';
 import { AppView, GoalView, StreakView } from '../state/buildView';
 import { useView } from '../state/AppState';
+import { useYesterdayOpen } from '../state/useYesterdayOpen';
 import { MainTabScreenProps } from '../navigation/types';
 
 export function TodayScreen({ navigation }: MainTabScreenProps<'Today'>) {
@@ -105,6 +106,7 @@ export function TodayScreen({ navigation }: MainTabScreenProps<'Today'>) {
 // ─── Move: the biggest thing on the screen ───────────────────────────────────
 
 function MoveSection({ view, onLog }: { view: AppView; onLog: (day: 'today' | 'yesterday') => void }) {
+  const yesterdayOk = useYesterdayOpen();
   if (view.iKeptToday) {
     return (
       <Card radius={radii.cardLg} padding={16} background={colors.keptBg} style={styles.keptCard}>
@@ -129,10 +131,12 @@ function MoveSection({ view, onLog }: { view: AppView; onLog: (day: 'today' | 'y
         icon={<Check size={22} color={colors.white} strokeWidth={2.6} />}
         onPress={() => onLog('today')}
       />
-      <View style={styles.yesterday}>
-        <Text style={styles.yesterdayText}>Forgot yesterday? </Text>
-        <TextButton label="Log yesterday" onPress={() => onLog('yesterday')} />
-      </View>
+      {yesterdayOk && (
+        <View style={styles.yesterday}>
+          <Text style={styles.yesterdayText}>Forgot yesterday? </Text>
+          <TextButton label="Log yesterday" onPress={() => onLog('yesterday')} />
+        </View>
+      )}
     </View>
   );
 }

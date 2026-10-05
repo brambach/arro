@@ -11,7 +11,10 @@ import { Check } from '../components/Icons';
 import { WorkoutType } from '../data/types';
 import { workoutTypeLabels } from '../data/workouts';
 import { useApp } from '../state/AppState';
+import { WorkoutDateError } from '../state/backend';
+import { yesterdayClosedAt } from '../state/dates';
 import { pickPhoto } from '../state/photos';
+import { useYesterdayOpen } from '../state/useYesterdayOpen';
 import { RootStackScreenProps } from '../navigation/types';
 
 const TYPES = Object.keys(workoutTypeLabels) as WorkoutType[];
@@ -24,17 +27,32 @@ const MINUTES = [10, 20, 30, 45, 60];
 export function LogTodayScreen({ navigation, route }: RootStackScreenProps<'LogToday'>) {
   const insets = useSafeAreaInsets();
   const { logWorkout } = useApp();
-  const [day, setDay] = useState<'today' | 'yesterday'>(route.params?.day ?? 'today');
+  const yesterdayOk = useYesterdayOpen();
+  const [chosenDay, setDay] = useState<'today' | 'yesterday'>(route.params?.day ?? 'today');
+  // If yesterday closes while the screen is open, fall back to today.
+  const day = yesterdayOk ? chosenDay : 'today';
   const [workoutType, setWorkoutType] = useState<WorkoutType>('walk');
   const [minutes, setMinutes] = useState<number | undefined>();
   const [photoUri, setPhotoUri] = useState<string | null>(null);
   const [note, setNote] = useState('');
   const [saving, setSaving] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   const save = async () => {
     setSaving(true);
-    await logWorkout({ day, type: workoutType, minutes, note, photoUri });
-    navigation.goBack();
+    setError(null);
+    try {
+      await logWorkout({ day, type: workoutType, minutes, note, photoUri });
+      navigation.goBack();
+    } catch (e) {
+      setSaving(false);
+      if (e instanceof WorkoutDateError) {
+        setDay('today');
+        setError(`Yesterday closed at ${yesterdayClosedAt()}, so Arro couldn’t save it. Today still counts.`);
+      } else {
+        setError('That didn’t save. Check your connection and try again.');
+      }
+    }
   };
 
   return (
@@ -60,8 +78,14 @@ export function LogTodayScreen({ navigation, route }: RootStackScreenProps<'LogT
 
         <View style={[styles.chips, { marginTop: 18 }]}>
           <Chip label="Today" selected={day === 'today'} onPress={() => setDay('today')} />
-          <Chip label="Yesterday" selected={day === 'yesterday'} onPress={() => setDay('yesterday')} />
+          {yesterdayOk && <Chip label="Yesterday" selected={day === 'yesterday'} onPress={() => setDay('yesterday')} />}
         </View>
+        {!yesterdayOk && !error && (
+          <Text style={styles.hint}>
+            Logging yesterday closed at {yesterdayClosedAt()}, when the date changed in UTC. Today still counts.
+          </Text>
+        )}
+        {error && <Text style={styles.error}>{error}</Text>}
 
         <Text style={styles.label}>Type</Text>
         <View style={styles.chips}>
@@ -132,6 +156,8 @@ const styles = StyleSheet.create({
   sub: { fontSize: 14, color: colors.muted, marginTop: 6 },
   label: { fontSize: 13, fontWeight: weights.semibold, color: colors.muted, marginTop: 22, marginBottom: 10 },
   chips: { flexDirection: 'row', flexWrap: 'wrap', gap: 10 },
+  hint: { fontSize: 13, color: colors.muted, marginTop: 10 },
+  error: { fontSize: 13.5, color: colors.ink, marginTop: 10 },
   photo: { height: 180, borderRadius: radii.card, backgroundColor: '#C7BCAE' },
   remove: { marginTop: 10 },
   photoButton: {

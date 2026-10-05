@@ -7,7 +7,9 @@
     "icon": "./assets/icon.png",
     "userInterfaceStyle": "light",
     "ios": {
-      "supportsTablet": false
+      "supportsTablet": false,
+      "bundleIdentifier": "com.arrofamily.arro",
+      "usesAppleSignIn": true
     },
     "android": {
       "adaptiveIcon": {
@@ -22,7 +24,8 @@
       "favicon": "./assets/favicon.png"
     },
     "plugins": [
-      "expo-font"
+      "expo-font",
+      "expo-apple-authentication"
     ]
   }
 }

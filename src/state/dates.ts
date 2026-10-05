@@ -9,6 +9,36 @@ export function dayKey(d: Date = new Date()): string {
   return `${d.getFullYear()}-${m}-${day}`;
 }
 
+/** "2026-10-05" for a Date, in UTC. */
+export function utcDayKey(d: Date = new Date()): string {
+  return d.toISOString().slice(0, 10);
+}
+
+/** The device's IANA time zone, such as "America/New_York". The server keeps each member's "today" in it. */
+export function deviceTimezone(): string {
+  try {
+    return Intl.DateTimeFormat().resolvedOptions().timeZone || 'UTC';
+  } catch {
+    return 'UTC';
+  }
+}
+
+/**
+ * Whether the server will take a workout dated yesterday right now. It allows the
+ * member's own today and yesterday, but never a date before yesterday in UTC
+ * (migration 20261005000006). West of UTC that closes "yesterday" once the UTC date
+ * has moved past the local one: about 8pm in New York in summer, 5pm in Los Angeles.
+ */
+export function yesterdayOpen(now: Date = new Date()): boolean {
+  return dayKey(now) >= utcDayKey(now);
+}
+
+/** Local time when "yesterday" stopped being loggable today (the last UTC midnight), such as "8:00 PM". */
+export function yesterdayClosedAt(now: Date = new Date()): string {
+  const midnightUtc = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate()));
+  return timeLabel(midnightUtc);
+}
+
 /** Parse a day key back to a local Date at noon (noon dodges daylight-saving edges). */
 export function fromKey(key: string): Date {
   const [y, m, d] = key.split('-').map(Number);

@@ -1,7 +1,7 @@
 /**
- * Turns the saved session into what the screens show. Phase 1 only: phase 2 gets
- * the same shape from the server (streaks, freezes and "days together" are
- * calculated there). The fake family in data/family.ts stays as the preview family.
+ * Turns the saved session, and the server's family when there is one, into what the
+ * screens show. Streaks, freezes and "days together" for a real family come from the
+ * server. The fake family in data/family.ts stays as the preview family.
  */
 import { memberColor } from '../theme/tokens';
 import {
@@ -26,11 +26,13 @@ import {
 } from '../data/family';
 import { joinNames, workoutSummary } from '../data/workouts';
 import { LoggedWorkout, SavedSession } from './session';
+import type { RemoteFamily, RemoteWorkout } from './backend';
 import {
   WEEKDAY_LETTER,
   WEEKDAY_SHORT,
   addDays,
   dateLabel,
+  daysBetween,
   dayKey,
   fromKey,
   greetingFor,
@@ -404,7 +406,209 @@ function previewFamilyView(session: SavedSession, preview: Preview | null, now: 
   };
 }
 
-export function buildView(session: SavedSession, preview: Preview | null, now: Date = new Date()): AppView {
-  if (preview || session.role === 'invitee') return previewFamilyView(session, preview, now);
+// ─── A real family from the server ───────────────────────────────────────────
+
+function asLogged(w: RemoteWorkout, photos: Record<string, string> | undefined): LoggedWorkout {
+  return {
+    id: w.id,
+    localDate: w.localDate,
+    loggedAt: w.createdAt,
+    type: w.type,
+    minutes: w.minutes,
+    note: w.note,
+    photoUri: photos?.[w.id] ?? null,
+  };
+}
+
+/**
+ * The view for a family on the server. Streaks, freezes and "days together" come from
+ * the server; labels, the week and the feed are worked out here from recent workouts.
+ */
+function familyView(session: SavedSession, family: RemoteFamily, now: Date): AppView {
+  const todayKey = dayKey(now);
+  const myId = session.remote!.memberId;
+  const logsBy = (memberId: string) =>
+    family.workouts.filter((w) => w.memberId === memberId).map((w) => asLogged(w, session.photos));
+
+  const joined: Member[] = family.members.map((m) => {
+    const mine = m.id === myId;
+    const latestToday = family.workouts.find((w) => w.memberId === m.id && w.localDate === todayKey);
+    const server = family.memberStreaks[m.id];
+    const moved = server?.movedToday ?? !!latestToday;
+    return {
+      id: m.id,
+      name: m.name,
+      color: m.color,
+      streak: server?.personalStreak ?? 0,
+      today: moved ? 'kept' : 'still',
+      meta: latestToday
+        ? `${workoutSummary({ type: latestToday.type, duration: minutesLabel(latestToday.minutes) })} · ${timeLabel(new Date(latestToday.createdAt))}`
+        : mine
+          ? `Still has today · usually ${SLOT_WORD[session.me.reminder]}`
+          : 'Still has today',
+      relationship: mine ? 'You' : undefined,
+      // Only your own photo, from this phone, until Storage is set up.
+      photoUri: mine ? session.me.photoUri : null,
+    };
+  });
+  const me = joined.find((m) => m.id === myId) ?? joined[0];
+
+  // People you invited by name who haven't joined. The server doesn't know names, so this list stays on the phone.
+  const joinedNames = new Set(joined.map((m) => m.name.trim().toLowerCase()));
+  const invited: Member[] = session.family.invited
+    .filter((p) => !joinedNames.has(p.name.trim().toLowerCase()))
+    .map((p, i) => ({
+      id: p.id,
+      name: p.name,
+      color: memberColor(joined.length + i),
+      streak: 0,
+      today: 'still',
+      meta: 'Invited · hasn’t joined yet',
+      relationship: 'Invited',
+      invited: true,
+    }));
+
+  const solo = joined.length < 2;
+  const keptCount = joined.filter((m) => m.today === 'kept').length;
+  const iKeptToday = me.today === 'kept';
+  const nudgeTarget = joined.find((m) => m.id !== me.id && m.today === 'still');
+  const myLogs = logsBy(myId);
+
+  // Streak and the first-30-days goal.
+  const s = family.streak;
+  const mineLongest = personalStreaks(myLogs, todayKey).longest;
+  const streak: StreakView = solo
+    ? { kind: 'solo', current: me.streak, longest: Math.max(mineLongest, me.streak), daysTogether: null, restartDay: false }
+    : {
+        kind: s.current === 0 && s.longest > 0 ? 'afterBreak' : 'building',
+        current: s.current,
+        longest: s.longest,
+        daysTogether: s.daysTogetherThisYear,
+        restartDay: s.current <= 1 && s.longest > 1,
+      };
+  const goal: GoalView = solo
+    ? { status: 'waiting', day: 0, total: GOAL_DAYS }
+    : s.longest >= GOAL_DAYS
+      ? { status: s.current === s.longest && s.current <= GOAL_DAYS + 1 ? 'done' : 'none', day: GOAL_DAYS, total: GOAL_DAYS }
+      : { status: 'active', day: s.current, total: GOAL_DAYS };
+
+  // This week, Monday to Sunday. A past day where someone didn't move but the family
+  // streak still runs through it was covered by a freeze.
+  const movedOn = (day: string) => new Set(family.workouts.filter((w) => w.localDate === day).map((w) => w.memberId));
+  const todayIdx = weekdayIndex(todayKey);
+  const monday = addDays(todayKey, -todayIdx);
+  const firstJoined = family.members.reduce((min, m) => (m.joinedOn < min ? m.joinedOn : min), todayKey);
+  // Once today counts, it's the newest day of the streak; until then the streak ends yesterday.
+  const streakDaysBack = joined.every((m) => m.today === 'kept') ? s.current - 1 : s.current;
+  const strip: WeekStripDay[] = [];
+  const rows: WeekRow[] = [];
+  let togetherDays = 0;
+  for (let i = 0; i < 7; i++) {
+    const key = addDays(monday, i);
+    const movers = movedOn(key);
+    const expected = family.members.filter((m) => m.joinedOn < key || movers.has(m.id));
+    const everyone = expected.length > 0 && expected.every((m) => movers.has(m.id));
+    const daysBack = daysBetween(key, todayKey);
+    const inStreak = !solo && daysBack >= 1 && daysBack <= streakDaysBack;
+    const state: WeekRow['state'] =
+      key === todayKey ? 'today' : key > todayKey ? 'missed' : everyone ? 'kept' : inStreak ? 'freeze' : 'missed';
+    if (key < todayKey && (state === 'kept' || state === 'freeze')) togetherDays += 1;
+    strip.push({ label: WEEKDAY_LETTER[i], state: key === todayKey && everyone ? 'kept' : state });
+    if (i <= todayIdx && key >= firstJoined) {
+      rows.push({
+        dow: WEEKDAY_SHORT[i],
+        date: `${fromKey(key).getDate()}`,
+        state,
+        avatars: joined.filter((m) => movers.has(m.id)).map((m) => m.id),
+        badge: key === todayKey ? 'Today' : state === 'freeze' ? 'Freeze day' : undefined,
+      });
+    }
+  }
+  const waitingFor = invited.length
+    ? `Waiting for ${joinNames(invited.map((m) => m.name))} to join.`
+    : 'Invite someone and their days will show up here too.';
+  const myWeek = ownWeek(myLogs, me, todayKey, session.me.joinedOn);
+
+  const details: Record<string, WorkoutDetail> = {};
+  for (const w of family.workouts) {
+    details[w.id] = { ...toDetail(asLogged(w, session.photos), w.memberId, todayKey), source: w.source, cheeredBy: w.cheeredBy };
+  }
+
+  const profile = ownProfile(myLogs, todayKey, family.name, me);
+  // The server's personal streak counts freeze days; the local count can't.
+  const streakStat = (n: number) => ({ value: n > 0 ? `${n}` : '–', unit: n > 0 ? (n === 1 ? 'day' : 'days') : undefined });
+  profile.stats[0] = { ...profile.stats[0], ...streakStat(me.streak) };
+  profile.stats[1] = { ...profile.stats[1], ...streakStat(Math.max(mineLongest, me.streak)) };
+  profile.recentWorkouts = profile.recentWorkouts.map((r) => details[r.id] ?? r);
+
+  return {
+    familyName: family.name,
+    joinCode: family.joinCode,
+    me,
+    allMembers: [...joined, ...invited],
+    members: Object.fromEntries([...joined, ...invited].map((m) => [m.id, m])),
+    familyList: [...joined].sort((a, b) => Number(b.today === 'kept') - Number(a.today === 'kept')),
+    invitedList: invited,
+    joinedCount: joined.length,
+    keptCount,
+    iKeptToday,
+    nudgeTarget,
+    today: {
+      dateLabel: dateLabel(now),
+      greeting: `${greetingFor(now)}, ${me.name}.`,
+      pending:
+        nudgeTarget && iKeptToday ? { id: nudgeTarget.id, prompt: `${nudgeTarget.name}’s still got today`, cta: 'cheer them on' } : null,
+    },
+    feed: family.workouts
+      .filter((w) => w.localDate >= addDays(todayKey, -1))
+      .map((w) => {
+        const who = joined.find((m) => m.id === w.memberId);
+        return {
+          ...feedItem(asLogged(w, session.photos), who ?? me, todayKey),
+          hearts: w.cheeredBy.length || undefined,
+        };
+      }),
+    week: solo
+      ? {
+          headline:
+            myWeek.movedDays === 0
+              ? 'Your week is open.'
+              : `You’ve moved ${myWeek.movedDays} ${myWeek.movedDays === 1 ? 'day' : 'days'} this week.`,
+          summary: waitingFor,
+          strip: myWeek.strip,
+          rows: myWeek.rows,
+        }
+      : {
+          headline:
+            togetherDays === 0
+              ? 'This week is open.'
+              : `${togetherDays} ${togetherDays === 1 ? 'day' : 'days'} together this week.`,
+          summary: s.current > 0 ? `${s.current}-day family streak.` : 'The family streak starts again with today.',
+          strip,
+          rows,
+        },
+    profile,
+    workouts: details,
+    streak,
+    goal,
+    milestone: familyMilestone,
+    usuallyLine: `usually ${SLOT_WORD[session.me.reminder]}`,
+  };
+}
+
+/**
+ * The preview family (Settings > Prototype preview) always wins, so App Review and
+ * empty-state checks can see a full family. Then the server's family, then local state.
+ */
+export function buildView(
+  session: SavedSession,
+  preview: Preview | null,
+  family: RemoteFamily | null = null,
+  now: Date = new Date(),
+): AppView {
+  if (preview) return previewFamilyView(session, preview, now);
+  // A server family that hasn't loaded yet (first launch offline) shows just you.
+  if (session.remote) return family ? familyView(session, family, now) : founderView(session, now);
+  if (session.role === 'invitee') return previewFamilyView(session, null, now);
   return founderView(session, now);
 }

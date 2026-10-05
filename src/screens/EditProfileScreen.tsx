@@ -8,6 +8,7 @@ import { PrimaryButton } from '../components/PrimaryButton';
 import { TextButton } from '../components/TextButton';
 import { TextField } from '../components/TextField';
 import { useApp, useView } from '../state/AppState';
+import { showError } from '../state/confirm';
 import { pickPhoto } from '../state/photos';
 import { RootStackScreenProps } from '../navigation/types';
 
@@ -51,8 +52,12 @@ export function EditProfileScreen({ navigation }: RootStackScreenProps<'EditProf
           title="Save"
           disabled={!name.trim()}
           onPress={async () => {
-            await updateProfile({ name, photoUri });
-            navigation.goBack();
+            try {
+              await updateProfile({ name, photoUri });
+              navigation.goBack();
+            } catch {
+              showError('Couldn’t save', 'Check your connection and try again.');
+            }
           }}
         />
       </View>

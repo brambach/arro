@@ -1,5 +1,14 @@
 import { Alert, Platform } from 'react-native';
 
+/** Tell someone an action failed. Alert.alert does nothing on web, so the web preview uses window.alert. */
+export function showError(title: string, message: string): void {
+  if (Platform.OS === 'web') {
+    if (typeof window !== 'undefined') window.alert(`${title}\n\n${message}`);
+    return;
+  }
+  Alert.alert(title, message);
+}
+
 /** Ask a yes/no question. Alert.alert does nothing on web, so the web preview uses window.confirm. */
 export function confirmAction(title: string, message: string, confirmLabel: string): Promise<boolean> {
   if (Platform.OS === 'web') {
