@@ -131,8 +131,9 @@ Founder path:
 2. Sign in (stubbed until phase 2).
 3. Name the family.
 4. How you move: Apple Health (automatic) or check in by hand.
-5. Invite (main step): share sheet with a prefilled message, link and a short
-   join code. "I'll do it later" is secondary.
+5. Invite (main step): share sheet with a prefilled message and a short join
+   code. "I'll do it later" is secondary. The message adds the link once phase 5
+   is live; until then it says to tap "I have an invite" and enter the code.
 6. "When do you usually move?" morning / lunch / evening. This sets the reminder
    and the "usually evenings" line on Today. Then the notification pre-prompt.
 7. Today in its waiting state.
@@ -217,6 +218,10 @@ Also in this phase:
   served over HTTPS, and `ios.associatedDomains` in `app.json`.
 - Links don't survive an App Store install reliably, so every invite also carries
   a short code, and the welcome screen asks for it.
+- Until the domain is bought, `inviteMessage()` in `src/state/invite.ts` leaves
+  the link out and sends only the code. `inviteLink()` is kept for this phase;
+  add it back to the message here. Joining by code works without the domain, so
+  TestFlight family testing doesn't wait on this phase.
 
 ## Phase 6 - App Store
 
