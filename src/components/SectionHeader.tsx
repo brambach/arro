@@ -5,7 +5,7 @@ import { weights } from '../theme/typography';
 
 /**
  * SectionHeader — a bold section label with an optional accent action on the right
- * (e.g. "Family today · Nudge", "Recent runs · See all").
+ * (e.g. "Family today · Nudge", "Recent workouts · See all").
  */
 type Props = {
   title: string;

@@ -10,10 +10,10 @@ import { CheerButton } from './CheerButton';
 import { Heart } from './Icons';
 
 /**
- * RunCard — a feed entry. A kept post shows a cheer line + heart count; a
+ * WorkoutCard — a feed entry. A kept post shows a cheer line + heart count; a
  * still-has-today post shows a nudge line + a Cheer button.
  */
-export function RunCard({ item, onPress }: { item: FeedItem; onPress?: () => void }) {
+export function WorkoutCard({ item, onPress }: { item: FeedItem; onPress?: () => void }) {
   const member = members[item.memberId];
 
   return (

@@ -7,7 +7,7 @@ export type RootStackParamList = {
   Main: undefined;
   Milestone: undefined;
   Settings: undefined;
-  RunDetail: undefined;
+  WorkoutDetail: { workoutId: string };
   Nudge: undefined;
   FamilyMembers: undefined;
 };

@@ -3,7 +3,7 @@ import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { OnboardingScreen } from '../screens/OnboardingScreen';
 import { MilestoneScreen } from '../screens/MilestoneScreen';
 import { SettingsScreen } from '../screens/SettingsScreen';
-import { RunDetailScreen } from '../screens/RunDetailScreen';
+import { WorkoutDetailScreen } from '../screens/WorkoutDetailScreen';
 import { NudgeModalScreen } from '../screens/NudgeModalScreen';
 import { FamilyMembersScreen } from '../screens/FamilyMembersScreen';
 import { MainTabs } from './MainTabs';
@@ -23,8 +23,8 @@ export function RootNavigator() {
         options={{ animation: 'slide_from_right' }}
       />
       <Stack.Screen
-        name="RunDetail"
-        component={RunDetailScreen}
+        name="WorkoutDetail"
+        component={WorkoutDetailScreen}
         options={{ animation: 'slide_from_right' }}
       />
       <Stack.Screen

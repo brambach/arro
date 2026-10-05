@@ -13,7 +13,7 @@ const STEM = 62; // stem+foot dash length (over-estimate)
 
 /**
  * Logo-draw splash (Motion Storyboard C1 / Handoff V1·4): the mark draws like a
- * running route — the bowl loop, then the forward foot — then the wordmark fades
+ * route on a map — the bowl loop, then the forward foot — then the wordmark fades
  * in, then the whole splash fades out to reveal the app. ~1.2s, one pass, never
  * loops. Reduced Motion → show the finished mark and fade out quickly.
  */

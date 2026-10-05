@@ -17,7 +17,7 @@ export function NudgeModalScreen({ navigation }: RootStackScreenProps<'Nudge'>) 
       <View style={styles.card}>
         <AvatarRing member={member} size={70} style={styles.avatar} />
         <Text style={styles.title}>{member.name} still has today.</Text>
-        <Text style={styles.sub}>Usually an evening run.</Text>
+        <Text style={styles.sub}>Usually moves in the evening.</Text>
         <View style={styles.divider} />
         <Text style={styles.prompt}>A little nudge?</Text>
         <Text style={styles.promptSub}>It’s never too late.</Text>

@@ -4,12 +4,12 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { colors, radii } from '../theme/tokens';
 import { type, weights } from '../theme/typography';
 import { AvatarRing } from '../components/AvatarRing';
-import { BellIcon, ChevronLeft, ChevronRight, LockIcon, StravaIcon, TargetIcon, UsersIcon } from '../components/Icons';
+import { BellIcon, ChevronLeft, ChevronRight, LockIcon, PulseIcon, TargetIcon, UsersIcon } from '../components/Icons';
 import { currentUser, settings } from '../data/family';
 import { RootStackScreenProps } from '../navigation/types';
 
 const ICONS: Record<string, React.ReactNode> = {
-  strava: <StravaIcon />,
+  pulse: <PulseIcon />,
   users: <UsersIcon size={18} color="#fff" strokeWidth={1.9} />,
   target: <TargetIcon />,
   bell: <BellIcon />,

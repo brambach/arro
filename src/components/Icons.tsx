@@ -122,7 +122,7 @@ export const FlameIcon = ({ size = 24, color = colors.primary }: IconProps) => (
 );
 
 // ── Settings row icons ────────────────────────────────────────────────────
-export const StravaIcon = ({ size = 18, color = '#fff', strokeWidth = 2.2 }: IconProps) => (
+export const PulseIcon = ({ size = 18, color = '#fff', strokeWidth = 2.2 }: IconProps) => (
   <Stroke size={size} color={color} strokeWidth={strokeWidth}>
     <Path d="M3 12h4l2.5-7 5 14 2.5-7H21" />
   </Stroke>

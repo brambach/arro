@@ -8,6 +8,7 @@ import { FadeInView } from '../components/FadeInView';
 import { Screen } from '../components/Screen';
 import { SectionHeader } from '../components/SectionHeader';
 import { members, profile } from '../data/family';
+import { workoutSourceLabels, workoutSummary, workoutTypeLabels } from '../data/workouts';
 import { MainTabScreenProps } from '../navigation/types';
 
 export function ProfileScreen({ navigation }: MainTabScreenProps<'Me'>) {
@@ -50,20 +51,20 @@ export function ProfileScreen({ navigation }: MainTabScreenProps<'Me'>) {
       </FadeInView>
 
       <FadeInView delay={120} style={styles.section}>
-        <SectionHeader title="Recent runs" action="See all" titleColor={colors.ink} style={styles.sectionHead} />
-        {profile.recentRuns.map((r, i) => (
+        <SectionHeader title="Recent workouts" action="See all" titleColor={colors.ink} style={styles.sectionHead} />
+        {profile.recentWorkouts.map((w, i) => (
           <Pressable
-            key={r.when}
-            onPress={() => navigation.navigate('RunDetail')}
+            key={w.id}
+            onPress={() => navigation.navigate('WorkoutDetail', { workoutId: w.id })}
             accessibilityRole="button"
-            accessibilityLabel={`Run ${r.when}`}
-            style={[styles.runRow, i < profile.recentRuns.length - 1 && styles.runBorder]}
+            accessibilityLabel={`${workoutTypeLabels[w.type]} ${w.when}`}
+            style={[styles.workoutRow, i < profile.recentWorkouts.length - 1 && styles.workoutBorder]}
           >
-            <AvatarRing member={members[r.memberId]} size={34} />
+            <AvatarRing member={members[w.memberId]} size={34} />
             <View style={{ flex: 1 }}>
-              <Text style={styles.runWhen}>{r.when}</Text>
-              <Text style={styles.runMeta}>
-                {r.dist} · {r.place}
+              <Text style={styles.workoutWhen}>{w.when}</Text>
+              <Text style={styles.workoutMeta}>
+                {workoutSummary(w)} · {workoutSourceLabels[w.source]}
               </Text>
             </View>
           </Pressable>
@@ -131,10 +132,10 @@ const styles = StyleSheet.create({
   statLabel: { fontSize: 12, color: colors.muted },
   statValue: { fontSize: 22, fontWeight: weights.bold, color: colors.ink, marginTop: 3 },
   statUnit: { fontSize: 13, fontWeight: weights.semibold, color: colors.faint2 },
-  runRow: { flexDirection: 'row', alignItems: 'center', gap: 12, paddingVertical: 8.5 },
-  runBorder: { borderBottomWidth: 1, borderBottomColor: colors.divider },
-  runWhen: { fontSize: 14, fontWeight: weights.semibold, color: colors.ink },
-  runMeta: { fontSize: 12.5, color: colors.faint, marginTop: 1 },
+  workoutRow: { flexDirection: 'row', alignItems: 'center', gap: 12, paddingVertical: 8.5 },
+  workoutBorder: { borderBottomWidth: 1, borderBottomColor: colors.divider },
+  workoutWhen: { fontSize: 14, fontWeight: weights.semibold, color: colors.ink },
+  workoutMeta: { fontSize: 12.5, color: colors.faint, marginTop: 1 },
   milestones: { flexDirection: 'row', gap: 16, marginTop: 4 },
   msCol: { alignItems: 'center', gap: 6 },
   msCircle: {

@@ -9,9 +9,9 @@ import { PrimaryButton } from '../components/PrimaryButton';
 import { RootStackScreenProps } from '../navigation/types';
 
 const FEATURES = [
-  { title: 'Connect Strava', body: 'Your daily runs sync automatically.', icon: <SyncIcon /> },
-  { title: 'Join your family', body: "See everyone's streak in one place.", icon: <UsersIcon /> },
-  { title: 'Keep your daily streak', body: 'One run a day keeps the chain alive.', icon: <FlameIcon /> },
+  { title: 'Any movement counts', body: 'Walk, gym, yoga, swim or run. Apple Health or “I moved today”.', icon: <SyncIcon /> },
+  { title: 'Join your family', body: 'See everyone’s day in one place.', icon: <UsersIcon /> },
+  { title: 'Keep one streak together', body: 'Everyone moves a little, every day.', icon: <FlameIcon /> },
 ];
 
 export function OnboardingScreen({ navigation }: RootStackScreenProps<'Onboarding'>) {
@@ -40,7 +40,7 @@ export function OnboardingScreen({ navigation }: RootStackScreenProps<'Onboardin
           ))}
         </View>
 
-        <PrimaryButton title="Connect Strava" onPress={() => navigation.replace('Main')} style={styles.cta} />
+        <PrimaryButton title="Get started" onPress={() => navigation.replace('Main')} style={styles.cta} />
         <Text style={styles.note}>Free for your whole family · no ads</Text>
       </FadeInView>
     </View>

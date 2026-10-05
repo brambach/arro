@@ -5,7 +5,7 @@ import { colors, radii, shadows } from '../theme/tokens';
 import { weights } from '../theme/typography';
 import { AvatarRing } from '../components/AvatarRing';
 import { ChevronLeft, ChevronRight, PlusIcon, UserPlusIcon } from '../components/Icons';
-import { familyMembersList, familyRelationships } from '../data/family';
+import { familyMembersList } from '../data/family';
 import { RootStackScreenProps } from '../navigation/types';
 
 export function FamilyMembersScreen({ navigation }: RootStackScreenProps<'FamilyMembers'>) {
@@ -31,7 +31,7 @@ export function FamilyMembersScreen({ navigation }: RootStackScreenProps<'Family
               <AvatarRing member={m} size={40} />
               <View style={{ flex: 1 }}>
                 <Text style={styles.name}>{m.name}</Text>
-                <Text style={styles.rel}>{familyRelationships[m.id]}</Text>
+                <Text style={styles.rel}>{m.relationship}</Text>
               </View>
               <View style={[styles.dot, { backgroundColor: m.color }]} />
             </View>

@@ -20,7 +20,7 @@ export function MilestoneScreen({ navigation }: RootStackScreenProps<'Milestone'
       <View style={styles.photo}>
         <PhotoSlot
           uri={milestone.photoUri}
-          placeholderLabel="Milestone photo — drop a run photo"
+          placeholderLabel="Milestone photo — drop a workout photo"
           style={StyleSheet.absoluteFill}
         />
         <LinearGradient
