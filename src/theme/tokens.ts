@@ -49,10 +49,16 @@ export const colors = {
 /**
  * One solid hue per person — avatar circles and status dots. Handed out in
  * join order: the founder gets the first, the next person to join the second.
+ * The server keeps a copy in private.member_palette()
+ * (supabase/migrations/20261005000001_schema.sql), hands out the first colour no
+ * current member has, and stores the hex on the member. Change both together.
  */
 export const memberPalette = ['#EF6C1A', '#DF6B96', '#4F97CF', '#4FA06B', '#7B7FD0', '#D9A23A'] as const;
 
-/** The colour for the member who joined at `joinIndex` (0 = founder). Wraps after the palette. */
+/**
+ * The colour for the member who joined at `joinIndex` (0 = founder). Wraps after the palette.
+ * Only for the fake data: real members use the colour the server stored.
+ */
 export function memberColor(joinIndex: number): string {
   return memberPalette[joinIndex % memberPalette.length];
 }
