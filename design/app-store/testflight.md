@@ -88,8 +88,8 @@ what each one is for:
   the existing `plugins` array; keep the other plugins as they are.
 - The Health text (`healthSharePermission`) is already specific and correct.
   `healthUpdatePermission: false` is right, since Arro never writes to Health.
-- The icon: `"icon": "./assets/icon.png"` stays. Only the image changes once
-  you've picked an option (`icon-options.md`).
+- The icon: `"icon": "./assets/icon.png"` stays. The image is now option A
+  from `icon-options.md`.
 
 Optional, for the app thread: `pickPhoto()` in `src/state/photos.ts` asks for
 full photo library access before opening the picker. iOS's picker doesn't need

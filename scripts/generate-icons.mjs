@@ -1,6 +1,7 @@
 /**
  * Generates the Arro app icons from the final production mark (lowercase-"a"
- * route mark, Arro Brand & Logo handoff) on the flat Arro-orange tile.
+ * route mark, Arro Brand & Logo handoff): a paper mark on a flat clay tile
+ * (Paper and clay, option A in design/app-store/icon-options.md).
  *
  * sharp is only needed to rasterize and is NOT a project dependency. Run with:
  *   npm install --no-save sharp && node scripts/generate-icons.mjs
@@ -10,7 +11,8 @@ import { fileURLToPath } from 'node:url';
 import { dirname, join } from 'node:path';
 
 const assets = join(dirname(fileURLToPath(import.meta.url)), '..', 'assets');
-const ORANGE = '#F26A1B';
+const CLAY = '#A65A3C';
+const PAPER = '#FBF9F5';
 
 /** The mark in a 120 viewBox, scaled+centered into an N canvas at `frac` of the canvas. */
 function mark(N, frac, color) {
@@ -31,17 +33,17 @@ function svg(N, { bg, markColor, frac }) {
 }
 
 const targets = [
-  { file: 'icon.png', n: 1024, opts: { bg: ORANGE, markColor: '#fff', frac: 0.587 } },
-  { file: 'android-icon-background.png', n: 1024, opts: { bg: ORANGE } },
-  { file: 'android-icon-foreground.png', n: 1024, opts: { markColor: '#fff', frac: 0.46 } },
+  { file: 'icon.png', n: 1024, opts: { bg: CLAY, markColor: PAPER, frac: 0.587 } },
+  { file: 'android-icon-background.png', n: 1024, opts: { bg: CLAY } },
+  { file: 'android-icon-foreground.png', n: 1024, opts: { markColor: PAPER, frac: 0.46 } },
   { file: 'android-icon-monochrome.png', n: 1024, opts: { markColor: '#000', frac: 0.46 } },
-  { file: 'favicon.png', n: 48, opts: { bg: ORANGE, markColor: '#fff', frac: 0.6 } },
-  { file: 'splash-icon.png', n: 1024, opts: { bg: ORANGE, markColor: '#fff', frac: 0.55 } },
+  { file: 'favicon.png', n: 48, opts: { bg: CLAY, markColor: PAPER, frac: 0.6 } },
+  { file: 'splash-icon.png', n: 1024, opts: { bg: CLAY, markColor: PAPER, frac: 0.55 } },
 ];
 
 for (const { file, n, opts } of targets) {
   let img = sharp(Buffer.from(svg(n, opts)));
-  if (opts.bg) img = img.flatten({ background: ORANGE });
+  if (opts.bg) img = img.flatten({ background: opts.bg });
   await img.png().toFile(join(assets, file));
   console.log('wrote', file, `(${n}x${n})`);
 }

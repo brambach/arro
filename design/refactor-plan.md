@@ -224,7 +224,8 @@ Also in this phase:
   description. `supportsTablet` is already `false` from phase 0.
 - Reserve the App Store name "Arro: Family Move Streak" (open decision 4). Not
   done yet; App Store Connect may still refuse it.
-- Real launcher icon (`assets/icon.png` is still the Expo template).
+- Real launcher icon. Done: option A, a clay tile with a paper "a"
+  (`design/app-store/icon-options.md`).
 - Privacy policy and support URLs, App Privacy labels (health, photos, name,
   email). Health data is never used for ads (Guideline 5.1.3).
 - Review notes with a demo account that's already in a family, so the reviewer

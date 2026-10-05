@@ -18,13 +18,11 @@ done in the Apple account.
 
 ## Open items
 
-1. **Pick an icon** (A, B or C in `icon-options.md`), then OK the `sharp`
-   install so the files can be regenerated.
-2. **Buy arrofamily.com** and choose a host for the two pages (`hosting.md`).
+1. **Buy arrofamily.com** and choose a host for the two pages (`hosting.md`).
    Then replace `{{SUPPORT_EMAIL}}` and `{{DATE}}` in the pages.
-3. **Demo family** on the server for App Review (`review-notes.md`), made on
+2. **Demo family** on the server for App Review (`review-notes.md`), made on
    the day you submit for external testing.
-4. **Re-check `app-privacy.md`** when photos start uploading. Push tokens from
+3. **Re-check `app-privacy.md`** when photos start uploading. Push tokens from
    phase 4 are already covered there and in the privacy policy; if a build
    ships without notifications, the policy's notifications paragraph can stay,
    since it only applies "if you allow them".
@@ -32,3 +30,5 @@ done in the Apple account.
 Done by the phase 4 thread: the placeholder comment bar is gone from Workout
 detail, and app.json has the build number, encryption flag and photo text from
 `testflight.md`.
+
+Done: icon A (clay tile, paper "a") is in `assets/`; see `icon-options.md`.

@@ -1,7 +1,10 @@
 # Launcher icon options
 
-`assets/icon.png` today is the white lowercase-"a" route mark on Arro orange
-`#F26A1B`, from the direction before Paper and clay. All three options keep the
+**Picked: A** (Oct 2026). `assets/` now has the clay tile with the paper "a",
+and `scripts/generate-icons.mjs` uses those colours.
+
+Before that, `assets/icon.png` was the white lowercase-"a" route mark on Arro
+orange `#F26A1B`, from the direction before Paper and clay. All three options keep the
 same mark (geometry from `scripts/generate-icons.mjs`) and only change colour,
 so the brand stays recognisable. Previews (512 px, square; iOS rounds the
 corners) are in `icon-options/`.
@@ -23,17 +26,16 @@ forward", but it's the least legible at small sizes.
 
 ## What regenerating changes
 
-Once you pick, `scripts/generate-icons.mjs` gets the new colours and writes,
-in `assets/`:
+`scripts/generate-icons.mjs` writes, in `assets/`:
 
 - `icon.png` (1024, the iOS icon app.json points at)
 - `splash-icon.png`, `favicon.png`
 - `android-icon-background.png`, `-foreground.png`, `-monochrome.png`
 
-Running it needs `npm install --no-save sharp` (an install, so it waits for your
-OK). app.json's `android.adaptiveIcon.backgroundColor` (`#EE7B3A`) and any
-splash colour would also want the new tile colour; that's an app.json change
-for the phase 4 thread or you. Android isn't in v1, so it isn't urgent.
+Running it needs `npm install --no-save sharp`. The option A files in `assets/`
+were drawn without sharp, by a one-off CoreGraphics script using the same
+geometry and colours, so the script hasn't been run with the new colours yet.
+app.json's `android.adaptiveIcon.backgroundColor` is now clay `#A65A3C` too.
 
 ## Later, optional
 
