@@ -81,3 +81,26 @@ export async function saveSession(session: SavedSession): Promise<void> {
 export async function clearSession(): Promise<void> {
   await AsyncStorage.multiRemove([KEY, FAMILY_KEY]);
 }
+
+const MOVE_METHOD_KEY = 'arro.moveMethod.v1';
+
+/**
+ * How this person moves, kept apart from the session so signing out doesn't
+ * forget it: Apple Health belongs to the phone, and the server doesn't store it.
+ */
+export async function loadMoveMethod(): Promise<MoveMethod | null> {
+  try {
+    const raw = await AsyncStorage.getItem(MOVE_METHOD_KEY);
+    return raw === 'health' || raw === 'manual' ? raw : null;
+  } catch {
+    return null;
+  }
+}
+
+export async function saveMoveMethod(method: MoveMethod): Promise<void> {
+  await AsyncStorage.setItem(MOVE_METHOD_KEY, method);
+}
+
+export async function clearMoveMethod(): Promise<void> {
+  await AsyncStorage.removeItem(MOVE_METHOD_KEY);
+}
