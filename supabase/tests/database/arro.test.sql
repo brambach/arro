@@ -7,7 +7,7 @@ begin;
 create extension if not exists pgtap with schema extensions;
 set local search_path = public, extensions;
 
-select plan(39);
+select plan(69);
 
 -- Users -----------------------------------------------------------------------
 insert into auth.users (id, email, aud, role) values
@@ -16,13 +16,18 @@ insert into auth.users (id, email, aud, role) values
   ('b1000000-0000-0000-0000-000000000000', 'b1@arro.test', 'authenticated', 'authenticated'),
   ('b2000000-0000-0000-0000-000000000000', 'b2@arro.test', 'authenticated', 'authenticated'),
   ('c1000000-0000-0000-0000-000000000000', 'c1@arro.test', 'authenticated', 'authenticated'),
-  ('d1000000-0000-0000-0000-000000000000', 'd1@arro.test', 'authenticated', 'authenticated');
+  ('d1000000-0000-0000-0000-000000000000', 'd1@arro.test', 'authenticated', 'authenticated'),
+  ('e1000000-0000-0000-0000-000000000000', 'e1@arro.test', 'authenticated', 'authenticated'),
+  ('e2000000-0000-0000-0000-000000000000', 'e2@arro.test', 'authenticated', 'authenticated'),
+  ('f1000000-0000-0000-0000-000000000000', 'f1@arro.test', 'authenticated', 'authenticated');
 
 -- Family A: both in Brisbane. A1 joins 1 June, A2 joins 3 June.
 insert into public.families (id, name) values
   ('aaaaaaaa-0000-0000-0000-000000000000', 'Family A'),
   ('bbbbbbbb-0000-0000-0000-000000000000', 'Family B'),
-  ('cccccccc-0000-0000-0000-000000000000', 'Family C');
+  ('cccccccc-0000-0000-0000-000000000000', 'Family C'),
+  ('eeeeeeee-0000-0000-0000-000000000000', 'Family E'),
+  ('ffffffff-0000-0000-0000-000000000000', 'Family F');
 
 insert into public.members (id, family_id, user_id, display_name, colour, timezone, joined_at) values
   ('a1111111-0000-0000-0000-000000000000', 'aaaaaaaa-0000-0000-0000-000000000000',
@@ -36,7 +41,20 @@ insert into public.members (id, family_id, user_id, display_name, colour, timezo
    'b2000000-0000-0000-0000-000000000000', 'B2', '#DF6B96', 'America/Los_Angeles', '2026-06-01 10:00-07'),
   -- Family C: one member, so no family streak yet.
   ('c1111111-0000-0000-0000-000000000000', 'cccccccc-0000-0000-0000-000000000000',
-   'c1000000-0000-0000-0000-000000000000', 'C1', '#EF6C1A', 'Europe/London', '2026-06-01 09:00+01');
+   'c1000000-0000-0000-0000-000000000000', 'C1', '#EF6C1A', 'Europe/London', '2026-06-01 09:00+01'),
+  -- Family E (UTC, dates relative to now): E1 joined 6 days ago, E2 5 days ago.
+  ('e1111111-0000-0000-0000-000000000000', 'eeeeeeee-0000-0000-0000-000000000000',
+   'e1000000-0000-0000-0000-000000000000', 'E1', '#EF6C1A', 'UTC', now() - interval '6 days'),
+  ('e2222222-0000-0000-0000-000000000000', 'eeeeeeee-0000-0000-0000-000000000000',
+   'e2000000-0000-0000-0000-000000000000', 'E2', '#DF6B96', 'UTC', now() - interval '5 days'),
+  -- Family F: one member who joined 1 July and then stopped, for the weekly freeze.
+  ('f1111111-0000-0000-0000-000000000000', 'ffffffff-0000-0000-0000-000000000000',
+   'f1000000-0000-0000-0000-000000000000', 'F1', '#EF6C1A', 'UTC', '2026-07-01 09:00+00');
+
+-- Fixture workouts below are older than yesterday, which the date trigger rejects
+-- for real clients. It's switched off while the fixtures go in (inside this
+-- transaction only) and back on before any role is set.
+alter table public.workouts disable trigger workouts_check_date;
 
 -- A1 moves every day 1-10 June except the 5th and the 7th.
 insert into public.workouts (member_id, local_date, type, source)
@@ -60,6 +78,21 @@ select 'b1111111-0000-0000-0000-000000000000', d::date, 'swim', 'manual'
 insert into public.workouts (member_id, local_date, type, source)
 select 'b2222222-0000-0000-0000-000000000000', d::date, 'yoga', 'manual'
   from generate_series('2026-06-01'::date, '2026-06-03', interval '1 day') d;
+
+-- E1 moves every day from 6 days ago to today. E2 moves once, 4 days ago: their
+-- freeze covers 3 days ago, then 2 days ago and yesterday are real misses.
+insert into public.workouts (member_id, local_date, type, source)
+select 'e1111111-0000-0000-0000-000000000000', d::date, 'walk', 'manual'
+  from generate_series((now() at time zone 'UTC')::date - 6, (now() at time zone 'UTC')::date, interval '1 day') d;
+insert into public.workouts (member_id, local_date, type, source)
+values ('e2222222-0000-0000-0000-000000000000', (now() at time zone 'UTC')::date - 4, 'walk', 'manual');
+
+-- F1 moves on 1 and 2 July, then nothing.
+insert into public.workouts (member_id, local_date, type, source) values
+  ('f1111111-0000-0000-0000-000000000000', '2026-07-01', 'walk', 'manual'),
+  ('f1111111-0000-0000-0000-000000000000', '2026-07-02', 'walk', 'manual');
+
+alter table public.workouts enable trigger workouts_check_date;
 
 -- Streaks: missed day and freeze ---------------------------------------------
 -- As of 10 June, 8pm in Brisbane.
@@ -182,15 +215,15 @@ select is((select count(*)::integer from public.family_plans), 1, 'A1 can read f
 
 select throws_ok(
   $$ insert into public.workouts (member_id, local_date, type, source)
-     values ('b1111111-0000-0000-0000-000000000000', '2026-06-09', 'walk', 'manual') $$,
+     values ('b1111111-0000-0000-0000-000000000000', current_date, 'walk', 'manual') $$,
   '42501', null, 'A1 can''t log a workout as someone in family B');
 select throws_ok(
   $$ insert into public.workouts (member_id, local_date, type, source)
-     values ('a2222222-0000-0000-0000-000000000000', '2026-06-09', 'walk', 'manual') $$,
+     values ('a2222222-0000-0000-0000-000000000000', current_date, 'walk', 'manual') $$,
   '42501', null, 'A1 can''t log a workout as A2 either');
 select lives_ok(
   $$ insert into public.workouts (member_id, local_date, type, source)
-     values ('a1111111-0000-0000-0000-000000000000', '2026-06-09', 'other', 'manual') $$,
+     values ('a1111111-0000-0000-0000-000000000000', current_date, 'other', 'manual') $$,
   'A1 can log their own workout');
 select throws_ok(
   $$ insert into public.workouts (member_id, local_date, type, source)
@@ -248,10 +281,13 @@ insert into public.invites (code, family_id, invited_by)
 values ('TEST42', 'aaaaaaaa-0000-0000-0000-000000000000', 'a1111111-0000-0000-0000-000000000000');
 
 set local role anon;
+set local request.jwt.claims = '{"role": "anon"}';
+set local request.headers = '{"cf-connecting-ip": "203.0.113.1"}';
 select results_eq(
-  $$ select family_name, invited_by_name, member_names from public.preview_invite('test42') $$,
-  $$ values ('Family A', 'A1', array['A1', 'A2']) $$,
-  'a code shows the family name, who invited and the members before signing in');
+  $$ select family_name, member_count, invited_by_name, member_names, member_colours, member_photo_paths, family_streak
+       from public.preview_invite('test42') $$,
+  $$ values ('Family A', 2, null::text, null::text[], null::text[], null::text[], null::integer) $$,
+  'before signing in a code shows only the family name and member count');
 
 set local role authenticated;
 set local request.jwt.claims = '{"sub": "d1000000-0000-0000-0000-000000000000", "role": "authenticated"}';
@@ -270,6 +306,165 @@ select is((select count(*)::integer from public.members where user_id = 'd100000
 delete from auth.users where id = 'c1000000-0000-0000-0000-000000000000';
 select is((select count(*)::integer from public.families where id = 'cccccccc-0000-0000-0000-000000000000'),
   0, 'a family with no members left is deleted');
+
+-- Workout dates: today or yesterday only ------------------------------------------------
+-- E1 and E2 are in UTC, so their today is (now() at time zone 'UTC')::date.
+set local role authenticated;
+set local request.jwt.claims = '{"sub": "e1000000-0000-0000-0000-000000000000", "role": "authenticated"}';
+
+select lives_ok(
+  $$ insert into public.workouts (member_id, local_date, type, source)
+     values ('e1111111-0000-0000-0000-000000000000', (now() at time zone 'UTC')::date, 'yoga', 'manual') $$,
+  'a workout dated today is accepted');
+select lives_ok(
+  $$ insert into public.workouts (member_id, local_date, type, source)
+     values ('e1111111-0000-0000-0000-000000000000', (now() at time zone 'UTC')::date - 1, 'yoga', 'manual') $$,
+  'a workout dated yesterday is accepted');
+select throws_ok(
+  $$ insert into public.workouts (member_id, local_date, type, source)
+     values ('e1111111-0000-0000-0000-000000000000', (now() at time zone 'UTC')::date - 2, 'yoga', 'manual') $$,
+  '22023', null, 'a workout dated two days ago is rejected');
+select throws_ok(
+  $$ insert into public.workouts (member_id, local_date, type, source)
+     values ('e1111111-0000-0000-0000-000000000000', (now() at time zone 'UTC')::date + 1, 'yoga', 'manual') $$,
+  '22023', null, 'a workout dated tomorrow is rejected');
+select lives_ok(
+  $$ insert into public.workouts (member_id, local_date, type, source, health_workout_id)
+     values ('e1111111-0000-0000-0000-000000000000', (now() at time zone 'UTC')::date - 1, 'run', 'health', 'HK-E1-1') $$,
+  'a Health sync from yesterday is accepted');
+select throws_ok(
+  $$ insert into public.workouts (member_id, local_date, type, source, health_workout_id)
+     values ('e1111111-0000-0000-0000-000000000000', (now() at time zone 'UTC')::date - 3, 'run', 'health', 'HK-E1-2') $$,
+  '22023', null, 'a Health workout from three days ago is rejected like any other');
+
+with edited as (
+  update public.workouts set note = 'felt good'
+   where member_id = 'e1111111-0000-0000-0000-000000000000' and local_date = (now() at time zone 'UTC')::date - 6
+  returning 1
+)
+select is((select count(*)::integer from edited), 1, 'editing the note on an old workout still works');
+with edited as (
+  update public.workouts set local_date = local_date, note = 'felt great'
+   where member_id = 'e1111111-0000-0000-0000-000000000000' and local_date = (now() at time zone 'UTC')::date - 6
+  returning 1
+)
+select is((select count(*)::integer from edited), 1, 'sending an old workout back with the same date still works');
+select throws_ok(
+  $$ update public.workouts set local_date = (now() at time zone 'UTC')::date - 5
+      where member_id = 'e1111111-0000-0000-0000-000000000000' and local_date = (now() at time zone 'UTC')::date - 6 $$,
+  '22023', null, 'moving a workout to another old date is rejected');
+
+-- E2 broke the family streak: 2 days ago and yesterday are real misses. No older
+-- date can be filled in to repair it.
+reset role;
+select results_eq(
+  $$ select day - (now() at time zone 'UTC')::date, state
+       from private.family_days('eeeeeeee-0000-0000-0000-000000000000')
+      where day between (now() at time zone 'UTC')::date - 3 and (now() at time zone 'UTC')::date - 1
+      order by day $$,
+  $$ values (-3, 'counted'), (-2, 'broken'), (-1, 'broken') $$,
+  'family E: the freeze covers 3 days ago, then the streak breaks');
+
+set local role authenticated;
+set local request.jwt.claims = '{"sub": "e2000000-0000-0000-0000-000000000000", "role": "authenticated"}';
+select throws_ok(
+  $$ insert into public.workouts (member_id, local_date, type, source)
+     values ('e2222222-0000-0000-0000-000000000000', (now() at time zone 'UTC')::date - 2, 'walk', 'manual') $$,
+  '22023', null, 'E2 can''t log the broken day afterwards');
+select throws_ok(
+  $$ insert into public.workouts (member_id, local_date, type, source)
+     values ('e2222222-0000-0000-0000-000000000000', (now() at time zone 'UTC')::date - 3, 'walk', 'manual') $$,
+  '22023', null, 'E2 can''t log the frozen day either');
+
+reset role;
+select results_eq(
+  $$ select day - (now() at time zone 'UTC')::date, state
+       from private.family_days('eeeeeeee-0000-0000-0000-000000000000')
+      where day between (now() at time zone 'UTC')::date - 3 and (now() at time zone 'UTC')::date - 1
+      order by day $$,
+  $$ values (-3, 'counted'), (-2, 'broken'), (-1, 'broken') $$,
+  'family E: the broken day is still broken after the attempts');
+
+-- Invites: codes, expiry and guessing ------------------------------------------------
+select is(
+  (select count(*)::integer from generate_series(1, 100) g
+    where private.new_join_code() ~ '^[A-HJKMNP-Z2-9]{6}$'),
+  100, '100 new join codes are all six characters from the code alphabet');
+select is(
+  (select prosrc !~ 'random\(\)' and prosrc ~ 'gen_random_bytes'
+     from pg_proc where oid = 'private.new_join_code()'::regprocedure),
+  true, 'join codes come from gen_random_bytes, not random()');
+
+set local role authenticated;
+set local request.jwt.claims = '{"sub": "a1000000-0000-0000-0000-000000000000", "role": "authenticated"}';
+
+with made as (
+  insert into public.invites (family_id, invited_by)
+  values ('aaaaaaaa-0000-0000-0000-000000000000', 'a1111111-0000-0000-0000-000000000000')
+  returning code, expires_at
+)
+select is(
+  (select code ~ '^[A-HJKMNP-Z2-9]{6}$' and expires_at = now() + interval '14 days' from made),
+  true, 'an invite made by a member gets a code and the 14-day expiry');
+select throws_ok(
+  $$ insert into public.invites (family_id, invited_by, expires_at)
+     values ('aaaaaaaa-0000-0000-0000-000000000000', 'a1111111-0000-0000-0000-000000000000', now() + interval '365 days') $$,
+  '42501', null, 'a member can''t choose an invite''s expiry');
+
+select results_eq(
+  $$ select family_name, member_count, invited_by_name, member_names, member_colours, family_streak
+       from public.preview_invite('test42') $$,
+  $$ values ('Family A', 2, 'A1', array['A1', 'A2'], array['#EF6C1A', '#DF6B96'], 0) $$,
+  'signed in, a code also shows who invited and the members');
+select throws_ok('select * from private.invite_attempts', '42501', null,
+  'signed-in clients can''t read the failed-attempt log');
+
+-- Ten failed guesses from one address, then it's blocked; others are not.
+set local role anon;
+set local request.jwt.claims = '{"role": "anon"}';
+set local request.headers = '{"cf-connecting-ip": "203.0.113.50"}';
+select is((select count(*)::integer from public.preview_invite('NOPE00')), 0, 'an unknown code shows nothing');
+select lives_ok(
+  $$ select count(*) from generate_series(1, 9) g cross join lateral public.preview_invite('NOPE0' || g) $$,
+  'nine more wrong codes are answered with nothing');
+reset role;
+select is((select count(*)::integer from private.invite_attempts where caller = 'ip:203.0.113.50'), 10,
+  'each wrong code was logged against the caller');
+set local role anon;
+select throws_ok($$ select * from public.preview_invite('NOPE99') $$, 'PT429', null,
+  'the eleventh attempt from the same address is refused');
+select throws_ok($$ select * from public.preview_invite('TEST42') $$, 'PT429', null,
+  'a blocked address is refused even with a right code');
+set local request.headers = '{"cf-connecting-ip": "203.0.113.51"}';
+select results_eq($$ select family_name from public.preview_invite('TEST42') $$, $$ values ('Family A') $$,
+  'another address still gets through');
+
+-- Across everyone: 200 failures in an hour blocks every caller.
+reset role;
+insert into private.invite_attempts (caller)
+select 'ip:198.51.100.' || g from generate_series(1, 200) g;
+set local role anon;
+set local request.headers = '{"cf-connecting-ip": "203.0.113.52"}';
+select throws_ok($$ select * from public.preview_invite('TEST42') $$, 'PT429', null,
+  'once 200 wrong codes came in within the hour, a fresh address is refused too');
+reset role;
+
+-- Freezes come back a week later ------------------------------------------------------------
+-- F1 moved on 1 and 2 July. 3 July is their first miss, so the freeze covers it.
+select is(private.freeze_refill_days(), 7, 'a used freeze comes back after 7 days');
+select results_eq(
+  $$ select day, status from private.member_days('f1111111-0000-0000-0000-000000000000', '2026-07-12 12:00+00')
+      where day in ('2026-07-03', '2026-07-09', '2026-07-10') order by day $$,
+  $$ values ('2026-07-03'::date, 'frozen'), ('2026-07-09', 'missed'), ('2026-07-10', 'frozen') $$,
+  'F1: a freeze used on the 3rd covers nothing on the 9th (6 days) and is back on the 10th (7 days)');
+select results_eq(
+  $$ select freeze_available, freeze_back_on from private.member_summary('f1111111-0000-0000-0000-000000000000', '2026-07-09 12:00+00') $$,
+  $$ values (false, '2026-07-10'::date) $$,
+  'F1: six days after using the freeze it isn''t back yet');
+select results_eq(
+  $$ select freeze_available, freeze_back_on from private.member_summary('f1111111-0000-0000-0000-000000000000', '2026-07-10 12:00+00') $$,
+  $$ values (true, null::date) $$,
+  'F1: seven days after using the freeze it is back');
 
 select * from finish();
 rollback;

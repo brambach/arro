@@ -33,7 +33,13 @@ This is a plan, not a spec. Check each library against the Expo SDK 57 docs
 - **What counts as a workout.** Any Health workout or any manual check-in, no
   minimum. Reconsider only if it gets gamed.
 - **Freeze days.** One automatic freeze per person, used without asking on a
-  missed day. Cadence still to confirm (recommendation: one per week).
+  missed day. It refills once a week: a freeze used on a day is back exactly 7
+  days later (`private.freeze_refill_days()`, pinned by a test).
+- **No backdating.** A workout can be logged for the member's own today or
+  yesterday only, Health workouts included, so nobody can fill in an old day to
+  repair a broken family streak. Enforced by the `workouts_check_date` trigger.
+  A phone that's offline for more than a day loses its Health workouts from before
+  yesterday.
 - **"Today" across timezones.** Each person's own local calendar day.
 - **iPhone only for v1.** Set `ios.supportsTablet` to `false` in `app.json` so
   there's no iPad review or iPad screenshots.
@@ -42,8 +48,8 @@ This is a plan, not a spec. Check each library against the Expo SDK 57 docs
 
 1. **A domain** for invite links, the privacy policy and a simple landing page.
    See "Domain" below.
-2. **Freeze cadence.** One automatic freeze per person; how often it refills.
-   Recommendation: once a week.
+2. ~~**Freeze cadence.**~~ **Decided (Oct 2026): weekly.** One automatic freeze
+   per person, back 7 days after it's used.
 3. **The paid plan.** Recommendation in `design/paid-plan.md`: v1 free, then
    Arro Family ($39.99 a year per family) in the first update.
 4. **The App Store name.** "Arro" on its own is taken (a travel app, a taxi app,
@@ -113,7 +119,9 @@ Founder path:
 
 Invitee path:
 1. Link or code -> "Bryce invited you to join <family>" with member faces and
-   the current family streak.
+   the current family streak. Before sign-in the server only returns the family
+   name and member count; names, faces and the streak come after sign-in
+   (`preview_invite`).
 2. Sign in.
 3. Optional photo. Colour assigned automatically.
 4. How you move.
@@ -156,6 +164,8 @@ Also in this phase:
 - In-app account deletion (App Store requirement) in Settings.
 - Replace `src/data/family.ts` with data hooks. Keep the fake data as a preview
   family for App Review and for empty-state previews.
+- The database spells it `colour` and the app's `Member` type spells it `color`;
+  the hooks need to map between them.
 
 ## Phase 3 - Apple Health
 
