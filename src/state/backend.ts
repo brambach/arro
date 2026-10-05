@@ -384,6 +384,24 @@ export async function updateMember(
   if (error) throw error;
 }
 
+/** Ties this phone's Expo push token to the signed-in person (register_push_token). */
+export async function registerPushToken(token: string): Promise<void> {
+  const { error } = await client().rpc('register_push_token', { p_token: token });
+  if (error) throw error;
+}
+
+/** Before signing out, so the next person on this phone doesn't get the last one's pushes. */
+export async function forgetPushToken(token: string): Promise<void> {
+  const { error } = await client().from('push_tokens').delete().eq('token', token);
+  if (error) throw error;
+}
+
+/** Sends whatever pushes are queued (the send-push edge function). Called after a join or a cheer. */
+export async function sendQueuedPushes(): Promise<void> {
+  const { error } = await client().functions.invoke('send-push');
+  if (error) throw error;
+}
+
 /** A manual "I moved today" check-in. Photos stay on the phone until Storage is set up. */
 export async function insertWorkout(
   memberId: string,

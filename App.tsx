@@ -1,9 +1,11 @@
 import React, { useCallback, useState } from 'react';
 import { StatusBar } from 'expo-status-bar';
-import { NavigationContainer, DefaultTheme, Theme } from '@react-navigation/native';
+import { NavigationContainer, DefaultTheme, Theme, createNavigationContainerRef } from '@react-navigation/native';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { colors } from './src/theme/tokens';
 import { RootNavigator } from './src/navigation/RootNavigator';
+import { NotificationTaps } from './src/navigation/NotificationTaps';
+import { RootStackParamList } from './src/navigation/types';
 import { AnimatedSplash } from './src/components/AnimatedSplash';
 import { AppStateProvider } from './src/state/AppState';
 
@@ -13,6 +15,8 @@ const arroTheme: Theme = {
   colors: { ...DefaultTheme.colors, background: colors.screen, card: colors.screen },
 };
 
+const navigationRef = createNavigationContainerRef<RootStackParamList>();
+
 export default function App() {
   const [splashDone, setSplashDone] = useState(false);
   const handleSplashDone = useCallback(() => setSplashDone(true), []);
@@ -20,9 +24,10 @@ export default function App() {
   return (
     <SafeAreaProvider>
       <AppStateProvider>
-        <NavigationContainer theme={arroTheme}>
+        <NavigationContainer ref={navigationRef} theme={arroTheme}>
           <StatusBar style="dark" />
           <RootNavigator />
+          <NotificationTaps navigation={navigationRef} />
           {!splashDone && <AnimatedSplash onDone={handleSplashDone} />}
         </NavigationContainer>
       </AppStateProvider>

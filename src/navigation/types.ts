@@ -22,6 +22,7 @@ export type RootStackParamList = {
   Settings: undefined;
   StreakRules: undefined;
   MoveMethod: undefined;
+  Notifications: undefined;
   WorkoutDetail: { workoutId: string };
   Nudge: { memberId?: string } | undefined;
   FamilyMembers: undefined;

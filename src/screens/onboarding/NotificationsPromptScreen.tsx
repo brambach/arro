@@ -8,13 +8,15 @@ import { OnboardingFrame } from '../../components/OnboardingFrame';
 import { useApp } from '../../state/AppState';
 import { InviteError } from '../../state/backend';
 import { showError } from '../../state/confirm';
+import { requestNotificationPermission } from '../../state/notifications';
 import { RootStackScreenProps } from '../../navigation/types';
 import { stepOf } from './steps';
 import { REMINDER_SLOTS } from './ReminderTimeScreen';
 
 /**
- * Pre-prompt: explains the reminder before iOS asks. It doesn't ask the OS yet (phase 4),
- * it only records the answer. Either button finishes onboarding and opens Today.
+ * Pre-prompt: explains the reminder before iOS asks. "Turn on reminders" shows iOS's
+ * sheet; either button finishes onboarding and opens Today. A "Don't Allow" there
+ * still finishes, and Settings > Notifications explains how to turn it on later.
  */
 export function NotificationsPromptScreen({ navigation }: RootStackScreenProps<'NotificationsPrompt'>) {
   const { draft, completeOnboarding } = useApp();
@@ -26,6 +28,7 @@ export function NotificationsPromptScreen({ navigation }: RootStackScreenProps<'
     if (busy) return;
     setBusy(true);
     try {
+      if (remindersWanted) await requestNotificationPermission();
       await completeOnboarding(remindersWanted);
     } catch (e) {
       setBusy(false);

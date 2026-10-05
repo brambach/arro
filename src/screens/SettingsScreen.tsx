@@ -10,6 +10,7 @@ import { Preview } from '../state/buildView';
 import { confirmAction, showError } from '../state/confirm';
 import { useApp, useView } from '../state/AppState';
 import { RootStackScreenProps } from '../navigation/types';
+import { REMINDER_SLOTS } from './onboarding/ReminderTimeScreen';
 
 // Ink icons on a paper tile: one quiet set instead of five bright hues.
 const ICONS: Record<string, React.ReactNode> = {
@@ -36,6 +37,8 @@ export function SettingsScreen({ navigation }: RootStackScreenProps<'Settings'>)
   const rows = settings.connection.map((row) =>
     row.key === 'moving' ? { ...row, value: session?.me.moveMethod === 'health' ? 'Apple Health' : 'I moved today' }
     : row.key === 'members' ? { ...row, value: `${view.allMembers.length} ${view.allMembers.length === 1 ? 'member' : 'members'}` }
+    : row.key === 'notifications'
+      ? { ...row, value: session?.me.remindersWanted ? (REMINDER_SLOTS.find((s) => s.slot === session.me.reminder)?.time ?? '') : 'Off' }
     : row,
   );
   const onSignOut = async () => {
@@ -93,7 +96,9 @@ export function SettingsScreen({ navigation }: RootStackScreenProps<'Settings'>)
                     ? () => navigation.navigate('FamilyMembers')
                     : row.key === 'rules'
                       ? () => navigation.navigate('StreakRules')
-                      : undefined
+                      : row.key === 'notifications'
+                        ? () => navigation.navigate('Notifications')
+                        : undefined
               }
               accessibilityRole="button"
               accessibilityLabel={row.label}

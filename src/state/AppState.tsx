@@ -9,6 +9,13 @@ import { dayKey, addDays, deviceTimezone } from './dates';
 import { connectHealth, onHealthWorkoutsChanged, readRecentHealthWorkouts } from './health';
 import { syncHealthWorkouts } from './healthSync';
 import {
+  NotificationPermission,
+  expoPushToken,
+  requestNotificationPermission,
+  scheduleReminders,
+  showNotificationsInForeground,
+} from './notifications';
+import {
   LoggedWorkout,
   SavedSession,
   clearMoveMethod,
@@ -103,6 +110,8 @@ interface AppContextValue {
   updateProfile: (patch: { name?: string; photoUri?: string | null }) => Promise<void>;
   /** Settings: switch how moving counts. Apple Health shows Apple's sheet, then syncs. */
   setMoveMethod: (method: MoveMethod) => Promise<void>;
+  /** Settings: the daily reminder on or off, and its time. Turning it on asks iOS first. */
+  setReminder: (patch: { wanted?: boolean; slot?: ReminderSlot }) => Promise<NotificationPermission | null>;
   /** Invite someone (name optional). Works during onboarding and afterwards. */
   addInvite: (name: string) => Promise<void>;
   refresh: () => Promise<void>;
@@ -125,6 +134,10 @@ export function AppStateProvider({ children }: { children: React.ReactNode }) {
   draftRef.current = draft;
   const sessionRef = useRef(session);
   sessionRef.current = session;
+  const familyRef = useRef(family);
+  familyRef.current = family;
+  /** The push token registered for whoever is signed in, so signing out can remove it. */
+  const pushTokenRef = useRef<string | null>(null);
 
   const persist = useCallback(async (next: SavedSession) => {
     setSession(next);
@@ -178,6 +191,44 @@ export function AppStateProvider({ children }: { children: React.ReactNode }) {
     return () => sub.remove();
   }, [syncHealth]);
 
+  /**
+   * Schedules the daily reminder from the session and today's workouts: two weeks
+   * ahead, without today's once this person has moved. Clears it when reminders are off.
+   */
+  const rescheduleReminders = useCallback(() => {
+    const current = sessionRef.current;
+    if (!current?.me.remindersWanted) return scheduleReminders(null, false);
+    const today = dayKey();
+    const fam = familyRef.current;
+    const movedToday = current.remote
+      ? (fam?.memberStreaks[current.remote.memberId]?.movedToday ??
+        !!fam?.workouts.some((w) => w.memberId === current.remote!.memberId && w.localDate === today))
+      : current.workouts.some((w) => w.localDate === today);
+    return scheduleReminders(current.me.reminder, movedToday);
+  }, []);
+
+  useEffect(() => {
+    rescheduleReminders();
+  }, [session, family, rescheduleReminders]);
+
+  /** Gives the server this phone's push token, once there's permission and a family on the server. */
+  const registerPush = useCallback(async () => {
+    const current = sessionRef.current;
+    if (!current?.remote) return;
+    const token = await expoPushToken();
+    if (!token) return;
+    try {
+      await backend.registerPushToken(token);
+      pushTokenRef.current = token;
+    } catch {
+      // Offline: the next launch registers it.
+    }
+  }, []);
+
+  useEffect(() => {
+    showNotificationsInForeground();
+  }, []);
+
   const clearAll = useCallback(async () => {
     setPreview(null);
     setSession(null);
@@ -209,7 +260,10 @@ export function AppStateProvider({ children }: { children: React.ReactNode }) {
       setSession(saved);
       sessionRef.current = saved;
       setReady(true);
-      if (saved?.remote) refresh();
+      if (saved?.remote) {
+        refresh();
+        registerPush();
+      }
       if (saved?.remote && saved.me.moveMethod === 'health') {
         // Asks once for people who chose Apple Health before it connected; iOS skips the sheet after that.
         connectHealth()
@@ -220,7 +274,7 @@ export function AppStateProvider({ children }: { children: React.ReactNode }) {
     return () => {
       alive = false;
     };
-  }, [refresh, syncHealth]);
+  }, [refresh, registerPush, syncHealth]);
 
   // Coming back to the app picks up what the family did meanwhile, and any new Health workouts.
   useEffect(() => {
@@ -228,10 +282,12 @@ export function AppStateProvider({ children }: { children: React.ReactNode }) {
       if (state === 'active') {
         refresh();
         syncHealth();
+        // A new day may have started since the last schedule.
+        rescheduleReminders();
       }
     });
     return () => sub.remove();
-  }, [refresh, syncHealth]);
+  }, [refresh, rescheduleReminders, syncHealth]);
 
   const startFlow = useCallback((role: Draft['role']) => setDraft(emptyDraft(role)), []);
   const updateDraft = useCallback((patch: Partial<Draft>) => setDraft((d) => ({ ...d, ...patch })), []);
@@ -277,6 +333,7 @@ export function AppStateProvider({ children }: { children: React.ReactNode }) {
       sessionRef.current = next;
       await persist(next);
       await refresh();
+      registerPush();
       if (moveMethod === 'health') {
         connectHealth()
           .catch(() => undefined)
@@ -286,7 +343,7 @@ export function AppStateProvider({ children }: { children: React.ReactNode }) {
     }
     setDraft((cur) => ({ ...cur, userId: result.userId, name: cur.name || result.givenName || '' }));
     return 'continue';
-  }, [persist, refresh, remoteSession, syncHealth]);
+  }, [persist, refresh, registerPush, remoteSession, syncHealth]);
 
   const saveFamilyName = useCallback(async () => {
     const d = draftRef.current;
@@ -318,12 +375,15 @@ export function AppStateProvider({ children }: { children: React.ReactNode }) {
           await backend.updateMember(remote.memberId, { reminder: d.reminder });
         } else if (!founder) {
           remote = await backend.joinFamily(d.joinCode, d.name.trim() || 'Me', deviceTimezone(), d.reminder);
+          // Joining queued "<name> joined" for everyone already in the family.
+          backend.sendQueuedPushes().catch(() => undefined);
         }
         if (!remote) throw new Error('No family yet');
         const next = remoteSession(d, { userId: d.userId, ...remote }, remindersWanted, d.familyName.trim());
         sessionRef.current = next;
         await persist(next);
         await refresh();
+        registerPush();
         // Health access was asked for at "How you move"; a workout from today counts straight away.
         if (d.moveMethod === 'health') await syncHealth();
         return;
@@ -350,7 +410,7 @@ export function AppStateProvider({ children }: { children: React.ReactNode }) {
         workouts: [],
       });
     },
-    [persist, refresh, remoteSession, syncHealth],
+    [persist, refresh, registerPush, remoteSession, syncHealth],
   );
 
   const logWorkout = useCallback(
@@ -422,6 +482,26 @@ export function AppStateProvider({ children }: { children: React.ReactNode }) {
     [persist, syncHealth],
   );
 
+  const setReminder = useCallback(
+    async (patch: { wanted?: boolean; slot?: ReminderSlot }): Promise<NotificationPermission | null> => {
+      const current = sessionRef.current;
+      if (!current) return null;
+      const slot = patch.slot ?? current.me.reminder;
+      if (current.remote && slot !== current.me.reminder) {
+        await backend.updateMember(current.remote.memberId, { reminder: slot });
+      }
+      const wanted = patch.wanted ?? current.me.remindersWanted;
+      // iOS shows its sheet only the first time; after that this just reads the answer.
+      const permission = wanted ? await requestNotificationPermission() : null;
+      const next = { ...current, me: { ...current.me, reminder: slot, remindersWanted: wanted } };
+      sessionRef.current = next;
+      await persist(next);
+      if (permission === 'granted') registerPush();
+      return permission;
+    },
+    [persist, registerPush],
+  );
+
   const addInvite = useCallback(
     async (name: string) => {
       const person = { id: `invite-${Date.now()}`, name: name.trim() };
@@ -437,12 +517,20 @@ export function AppStateProvider({ children }: { children: React.ReactNode }) {
   );
 
   const signOut = useCallback(async () => {
+    // While still signed in: RLS only lets you delete your own token.
+    const token = pushTokenRef.current;
+    if (token) await backend.forgetPushToken(token).catch(() => undefined);
+    pushTokenRef.current = null;
+    await scheduleReminders(null, false);
     await backend.signOut().catch(() => undefined);
     await clearAll();
   }, [clearAll]);
 
   const deleteAccount = useCallback(async () => {
+    // Deleting the account removes its push tokens on the server too.
     if (sessionRef.current?.remote) await backend.deleteAccount();
+    pushTokenRef.current = null;
+    await scheduleReminders(null, false);
     await clearMoveMethod().catch(() => undefined);
     await clearAll();
   }, [clearAll]);
@@ -469,6 +557,7 @@ export function AppStateProvider({ children }: { children: React.ReactNode }) {
       logWorkout,
       updateProfile,
       setMoveMethod,
+      setReminder,
       addInvite,
       refresh,
       signOut,
@@ -490,6 +579,7 @@ export function AppStateProvider({ children }: { children: React.ReactNode }) {
       logWorkout,
       updateProfile,
       setMoveMethod,
+      setReminder,
       addInvite,
       refresh,
       signOut,
