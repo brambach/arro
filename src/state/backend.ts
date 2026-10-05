@@ -408,3 +408,31 @@ export async function insertWorkout(
   }
   return data.id;
 }
+
+/**
+ * A workout read from Apple Health, keyed by its HealthKit UUID. 'added' when it's
+ * new; 'synced' when it was already saved (unique (member_id, health_workout_id)).
+ * Throws WorkoutDateError for a date outside today or yesterday.
+ */
+export async function insertHealthWorkout(
+  memberId: string,
+  input: { healthWorkoutId: string; localDate: string; type: WorkoutType; minutes?: number },
+): Promise<'added' | 'synced'> {
+  const { error } = await client()
+    .from('workouts')
+    .insert({
+      member_id: memberId,
+      local_date: input.localDate,
+      type: input.type,
+      duration_minutes: input.minutes ?? null,
+      source: 'health',
+      health_workout_id: input.healthWorkoutId,
+    });
+  if (error) {
+    // 23505: unique violation, so this Health workout is already on the server.
+    if (error.code === '23505') return 'synced';
+    if (error.code === '22023') throw new WorkoutDateError(error.message);
+    throw error;
+  }
+  return 'added';
+}
