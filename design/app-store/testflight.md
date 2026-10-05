@@ -11,18 +11,20 @@ uploads by itself.
 
 | | Xcode Archive and upload | EAS Build and Submit |
 | --- | --- | --- |
-| New accounts or tools | None. Xcode, CocoaPods and signing already work for your dev builds | `eas-cli` (an install), an Expo account link, `eas.json` in the project root |
+| New accounts or tools | None. Xcode, CocoaPods and signing already work for your dev builds | Already set up by phase 4: `eas.json` in the project root, the project linked to `@brycerambach/arro`, `npx eas-cli` signed in on your Mac |
 | Signing | Xcode "Automatically manage signing" makes the distribution certificate and profile | EAS asks for your Apple ID once and makes and stores them |
 | Supabase URL and key | Read from `.env.local` at bundle time. Checked: a release bundle built here contains the hosted project's URL | `.env.local` is git-ignored, so EAS never uploads it. You'd have to add both values as EAS environment variables, or the build quietly runs on local fake data |
 | Speed | About 5-10 minutes on your Mac | Free plan: 15 iOS builds a month, low-priority queue (can wait a while), 45 minute timeout |
-| Build number | Bump `ios.buildNumber` in app.json yourself | Can auto-increment |
+| Build number | Bump `ios.buildNumber` in app.json yourself | Same as Xcode today (`appVersionSource: "local"`); can auto-increment if you switch it |
 | Upload | Xcode Organizer > Distribute App | `eas submit` (Apple ID or an App Store Connect API key) |
 | Repeatability | Depends on your Mac's Xcode (26.6 now) | Same cloud image every time; your Mac doesn't matter |
 
 **Recommendation: Xcode Archive for the TestFlight builds.** It reuses the
-setup that already builds Arro for your phone, needs no install, no new
-account and no `eas.json` (which this thread can't add), and it picks up the
-Supabase settings from `.env.local` the same way your dev build does. The
+setup that already builds Arro for your phone, uses no EAS build minutes, and
+picks up the Supabase settings from `.env.local` the same way your dev build
+does. Phase 4 has since set up EAS for push (`eas.json`, the Expo project
+link), so the EAS route is closer than it was, but the `.env.local` problem
+below still applies. The
 EAS gotcha with `.env.local` is exactly the kind that produces a TestFlight
 build that silently isn't talking to the server. Move to EAS later if you want
 builds that don't depend on your Mac, or when phase 7 adds more native setup.
@@ -113,8 +115,9 @@ thread's changes committed:
    still there, tell the app thread; they need setting in app.json instead.
 4. Open the workspace: `open ios/Arro.xcworkspace`
 5. Arro target > Signing & Capabilities: "Automatically manage signing" on,
-   Team = your individual team. HealthKit (with Background Delivery) and Sign
-   in with Apple should both be listed.
+   Team = your individual team. HealthKit (with Background Delivery), Sign in
+   with Apple and Push Notifications (added by `expo-notifications`) should
+   all be listed.
 6. In the toolbar, set the destination to **Any iOS Device (arm64)**.
 7. Product > Archive. This builds Release, which bundles the JavaScript into
    the app (no dev server) and leaves out the dev launcher.
@@ -153,18 +156,25 @@ reach Arro through Health.
 
 ## The EAS route, if you'd rather
 
-Needs your OK for the install and for `eas.json` in the project root.
+Phase 4 already did the setup: `eas.json` is in the project root (a
+development profile, an empty `production` build profile and an empty
+`production` submit profile), the project is linked to `@brycerambach/arro`
+(`owner` and `extra.eas.projectId` in app.json), and `npx eas-cli` is signed in
+on your Mac. Don't run `eas build:configure`; edit the existing file.
 
-1. `npm install -g eas-cli`, then `eas login` with your Expo account.
-2. `eas build:configure` to create `eas.json`; set
-   `"cli": { "appVersionSource": "remote" }` and
-   `"build": { "production": { "autoIncrement": true } }`.
-3. Add the Supabase settings, since `.env.local` isn't uploaded:
-   `eas env:create --environment production --name EXPO_PUBLIC_SUPABASE_URL --value <url> --visibility plaintext`
+1. **Build numbers.** `eas.json` has `"appVersionSource": "local"`, so
+   app.json's `ios.buildNumber` is the build number on both routes. Leave it
+   that way if you might still archive in Xcode. If you go EAS only, set
+   `"appVersionSource": "remote"` under `cli` and `"autoIncrement": true` in
+   `build.production`, so EAS counts builds itself (start it above any number
+   you've already uploaded).
+2. Add the Supabase settings, since `.env.local` isn't uploaded:
+   `npx eas-cli env:create --environment production --name EXPO_PUBLIC_SUPABASE_URL --value <url> --visibility plaintext`
    and the same for `EXPO_PUBLIC_SUPABASE_ANON_KEY`.
-4. `eas build --platform ios --profile production`. It asks for your Apple ID
-   once, creates the certificate and profile, and syncs HealthKit and Sign in
-   with Apple from the entitlements.
-5. `eas submit --platform ios --latest` (it can find the app record by bundle
-   ID, or set `ascAppId` in `eas.json`).
-6. Then section 4 above.
+3. `npx eas-cli build --platform ios --profile production`. It asks for
+   your Apple ID if it needs to, creates the distribution certificate and
+   profile, and syncs HealthKit, Sign in with Apple and push from the
+   entitlements. The APNs key from phase 4 is separate and stays as it is.
+4. `npx eas-cli submit --platform ios --latest` (it can find the app record by
+   bundle ID, or set `ascAppId` in `eas.json`'s `submit.production`).
+5. Then section 4 above.
