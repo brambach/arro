@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { KeyboardAvoidingView, Platform, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { colors } from '../theme/tokens';
+import { colors, spacing } from '../theme/tokens';
 import { type, weights } from '../theme/typography';
 import { AvatarRing } from '../components/AvatarRing';
 import { PrimaryButton } from '../components/PrimaryButton';
@@ -40,9 +40,9 @@ export function EditProfileScreen({ navigation }: RootStackScreenProps<'EditProf
               const uri = await pickPhoto();
               if (uri) setPhotoUri(uri);
             }}
-            style={{ fontSize: 15, marginTop: 14 }}
+            style={{ marginTop: 14 }}
           />
-          {photoUri ? <TextButton label="Remove photo" onPress={() => setPhotoUri(null)} style={{ fontSize: 14, marginTop: 10, color: colors.muted }} /> : null}
+          {photoUri ? <TextButton label="Remove photo" onPress={() => setPhotoUri(null)} style={{ fontSize: 15, marginTop: 10, color: colors.muted }} /> : null}
         </View>
         <TextField label="Name" value={name} onChangeText={setName} autoCapitalize="words" maxLength={24} />
         <Text style={styles.note}>Your colour is picked for you, so everyone in the family has a different one.</Text>
@@ -66,11 +66,11 @@ export function EditProfileScreen({ navigation }: RootStackScreenProps<'EditProf
 }
 
 const styles = StyleSheet.create({
-  footer: { paddingHorizontal: 22, paddingTop: 10 },
+  footer: { paddingHorizontal: spacing.gutter, paddingTop: 10 },
   root: { flex: 1, backgroundColor: colors.screen },
-  topBar: { height: 40, paddingHorizontal: 22, justifyContent: 'center' },
-  cancel: { fontSize: 15.5, color: colors.muted, fontWeight: weights.medium },
-  body: { paddingHorizontal: 22, paddingTop: 14, paddingBottom: 24 },
+  topBar: { height: 40, paddingHorizontal: spacing.gutter, justifyContent: 'center' },
+  cancel: { fontSize: 16, color: colors.muted, fontWeight: weights.medium },
+  body: { paddingHorizontal: spacing.gutter, paddingTop: 14, paddingBottom: 24 },
   avatarWrap: { alignItems: 'center', marginVertical: 24 },
-  note: { fontSize: 12.5, lineHeight: 17, color: colors.faint, marginTop: 12 },
+  note: { ...type.meta, marginTop: 12 },
 });

@@ -47,7 +47,7 @@ export function OnboardingPhotoScreen({ navigation }: RootStackScreenProps<'Onbo
 
 const styles = StyleSheet.create({
   center: { alignItems: 'center', paddingTop: 12 },
-  choose: { fontSize: 15.5, marginTop: 18 },
+  choose: { fontSize: 16, marginTop: 18 },
   colorRow: { flexDirection: 'row', alignItems: 'center', gap: 8, marginTop: 22 },
   dot: { width: 10, height: 10, borderRadius: 5 },
   colorText: { fontSize: 13, fontWeight: weights.medium, color: colors.muted },

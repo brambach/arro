@@ -234,7 +234,7 @@ function StreakCard({ streak }: { streak: StreakView }) {
 /** Day 1 after a break. Says nothing about who missed. */
 function BackAtItCard() {
   return (
-    <Card radius={radii.cardLg} padding={18} background={colors.todayPillBg} style={{ borderColor: '#F3D7BC' }}>
+    <Card radius={radii.cardLg} padding={18} background={colors.todayPillBg} style={{ borderColor: colors.border }}>
       <Text style={styles.backTitle}>Back at it, together</Text>
       <Text style={styles.backBody}>
         A fresh start today. Every day you’ve spent together still counts, and a new streak begins when everyone moves.
@@ -321,9 +321,9 @@ const styles = StyleSheet.create({
     paddingHorizontal: spacing.gutter,
     paddingTop: 6,
   },
-  date: { fontSize: 13, color: colors.muted },
-  section: { paddingHorizontal: spacing.gutter, marginTop: 16 },
-  keptCard: { flexDirection: 'row', alignItems: 'center', gap: 12, borderColor: '#D3E4D8' },
+  date: { ...type.meta, color: colors.muted },
+  section: { paddingHorizontal: spacing.gutter, marginTop: 20 },
+  keptCard: { flexDirection: 'row', alignItems: 'center', gap: 12, borderColor: colors.border },
   keptTick: {
     width: 32,
     height: 32,
@@ -332,12 +332,12 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   },
-  keptTitle: { fontSize: 16, fontWeight: weights.semibold, color: colors.ink },
-  keptMeta: { fontSize: 12.5, color: colors.inkSoft, marginTop: 1 },
+  keptTitle: { ...type.name },
+  keptMeta: { ...type.meta, color: colors.inkSoft, marginTop: 1 },
   yesterday: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', marginTop: 12 },
-  yesterdayText: { fontSize: 13, color: colors.muted },
+  yesterdayText: { ...type.body },
   summaryRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
-  keptLabel: { fontSize: 14, color: colors.muted, marginTop: 2 },
+  keptLabel: { ...type.body, marginTop: 2 },
   footer: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -349,10 +349,10 @@ const styles = StyleSheet.create({
     borderTopWidth: 1,
     borderTopColor: colors.dividerSoft,
   },
-  footerText: { fontSize: 13, color: '#8A8073' },
-  cardLabel: { fontSize: 13, fontWeight: weights.semibold, color: colors.muted },
-  cardNote: { fontSize: 13, lineHeight: 18, color: colors.muted, marginTop: 6 },
-  streakBig: { fontSize: 34, lineHeight: 40, fontWeight: weights.bold, letterSpacing: -0.6, color: colors.ink, marginTop: 4 },
+  footerText: { ...type.body },
+  cardLabel: { ...type.label, color: colors.muted },
+  cardNote: { ...type.body, marginTop: 6 },
+  streakBig: { ...type.bigNumber, fontSize: 34, lineHeight: 40, marginTop: 4 },
   statRow: {
     flexDirection: 'row',
     gap: 24,
@@ -363,26 +363,27 @@ const styles = StyleSheet.create({
   },
   stat: { flex: 1 },
   statValue: { ...type.stat },
-  statLabel: { fontSize: 12.5, color: colors.muted, marginTop: 1 },
-  backTitle: { fontSize: 18, fontWeight: weights.bold, letterSpacing: -0.2, color: colors.todayPillText },
-  backBody: { fontSize: 13.5, lineHeight: 19, color: colors.inkSoft, marginTop: 6 },
+  statLabel: { ...type.meta, color: colors.muted, marginTop: 1 },
+  backTitle: { ...type.greeting },
+  backBody: { ...type.body, color: colors.inkSoft, marginTop: 6 },
   goalHead: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
-  goalCount: { fontSize: 13, fontWeight: weights.semibold, color: colors.primary, fontVariant: ['tabular-nums'] },
-  goalDone: { fontSize: 18, fontWeight: weights.bold, letterSpacing: -0.2, color: colors.ink, marginTop: 4 },
-  track: { height: 8, borderRadius: 4, backgroundColor: '#F0E7D8', marginTop: 12, overflow: 'hidden' },
-  fill: { height: 8, borderRadius: 4, backgroundColor: colors.primary },
+  goalCount: { ...type.meta, fontWeight: weights.semibold, color: colors.ink, fontVariant: ['tabular-nums'] },
+  goalDone: { ...type.greeting, marginTop: 4 },
+  track: { height: 6, borderRadius: 3, backgroundColor: colors.track, marginTop: 12, overflow: 'hidden' },
+  // Days kept together, so it takes the "kept" colour, not the accent.
+  fill: { height: 6, borderRadius: 3, backgroundColor: colors.kept },
   row: { flexDirection: 'row', alignItems: 'center', gap: 12, paddingVertical: 11 },
   rowBorder: { borderBottomWidth: 1, borderBottomColor: colors.divider },
   rowMiddle: { flex: 1, minWidth: 0 },
-  name: { fontSize: 15, fontWeight: weights.semibold, color: colors.ink },
-  meta: { fontSize: 12.5, color: colors.faint, marginTop: 1 },
+  name: { ...type.name },
+  meta: { ...type.meta, marginTop: 1 },
   rowRight: { flexDirection: 'row', alignItems: 'center', gap: 10 },
   pill: { borderRadius: radii.pill, paddingVertical: 3, paddingHorizontal: 9 },
-  pillText: { fontSize: 11.5, fontWeight: weights.semibold },
+  pillText: { fontSize: 12, fontWeight: weights.semibold },
   streak: {
     fontSize: 17,
     fontWeight: weights.semibold,
-    color: '#B4AA9C',
+    color: colors.faint2,
     fontVariant: ['tabular-nums'],
     minWidth: 20,
     textAlign: 'right',

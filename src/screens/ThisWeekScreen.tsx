@@ -57,13 +57,13 @@ export function ThisWeekScreen({ navigation }: MainTabScreenProps<'ThisWeek'>) {
 
 function DayRow({ row, members, last }: { row: WeekRow; members: Record<string, Member>; last: boolean }) {
   const isToday = row.state === 'today';
-  const dowColor = isToday ? colors.primary : colors.ink;
+  // Today stands out by weight, not by colour.
   const badgeColor = row.state === 'freeze' ? colors.freeze : colors.todayPillText;
-  const badgeBg = row.state === 'freeze' ? '#E6EEF5' : colors.todayPillBg;
+  const badgeBg = row.state === 'freeze' ? colors.freezeBg : colors.todayPillBg;
 
   return (
     <View style={[styles.dayRow, !last && styles.rowBorder]}>
-      <Text style={[styles.dow, { color: dowColor }]}>{row.dow}</Text>
+      <Text style={[styles.dow, isToday && styles.dowToday]}>{row.dow}</Text>
       <Text style={styles.date}>{row.date}</Text>
       <View style={styles.avatars}>
         <AvatarStack members={row.avatars.map((id) => members[id]).filter(Boolean)} size={24} overlap={6} />
@@ -85,15 +85,16 @@ const styles = StyleSheet.create({
     paddingHorizontal: spacing.gutter,
     paddingTop: 6,
   },
-  section: { paddingHorizontal: spacing.gutter, marginTop: 16 },
-  headline: { fontSize: 18, lineHeight: 24, fontWeight: weights.bold, letterSpacing: -0.2, color: colors.ink },
+  section: { paddingHorizontal: spacing.gutter, marginTop: 20 },
+  headline: { ...type.greeting },
   strip: { flexDirection: 'row', justifyContent: 'space-between', marginTop: 17 },
-  summary: { fontSize: 13, lineHeight: 19, color: colors.muted, marginTop: 17 },
-  dayRow: { flexDirection: 'row', alignItems: 'center', gap: 11, paddingVertical: 9.5 },
+  summary: { ...type.body, marginTop: 17 },
+  dayRow: { flexDirection: 'row', alignItems: 'center', gap: 11, paddingVertical: 10 },
   rowBorder: { borderBottomWidth: 1, borderBottomColor: colors.dividerSoft },
-  dow: { width: 36, fontSize: 13.5, fontWeight: weights.semibold },
-  date: { width: 18, fontSize: 13, color: colors.faint2, fontVariant: ['tabular-nums'] },
+  dow: { width: 40, fontSize: 15, fontWeight: weights.regular, color: colors.inkSoft },
+  dowToday: { fontWeight: weights.semibold, color: colors.ink },
+  date: { ...type.meta, width: 22, color: colors.faint2, fontVariant: ['tabular-nums'] },
   avatars: { flex: 1, paddingLeft: 6 },
   badge: { borderRadius: radii.pill, paddingVertical: 3, paddingHorizontal: 9 },
-  badgeText: { fontSize: 11, fontWeight: weights.semibold },
+  badgeText: { fontSize: 12, fontWeight: weights.semibold },
 });

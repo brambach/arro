@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { StyleSheet, Text } from 'react-native';
 import * as AppleAuthentication from 'expo-apple-authentication';
-import { colors } from '../../theme/tokens';
+import { type } from '../../theme/typography';
 import { OnboardingFrame } from '../../components/OnboardingFrame';
 import { TextField } from '../../components/TextField';
 import { useApp } from '../../state/AppState';
@@ -87,5 +87,5 @@ export function SignInScreen({ navigation }: RootStackScreenProps<'SignIn'>) {
 const styles = StyleSheet.create({
   apple: { height: 52, marginTop: 18 },
   busy: { opacity: 0.5 },
-  note: { fontSize: 12.5, lineHeight: 17, color: colors.faint, marginTop: 14 },
+  note: { ...type.meta, marginTop: 14 },
 });

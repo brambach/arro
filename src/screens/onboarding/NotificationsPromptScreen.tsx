@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { StyleSheet, Text, View } from 'react-native';
 import { colors } from '../../theme/tokens';
-import { weights } from '../../theme/typography';
+import { type } from '../../theme/typography';
 import { Card } from '../../components/Card';
 import { BellIcon } from '../../components/Icons';
 import { OnboardingFrame } from '../../components/OnboardingFrame';
@@ -50,7 +50,7 @@ export function NotificationsPromptScreen({ navigation }: RootStackScreenProps<'
     >
       <Card padding={20} style={styles.card}>
         <View style={styles.bell}>
-          <BellIcon size={28} color={colors.primary} />
+          <BellIcon size={28} color={colors.inkSoft} />
         </View>
         <Text style={styles.time}>{time}</Text>
         <Text style={styles.body}>
@@ -71,6 +71,6 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   },
-  time: { fontSize: 26, fontWeight: weights.bold, letterSpacing: -0.4, color: colors.ink, marginTop: 14 },
-  body: { fontSize: 13.5, lineHeight: 19, color: colors.muted, textAlign: 'center', marginTop: 8 },
+  time: { ...type.bigNumber, fontSize: 28, lineHeight: 34, marginTop: 14 },
+  body: { ...type.body, textAlign: 'center', marginTop: 8 },
 });

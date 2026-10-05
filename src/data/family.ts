@@ -209,7 +209,7 @@ export const profile = {
   memberId: 'bryce' as MemberId,
   location: 'Brisbane, Australia',
   stats: [
-    { label: 'Current streak', value: '24', unit: 'days', accent: true },
+    { label: 'Current streak', value: '24', unit: 'days' },
     { label: 'Longest streak', value: '31', unit: 'days' },
     { label: 'Workouts this month', value: '31' },
     { label: 'Active days', value: '29', unit: 'of 30' },
@@ -221,11 +221,11 @@ export const profile = {
 // ─── Settings ────────────────────────────────────────────────────────────────
 export const settings = {
   connection: [
-    { key: 'moving', label: 'How you move', value: 'Apple Health', icon: 'pulse', tint: '#F26A1B' },
-    { key: 'members', label: 'Family members', value: `${familyMembersList.length} members`, icon: 'users', tint: '#4F97CF' },
-    { key: 'rules', label: 'Streak rules', value: 'Move once a day', icon: 'target', tint: '#4FA06B' },
-    { key: 'notifications', label: 'Notifications', value: '', icon: 'bell', tint: '#E0654E' },
-    { key: 'privacy', label: 'Privacy', value: 'Family only', icon: 'lock', tint: '#7B7FD0' },
+    { key: 'moving', label: 'How you move', value: 'Apple Health', icon: 'pulse' },
+    { key: 'members', label: 'Family members', value: `${familyMembersList.length} members`, icon: 'users' },
+    { key: 'rules', label: 'Streak rules', value: 'Move once a day', icon: 'target' },
+    { key: 'notifications', label: 'Notifications', value: '', icon: 'bell' },
+    { key: 'privacy', label: 'Privacy', value: 'Family only', icon: 'lock' },
   ],
   about: [
     { key: 'help', label: 'Help & FAQ', value: '', glyph: '?' },

@@ -1,7 +1,7 @@
 import React from 'react';
 import { StyleSheet, Text, View } from 'react-native';
 import { colors } from '../../theme/tokens';
-import { weights } from '../../theme/typography';
+import { type, weights } from '../../theme/typography';
 import { Card } from '../../components/Card';
 import { ArroMark } from '../../components/Icons';
 import { OnboardingFrame } from '../../components/OnboardingFrame';
@@ -43,9 +43,9 @@ export function InvitePreviewScreen({ navigation }: RootStackScreenProps<'Invite
 
 const styles = StyleSheet.create({
   card: { alignItems: 'center' },
-  family: { fontSize: 24, fontWeight: weights.bold, letterSpacing: -0.4, color: colors.ink, marginTop: 14 },
-  count: { fontSize: 14.5, color: colors.muted, marginTop: 4 },
+  family: { ...type.title, textAlign: 'center', marginTop: 14 },
+  count: { ...type.body, marginTop: 4 },
   codeRow: { flexDirection: 'row', alignItems: 'center', gap: 8, marginTop: 18 },
-  codeLabel: { fontSize: 12.5, color: colors.faint },
+  codeLabel: { ...type.meta },
   code: { fontSize: 15, fontWeight: weights.semibold, letterSpacing: 2, color: colors.inkSoft },
 });

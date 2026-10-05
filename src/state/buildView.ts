@@ -223,7 +223,7 @@ function ownProfile(
   return {
     subtitle: familyName,
     stats: [
-      { label: 'Current streak', value: current > 0 ? `${current}` : '–', unit: current > 0 ? (current === 1 ? 'day' : 'days') : undefined, accent: true },
+      { label: 'Current streak', value: current > 0 ? `${current}` : '–', unit: current > 0 ? (current === 1 ? 'day' : 'days') : undefined },
       { label: 'Longest streak', value: longest > 0 ? `${longest}` : '–', unit: longest > 0 ? (longest === 1 ? 'day' : 'days') : undefined },
       { label: 'Workouts this month', value: `${thisMonth.length}` },
       { label: 'Active days', value: `${activeDays}`, unit: `of ${dayOfMonth}` },

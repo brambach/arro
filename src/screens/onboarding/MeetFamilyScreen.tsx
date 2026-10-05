@@ -1,7 +1,7 @@
 import React, { useEffect } from 'react';
 import { StyleSheet, Text, View } from 'react-native';
 import { colors } from '../../theme/tokens';
-import { weights } from '../../theme/typography';
+import { type, weights } from '../../theme/typography';
 import { AvatarRing } from '../../components/AvatarRing';
 import { Card } from '../../components/Card';
 import { OnboardingFrame } from '../../components/OnboardingFrame';
@@ -64,7 +64,7 @@ export function MeetFamilyScreen({ navigation }: RootStackScreenProps<'MeetFamil
 const styles = StyleSheet.create({
   faces: { flexDirection: 'row', justifyContent: 'space-around' },
   face: { alignItems: 'center', gap: 6 },
-  faceName: { fontSize: 13.5, fontWeight: weights.semibold, color: colors.ink },
+  faceName: { fontSize: 14, fontWeight: weights.semibold, color: colors.ink },
   streakRow: {
     marginTop: 18,
     paddingTop: 16,
@@ -72,6 +72,6 @@ const styles = StyleSheet.create({
     borderTopColor: colors.dividerSoft,
     alignItems: 'center',
   },
-  streakNumber: { fontSize: 26, fontWeight: weights.bold, letterSpacing: -0.4, color: colors.primary },
-  streakLabel: { fontSize: 13, color: colors.muted, marginTop: 2 },
+  streakNumber: { ...type.bigNumber, fontSize: 28, lineHeight: 34 },
+  streakLabel: { ...type.body, marginTop: 2 },
 });

@@ -1,7 +1,7 @@
 import React from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
-import { colors, radii } from '../theme/tokens';
-import { weights } from '../theme/typography';
+import { colors } from '../theme/tokens';
+import { type, weights } from '../theme/typography';
 import { AvatarRing } from '../components/AvatarRing';
 import { PrimaryButton } from '../components/PrimaryButton';
 import { useView } from '../state/AppState';
@@ -17,7 +17,7 @@ export function NudgeModalScreen({ navigation, route }: RootStackScreenProps<'Nu
     <View style={styles.root}>
       <Pressable style={StyleSheet.absoluteFill} onPress={close} accessibilityLabel="Dismiss" />
       <View style={styles.card}>
-        <AvatarRing member={member} size={70} style={styles.avatar} />
+        <AvatarRing member={member} size={70} />
         <Text style={styles.title}>{member.name} still has today.</Text>
         <Text style={styles.sub}>It’s still today for them.</Text>
         <View style={styles.divider} />
@@ -43,30 +43,24 @@ const styles = StyleSheet.create({
   card: {
     width: '100%',
     backgroundColor: colors.screen,
-    borderRadius: 28,
+    borderRadius: 22,
     paddingHorizontal: 24,
     paddingTop: 28,
     paddingBottom: 18,
     alignItems: 'center',
-    shadowColor: '#000',
-    shadowOpacity: 0.5,
-    shadowRadius: 32,
-    shadowOffset: { width: 0, height: 24 },
-    elevation: 20,
+    // The only lifted surface in the app: a sheet over a dimmed screen, softly.
+    shadowColor: colors.shadowWarm,
+    shadowOpacity: 0.18,
+    shadowRadius: 24,
+    shadowOffset: { width: 0, height: 12 },
+    elevation: 12,
   },
-  avatar: {
-    shadowColor: '#DF6B96',
-    shadowOpacity: 0.5,
-    shadowRadius: 10,
-    shadowOffset: { width: 0, height: 8 },
-    elevation: 6,
-  },
-  title: { fontSize: 20, fontWeight: weights.bold, letterSpacing: -0.2, color: colors.ink, marginTop: 16 },
-  sub: { fontSize: 14, color: colors.muted, marginTop: 4 },
-  divider: { height: 1, backgroundColor: '#ECE4D7', alignSelf: 'stretch', marginVertical: 20 },
-  prompt: { fontSize: 16, fontWeight: weights.bold, color: colors.ink },
-  promptSub: { fontSize: 13, color: colors.faint, marginTop: 4 },
+  title: { ...type.greeting, textAlign: 'center', marginTop: 16 },
+  sub: { ...type.body, marginTop: 4 },
+  divider: { height: 1, backgroundColor: colors.divider, alignSelf: 'stretch', marginVertical: 20 },
+  prompt: { ...type.name },
+  promptSub: { ...type.meta, marginTop: 4 },
   cta: { alignSelf: 'stretch', marginTop: 20 },
   notNow: { paddingVertical: 13, marginTop: 2 },
-  notNowText: { fontSize: 14.5, fontWeight: weights.semibold, color: colors.muted },
+  notNowText: { fontSize: 15, fontWeight: weights.semibold, color: colors.muted },
 });

@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { Image, KeyboardAvoidingView, Platform, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { colors, radii } from '../theme/tokens';
+import { colors, radii, spacing } from '../theme/tokens';
 import { type, weights } from '../theme/typography';
 import { Chip } from '../components/Chip';
 import { PrimaryButton } from '../components/PrimaryButton';
@@ -65,7 +65,7 @@ export function LogTodayScreen({ navigation, route }: RootStackScreenProps<'LogT
           <Text style={styles.cancel}>Cancel</Text>
         </Pressable>
         <Text style={styles.topTitle}>Log {day}</Text>
-        <View style={{ width: 52 }} />
+        <View style={{ width: 60 }} />
       </View>
 
       <ScrollView
@@ -147,18 +147,18 @@ export function LogTodayScreen({ navigation, route }: RootStackScreenProps<'LogT
 }
 
 const styles = StyleSheet.create({
-  footer: { paddingHorizontal: 22, paddingTop: 10 },
+  footer: { paddingHorizontal: spacing.gutter, paddingTop: 10 },
   root: { flex: 1, backgroundColor: colors.screen },
-  topBar: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', height: 40, paddingHorizontal: 22 },
-  cancel: { fontSize: 15.5, color: colors.muted, width: 52 },
-  topTitle: { fontSize: 16, fontWeight: weights.semibold, color: colors.ink, textTransform: 'capitalize' },
-  body: { paddingHorizontal: 22, paddingTop: 14, paddingBottom: 24 },
-  sub: { fontSize: 14, color: colors.muted, marginTop: 6 },
-  label: { fontSize: 13, fontWeight: weights.semibold, color: colors.muted, marginTop: 22, marginBottom: 10 },
+  topBar: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', height: 40, paddingHorizontal: spacing.gutter },
+  cancel: { fontSize: 16, color: colors.muted, width: 60 },
+  topTitle: { ...type.name, textTransform: 'capitalize' },
+  body: { paddingHorizontal: spacing.gutter, paddingTop: 14, paddingBottom: 24 },
+  sub: { ...type.body, marginTop: 6 },
+  label: { ...type.label, color: colors.muted, marginTop: 24, marginBottom: 10 },
   chips: { flexDirection: 'row', flexWrap: 'wrap', gap: 10 },
-  hint: { fontSize: 13, color: colors.muted, marginTop: 10 },
-  error: { fontSize: 13.5, color: colors.ink, marginTop: 10 },
-  photo: { height: 180, borderRadius: radii.card, backgroundColor: '#C7BCAE' },
+  hint: { ...type.meta, color: colors.muted, marginTop: 10 },
+  error: { ...type.body, color: colors.ink, marginTop: 10 },
+  photo: { height: 180, borderRadius: radii.card, backgroundColor: colors.photoPlaceholder },
   remove: { marginTop: 10 },
   photoButton: {
     height: 52,

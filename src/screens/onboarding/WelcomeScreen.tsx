@@ -2,7 +2,7 @@ import React from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { colors, radii } from '../../theme/tokens';
-import { weights } from '../../theme/typography';
+import { type, weights } from '../../theme/typography';
 import { ArroMark } from '../../components/Icons';
 import { FadeInView } from '../../components/FadeInView';
 import { PrimaryButton } from '../../components/PrimaryButton';
@@ -54,10 +54,10 @@ export function WelcomeScreen({ navigation }: RootStackScreenProps<'Welcome'>) {
 const styles = StyleSheet.create({
   root: { flex: 1, backgroundColor: colors.screen, paddingHorizontal: 26 },
   hero: { alignItems: 'center', paddingTop: 72 },
-  wordmark: { fontSize: 34, fontWeight: weights.bold, letterSpacing: -0.6, color: colors.ink, marginTop: 20 },
-  tagline: { fontSize: 15, color: '#8A8177', marginTop: 8 },
+  wordmark: { ...type.display, fontSize: 40, lineHeight: 46, color: colors.ink, marginTop: 20 },
+  tagline: { ...type.body, marginTop: 6 },
   spacer: { flex: 1 },
-  line: { fontSize: 17, lineHeight: 24, fontWeight: weights.medium, color: colors.ink, textAlign: 'center', paddingHorizontal: 6 },
+  line: { fontSize: 17, lineHeight: 25, fontWeight: weights.regular, color: colors.inkSoft, textAlign: 'center', paddingHorizontal: 6 },
   cta: { marginTop: 28 },
   secondary: {
     marginTop: 12,
@@ -70,5 +70,5 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   secondaryText: { fontSize: 16, fontWeight: weights.semibold, color: colors.ink },
-  note: { textAlign: 'center', fontSize: 12.5, color: '#A49B8F', marginTop: 16 },
+  note: { ...type.meta, textAlign: 'center', marginTop: 16 },
 });

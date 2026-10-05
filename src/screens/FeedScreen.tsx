@@ -1,7 +1,7 @@
 import React from 'react';
 import { StyleSheet, Text, View } from 'react-native';
 import { colors, radii, spacing } from '../theme/tokens';
-import { type, weights } from '../theme/typography';
+import { type } from '../theme/typography';
 import { Card } from '../components/Card';
 import { FadeInView } from '../components/FadeInView';
 import { ListIcon } from '../components/Icons';
@@ -97,8 +97,8 @@ const styles = StyleSheet.create({
     paddingTop: 6,
     paddingBottom: 14,
   },
-  subtitle: { fontSize: 13, color: colors.faint, marginTop: 3 },
+  subtitle: { ...type.body, marginTop: 4 },
   list: { paddingHorizontal: spacing.gutter },
-  emptyTitle: { fontSize: 16, fontWeight: weights.semibold, color: colors.ink },
-  emptyBody: { fontSize: 13.5, lineHeight: 19, color: colors.muted, marginTop: 6 },
+  emptyTitle: { ...type.name },
+  emptyBody: { ...type.body, marginTop: 6 },
 });

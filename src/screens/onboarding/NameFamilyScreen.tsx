@@ -50,5 +50,5 @@ export function NameFamilyScreen({ navigation }: RootStackScreenProps<'NameFamil
 }
 
 const styles = StyleSheet.create({
-  note: { fontSize: 12.5, color: colors.faint, marginTop: 12 },
+  note: { fontSize: 13, lineHeight: 18, color: colors.faint, marginTop: 12 },
 });

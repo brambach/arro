@@ -1,7 +1,7 @@
 import React from 'react';
 import { Pressable, ScrollView, StyleSheet, Text, View, KeyboardAvoidingView, Platform } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { colors } from '../theme/tokens';
+import { colors, spacing } from '../theme/tokens';
 import { type, weights } from '../theme/typography';
 import { InvitePanel } from '../components/InvitePanel';
 import { PrimaryButton } from '../components/PrimaryButton';
@@ -49,9 +49,9 @@ export function InviteScreen({ navigation }: RootStackScreenProps<'Invite'>) {
 
 const styles = StyleSheet.create({
   root: { flex: 1, backgroundColor: colors.screen },
-  topBar: { height: 40, paddingHorizontal: 22, justifyContent: 'center' },
-  close: { fontSize: 15.5, color: colors.muted, fontWeight: weights.medium },
-  body: { paddingHorizontal: 22, paddingTop: 14, paddingBottom: 24 },
-  sub: { fontSize: 14, lineHeight: 20, color: colors.muted, marginTop: 6 },
-  footer: { paddingHorizontal: 22, paddingTop: 10 },
+  topBar: { height: 40, paddingHorizontal: spacing.gutter, justifyContent: 'center' },
+  close: { fontSize: 16, color: colors.muted, fontWeight: weights.medium },
+  body: { paddingHorizontal: spacing.gutter, paddingTop: 14, paddingBottom: 24 },
+  sub: { ...type.body, marginTop: 6 },
+  footer: { paddingHorizontal: spacing.gutter, paddingTop: 10 },
 });

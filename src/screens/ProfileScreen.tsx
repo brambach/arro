@@ -48,7 +48,7 @@ export function ProfileScreen({ navigation }: MainTabScreenProps<'Me'>) {
               style={[styles.statCell, i % 2 === 0 && styles.cellRight, i < 2 && styles.cellBottom]}
             >
               <Text style={styles.statLabel}>{s.label}</Text>
-              <Text style={[styles.statValue, s.accent && { color: colors.primary }]}>
+              <Text style={styles.statValue}>
                 {s.value}
                 {s.unit ? <Text style={styles.statUnit}> {s.unit}</Text> : null}
               </Text>
@@ -117,18 +117,18 @@ const styles = StyleSheet.create({
     paddingTop: 2,
   },
   name: { ...type.stat, fontSize: 22 },
-  location: { fontSize: 13, color: colors.faint, marginTop: 2 },
+  location: { ...type.meta, marginTop: 2 },
   editPill: {
     alignSelf: 'flex-start',
     marginTop: 9,
     borderWidth: 1,
-    borderColor: '#E5DCCD',
+    borderColor: colors.borderStrong,
     borderRadius: radii.pill,
     paddingVertical: 5,
     paddingHorizontal: 14,
   },
-  editText: { fontSize: 12.5, fontWeight: weights.semibold, color: colors.inkSoft },
-  section: { paddingHorizontal: spacing.gutter, marginTop: 18 },
+  editText: { ...type.meta, fontWeight: weights.semibold, color: colors.inkSoft },
+  section: { paddingHorizontal: spacing.gutter, marginTop: 24 },
   sectionHead: { marginBottom: 4 },
   statsCard: {
     flexDirection: 'row',
@@ -142,25 +142,26 @@ const styles = StyleSheet.create({
   statCell: { width: '50%', padding: 14 },
   cellRight: { borderRightWidth: 1, borderRightColor: colors.divider },
   cellBottom: { borderBottomWidth: 1, borderBottomColor: colors.divider },
-  statLabel: { fontSize: 12, color: colors.muted },
-  statValue: { fontSize: 22, fontWeight: weights.bold, color: colors.ink, marginTop: 3 },
-  statUnit: { fontSize: 13, fontWeight: weights.semibold, color: colors.faint2 },
-  workoutRow: { flexDirection: 'row', alignItems: 'center', gap: 12, paddingVertical: 8.5 },
+  statLabel: { ...type.meta, color: colors.muted },
+  statValue: { ...type.stat, marginTop: 3 },
+  statUnit: { fontFamily: undefined, fontSize: 13, fontWeight: weights.medium, color: colors.faint2 },
+  workoutRow: { flexDirection: 'row', alignItems: 'center', gap: 12, paddingVertical: 10 },
   workoutBorder: { borderBottomWidth: 1, borderBottomColor: colors.divider },
-  workoutWhen: { fontSize: 14, fontWeight: weights.semibold, color: colors.ink },
-  workoutMeta: { fontSize: 12.5, color: colors.faint, marginTop: 1 },
-  empty: { fontSize: 13.5, lineHeight: 19, color: colors.muted, marginTop: 6 },
+  workoutWhen: { fontSize: 15, fontWeight: weights.semibold, color: colors.ink },
+  workoutMeta: { ...type.meta, marginTop: 1 },
+  empty: { ...type.body, marginTop: 6 },
   milestones: { flexDirection: 'row', gap: 16, marginTop: 4 },
   msCol: { alignItems: 'center', gap: 6 },
   msCircle: {
     width: 56,
     height: 56,
     borderRadius: 28,
-    borderWidth: 2.5,
-    borderColor: colors.primary,
+    borderWidth: 1.5,
+    borderColor: colors.borderStrong,
+    backgroundColor: colors.card,
     alignItems: 'center',
     justifyContent: 'center',
   },
-  msNumber: { fontSize: 18, fontWeight: weights.bold, color: colors.primary },
-  msLabel: { fontSize: 11, color: colors.faint2 },
+  msNumber: { ...type.stat, fontSize: 20, lineHeight: 24 },
+  msLabel: { ...type.meta, color: colors.faint2 },
 });

@@ -67,6 +67,6 @@ export function JoinCodeScreen({ navigation }: RootStackScreenProps<'JoinCode'>)
 
 const styles = StyleSheet.create({
   code: { fontSize: 22, letterSpacing: 4, fontWeight: '600', textAlign: 'center', height: 60 },
-  hint: { fontSize: 12.5, color: colors.faint, marginTop: 12, textAlign: 'center' },
+  hint: { fontSize: 13, lineHeight: 18, color: colors.faint, marginTop: 12, textAlign: 'center' },
   error: { color: colors.ink },
 });

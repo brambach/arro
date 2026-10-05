@@ -210,3 +210,25 @@ What still looks like the old design, all of it in screen files, for stage 3:
 - **Spacing.** `spacing.section` (28) and `spacing.gutter` (20) changed, but
   most screens set their own gaps, so vertical rhythm is unchanged until the
   screens use the tokens.
+
+## Applied: screens (stage 3)
+
+The screens in `src/screens/` now use `type.*` and the colour tokens instead of
+their own sizes and hex values:
+
+- Hand-set headings are serif: Welcome's "Arro", Today's "Day 24" and "Back at
+  it", This Week's headline, workout titles, the nudge sheet, the invite and
+  reminder numbers.
+- Text under 13 px is gone. Sentences use `type.body` (15), timestamps and
+  member meta use `type.meta` (13), pills and badges are 12.
+- Clay is left only on the main button, the active tab and the comment send
+  button. Links, counts, the This Week "today" row, Profile's milestone rings
+  and "Sign out" are ink. The 30-day bar is the "kept" green.
+- Settings tiles are paper with ink icons; the tile hues are gone from
+  `src/data/family.ts`.
+- Milestone without a photo is plain paper with ink type and a large faint
+  serif day number. With a photo it keeps the dark gradient and white type.
+
+Still the old look, in shared components rather than screens: the "today" ring
+in `DayPill` and the "Cheer" outline and hearts in `CheerButton`/`WorkoutCard`
+are clay. Member colours are unchanged (they need a migration).

@@ -79,7 +79,6 @@ export interface ProfileStat {
   label: string;
   value: string;
   unit?: string;
-  accent?: boolean;
 }
 
 /** One row in a recent-workouts list. */

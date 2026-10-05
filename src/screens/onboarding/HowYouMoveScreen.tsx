@@ -47,5 +47,5 @@ export function HowYouMoveScreen({ navigation }: RootStackScreenProps<'HowYouMov
 }
 
 const styles = StyleSheet.create({
-  note: { fontSize: 12.5, lineHeight: 17, color: colors.faint, marginTop: 2 },
+  note: { fontSize: 13, lineHeight: 18, color: colors.faint, marginTop: 2 },
 });

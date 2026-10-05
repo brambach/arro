@@ -1,7 +1,7 @@
 import React from 'react';
 import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { colors } from '../theme/tokens';
+import { colors, spacing } from '../theme/tokens';
 import { type } from '../theme/typography';
 import { ChevronLeft } from '../components/Icons';
 import { StreakRulesList } from '../components/StreakRulesList';
@@ -17,7 +17,7 @@ export function StreakRulesScreen({ navigation }: RootStackScreenProps<'StreakRu
           <ChevronLeft />
         </Pressable>
       </View>
-      <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{ paddingHorizontal: 22, paddingBottom: insets.bottom + 24 }}>
+      <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{ paddingHorizontal: spacing.gutter, paddingBottom: insets.bottom + 24 }}>
         <Text style={type.title}>Streak rules</Text>
         <Text style={styles.sub}>How the family streak and freeze days work.</Text>
         <View style={{ marginTop: 18 }}>
@@ -31,5 +31,5 @@ export function StreakRulesScreen({ navigation }: RootStackScreenProps<'StreakRu
 const styles = StyleSheet.create({
   root: { flex: 1, backgroundColor: colors.screen },
   topBar: { paddingHorizontal: 16, paddingVertical: 6 },
-  sub: { fontSize: 14, color: colors.muted, marginTop: 6 },
+  sub: { ...type.body, marginTop: 6 },
 });
