@@ -1,6 +1,11 @@
-import { MemberId } from '../theme/tokens';
+/** A family member's id. Any string; colours come from the join-order palette in tokens.ts. */
+export type MemberId = string;
 
-export type { MemberId };
+/** Any workout counts. A walk and a marathon count the same. */
+export type WorkoutType = 'walk' | 'run' | 'gym' | 'yoga' | 'swim' | 'ride' | 'other';
+
+/** Where a workout came from: Apple Health, or a manual "I moved today" check-in. */
+export type WorkoutSource = 'health' | 'manual';
 
 /**
  * A photo source. Use a URL string, or a bundled local image via
@@ -31,6 +36,7 @@ export interface FeedItem {
   time?: string; // "6:21 AM"
   cheer?: string; // a cheer line, or nudge prompt
   hearts?: number; // heart count (kept posts)
+  workoutId?: string; // opens the workout detail (kept posts)
 }
 
 export type WeekState = 'kept' | 'freeze' | 'today' | 'missed';
@@ -54,7 +60,7 @@ export interface MilestoneData {
   memberId: MemberId;
   day: number;
   title: string; // "Bryce kept\n30 days"
-  subtitle: string; // "One month running in Brisbane."
+  subtitle: string; // "A month of showing up, from Brisbane."
   motto: string; // "Every day forward, together."
   dateLine: string; // "June 30 · streak still alive"
   cheeredBy: MemberId[];
@@ -68,26 +74,26 @@ export interface ProfileStat {
   accent?: boolean;
 }
 
-export interface RecentRun {
+/** One row in a recent-workouts list. */
+export interface RecentWorkout {
+  id: string;
   memberId: MemberId;
+  type: WorkoutType;
+  source: WorkoutSource;
   when: string; // "Today · 6:21 AM"
-  dist: string; // "3.2 mi"
-  place: string; // "Brisbane"
+  duration?: string; // "32 min" (optional: a check-in can skip it)
+  place?: string; // "Brisbane"
 }
 
-export interface RunDetail {
-  memberId: MemberId;
-  when: string; // "Today · 6:21 AM"
-  distance: string; // "3.2"
-  place: string; // "Brisbane, Australia"
-  time: string; // "23:45"
-  pace: string; // "7:25"
-  cal: string; // "312"
-  note: string;
+export interface WorkoutDetail extends RecentWorkout {
+  note?: string;
+  photoUri?: PhotoSource;
   cheeredBy: MemberId[];
-  /** SVG route path in a 0 0 320 194 viewBox, plus the start marker. */
-  routePath: string;
-  start: { x: number; y: number };
-  pin: { x: number; y: number };
+  /** Only for Health workouts that recorded one. SVG path in a 0 0 320 194 viewBox. */
+  route?: {
+    path: string;
+    start: { x: number; y: number };
+    pin: { x: number; y: number };
+  };
 }
 

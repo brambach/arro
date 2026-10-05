@@ -1,73 +1,84 @@
 # Arro
 
-A warm, private running-streak ritual for families. Each member eventually connects
-Strava; for now this is a **static, high-fidelity front-end prototype** running on
-**fake data only**. There's no backend, auth, Strava connection or database yet.
+A daily workout streak for families who live apart. Everyone moves a little,
+everyone sees it, and the family keeps one streak together. Any workout counts:
+a walk, the gym, yoga, a swim, a run. Nobody's competing, and a walk counts the
+same as a marathon.
 
-> Design source of truth: `Arro Spec.html` (tokens, components, motion) and
-> `Arro.dc.html` (locked visual frames). This app translates those, it doesn't redesign them.
+Arro is about staying in touch in a healthy way: one moment a day, not a feed to
+scroll. A missed day is never public ("Darcey still has today", never "Darcey
+broke the streak"), there are no rankings, and nudges are capped.
+
+Workouts will come from Apple Health or a manual "I moved today" check-in. Not
+Strava: its API terms only allow showing a user's activity to that same user,
+which rules out a family feed.
+
+**Status:** a front-end prototype on **fake data only**. There's no backend,
+sign-in, Apple Health or notifications yet. iPhone only for v1.
+
+## Read next
+
+- [`design/refactor-plan.md`](design/refactor-plan.md): decisions made and the build phases.
+- [`design/market-research.md`](design/market-research.md): competitors, positioning and the healthy-contact rules.
+- [`design/paid-plan.md`](design/paid-plan.md): how Arro will charge.
+
+`design/Arro-Spec.html` and `design/Arro.dc.html` describe an older warm/serif
+direction. The app's flat iOS look in `src/theme/` wins where they disagree.
 
 ## Run it
 
 ```bash
 npm install
-npx expo start      # then press "i" for the iOS simulator (or "a" for Android)
-# or go straight to a simulator:
-npx expo start --ios
+npx expo start         # scan the QR code with Expo Go, or press "i" for the iOS simulator
+npx expo start --web   # quick look in a browser (react-native-web)
 ```
-
-Requires the Expo Go app (or a dev build) / an iOS Simulator or Android emulator.
 
 ## Stack
 
-- **Expo SDK 57** · React Native 0.86 · React 19 · TypeScript
-- **React Navigation 7**: native-stack (Onboarding → Tabs → Milestone modal / Settings)
-  with a fully custom bottom tab bar
-- **react-native-svg**: logo, checks, tab icons, conic streak rings
-- **expo-linear-gradient**: buttons, avatars, hero bands, photo overlays
-- **@expo-google-fonts/literata + /nunito**: the two type families from the spec
-- Animations use the built-in RN `Animated` API (no Reanimated)
+- **Expo SDK 57** · React Native 0.86 · React 19 · TypeScript (strict)
+- **React Navigation 7**: native-stack (Onboarding, Tabs, modals and pushed screens)
+  with a custom bottom tab bar
+- **react-native-svg**: logo, checks, icons, streak rings, the optional route map
+- **expo-linear-gradient**: photo overlays
+- **expo-haptics**: cheer feedback
+- System font only. Animations use React Native's built-in `Animated` API.
 
 ## Structure
 
 ```
-App.tsx                 fonts + providers + navigation
-src/theme/              tokens.ts (colors/spacing/radii/shadows) · typography.ts
-src/data/               types.ts · family.ts  ← ALL fake data lives here
-src/components/         11 spec components + helpers (Screen, Card, Toggle, Icons, motion)
+App.tsx                 providers, navigation, animated splash
+src/theme/              tokens.ts (colours, member palette, spacing, radii, shadows) · typography.ts
+src/data/               types.ts · family.ts (ALL fake data) · workouts.ts (labels, helpers)
+src/components/         AvatarRing, StreakRing, WorkoutCard, CheerButton, TabBar, Icons...
 src/navigation/         RootNavigator · MainTabs · types
-src/screens/            Onboarding · Today · Trail · Feed · Milestone · Profile · Settings
+src/screens/            one file per screen below
 ```
 
-## Screens (mapped to the locked design frames)
+## Screens
 
-| Screen | Frame | Reach it via |
+| Screen | File | Reach it via |
 |---|---|---|
-| Onboarding / Connect Strava | 1a | app launch → **Connect Strava** enters the app |
-| Today / Family Home | 2a + 2c | **Today** tab |
-| Weekly Recap / Trail | 3a | **Trail** tab |
-| Activity Feed | 4a | **Feed** tab |
-| Profile / Me | 5a | **Me** tab |
-| Milestone Photo Card | 6b | tap the highlighted (checked) feed card, or a reached milestone badge on Profile |
-| Settings | 7a | gear icon, top-right of Profile |
+| Onboarding | `OnboardingScreen.tsx` | app launch, **Get started** enters the app |
+| Today | `TodayScreen.tsx` | **Today** tab |
+| This Week | `ThisWeekScreen.tsx` | **This Week** tab |
+| Feed | `FeedScreen.tsx` | **Feed** tab |
+| Me | `ProfileScreen.tsx` | **Me** tab |
+| Workout detail | `WorkoutDetailScreen.tsx` | tap a kept post in Feed, or a recent workout on Me |
+| Nudge | `NudgeModalScreen.tsx` | **Nudge** on Today, or tap someone who still has today |
+| Family members | `FamilyMembersScreen.tsx` | Settings, **Family members** |
+| Settings | `SettingsScreen.tsx` | gear icon on Me |
+| Milestone | `MilestoneScreen.tsx` | the 30-day badge on Me |
 
-## Reusable components (Spec §8)
+## What's fake
 
-`AvatarRing` · `StreakRing` · `MemberRow` · `RunCard` · `CheerBar` (+ `CheerButton`) ·
-`DayPill` · `SectionHeader` · `PrimaryButton` · `TabBar` · `MilestoneShareCard` · `WeeklyRecapCard`
-
-## What's intentionally fake / static
-
-- **Everyone's data**: members, streaks, runs, feed, week, milestone, profile stats, and
-  settings all come from `src/data/family.ts`.
-- **Avatars** are colored-initials placeholders. Every avatar accepts an optional
-  `photoUri`; set it (in `family.ts` / component props) and real photos appear with no
-  refactor.
-- **Milestone/Trail photos** render a warm placeholder until a real `photoUri` is supplied.
-- **Interactions are optimistic-only**: cheer chips/buttons increment locally, toggles flip
-  locally, "Connect Strava" just enters the app, and Share/Manage are no-ops.
-- **The launcher icon** (`assets/icon.png`) is still the Expo template art; the in-app Arro
-  mark is the real one.
-
-Everything is componentized so Strava/backend/auth can be layered in later without
-rewriting the UI.
+- **Everyone's data**: members, streaks, workouts, feed, week, milestone, profile
+  stats and settings all come from `src/data/family.ts`.
+- **Workouts** are a mix of types (run, gym, yoga, walk) and sources (Apple Health,
+  manual check-in). The route map only shows for a Health workout that has one.
+- **Members** have string ids. Each gets a colour from `memberPalette` in
+  `src/theme/tokens.ts`, in the order they joined.
+- **Avatars and photos** are coloured initials and placeholders until a `photoUri`
+  is set.
+- **Interactions are local only**: cheers count up, "Get started"
+  just enters the app, and Share, Invite and Edit profile do nothing yet.
+- **The launcher icon** (`assets/icon.png`) is still the Expo template art.

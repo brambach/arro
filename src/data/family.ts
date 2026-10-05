@@ -1,57 +1,113 @@
 /**
- * ALL fake data for the Arro prototype. No backend, Strava, auth, or maps.
- * Values transcribed from the final "Arro Mockups.dc.html" direction.
+ * ALL fake data for the Arro prototype. No backend, Apple Health, auth, or maps.
+ * Workouts are a mix of types and sources: Apple Health or a manual check-in.
  */
-import { memberColors } from '../theme/tokens';
+import { memberColor } from '../theme/tokens';
 import {
   FeedItem,
   Member,
   MemberId,
   MilestoneData,
   ProfileStat,
-  RecentRun,
+  RecentWorkout,
   WeekRow,
   WeekStripDay,
+  WorkoutDetail,
 } from './types';
 
-export const members: Record<MemberId, Member> = {
-  bryce: {
+/** Everyone in the family, in the order they joined. Colours are assigned from that order. */
+const joined: Omit<Member, 'color'>[] = [
+  {
     id: 'bryce',
     name: 'Bryce',
-    ...memberColors.bryce,
     streak: 24,
     today: 'kept',
-    meta: '3.2 mi · Brisbane · 6:21 AM',
+    meta: 'Run · 32 min · Brisbane · 6:21 AM',
     location: 'Brisbane',
     relationship: 'You',
     photoUri: null,
   },
-  whit: {
-    id: 'whit',
-    name: 'Whit',
-    ...memberColors.whit,
-    streak: 31,
-    today: 'kept',
-    meta: '4.0 mi · lunch loop · 12:45 PM',
-    relationship: 'Brother',
-    photoUri: null,
-  },
-  darcey: {
+  {
     id: 'darcey',
     name: 'Darcey',
-    ...memberColors.darcey,
     streak: 12,
     today: 'still',
     meta: 'Still has today · usually evenings',
     relationship: 'Sister',
     photoUri: null,
   },
-};
+  {
+    id: 'whit',
+    name: 'Whit',
+    streak: 31,
+    today: 'kept',
+    meta: 'Gym · 45 min · 12:45 PM',
+    relationship: 'Brother',
+    photoUri: null,
+  },
+];
 
-/** Family in display order (host first). */
+/** Family Members screen order: join order. */
+export const familyMembersList: Member[] = joined.map((m, i) => ({ ...m, color: memberColor(i) }));
+
+export const members: Record<MemberId, Member> = Object.fromEntries(
+  familyMembersList.map((m) => [m.id, m]),
+);
+
+/** Today's list order: whoever kept it first, then whoever still has today. */
 export const familyOrder: MemberId[] = ['bryce', 'whit', 'darcey'];
 export const familyList: Member[] = familyOrder.map((id) => members[id]);
 export const currentUser = members.bryce;
+
+// ─── Workouts ────────────────────────────────────────────────────────────────
+export const workouts: Record<string, WorkoutDetail> = {
+  'bryce-today': {
+    id: 'bryce-today',
+    memberId: 'bryce',
+    type: 'run',
+    source: 'health',
+    when: 'Today · 6:21 AM',
+    duration: '32 min',
+    place: 'Brisbane',
+    note: 'Before work. Already tomorrow over here 🌏',
+    cheeredBy: ['darcey', 'whit'],
+    route: {
+      path: 'M58 158 C 66 120, 104 132, 128 108 C 150 86, 150 62, 186 60 C 214 58, 236 74, 258 66',
+      start: { x: 58, y: 158 },
+      pin: { x: 258, y: 60 },
+    },
+  },
+  'whit-today': {
+    id: 'whit-today',
+    memberId: 'whit',
+    type: 'gym',
+    source: 'manual',
+    when: 'Today · 12:45 PM',
+    duration: '45 min',
+    note: 'Lunch session. Legs, unfortunately.',
+    cheeredBy: ['bryce'],
+  },
+  'bryce-yesterday': {
+    id: 'bryce-yesterday',
+    memberId: 'bryce',
+    type: 'yoga',
+    source: 'manual',
+    when: 'Yesterday · 6:10 AM',
+    duration: '20 min',
+    note: 'Slow one on the balcony.',
+    cheeredBy: ['darcey'],
+  },
+  'bryce-fri': {
+    id: 'bryce-fri',
+    memberId: 'bryce',
+    type: 'walk',
+    source: 'health',
+    when: 'Fri, Jun 28 · 6:42 AM',
+    duration: '40 min',
+    place: 'Brisbane',
+    cheeredBy: ['whit'],
+  },
+};
 
 // ─── Today ───────────────────────────────────────────────────────────────────
 export const today = {
@@ -72,27 +128,29 @@ export const feed: FeedItem[] = [
     memberId: 'bryce',
     kind: 'kept',
     title: 'Bryce kept Day 24',
-    meta: '3.2 mi before work · Brisbane',
+    meta: 'Run · 32 min · Brisbane',
     time: '6:21 AM',
     cheer: 'Darcey cheered: “Already tomorrow over here 🌏”',
     hearts: 4,
+    workoutId: 'bryce-today',
   },
   {
     id: 'f2',
     memberId: 'whit',
     kind: 'kept',
     title: 'Whit kept Day 31',
-    meta: '4.0 mi lunch loop',
+    meta: 'Gym · 45 min · checked in',
     time: '12:45 PM',
     cheer: 'Bryce cheered: “machine 💪”',
     hearts: 3,
+    workoutId: 'whit-today',
   },
   {
     id: 'f3',
     memberId: 'darcey',
     kind: 'still',
     title: 'Darcey still has today',
-    meta: 'Usually an evening run · 5:30 PM',
+    meta: 'Usually moves in the evening · 5:30 PM',
     cheer: 'Go Darce 💪',
   },
 ];
@@ -127,7 +185,7 @@ export const milestone: MilestoneData = {
   memberId: 'bryce',
   day: 30,
   title: 'Bryce kept\n30 days',
-  subtitle: 'One month running in Brisbane.',
+  subtitle: 'A month of showing up, from Brisbane.',
   motto: 'Every day forward, together.',
   dateLine: 'June 30 · streak still alive',
   cheeredBy: ['darcey', 'whit'],
@@ -141,50 +199,19 @@ export const profile = {
   stats: [
     { label: 'Current streak', value: '24', unit: 'days', accent: true },
     { label: 'Longest streak', value: '31', unit: 'days' },
-    { label: 'Runs this month', value: '18' },
-    { label: 'Total miles', value: '86.4', unit: 'mi' },
+    { label: 'Workouts this month', value: '31' },
+    { label: 'Active days', value: '29', unit: 'of 30' },
   ] as ProfileStat[],
-  recentRuns: [
-    { memberId: 'bryce', when: 'Today · 6:21 AM', dist: '3.2 mi', place: 'Brisbane' },
-    { memberId: 'bryce', when: 'Yesterday · 6:10 AM', dist: '3.0 mi', place: 'Brisbane' },
-    { memberId: 'bryce', when: 'Fri, Jun 28 · 6:42 AM', dist: '3.1 mi', place: 'Brisbane' },
-  ] as RecentRun[],
+  recentWorkouts: [workouts['bryce-today'], workouts['bryce-yesterday'], workouts['bryce-fri']] as RecentWorkout[],
   milestones: [30, 20, 10, 7],
 };
-
-// ─── Run detail (frame 07) ───────────────────────────────────────────────────
-export const runDetail: import('./types').RunDetail = {
-  memberId: 'bryce',
-  when: 'Today · 6:21 AM',
-  distance: '3.2',
-  place: 'Brisbane, Australia',
-  time: '23:45',
-  pace: '7:25',
-  cal: '312',
-  note: 'Before work. Already tomorrow over here 🌏',
-  cheeredBy: ['darcey', 'whit'],
-  routePath: 'M58 158 C 66 120, 104 132, 128 108 C 150 86, 150 62, 186 60 C 214 58, 236 74, 258 66',
-  start: { x: 58, y: 158 },
-  pin: { x: 258, y: 60 },
-};
-
-// ─── Family members (frame 10) ───────────────────────────────────────────────
-export const familyRelationships: Record<MemberId, string> = {
-  bryce: 'You',
-  darcey: 'Sister',
-  whit: 'Brother',
-};
-
-/** Family Members screen order (Bryce, Darcey, Whit) — differs from Today's list. */
-export const familyMembersOrder: MemberId[] = ['bryce', 'darcey', 'whit'];
-export const familyMembersList: Member[] = familyMembersOrder.map((id) => members[id]);
 
 // ─── Settings ────────────────────────────────────────────────────────────────
 export const settings = {
   connection: [
-    { key: 'strava', label: 'Strava connection', value: 'Connected', icon: 'strava', tint: '#F26A1B' },
-    { key: 'members', label: 'Family members', value: '3 members', icon: 'users', tint: '#4F97CF' },
-    { key: 'rules', label: 'Streak rules', value: '1 run per day', icon: 'target', tint: '#4FA06B' },
+    { key: 'moving', label: 'How you move', value: 'Apple Health', icon: 'pulse', tint: '#F26A1B' },
+    { key: 'members', label: 'Family members', value: `${familyMembersList.length} members`, icon: 'users', tint: '#4F97CF' },
+    { key: 'rules', label: 'Streak rules', value: 'Move once a day', icon: 'target', tint: '#4FA06B' },
     { key: 'notifications', label: 'Notifications', value: '', icon: 'bell', tint: '#E0654E' },
     { key: 'privacy', label: 'Privacy', value: 'Family only', icon: 'lock', tint: '#7B7FD0' },
   ],

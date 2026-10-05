@@ -46,12 +46,16 @@ export const colors = {
   shadowWarm: '#463219', // rgb(70,50,25) — base for the micro card shadow
 } as const;
 
-/** One solid hue per person — avatar circles and status dots. */
-export const memberColors = {
-  bryce: { color: '#EF6C1A' },
-  darcey: { color: '#DF6B96' },
-  whit: { color: '#4F97CF' },
-} as const;
+/**
+ * One solid hue per person — avatar circles and status dots. Handed out in
+ * join order: the founder gets the first, the next person to join the second.
+ */
+export const memberPalette = ['#EF6C1A', '#DF6B96', '#4F97CF', '#4FA06B', '#7B7FD0', '#D9A23A'] as const;
+
+/** The colour for the member who joined at `joinIndex` (0 = founder). Wraps after the palette. */
+export function memberColor(joinIndex: number): string {
+  return memberPalette[joinIndex % memberPalette.length];
+}
 
 export const spacing = {
   xs: 4,
@@ -90,5 +94,3 @@ export const shadows = {
     elevation: 4,
   },
 } as const;
-
-export type MemberId = keyof typeof memberColors;
