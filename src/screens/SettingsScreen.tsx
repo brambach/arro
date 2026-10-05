@@ -1,5 +1,5 @@
-import React from 'react';
-import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
+import React, { useEffect, useState } from 'react';
+import { AppState as RNAppState, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { colors, radii, spacing } from '../theme/tokens';
 import { type, weights } from '../theme/typography';
@@ -9,6 +9,7 @@ import { settings } from '../data/family';
 import { Preview } from '../state/buildView';
 import { confirmAction, showError } from '../state/confirm';
 import { useApp, useView } from '../state/AppState';
+import { NotificationPermission, notificationPermission } from '../state/notifications';
 import { RootStackScreenProps } from '../navigation/types';
 import { REMINDER_SLOTS } from './onboarding/ReminderTimeScreen';
 
@@ -34,11 +35,34 @@ export function SettingsScreen({ navigation }: RootStackScreenProps<'Settings'>)
   const { session, signOut, deleteAccount, preview, setPreview } = useApp();
   const onServer = !!session?.remote;
   const view = useView();
+  const [permission, setPermission] = useState<NotificationPermission | null>(null);
+
+  // Back from Settings > Notifications or the iPhone's Settings app picks up a change.
+  useEffect(() => {
+    const check = () => notificationPermission().then(setPermission);
+    check();
+    const unfocus = navigation.addListener('focus', check);
+    const sub = RNAppState.addEventListener('change', (state) => {
+      if (state === 'active') check();
+    });
+    return () => {
+      unfocus();
+      sub.remove();
+    };
+  }, [navigation]);
+
+  const notificationsOff = permission === 'denied' || permission === 'undetermined';
   const rows = settings.connection.map((row) =>
     row.key === 'moving' ? { ...row, value: session?.me.moveMethod === 'health' ? 'Apple Health' : 'I moved today' }
     : row.key === 'members' ? { ...row, value: `${view.allMembers.length} ${view.allMembers.length === 1 ? 'member' : 'members'}` }
     : row.key === 'notifications'
-      ? { ...row, value: session?.me.remindersWanted ? (REMINDER_SLOTS.find((s) => s.slot === session.me.reminder)?.time ?? '') : 'Off' }
+      ? {
+          ...row,
+          value:
+            !notificationsOff && session?.me.remindersWanted
+              ? (REMINDER_SLOTS.find((s) => s.slot === session.me.reminder)?.time ?? '')
+              : permission === 'granted' ? 'On' : 'Off',
+        }
     : row,
   );
   const onSignOut = async () => {

@@ -15,7 +15,8 @@ export type RootStackParamList = {
   HowYouMove: undefined;
   OnboardingInvite: undefined;
   ReminderTime: undefined;
-  NotificationsPrompt: undefined;
+  /** `returning`: an existing account signing in on a phone that hasn't been asked yet. */
+  NotificationsPrompt: { returning?: boolean } | undefined;
   // The app: only in the stack once there is one.
   Main: NavigatorScreenParams<MainTabParamList> | undefined;
   Milestone: { kind?: 'family' } | undefined;

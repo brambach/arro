@@ -11,6 +11,7 @@ import { syncHealthWorkouts } from './healthSync';
 import {
   NotificationPermission,
   expoPushToken,
+  notificationPermission,
   requestNotificationPermission,
   scheduleReminders,
   showNotificationsInForeground,
@@ -98,8 +99,13 @@ interface AppContextValue {
   draft: Draft;
   startFlow: (role: Draft['role']) => void;
   updateDraft: (patch: Partial<Draft>) => void;
-  /** Sign in with Apple. 'done' when an existing account went straight to its family. */
-  signIn: () => Promise<'cancelled' | 'continue' | 'done'>;
+  /**
+   * Sign in with Apple. 'done' when an existing account went straight to its family;
+   * 'ask' when it's on a phone that hasn't been asked about notifications yet, and
+   * finishSignIn takes it to the family after the ask.
+   */
+  signIn: () => Promise<'cancelled' | 'continue' | 'done' | 'ask'>;
+  finishSignIn: () => Promise<void>;
   /** Founder, server mode: make (or rename) the family so the invite step has a real code. */
   saveFamilyName: () => Promise<void>;
   /** Invitee: look up the code on the server. Throws backend.InviteError. */
@@ -114,6 +120,8 @@ interface AppContextValue {
   setMoveMethod: (method: MoveMethod) => Promise<void>;
   /** Settings: the daily reminder on or off, and its time. Turning it on asks iOS first. */
   setReminder: (patch: { wanted?: boolean; slot?: ReminderSlot }) => Promise<NotificationPermission | null>;
+  /** Asks iOS for notifications (the sheet shows only the first time) and registers this phone for pushes. */
+  turnOnNotifications: () => Promise<NotificationPermission>;
   /** Invite someone (name optional). Works during onboarding and afterwards. */
   addInvite: (name: string) => Promise<void>;
   refresh: () => Promise<void>;
@@ -317,7 +325,25 @@ export function AppStateProvider({ children }: { children: React.ReactNode }) {
     [],
   );
 
-  const signIn = useCallback(async (): Promise<'cancelled' | 'continue' | 'done'> => {
+  /** An existing account's session, held while a new phone is asked about notifications. */
+  const pendingSignInRef = useRef<SavedSession | null>(null);
+
+  const openExisting = useCallback(
+    async (next: SavedSession) => {
+      sessionRef.current = next;
+      await persist(next);
+      await refresh();
+      registerPush();
+      if (next.me.moveMethod === 'health') {
+        connectHealth()
+          .catch(() => undefined)
+          .then(() => syncHealth());
+      }
+    },
+    [persist, refresh, registerPush, syncHealth],
+  );
+
+  const signIn = useCallback(async (): Promise<'cancelled' | 'continue' | 'done' | 'ask'> => {
     const result = await backend.signInWithApple();
     if (!result) return 'cancelled';
     const d = draftRef.current;
@@ -332,20 +358,24 @@ export function AppStateProvider({ children }: { children: React.ReactNode }) {
         false,
         '',
       );
-      sessionRef.current = next;
-      await persist(next);
-      await refresh();
-      registerPush();
-      if (moveMethod === 'health') {
-        connectHealth()
-          .catch(() => undefined)
-          .then(() => syncHealth());
+      // A new phone hasn't been asked yet: without it, cheers and nudges never arrive.
+      if ((await notificationPermission()) === 'undetermined') {
+        pendingSignInRef.current = next;
+        return 'ask';
       }
+      await openExisting(next);
       return 'done';
     }
     setDraft((cur) => ({ ...cur, userId: result.userId, name: cur.name || result.givenName || '' }));
     return 'continue';
-  }, [persist, refresh, registerPush, remoteSession, syncHealth]);
+  }, [openExisting, remoteSession]);
+
+  const finishSignIn = useCallback(async () => {
+    const next = pendingSignInRef.current;
+    if (!next) return;
+    pendingSignInRef.current = null;
+    await openExisting(next);
+  }, [openExisting]);
 
   const saveFamilyName = useCallback(async () => {
     const d = draftRef.current;
@@ -513,6 +543,15 @@ export function AppStateProvider({ children }: { children: React.ReactNode }) {
     [persist, registerPush],
   );
 
+  const turnOnNotifications = useCallback(async () => {
+    const permission = await requestNotificationPermission();
+    if (permission === 'granted') {
+      registerPush();
+      rescheduleReminders();
+    }
+    return permission;
+  }, [registerPush, rescheduleReminders]);
+
   const addInvite = useCallback(
     async (name: string) => {
       const person = { id: `invite-${Date.now()}`, name: name.trim() };
@@ -562,6 +601,7 @@ export function AppStateProvider({ children }: { children: React.ReactNode }) {
       startFlow,
       updateDraft,
       signIn,
+      finishSignIn,
       saveFamilyName,
       lookUpInvite,
       completeOnboarding,
@@ -570,6 +610,7 @@ export function AppStateProvider({ children }: { children: React.ReactNode }) {
       updateProfile,
       setMoveMethod,
       setReminder,
+      turnOnNotifications,
       addInvite,
       refresh,
       signOut,
@@ -585,6 +626,7 @@ export function AppStateProvider({ children }: { children: React.ReactNode }) {
       startFlow,
       updateDraft,
       signIn,
+      finishSignIn,
       saveFamilyName,
       lookUpInvite,
       completeOnboarding,
@@ -593,6 +635,7 @@ export function AppStateProvider({ children }: { children: React.ReactNode }) {
       updateProfile,
       setMoveMethod,
       setReminder,
+      turnOnNotifications,
       addInvite,
       refresh,
       signOut,

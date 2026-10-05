@@ -13,13 +13,14 @@ import { RootStackScreenProps } from '../navigation/types';
 import { REMINDER_SLOTS } from './onboarding/ReminderTimeScreen';
 
 /**
- * Settings > Notifications: the daily reminder's time, or none. Picking a time asks
- * iOS for permission the first time; after a "Don't Allow" only the iPhone's
- * Settings app can turn it back on, so the screen says so and links there.
+ * Settings > Notifications: the daily reminder's time, or none, and whether
+ * notifications are on at all. Picking a time or "Turn on notifications" asks iOS
+ * the first time; after a "Don't Allow" only the iPhone's Settings app can turn it
+ * back on, so the screen says so and links there.
  */
 export function NotificationsScreen({ navigation }: RootStackScreenProps<'Notifications'>) {
   const insets = useSafeAreaInsets();
-  const { session, setReminder } = useApp();
+  const { session, setReminder, turnOnNotifications } = useApp();
   const [permission, setPermission] = useState<NotificationPermission | null>(null);
   const [busy, setBusy] = useState(false);
   const wanted = !!session?.me.remindersWanted;
@@ -52,6 +53,16 @@ export function NotificationsScreen({ navigation }: RootStackScreenProps<'Notifi
     }
   };
 
+  const turnOn = async () => {
+    if (busy) return;
+    setBusy(true);
+    try {
+      setPermission(await turnOnNotifications());
+    } finally {
+      setBusy(false);
+    }
+  };
+
   const blocked = permission === 'denied';
 
   return (
@@ -78,10 +89,20 @@ export function NotificationsScreen({ navigation }: RootStackScreenProps<'Notifi
         </View>
         {permission === 'unavailable' ? (
           <Text style={styles.note}>Notifications aren’t available in this version of Arro.</Text>
+        ) : permission === 'undetermined' ? (
+          <>
+            <Text style={styles.note}>
+              Notifications are off, so cheers and nudges from your family don’t reach you yet.
+            </Text>
+            <Pressable onPress={turnOn} disabled={busy} accessibilityRole="button" hitSlop={8} style={styles.link}>
+              <Text style={styles.linkText}>Turn on notifications</Text>
+            </Pressable>
+          </>
         ) : blocked ? (
           <>
             <Text style={styles.note}>
-              Notifications for Arro are off in the iPhone’s Settings, so nothing arrives yet. Turn on Allow Notifications there.
+              Notifications for Arro are off in the iPhone’s Settings, so cheers, nudges and reminders don’t arrive yet. Turn
+              on Allow Notifications there.
             </Text>
             <Pressable onPress={() => Linking.openSettings()} accessibilityRole="button" hitSlop={8} style={styles.link}>
               <Text style={styles.linkText}>Open iPhone Settings</Text>

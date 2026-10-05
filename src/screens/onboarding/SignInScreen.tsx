@@ -35,6 +35,7 @@ export function SignInScreen({ navigation }: RootStackScreenProps<'SignIn'>) {
       const result = await signIn();
       // 'done': an existing account went straight to its family and the stack changes by itself.
       if (result === 'continue' && draft.name.trim()) goNext();
+      if (result === 'ask') navigation.navigate('NotificationsPrompt', { returning: true });
     } catch (e) {
       showError('Couldn’t sign in', e instanceof Error ? e.message : 'Try again in a moment.');
     } finally {
