@@ -21,7 +21,7 @@ export function TextField({ label, wrapStyle, style, multiline, ...rest }: Props
 }
 
 const styles = StyleSheet.create({
-  label: { fontSize: 13, fontWeight: weights.semibold, color: colors.muted, marginBottom: 6 },
+  label: { fontSize: 14, fontWeight: weights.semibold, color: colors.muted, marginBottom: 6 },
   input: {
     backgroundColor: colors.card,
     borderWidth: 1,

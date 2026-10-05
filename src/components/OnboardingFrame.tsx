@@ -93,9 +93,9 @@ const styles = StyleSheet.create({
   barFill: { height: 4, borderRadius: 2, backgroundColor: colors.primary },
   body: { paddingHorizontal: 26, paddingTop: 18, paddingBottom: 20 },
   title: { fontSize: 28, lineHeight: 33 },
-  subtitle: { fontSize: 15, lineHeight: 21, color: colors.muted, marginTop: 8 },
+  subtitle: { fontSize: 16, lineHeight: 22, color: colors.muted, marginTop: 8 },
   content: { marginTop: 22 },
   footer: { paddingHorizontal: 26, paddingTop: 10 },
   secondary: { alignItems: 'center', paddingTop: 16, paddingBottom: 4 },
-  secondaryText: { fontSize: 14.5, fontWeight: weights.semibold, color: colors.muted },
+  secondaryText: { fontSize: 15, fontWeight: weights.semibold, color: colors.muted },
 });

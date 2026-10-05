@@ -4,7 +4,7 @@ import { colors, radii, shadows } from '../theme/tokens';
 import { weights } from '../theme/typography';
 
 /**
- * PrimaryButton — flat solid Arro-orange CTA. Press primitive (Motion §3):
+ * PrimaryButton — flat solid clay CTA, no shadow. Press primitive (Motion §3):
  * scale 1→0.96 over 90ms down, back to 1 over 140ms up. No gradient, no bounce.
  */
 type Props = {
@@ -61,6 +61,6 @@ const styles = StyleSheet.create({
   },
   btnLarge: { height: 68, borderRadius: radii.card },
   icon: { marginRight: 2 },
-  label: { color: colors.white, fontSize: 16, fontWeight: weights.semibold },
-  labelLarge: { fontSize: 19, fontWeight: weights.bold },
+  label: { color: colors.white, fontSize: 17, fontWeight: weights.semibold },
+  labelLarge: { fontSize: 19, fontWeight: weights.semibold },
 });

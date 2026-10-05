@@ -56,7 +56,7 @@ export const Heart = ({ size = 15, color = colors.primary }: IconProps) => (
   </Svg>
 );
 
-export const ChevronRight = ({ size = 18, color = '#C7BDAE', strokeWidth = 2 }: IconProps) => (
+export const ChevronRight = ({ size = 18, color = colors.chevron, strokeWidth = 2 }: IconProps) => (
   <Stroke size={size} color={color} strokeWidth={strokeWidth}>
     <Path d="M9 6l6 6-6 6" />
   </Stroke>

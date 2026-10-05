@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { StyleSheet, Text, View } from 'react-native';
 import { colors } from '../../theme/tokens';
 import { weights } from '../../theme/typography';
@@ -6,6 +6,8 @@ import { Card } from '../../components/Card';
 import { BellIcon } from '../../components/Icons';
 import { OnboardingFrame } from '../../components/OnboardingFrame';
 import { useApp } from '../../state/AppState';
+import { InviteError } from '../../state/backend';
+import { showError } from '../../state/confirm';
 import { RootStackScreenProps } from '../../navigation/types';
 import { stepOf } from './steps';
 import { REMINDER_SLOTS } from './ReminderTimeScreen';
@@ -17,6 +19,22 @@ import { REMINDER_SLOTS } from './ReminderTimeScreen';
 export function NotificationsPromptScreen({ navigation }: RootStackScreenProps<'NotificationsPrompt'>) {
   const { draft, completeOnboarding } = useApp();
   const time = REMINDER_SLOTS.find((s) => s.slot === draft.reminder)?.time ?? '6:30 PM';
+  const [busy, setBusy] = useState(false);
+
+  // Joining happens here for an invitee, so a code can expire on the way.
+  const finish = async (remindersWanted: boolean) => {
+    if (busy) return;
+    setBusy(true);
+    try {
+      await completeOnboarding(remindersWanted);
+    } catch (e) {
+      setBusy(false);
+      showError(
+        'Couldn’t join yet',
+        e instanceof InviteError ? `${e.message} Ask your family for a new code.` : 'Check your connection and try again.',
+      );
+    }
+  };
 
   return (
     <OnboardingFrame
@@ -25,9 +43,10 @@ export function NotificationsPromptScreen({ navigation }: RootStackScreenProps<'
       step={stepOf(draft.role, 'NotificationsPrompt')}
       onBack={() => navigation.goBack()}
       primaryLabel="Turn on reminders"
-      onPrimary={() => completeOnboarding(true)}
+      primaryDisabled={busy}
+      onPrimary={() => finish(true)}
       secondaryLabel="Not now"
-      onSecondary={() => completeOnboarding(false)}
+      onSecondary={() => finish(false)}
     >
       <Card padding={20} style={styles.card}>
         <View style={styles.bell}>

@@ -7,7 +7,7 @@ import { AvatarRing } from '../components/AvatarRing';
 import { BellIcon, ChevronLeft, ChevronRight, LockIcon, PulseIcon, TargetIcon, UsersIcon } from '../components/Icons';
 import { settings } from '../data/family';
 import { Preview } from '../state/buildView';
-import { confirmAction } from '../state/confirm';
+import { confirmAction, showError } from '../state/confirm';
 import { useApp, useView } from '../state/AppState';
 import { RootStackScreenProps } from '../navigation/types';
 
@@ -29,7 +29,8 @@ const PREVIEWS: { label: string; value: Preview | null }[] = [
 
 export function SettingsScreen({ navigation }: RootStackScreenProps<'Settings'>) {
   const insets = useSafeAreaInsets();
-  const { session, signOut, preview, setPreview } = useApp();
+  const { session, signOut, deleteAccount, preview, setPreview } = useApp();
+  const onServer = !!session?.remote;
   const view = useView();
   const rows = settings.connection.map((row) =>
     row.key === 'moving' ? { ...row, value: session?.me.moveMethod === 'health' ? 'Apple Health' : 'I moved today' }
@@ -37,8 +38,30 @@ export function SettingsScreen({ navigation }: RootStackScreenProps<'Settings'>)
     : row,
   );
   const onSignOut = async () => {
-    const ok = await confirmAction('Sign out?', 'This preview keeps your family on this phone only, so signing out clears it.', 'Sign out');
+    const ok = await confirmAction(
+      'Sign out?',
+      onServer
+        ? 'Your family and streak stay safe. Sign in with Apple again to come back.'
+        : 'This preview keeps your family on this phone only, so signing out clears it.',
+      'Sign out',
+    );
     if (ok) await signOut();
+  };
+  // App Store rule: an app with accounts lets people delete theirs from inside it.
+  const onDelete = async () => {
+    const ok = await confirmAction(
+      'Delete your account?',
+      onServer
+        ? 'This deletes your account and every workout you’ve logged. Your family keeps going without you. If you’re the last one in it, the family is deleted too. You can’t undo this.'
+        : 'This deletes the family and workouts saved on this phone. You can’t undo this.',
+      'Delete account',
+    );
+    if (!ok) return;
+    try {
+      await deleteAccount();
+    } catch {
+      showError('Couldn’t delete your account', 'Nothing was deleted. Check your connection and try again.');
+    }
   };
 
   return (
@@ -117,6 +140,9 @@ export function SettingsScreen({ navigation }: RootStackScreenProps<'Settings'>)
         <Pressable onPress={onSignOut} accessibilityRole="button" accessibilityLabel="Sign out" style={styles.signOut}>
           <Text style={styles.signOutText}>Sign out</Text>
         </Pressable>
+        <Pressable onPress={onDelete} accessibilityRole="button" accessibilityLabel="Delete account" style={styles.delete}>
+          <Text style={styles.deleteText}>Delete account</Text>
+        </Pressable>
       </ScrollView>
     </View>
   );
@@ -150,4 +176,6 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   signOutText: { fontSize: 15, fontWeight: weights.semibold, color: colors.primary },
+  delete: { marginTop: 6, paddingVertical: 14, alignItems: 'center' },
+  deleteText: { fontSize: 14.5, fontWeight: weights.medium, color: colors.muted },
 });

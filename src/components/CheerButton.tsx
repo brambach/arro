@@ -126,8 +126,8 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   pillCheered: { borderColor: colors.keptBg, backgroundColor: colors.keptBg },
-  pillText: { fontSize: 12.5, fontWeight: weights.semibold, color: colors.primary },
+  pillText: { fontSize: 13.5, fontWeight: weights.semibold, color: colors.primary },
   link: { alignItems: 'center', justifyContent: 'center' },
-  linkText: { fontSize: 13, fontWeight: weights.semibold, color: colors.inkSoft },
+  linkText: { fontSize: 14, fontWeight: weights.semibold, color: colors.inkSoft },
   pulse: { position: 'absolute', alignSelf: 'center' },
 });

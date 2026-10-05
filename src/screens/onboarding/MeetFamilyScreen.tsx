@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { StyleSheet, Text, View } from 'react-native';
 import { colors } from '../../theme/tokens';
 import { weights } from '../../theme/typography';
@@ -7,17 +7,30 @@ import { Card } from '../../components/Card';
 import { OnboardingFrame } from '../../components/OnboardingFrame';
 import { DEMO_FAMILY_NAME, useApp } from '../../state/AppState';
 import { familyMembersList } from '../../data/family';
+import { Member } from '../../data/types';
 import { RootStackScreenProps } from '../../navigation/types';
 import { stepOf } from './steps';
 
 /** After sign-in the server can say who's in the family and how the streak is going. */
 export function MeetFamilyScreen({ navigation }: RootStackScreenProps<'MeetFamily'>) {
-  const { draft } = useApp();
-  const founder = familyMembersList[0];
+  const { draft, online, lookUpInvite } = useApp();
+  const invite = draft.invite;
+
+  // Signed in now, the same code also returns names, colours and the streak.
+  useEffect(() => {
+    if (online && draft.userId) lookUpInvite().catch(() => undefined);
+  }, [online, draft.userId, lookUpInvite]);
+
+  const members: Member[] = invite
+    ? invite.members.map((m, i) => ({ id: `invitee-preview-${i}`, name: m.name, color: m.color, streak: 0, today: 'still', meta: '' }))
+    : familyMembersList;
+  const inviter = invite ? invite.invitedBy ?? members[0]?.name ?? 'Your family' : familyMembersList[0].name;
+  const familyName = invite?.familyName ?? DEMO_FAMILY_NAME;
+  const streak = invite ? invite.familyStreak : 24;
 
   return (
     <OnboardingFrame
-      title={`${founder.name} invited you to ${DEMO_FAMILY_NAME}`}
+      title={`${inviter} invited you to ${familyName}`}
       subtitle={`Welcome, ${draft.name.trim() || 'friend'}. Here’s who’s in.`}
       step={stepOf('invitee', 'MeetFamily')}
       onBack={() => navigation.goBack()}
@@ -26,17 +39,23 @@ export function MeetFamilyScreen({ navigation }: RootStackScreenProps<'MeetFamil
     >
       <Card padding={18}>
         <View style={styles.faces}>
-          {familyMembersList.map((m) => (
+          {members.map((m) => (
             <View key={m.id} style={styles.face}>
               <AvatarRing member={m} size={52} />
               <Text style={styles.faceName}>{m.name}</Text>
             </View>
           ))}
         </View>
-        <View style={styles.streakRow}>
-          <Text style={styles.streakNumber}>Day 24</Text>
-          <Text style={styles.streakLabel}>family streak, and still going</Text>
-        </View>
+        {streak ? (
+          <View style={styles.streakRow}>
+            <Text style={styles.streakNumber}>Day {streak}</Text>
+            <Text style={styles.streakLabel}>family streak, and still going</Text>
+          </View>
+        ) : (
+          <View style={styles.streakRow}>
+            <Text style={styles.streakLabel}>The family streak starts with you.</Text>
+          </View>
+        )}
       </Card>
     </OnboardingFrame>
   );

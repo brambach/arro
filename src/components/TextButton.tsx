@@ -20,4 +20,4 @@ export function TextButton({
   );
 }
 
-const styles = StyleSheet.create({ text: { fontSize: 13.5, fontWeight: weights.semibold, color: colors.primary } });
+const styles = StyleSheet.create({ text: { fontSize: 15, fontWeight: weights.semibold, color: colors.ink, textDecorationLine: 'underline' } });

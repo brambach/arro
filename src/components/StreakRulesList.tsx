@@ -22,6 +22,6 @@ export function StreakRulesList() {
 const styles = StyleSheet.create({
   row: { paddingVertical: 14 },
   rowBorder: { borderBottomWidth: 1, borderBottomColor: colors.dividerSoft },
-  title: { fontSize: 15, fontWeight: weights.semibold, color: colors.ink },
-  body: { fontSize: 13, lineHeight: 19, color: colors.muted, marginTop: 3 },
+  title: { fontSize: 16, fontWeight: weights.semibold, color: colors.ink },
+  body: { fontSize: 14.5, lineHeight: 20, color: colors.muted, marginTop: 3 },
 });

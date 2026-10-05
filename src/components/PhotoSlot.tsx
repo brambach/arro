@@ -31,7 +31,7 @@ export function PhotoSlot({ uri, placeholderLabel, children, style }: Props) {
 }
 
 const styles = StyleSheet.create({
-  wrap: { overflow: 'hidden', backgroundColor: '#C7BCAE' },
-  placeholder: { alignItems: 'center', justifyContent: 'center', padding: 16, backgroundColor: '#C7BCAE' },
-  label: { fontSize: 12.5, fontWeight: weights.medium, color: 'rgba(255,255,255,0.85)', textAlign: 'center' },
+  wrap: { overflow: 'hidden', backgroundColor: colors.photoPlaceholder },
+  placeholder: { alignItems: 'center', justifyContent: 'center', padding: 16, backgroundColor: colors.photoPlaceholder },
+  label: { fontSize: 13.5, fontWeight: weights.medium, color: 'rgba(255,255,255,0.85)', textAlign: 'center' },
 });

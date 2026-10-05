@@ -8,7 +8,7 @@ import { Check, Snowflake } from './Icons';
 /**
  * DayPill — one dot in the compact 7-day strip.
  * kept = green check on soft green · freeze = blue snowflake on soft blue ·
- * today = orange ring with an orange dot.
+ * today = clay ring with a clay dot.
  */
 export function DayPill({ state, label, size = 28 }: { state: WeekState; label: string; size?: number }) {
   const isToday = state === 'today';
@@ -39,5 +39,5 @@ const styles = StyleSheet.create({
   col: { alignItems: 'center', gap: 6 },
   dot: { alignItems: 'center', justifyContent: 'center' },
   todayDot: { width: 8, height: 8, borderRadius: 4, backgroundColor: colors.primary },
-  label: { fontSize: 11, color: colors.faint3, fontWeight: weights.medium },
+  label: { fontSize: 12, color: colors.faint3, fontWeight: weights.medium },
 });

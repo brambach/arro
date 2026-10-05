@@ -16,7 +16,7 @@ const TABS: Record<string, { label: string; render: (c: string) => React.ReactNo
 /**
  * Bottom tab bar (final direction): a solid bar with a hairline top border —
  * content sits above it, nothing scrolls under. 4 fixed tabs, no badges, no
- * "More". Active = orange, inactive = warm grey.
+ * "More". Active = clay, inactive = warm grey.
  */
 export function TabBar({ state, navigation }: BottomTabBarProps) {
   const insets = useSafeAreaInsets();
@@ -64,5 +64,5 @@ const styles = StyleSheet.create({
     paddingHorizontal: 6,
   },
   tab: { flex: 1, alignItems: 'center', gap: 4 },
-  label: { fontSize: 10 },
+  label: { fontSize: 11 },
 });

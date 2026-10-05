@@ -2,7 +2,7 @@ import React, { useEffect, useRef, useState } from 'react';
 import { AccessibilityInfo, Animated, Easing, StyleSheet, Text, View } from 'react-native';
 import Svg, { Circle, Path } from 'react-native-svg';
 import { colors } from '../theme/tokens';
-import { weights } from '../theme/typography';
+import { fonts, weights } from '../theme/typography';
 
 const AnimatedCircle = Animated.createAnimatedComponent(Circle);
 const AnimatedPath = Animated.createAnimatedComponent(Path);
@@ -105,5 +105,5 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     zIndex: 10,
   },
-  word: { fontSize: 30, fontWeight: weights.bold, letterSpacing: -0.6, color: colors.ink, marginTop: 14 },
+  word: { fontFamily: fonts.serif, fontSize: 32, fontWeight: weights.semibold, color: colors.ink, marginTop: 14 },
 });

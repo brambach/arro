@@ -4,7 +4,7 @@ import { colors } from '../theme/tokens';
 import { weights } from '../theme/typography';
 
 /**
- * SectionHeader — a bold section label with an optional accent action on the right
+ * SectionHeader — a bold section label with an optional ink action on the right
  * (e.g. "Family today · Nudge", "Recent workouts · See all").
  */
 type Props = {
@@ -30,6 +30,6 @@ export function SectionHeader({ title, action, onAction, titleColor = colors.mut
 
 const styles = StyleSheet.create({
   row: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
-  title: { fontSize: 13, fontWeight: weights.semibold },
-  action: { fontSize: 13, fontWeight: weights.semibold, color: colors.primary },
+  title: { fontSize: 14, fontWeight: weights.semibold },
+  action: { fontSize: 14, fontWeight: weights.semibold, color: colors.ink },
 });

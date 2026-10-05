@@ -50,9 +50,9 @@ const styles = StyleSheet.create({
   header: { flexDirection: 'row', alignItems: 'flex-start', gap: 12 },
   middle: { flex: 1, minWidth: 0 },
   titleRow: { flexDirection: 'row', alignItems: 'baseline', justifyContent: 'space-between', gap: 8 },
-  title: { fontSize: 15, fontWeight: weights.semibold, color: colors.ink },
-  time: { fontSize: 12, color: colors.faint2 },
-  meta: { fontSize: 13, color: colors.muted, marginTop: 2 },
+  title: { fontSize: 16, fontWeight: weights.semibold, color: colors.ink },
+  time: { fontSize: 13, color: colors.faint2 },
+  meta: { fontSize: 14, color: colors.muted, marginTop: 2 },
   footer: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -63,7 +63,7 @@ const styles = StyleSheet.create({
     borderTopWidth: 1,
     borderTopColor: colors.dividerSoft,
   },
-  cheerLine: { flex: 1, minWidth: 0, fontSize: 13, color: colors.inkSoft },
+  cheerLine: { flex: 1, minWidth: 0, fontSize: 14, color: colors.inkSoft },
   hearts: { flexDirection: 'row', alignItems: 'center', gap: 5 },
-  heartCount: { fontSize: 12.5, fontWeight: weights.semibold, color: colors.faint2 },
+  heartCount: { fontSize: 13, fontWeight: weights.semibold, color: colors.faint2 },
 });

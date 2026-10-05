@@ -27,7 +27,7 @@ export function StreakRing({
   size = 84,
   strokeWidth = 9,
   color = colors.primary,
-  track = '#F0E7D8',
+  track = colors.track,
   children,
   style,
 }: Props) {

@@ -26,7 +26,7 @@ const styles = StyleSheet.create({
     paddingVertical: 9,
     paddingHorizontal: 16,
   },
-  chipOn: { backgroundColor: colors.todayPillBg, borderColor: colors.primary },
-  text: { fontSize: 14.5, fontWeight: weights.medium, color: colors.inkSoft },
-  textOn: { color: colors.todayPillText, fontWeight: weights.semibold },
+  chipOn: { backgroundColor: colors.accentTint, borderColor: colors.primary },
+  text: { fontSize: 15, fontWeight: weights.medium, color: colors.inkSoft },
+  textOn: { color: colors.primaryPress, fontWeight: weights.semibold },
 });

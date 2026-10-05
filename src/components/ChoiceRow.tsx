@@ -15,6 +15,12 @@ type Props = {
 };
 
 export function ChoiceRow({ title, body, icon, tag, selected, onPress }: Props) {
+  // Some icons default to white (they're made for the Settings tiles), so give
+  // one without its own colour the soft ink, or it vanishes on the card.
+  const tinted =
+    React.isValidElement<{ color?: string }>(icon) && icon.props.color === undefined
+      ? React.cloneElement(icon, { color: colors.inkSoft })
+      : icon;
   return (
     <Pressable
       onPress={onPress}
@@ -22,7 +28,7 @@ export function ChoiceRow({ title, body, icon, tag, selected, onPress }: Props) 
       accessibilityState={{ selected }}
       style={[styles.row, selected && styles.rowSelected]}
     >
-      {icon ? <View style={styles.icon}>{icon}</View> : null}
+      {tinted ? <View style={styles.icon}>{tinted}</View> : null}
       <View style={{ flex: 1 }}>
         <View style={styles.titleRow}>
           <Text style={styles.title}>{title}</Text>
@@ -56,15 +62,15 @@ const styles = StyleSheet.create({
   icon: { width: 28, alignItems: 'center' },
   titleRow: { flexDirection: 'row', alignItems: 'center', gap: 8 },
   title: { fontSize: 16, fontWeight: weights.semibold, color: colors.ink },
-  body: { fontSize: 13, lineHeight: 18, color: colors.muted, marginTop: 3 },
+  body: { fontSize: 14.5, lineHeight: 20, color: colors.muted, marginTop: 3 },
   tag: { backgroundColor: colors.todayPillBg, borderRadius: radii.pill, paddingVertical: 2, paddingHorizontal: 8 },
-  tagText: { fontSize: 11, fontWeight: weights.semibold, color: colors.todayPillText },
+  tagText: { fontSize: 12, fontWeight: weights.semibold, color: colors.todayPillText },
   radio: {
     width: 22,
     height: 22,
     borderRadius: 11,
     borderWidth: 1.5,
-    borderColor: '#D9CFC0',
+    borderColor: colors.borderStrong,
     alignItems: 'center',
     justifyContent: 'center',
   },

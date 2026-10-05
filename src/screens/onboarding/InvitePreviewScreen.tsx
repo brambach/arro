@@ -13,7 +13,9 @@ import { stepOf } from './steps';
 /** Before sign-in the server only says the family's name and how many people are in it. */
 export function InvitePreviewScreen({ navigation }: RootStackScreenProps<'InvitePreview'>) {
   const { draft } = useApp();
-  const count = familyMembersList.length;
+  // The server's answer, or the preview family when there's no server.
+  const familyName = draft.invite?.familyName ?? DEMO_FAMILY_NAME;
+  const count = draft.invite?.memberCount ?? familyMembersList.length;
 
   return (
     <OnboardingFrame
@@ -26,7 +28,7 @@ export function InvitePreviewScreen({ navigation }: RootStackScreenProps<'Invite
     >
       <Card padding={24} style={styles.card}>
         <ArroMark size={44} />
-        <Text style={styles.family}>{DEMO_FAMILY_NAME}</Text>
+        <Text style={styles.family}>{familyName}</Text>
         <Text style={styles.count}>
           {count} {count === 1 ? 'person is' : 'people are'} in
         </Text>

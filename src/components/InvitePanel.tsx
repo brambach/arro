@@ -49,9 +49,9 @@ export function InvitePanel({
 
 const styles = StyleSheet.create({
   codeCard: { alignItems: 'center' },
-  codeLabel: { fontSize: 13, color: colors.muted },
+  codeLabel: { fontSize: 14, color: colors.muted },
   code: { fontSize: 36, fontWeight: weights.bold, letterSpacing: 6, color: colors.ink, marginTop: 8 },
-  codeNote: { fontSize: 12.5, lineHeight: 17, color: colors.faint, textAlign: 'center', marginTop: 10 },
-  fallbackLabel: { fontSize: 12.5, fontWeight: weights.semibold, color: colors.muted },
-  fallback: { fontSize: 13, lineHeight: 18, color: colors.inkSoft, marginTop: 6 },
+  codeNote: { fontSize: 13.5, lineHeight: 19, color: colors.faint, textAlign: 'center', marginTop: 10 },
+  fallbackLabel: { fontSize: 13.5, fontWeight: weights.semibold, color: colors.muted },
+  fallback: { fontSize: 14.5, lineHeight: 20, color: colors.inkSoft, marginTop: 6 },
 });
