@@ -1,17 +1,30 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 import { colors } from '../theme/tokens';
 import { type, weights } from '../theme/typography';
 import { AvatarRing } from '../components/AvatarRing';
 import { PrimaryButton } from '../components/PrimaryButton';
-import { useView } from '../state/AppState';
+import { useApp, useView } from '../state/AppState';
 import { RootStackScreenProps } from '../navigation/types';
 
 export function NudgeModalScreen({ navigation, route }: RootStackScreenProps<'Nudge'>) {
   const view = useView();
+  const { nudge } = useApp();
+  const [state, setState] = useState<'idle' | 'sending' | 'sent' | 'failed'>('idle');
   const member = (route.params?.memberId && view.members[route.params.memberId]) || view.nudgeTarget;
   const close = () => navigation.goBack();
   if (!member || member.invited) return null;
+
+  // One nudge per person per day, whoever sends it, so "already" reads as sent too.
+  const send = () => {
+    setState('sending');
+    nudge(member.id)
+      .then(() => {
+        setState('sent');
+        setTimeout(close, 700);
+      })
+      .catch(() => setState('failed'));
+  };
 
   return (
     <View style={styles.root}>
@@ -23,7 +36,13 @@ export function NudgeModalScreen({ navigation, route }: RootStackScreenProps<'Nu
         <View style={styles.divider} />
         <Text style={styles.prompt}>A little nudge?</Text>
         <Text style={styles.promptSub}>It’s never too late.</Text>
-        <PrimaryButton title="Send a cheer" onPress={close} style={styles.cta} />
+        <PrimaryButton
+          title={state === 'sent' ? 'Sent' : state === 'sending' ? 'Sending…' : 'Send a cheer'}
+          onPress={send}
+          disabled={state === 'sending' || state === 'sent'}
+          style={styles.cta}
+        />
+        {state === 'failed' ? <Text style={styles.failed}>Couldn’t send it. Try again.</Text> : null}
         <Pressable onPress={close} style={styles.notNow} hitSlop={6}>
           <Text style={styles.notNowText}>Not now</Text>
         </Pressable>
@@ -61,6 +80,7 @@ const styles = StyleSheet.create({
   prompt: { ...type.name },
   promptSub: { ...type.meta, marginTop: 4 },
   cta: { alignSelf: 'stretch', marginTop: 20 },
+  failed: { ...type.meta, color: colors.muted, marginTop: 10 },
   notNow: { paddingVertical: 13, marginTop: 2 },
   notNowText: { fontSize: 15, fontWeight: weights.semibold, color: colors.muted },
 });

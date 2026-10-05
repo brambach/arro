@@ -16,12 +16,13 @@ import { TextButton } from '../components/TextButton';
 import { joinNames } from '../data/workouts';
 import { Member } from '../data/types';
 import { AppView, GoalView, StreakView } from '../state/buildView';
-import { useView } from '../state/AppState';
+import { useApp, useView } from '../state/AppState';
 import { useYesterdayOpen } from '../state/useYesterdayOpen';
 import { MainTabScreenProps } from '../navigation/types';
 
 export function TodayScreen({ navigation }: MainTabScreenProps<'Today'>) {
   const view = useView();
+  const { nudge } = useApp();
   const { streak, goal } = view;
   const afterBreak = streak.restartDay;
   let delay = 0;
@@ -56,7 +57,7 @@ export function TodayScreen({ navigation }: MainTabScreenProps<'Today'>) {
       </FadeInView>
 
       <FadeInView delay={next()} style={styles.section}>
-        <SummaryCard view={view} onInvite={() => navigation.navigate('Invite')} />
+        <SummaryCard view={view} onInvite={() => navigation.navigate('Invite')} onCheer={nudge} />
       </FadeInView>
 
       {!afterBreak ? (
@@ -143,10 +144,19 @@ function MoveSection({ view, onLog }: { view: AppView; onLog: (day: 'today' | 'y
 
 // ─── "x of y kept it today", including a family of one ───────────────────────
 
-function SummaryCard({ view, onInvite }: { view: AppView; onInvite: () => void }) {
+function SummaryCard({
+  view,
+  onInvite,
+  onCheer,
+}: {
+  view: AppView;
+  onInvite: () => void;
+  onCheer: (memberId: string) => Promise<unknown>;
+}) {
   const { joinedCount, keptCount, invitedList, today } = view;
   const solo = joinedCount === 1;
   const everyone = joinedCount > 1 && keptCount === joinedCount;
+  const pendingId = today.pending?.id;
 
   return (
     <Card radius={radii.cardLg} padding={18}>
@@ -173,7 +183,15 @@ function SummaryCard({ view, onInvite }: { view: AppView; onInvite: () => void }
       ) : today.pending ? (
         <View style={styles.footer}>
           <Text style={styles.footerText}>{today.pending.prompt} — </Text>
-          {today.pending.cta ? <CheerButton variant="link" label={today.pending.cta} cheeredLabel="Cheered" /> : null}
+          {today.pending.cta && pendingId ? (
+            <CheerButton
+              key={pendingId}
+              variant="link"
+              label={today.pending.cta}
+              cheeredLabel="Cheered"
+              onCheer={() => onCheer(pendingId)}
+            />
+          ) : null}
         </View>
       ) : everyone ? (
         <View style={styles.footer}>

@@ -1,5 +1,5 @@
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
-import type { CompositeScreenProps } from '@react-navigation/native';
+import type { CompositeScreenProps, NavigatorScreenParams } from '@react-navigation/native';
 import type { BottomTabScreenProps } from '@react-navigation/bottom-tabs';
 
 export type RootStackParamList = {
@@ -17,7 +17,7 @@ export type RootStackParamList = {
   ReminderTime: undefined;
   NotificationsPrompt: undefined;
   // The app: only in the stack once there is one.
-  Main: undefined;
+  Main: NavigatorScreenParams<MainTabParamList> | undefined;
   Milestone: { kind?: 'family' } | undefined;
   Settings: undefined;
   StreakRules: undefined;

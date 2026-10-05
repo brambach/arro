@@ -9,13 +9,14 @@ import { TextButton } from '../components/TextButton';
 import { WorkoutCard } from '../components/WorkoutCard';
 import { Screen } from '../components/Screen';
 import { joinNames } from '../data/workouts';
-import { useView } from '../state/AppState';
+import { useApp, useView } from '../state/AppState';
 import { MainTabScreenProps } from '../navigation/types';
 
 const COUNT_WORDS = ['zero', 'one', 'two', 'three', 'four', 'five', 'six', 'seven'];
 
 export function FeedScreen({ navigation }: MainTabScreenProps<'Feed'>) {
   const view = useView();
+  const { nudge } = useApp();
   const joined = view.joinedCount;
   const count = COUNT_WORDS[joined] ?? joined;
   const subtitle =
@@ -45,6 +46,7 @@ export function FeedScreen({ navigation }: MainTabScreenProps<'Feed'>) {
                 item={item}
                 member={view.members[item.memberId]}
                 onPress={workoutId ? () => navigation.navigate('WorkoutDetail', { workoutId }) : undefined}
+                onCheer={item.kind === 'still' ? () => nudge(item.memberId) : undefined}
               />
             </FadeInView>
           );

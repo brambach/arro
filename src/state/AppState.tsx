@@ -107,6 +107,8 @@ interface AppContextValue {
   completeOnboarding: (remindersWanted: boolean) => Promise<void>;
   /** Throws backend.WorkoutDateError when the server refuses the date. */
   logWorkout: (input: LogInput) => Promise<void>;
+  /** "Send a cheer" for someone who hasn't moved yet. 'already' if they've been nudged today. */
+  nudge: (memberId: string) => Promise<'sent' | 'already'>;
   updateProfile: (patch: { name?: string; photoUri?: string | null }) => Promise<void>;
   /** Settings: switch how moving counts. Apple Health shows Apple's sheet, then syncs. */
   setMoveMethod: (method: MoveMethod) => Promise<void>;
@@ -446,6 +448,15 @@ export function AppStateProvider({ children }: { children: React.ReactNode }) {
     [persist, refresh],
   );
 
+  const nudge = useCallback(async (memberId: string): Promise<'sent' | 'already'> => {
+    const current = sessionRef.current;
+    // The local demo family has no server to tell.
+    if (!current?.remote) return 'sent';
+    const result = await backend.sendNudge(current.remote.memberId, memberId);
+    if (result === 'sent') backend.sendQueuedPushes().catch(() => undefined);
+    return result;
+  }, []);
+
   const updateProfile = useCallback(
     async (patch: { name?: string; photoUri?: string | null }) => {
       const current = sessionRef.current;
@@ -555,6 +566,7 @@ export function AppStateProvider({ children }: { children: React.ReactNode }) {
       lookUpInvite,
       completeOnboarding,
       logWorkout,
+      nudge,
       updateProfile,
       setMoveMethod,
       setReminder,
@@ -577,6 +589,7 @@ export function AppStateProvider({ children }: { children: React.ReactNode }) {
       lookUpInvite,
       completeOnboarding,
       logWorkout,
+      nudge,
       updateProfile,
       setMoveMethod,
       setReminder,

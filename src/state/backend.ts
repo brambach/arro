@@ -396,10 +396,25 @@ export async function forgetPushToken(token: string): Promise<void> {
   if (error) throw error;
 }
 
-/** Sends whatever pushes are queued (the send-push edge function). Called after a join or a cheer. */
+/** Sends whatever pushes are queued (the send-push edge function). Called after a join or a nudge. */
 export async function sendQueuedPushes(): Promise<void> {
   const { error } = await client().functions.invoke('send-push');
   if (error) throw error;
+}
+
+/**
+ * "Send a cheer" for someone who hasn't moved yet: a nudge, which queues a push to
+ * them (migration 20261005000009). 'already' when they've had one today from
+ * anyone, since nudges are one per person per day.
+ */
+export async function sendNudge(fromMemberId: string, toMemberId: string): Promise<'sent' | 'already'> {
+  const { error } = await client().from('nudges').insert({ from_member_id: fromMemberId, to_member_id: toMemberId });
+  if (error) {
+    // 23505: unique (to_member_id, local_date).
+    if (error.code === '23505') return 'already';
+    throw error;
+  }
+  return 'sent';
 }
 
 /** A manual "I moved today" check-in. Photos stay on the phone until Storage is set up. */

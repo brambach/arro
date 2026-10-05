@@ -7,7 +7,6 @@ import { type, weights } from '../theme/typography';
 import { AvatarStack } from '../components/AvatarStack';
 import { ChevronLeft, ShareIcon } from '../components/Icons';
 import { PhotoSlot } from '../components/PhotoSlot';
-import { PrimaryButton } from '../components/PrimaryButton';
 import { milestone as personalMilestone } from '../data/family';
 import { joinNames } from '../data/workouts';
 import { useView } from '../state/AppState';
@@ -65,7 +64,7 @@ export function MilestoneScreen({ navigation, route }: RootStackScreenProps<'Mil
           <Text style={styles.cheeredText}>Cheered on by {joinNames(cheerers.map((c) => c.name))}</Text>
         </View>
         <View style={styles.actions}>
-          <PrimaryButton title="Send a cheer" onPress={() => {}} style={{ flex: 1 }} />
+          {/* "Send a cheer" comes back once milestones live on the server; this card is sample data. */}
           <Pressable style={styles.shareBtn} accessibilityLabel="Share">
             <ShareIcon size={20} color={colors.inkSoft} />
           </Pressable>

@@ -12,7 +12,17 @@ import { Heart } from './Icons';
  * WorkoutCard — a feed entry. A kept post shows a cheer line + heart count; a
  * still-has-today post shows a nudge line + a Cheer button.
  */
-export function WorkoutCard({ item, member, onPress }: { item: FeedItem; member: Member; onPress?: () => void }) {
+export function WorkoutCard({
+  item,
+  member,
+  onPress,
+  onCheer,
+}: {
+  item: FeedItem;
+  member: Member;
+  onPress?: () => void;
+  onCheer?: () => Promise<unknown>;
+}) {
   return (
     <Card radius={radii.card} padding={14} style={styles.card} onPress={onPress}>
       <View style={styles.header}>
@@ -37,7 +47,7 @@ export function WorkoutCard({ item, member, onPress }: { item: FeedItem; member:
               <Text style={styles.heartCount}>{item.hearts}</Text>
             </View>
           ) : (
-            <CheerButton variant="outline" />
+            <CheerButton variant="outline" onCheer={onCheer} />
           )}
         </View>
       ) : null}

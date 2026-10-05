@@ -4,7 +4,7 @@ begin;
 create extension if not exists pgtap with schema extensions;
 set local search_path = public, extensions;
 
-select plan(16);
+select plan(20);
 
 insert into auth.users (id, email, aud, role) values
   ('91000000-0000-0000-0000-000000000000', 'p1@arro.test', 'authenticated', 'authenticated'),
@@ -112,6 +112,41 @@ select results_eq(
   $$ select token, user_id from public.push_tokens $$,
   $$ values ('ExponentPushToken[mum-phone]'::text, '93000000-0000-0000-0000-000000000000'::uuid) $$,
   'The last account to sign in on a phone owns its token');
+
+-- Nudges (migration 20261005000009) ----------------------------------------------
+-- The push depends on the recipient's clock, so put Dad somewhere it's mid-afternoon
+-- and Mum somewhere it's the middle of the night.
+update public.members
+   set timezone = (select name from pg_timezone_names
+                    where (now() at time zone name)::time between time '13:00' and time '16:00' limit 1)
+ where id = '92222222-0000-0000-0000-000000000000';
+update public.members
+   set timezone = (select name from pg_timezone_names
+                    where (now() at time zone name)::time between time '01:00' and time '04:00' limit 1)
+ where id = '91111111-0000-0000-0000-000000000000';
+
+set local role authenticated;
+set local request.jwt.claims = '{"sub": "91000000-0000-0000-0000-000000000000", "role": "authenticated"}';
+select lives_ok(
+  $$ insert into public.nudges (from_member_id, to_member_id)
+     values ('91111111-0000-0000-0000-000000000000', '92222222-0000-0000-0000-000000000000') $$,
+  'Mum nudges Dad');
+select throws_ok(
+  $$ insert into public.nudges (from_member_id, to_member_id)
+     values ('91111111-0000-0000-0000-000000000000', '92222222-0000-0000-0000-000000000000') $$,
+  '23505', null, 'A second nudge to Dad the same day is refused');
+set local request.jwt.claims = '{"sub": "92000000-0000-0000-0000-000000000000", "role": "authenticated"}';
+select lives_ok(
+  $$ insert into public.nudges (from_member_id, to_member_id)
+     values ('92222222-0000-0000-0000-000000000000', '91111111-0000-0000-0000-000000000000') $$,
+  'Dad nudges Mum in her middle of the night');
+reset role;
+
+select results_eq(
+  $$ select user_id, title, body, data->>'memberId' from private.push_outbox where kind = 'nudge' $$,
+  $$ values ('92000000-0000-0000-0000-000000000000'::uuid, 'Mum is cheering you on'::text,
+             'You’ve still got today.'::text, '91111111-0000-0000-0000-000000000000'::text) $$,
+  'Dad is told about Mum''s nudge once, and Mum''s nudge waits in silence for her quiet hours');
 
 select * from finish();
 rollback;

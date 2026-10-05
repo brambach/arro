@@ -1,7 +1,7 @@
-// Sends queued pushes (cheers, joins) through Expo's push service.
+// Sends queued pushes (cheers, nudges, joins, the evening message) through Expo's push service.
 //
 // The queue lives in private.push_outbox, filled by database triggers. The app
-// calls this function after it cheers or joins, with the signed-in user's JWT.
+// calls this function after it nudges or joins, with the signed-in user's JWT.
 // Calling it only sends what's already queued, so any signed-in caller is fine.
 // SUPABASE_URL and SUPABASE_SERVICE_ROLE_KEY are provided by the edge runtime.
 // EXPO_ACCESS_TOKEN is optional: set it only if push security is turned on in

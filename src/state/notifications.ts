@@ -131,12 +131,13 @@ export type NotificationTap =
   | { kind: 'cheer'; workoutId: string }
   | { kind: 'joined'; memberId: string }
   | { kind: 'evening'; memberId: string }
+  | { kind: 'nudge'; memberId: string }
   | { kind: 'reminder' };
 
 function asTap(data: unknown): NotificationTap | null {
   const d = (data ?? {}) as Record<string, unknown>;
   if (d.kind === 'cheer' && typeof d.workoutId === 'string') return { kind: 'cheer', workoutId: d.workoutId };
-  if ((d.kind === 'joined' || d.kind === 'evening') && typeof d.memberId === 'string') {
+  if ((d.kind === 'joined' || d.kind === 'evening' || d.kind === 'nudge') && typeof d.memberId === 'string') {
     return { kind: d.kind, memberId: d.memberId };
   }
   if (d.kind === 'reminder') return { kind: 'reminder' };

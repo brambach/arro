@@ -26,7 +26,8 @@ type Props = {
   variant?: 'outline' | 'link';
   label?: string;
   cheeredLabel?: string;
-  onCheer?: () => void;
+  /** Shows "Cheered" straight away; if the promise rejects, the button goes back. */
+  onCheer?: () => unknown;
   style?: StyleProp<ViewStyle>;
 };
 
@@ -57,7 +58,7 @@ export function CheerButton({
   const cheer = () => {
     if (cheered) return;
     setCheered(true);
-    onCheer?.();
+    Promise.resolve(onCheer?.()).catch(() => setCheered(false));
     if (Platform.OS !== 'web') Haptics.selectionAsync().catch(() => {});
     if (!reduceMotion.current) {
       pulse.setValue(0);
