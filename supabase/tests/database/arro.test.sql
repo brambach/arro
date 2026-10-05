@@ -7,7 +7,7 @@ begin;
 create extension if not exists pgtap with schema extensions;
 set local search_path = public, extensions;
 
-select plan(69);
+select plan(81);
 
 -- Users -----------------------------------------------------------------------
 insert into auth.users (id, email, aud, role) values
@@ -465,6 +465,62 @@ select results_eq(
   $$ select freeze_available, freeze_back_on from private.member_summary('f1111111-0000-0000-0000-000000000000', '2026-07-10 12:00+00') $$,
   $$ values (true, null::date) $$,
   'F1: seven days after using the freeze it is back');
+
+-- Timezone loophole: a far-behind timezone can't reach back further --------------------------
+-- The earliest date is never before yesterday in UTC, whatever timezone is claimed.
+-- Times are pinned here so the result doesn't depend on when the test runs.
+select results_eq(
+  $$ select earliest, latest from private.workout_date_window('2026-10-05 03:00+00', 'Etc/GMT+12') $$,
+  $$ values ('2026-10-04'::date, '2026-10-04'::date) $$,
+  'UTC-12 at 03:00 UTC on the 5th: their own yesterday would be the 3rd, the floor holds it at the 4th');
+select results_eq(
+  $$ select earliest, latest from private.workout_date_window('2026-10-05 15:00+00', 'Pacific/Kiritimati') $$,
+  $$ values ('2026-10-05'::date, '2026-10-06'::date) $$,
+  'UTC+14 keeps its own yesterday, which is already after the floor');
+select results_eq(
+  $$ select earliest, latest from private.workout_date_window('2026-10-05 02:00+00', 'America/New_York') $$,
+  $$ values ('2026-10-04'::date, '2026-10-04'::date) $$,
+  'New York at 10pm on the 4th can log only the 4th: the known cost of the floor, no yesterday that evening');
+select results_eq(
+  $$ select earliest, latest from private.workout_date_window('2026-10-05 15:00+00', 'UTC') $$,
+  $$ values ('2026-10-04'::date, '2026-10-05'::date) $$,
+  'UTC: yesterday and today');
+
+-- The floor relies on the timezone list stopping at UTC-12 and UTC+14.
+select throws_ok(
+  $$ update public.members set timezone = 'Mars/Olympus_Mons' where id = 'e1111111-0000-0000-0000-000000000000' $$,
+  '23514', null, 'a made-up timezone is refused');
+select is(
+  (select min(utc_offset) >= interval '-12 hours' and max(utc_offset) <= interval '14 hours' from pg_timezone_names),
+  true, 'no named timezone is behind UTC-12 or ahead of UTC+14');
+
+set local role authenticated;
+set local request.jwt.claims = '{"sub": "e1000000-0000-0000-0000-000000000000", "role": "authenticated"}';
+
+select lives_ok(
+  $$ update public.members set timezone = 'Etc/GMT+12' where id = 'e1111111-0000-0000-0000-000000000000' $$,
+  'E1 can set their timezone to UTC-12');
+select throws_ok(
+  $$ insert into public.workouts (member_id, local_date, type, source)
+     values ('e1111111-0000-0000-0000-000000000000', (now() at time zone 'UTC')::date - 2, 'walk', 'manual') $$,
+  '22023', null, 'E1 on UTC-12 still can''t log a date two days before today in UTC');
+select lives_ok(
+  $$ insert into public.workouts (member_id, local_date, type, source)
+     values ('e1111111-0000-0000-0000-000000000000', (now() at time zone 'UTC')::date - 1, 'walk', 'manual') $$,
+  'E1 on UTC-12 can still log yesterday in UTC');
+
+select lives_ok(
+  $$ update public.members set timezone = 'America/Los_Angeles' where id = 'e1111111-0000-0000-0000-000000000000' $$,
+  'E1 can move to California');
+select lives_ok(
+  $$ insert into public.workouts (member_id, local_date, type, source)
+     values ('e1111111-0000-0000-0000-000000000000', (now() at time zone 'America/Los_Angeles')::date, 'run', 'manual') $$,
+  'E1 in California can always log their own today');
+select throws_ok(
+  $$ insert into public.workouts (member_id, local_date, type, source)
+     values ('e1111111-0000-0000-0000-000000000000', (now() at time zone 'UTC')::date - 2, 'run', 'manual') $$,
+  '22023', null, 'E1 in California can''t log a date two days before today in UTC either');
+reset role;
 
 select * from finish();
 rollback;

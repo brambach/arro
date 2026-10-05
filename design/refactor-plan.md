@@ -40,21 +40,40 @@ This is a plan, not a spec. Check each library against the Expo SDK 57 docs
   repair a broken family streak. Enforced by the `workouts_check_date` trigger.
   A phone that's offline for more than a day loses its Health workouts from before
   yesterday.
+- **A timezone can't be used to backdate.** Members set their own timezone, and
+  the server can't tell where they really are, so the trigger also refuses any
+  date before yesterday in UTC (migration `20261005000006`). The cost: a member
+  west of UTC can't log "yesterday" in the hours when their local date is behind
+  the UTC date (about 7pm to midnight in New York, 5pm to midnight in Los
+  Angeles). Today is never affected. What's left: a member east of UTC who claims
+  a timezone behind theirs can still reach up to a day past their real yesterday
+  for part of the day. Closing that needs a trusted location, which the database
+  doesn't have. Limiting how often the timezone can change was rejected: it
+  wouldn't hold anything the floor doesn't.
 - **"Today" across timezones.** Each person's own local calendar day.
+- **The paid plan stays as is.** v1 free, then Arro Family ($39.99 a year per
+  family) in the first update, as in `design/paid-plan.md`.
+- **App Store name: "Arro: Family Move Streak".** Agreed, not yet reserved or
+  cleared in App Store Connect.
+- **Domain: arrofamily.com.** Agreed, not yet bought.
+- **Apple Developer Program: an individual account.** The user's own name will be
+  the App Store seller, and they're fine with that.
 - **iPhone only for v1.** Set `ios.supportsTablet` to `false` in `app.json` so
   there's no iPad review or iPad screenshots.
 
 ## Open decisions
 
 1. **A domain** for invite links, the privacy policy and a simple landing page.
-   See "Domain" below.
+   Agreed: arrofamily.com (Oct 2026). **Not bought yet.** See "Domain" below.
 2. ~~**Freeze cadence.**~~ **Decided (Oct 2026): weekly.** One automatic freeze
    per person, back 7 days after it's used.
-3. **The paid plan.** Recommendation in `design/paid-plan.md`: v1 free, then
-   Arro Family ($39.99 a year per family) in the first update.
-4. **The App Store name.** "Arro" on its own is taken (a travel app, a taxi app,
-   a credit card app). It needs a suffix, such as "Arro: Family Move Streak".
-   Decide before buying a domain.
+3. ~~**The paid plan.**~~ **Decided (Oct 2026): it stays as is.** v1 free, then
+   Arro Family ($39.99 a year per family) in the first update
+   (`design/paid-plan.md`).
+4. ~~**The App Store name.**~~ **Decided (Oct 2026): "Arro: Family Move Streak".**
+   "Arro" on its own is taken (a travel app, a taxi app, a credit card app), so it
+   needs the suffix. **Not yet reserved:** nobody has checked that App Store
+   Connect will accept it.
 
 ## Domain
 
@@ -74,9 +93,10 @@ association file, the privacy policy and a landing page. Vercel's own guide uses
 JSON. The catch: moving to a real domain later breaks every invite link already
 sent. Join codes would still work.
 
-**Recommendation:** buy one once the App Store name is settled (open decision 4).
-It's the cheapest part of the launch and it's in every invite your family gets.
-Until then, nothing in phases 0-4 needs it.
+**Decision:** arrofamily.com, agreed in Oct 2026 but not bought yet. The name
+it's built on is decided (open decision 4) and not yet reserved. It's the
+cheapest part of the launch and it's in every invite your family gets. Until it's
+bought, nothing in phases 0-4 needs it.
 
 ## Phase 0 - Clean up drift (Expo Go is fine)
 
@@ -198,7 +218,8 @@ Also in this phase:
 
 - `app.json`: add `ios.bundleIdentifier` (missing now) and a Health usage
   description. `supportsTablet` is already `false` from phase 0.
-- Reserve the App Store name with a suffix (open decision 4).
+- Reserve the App Store name "Arro: Family Move Streak" (open decision 4). Not
+  done yet; App Store Connect may still refuse it.
 - Real launcher icon (`assets/icon.png` is still the Expo template).
 - Privacy policy and support URLs, App Privacy labels (health, photos, name,
   email). Health data is never used for ads (Guideline 5.1.3).
