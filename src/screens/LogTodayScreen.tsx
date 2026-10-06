@@ -13,7 +13,7 @@ import { workoutTypeLabels } from '../data/workouts';
 import { useApp } from '../state/AppState';
 import { WorkoutDateError } from '../state/backend';
 import { yesterdayClosedAt } from '../state/dates';
-import { pickPhoto } from '../state/photos';
+import { PHOTOS_ON, pickPhoto } from '../state/photos';
 import { useYesterdayOpen } from '../state/useYesterdayOpen';
 import { RootStackScreenProps } from '../navigation/types';
 
@@ -22,7 +22,7 @@ const MINUTES = [10, 20, 30, 45, 60];
 
 /**
  * Log a workout for today or yesterday, never older. Only the type is needed;
- * duration, photo and note are optional and never ranked.
+ * duration and note are optional and never ranked.
  */
 export function LogTodayScreen({ navigation, route }: RootStackScreenProps<'LogToday'>) {
   const insets = useSafeAreaInsets();
@@ -82,7 +82,7 @@ export function LogTodayScreen({ navigation, route }: RootStackScreenProps<'LogT
         </View>
         {!yesterdayOk && !error && (
           <Text style={styles.hint}>
-            Logging yesterday closed at {yesterdayClosedAt()}, when the date changed in UTC. Today still counts.
+            Yesterday could be logged until {yesterdayClosedAt()}. Today still counts.
           </Text>
         )}
         {error && <Text style={styles.error}>{error}</Text>}
@@ -106,8 +106,8 @@ export function LogTodayScreen({ navigation, route }: RootStackScreenProps<'LogT
           ))}
         </View>
 
-        <Text style={styles.label}>Photo (optional)</Text>
-        {photoUri ? (
+        {PHOTOS_ON ? <Text style={styles.label}>Photo (optional)</Text> : null}
+        {!PHOTOS_ON ? null : photoUri ? (
           <View>
             <Image source={{ uri: photoUri }} style={styles.photo} />
             <TextButton label="Remove photo" onPress={() => setPhotoUri(null)} style={styles.remove} />

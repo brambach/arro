@@ -1,4 +1,5 @@
 import { RootStackParamList } from '../../navigation/types';
+import { PHOTOS_ON } from '../../state/photos';
 
 type Role = 'founder' | 'invitee';
 
@@ -10,7 +11,7 @@ const PATHS: Record<Role, (keyof RootStackParamList)[]> = {
     'InvitePreview',
     'SignIn',
     'MeetFamily',
-    'OnboardingPhoto',
+    ...(PHOTOS_ON ? ['OnboardingPhoto' as const] : []),
     'HowItWorks',
     'HowYouMove',
     'ReminderTime',

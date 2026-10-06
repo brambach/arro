@@ -25,7 +25,7 @@ export function InviteScreen({ navigation }: RootStackScreenProps<'Invite'>) {
       </View>
       <ScrollView keyboardShouldPersistTaps="handled" showsVerticalScrollIndicator={false} contentContainerStyle={styles.body}>
         <Text style={type.title}>Invite a family member</Text>
-        <Text style={styles.sub}>Send the message, or read them the code. They’ll pick a photo and join in a minute.</Text>
+        <Text style={styles.sub}>Send the message, or read them the code. It takes them about a minute to join.</Text>
         <View style={{ marginTop: 20 }}>
           <InvitePanel code={invite.code} name={invite.name} onName={invite.setName} fallback={invite.fallback} />
         </View>

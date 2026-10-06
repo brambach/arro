@@ -4,7 +4,6 @@ import { colors, radii, spacing } from '../theme/tokens';
 import { type } from '../theme/typography';
 import { Card } from '../components/Card';
 import { FadeInView } from '../components/FadeInView';
-import { ListIcon } from '../components/Icons';
 import { TextButton } from '../components/TextButton';
 import { WorkoutCard } from '../components/WorkoutCard';
 import { Screen } from '../components/Screen';
@@ -22,7 +21,7 @@ export function FeedScreen({ navigation }: MainTabScreenProps<'Feed'>) {
   const subtitle =
     joined === 1
       ? view.invitedList.length
-        ? `Just you so far. ${joinNames(view.invitedList.map((m) => m.name))} hasn’t joined yet.`
+        ? `Just you so far. ${joinNames(view.invitedList.map((m) => m.name))} ${view.invitedList.length === 1 ? 'hasn’t' : 'haven’t'} joined yet.`
         : 'Just you so far.'
       : `Just the ${count} of you, one day at a time.`;
   const waiting = joined === 1;
@@ -34,7 +33,6 @@ export function FeedScreen({ navigation }: MainTabScreenProps<'Feed'>) {
           <Text style={type.title}>Family feed</Text>
           <Text style={styles.subtitle}>{subtitle}</Text>
         </View>
-        <ListIcon />
       </FadeInView>
 
       <View style={styles.list}>

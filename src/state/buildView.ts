@@ -235,6 +235,22 @@ function ownProfile(
   };
 }
 
+/**
+ * The card at the end of "Your first 30 days together" for a real family. Nothing on it
+ * is made up: no date or cheers until milestones live on the server.
+ */
+function firstMonthMilestone(me: Member): MilestoneData {
+  return {
+    memberId: me.id,
+    day: GOAL_DAYS,
+    title: `${GOAL_DAYS} days\ntogether`,
+    subtitle: 'Your first month, the whole family.',
+    motto: 'Every day forward, together.',
+    dateLine: '',
+    cheeredBy: [],
+  };
+}
+
 // ─── The two kinds of family ─────────────────────────────────────────────────
 
 function founderView(session: SavedSession, now: Date): AppView {
@@ -281,7 +297,7 @@ function founderView(session: SavedSession, now: Date): AppView {
     workouts: Object.fromEntries(logs.map((l) => [l.id, toDetail(l, me.id, todayKey)])),
     streak: { kind: 'solo', current, longest, daysTogether: null, restartDay: false },
     goal: { status: 'waiting', day: 0, total: GOAL_DAYS },
-    milestone: familyMilestone,
+    milestone: firstMonthMilestone(me),
     usuallyLine: `usually ${SLOT_WORD[session.me.reminder]}`,
   };
 }
@@ -591,7 +607,7 @@ function familyView(session: SavedSession, family: RemoteFamily, now: Date): App
     workouts: details,
     streak,
     goal,
-    milestone: familyMilestone,
+    milestone: firstMonthMilestone(me),
     usuallyLine: `usually ${SLOT_WORD[session.me.reminder]}`,
   };
 }

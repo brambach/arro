@@ -5,9 +5,9 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { colors, radii, spacing } from '../theme/tokens';
 import { type, weights } from '../theme/typography';
 import { AvatarStack } from '../components/AvatarStack';
-import { ChevronLeft, ShareIcon } from '../components/Icons';
+import { ChevronLeft } from '../components/Icons';
 import { PhotoSlot } from '../components/PhotoSlot';
-import { milestone as personalMilestone } from '../data/family';
+import { MilestoneData } from '../data/types';
 import { joinNames } from '../data/workouts';
 import { useView } from '../state/AppState';
 import { RootStackScreenProps } from '../navigation/types';
@@ -15,8 +15,20 @@ import { RootStackScreenProps } from '../navigation/types';
 export function MilestoneScreen({ navigation, route }: RootStackScreenProps<'Milestone'>) {
   const insets = useSafeAreaInsets();
   const view = useView();
-  // "Your first 30 days together" ends on the family card; the Me tab shows Bryce's own.
-  const milestone = route.params?.kind === 'family' ? view.milestone : personalMilestone;
+  // "Your first 30 days together" ends on the family card; the Me tab shows your own runs.
+  const params = route.params;
+  const milestone: MilestoneData =
+    params.kind === 'family'
+      ? view.milestone
+      : {
+          memberId: view.me.id,
+          day: params.days,
+          title: `${params.days} days\nin a row`,
+          subtitle: 'One day at a time, every one of them counted.',
+          motto: 'Every day forward, together.',
+          dateLine: '',
+          cheeredBy: [],
+        };
   const cheerers = milestone.cheeredBy.map((id) => view.members[id]).filter(Boolean);
   // Without a photo the top is plain paper with ink type, not a grey stand-in under a dark gradient.
   const hasPhoto = !!milestone.photoUri;
@@ -58,17 +70,14 @@ export function MilestoneScreen({ navigation, route }: RootStackScreenProps<'Mil
 
       <View style={[styles.panel, { paddingBottom: insets.bottom + 22 }]}>
         <Text style={styles.motto}>{milestone.motto}</Text>
-        <Text style={styles.dateLine}>{milestone.dateLine}</Text>
-        <View style={styles.cheered}>
-          <AvatarStack members={cheerers} size={26} overlap={6} borderColor={colors.screen} />
-          <Text style={styles.cheeredText}>Cheered on by {joinNames(cheerers.map((c) => c.name))}</Text>
-        </View>
-        <View style={styles.actions}>
-          {/* "Send a cheer" comes back once milestones live on the server; this card is sample data. */}
-          <Pressable style={styles.shareBtn} accessibilityLabel="Share">
-            <ShareIcon size={20} color={colors.inkSoft} />
-          </Pressable>
-        </View>
+        {milestone.dateLine ? <Text style={styles.dateLine}>{milestone.dateLine}</Text> : null}
+        {/* Cheers and "Send a cheer" come back once milestones live on the server. */}
+        {cheerers.length ? (
+          <View style={styles.cheered}>
+            <AvatarStack members={cheerers} size={26} overlap={6} borderColor={colors.screen} />
+            <Text style={styles.cheeredText}>Cheered on by {joinNames(cheerers.map((c) => c.name))}</Text>
+          </View>
+        ) : null}
       </View>
     </View>
   );
@@ -116,15 +125,4 @@ const styles = StyleSheet.create({
   dateLine: { ...type.meta, marginTop: 4 },
   cheered: { flexDirection: 'row', alignItems: 'center', gap: 12, marginTop: 16 },
   cheeredText: { ...type.meta, color: colors.muted, flex: 1 },
-  actions: { flexDirection: 'row', gap: 12, marginTop: 18, alignItems: 'center' },
-  shareBtn: {
-    width: 54,
-    height: 54,
-    borderRadius: radii.button,
-    backgroundColor: colors.card,
-    borderWidth: 1,
-    borderColor: colors.border,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
 });

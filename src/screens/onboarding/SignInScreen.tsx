@@ -62,7 +62,7 @@ export function SignInScreen({ navigation }: RootStackScreenProps<'SignIn'>) {
         autoCapitalize="words"
         autoComplete="given-name"
         maxLength={24}
-        placeholder="Bryce"
+        placeholder="First name"
         returnKeyType="done"
       />
       {needsApple ? (

@@ -9,7 +9,7 @@ import { DEMO_FAMILY_NAME, useApp } from '../../state/AppState';
 import { familyMembersList } from '../../data/family';
 import { Member } from '../../data/types';
 import { RootStackScreenProps } from '../../navigation/types';
-import { stepOf } from './steps';
+import { nextAfter, stepOf } from './steps';
 
 /** After sign-in the server can say who's in the family and how the streak is going. */
 export function MeetFamilyScreen({ navigation }: RootStackScreenProps<'MeetFamily'>) {
@@ -35,7 +35,7 @@ export function MeetFamilyScreen({ navigation }: RootStackScreenProps<'MeetFamil
       step={stepOf('invitee', 'MeetFamily')}
       onBack={() => navigation.goBack()}
       primaryLabel="Join the family"
-      onPrimary={() => navigation.navigate('OnboardingPhoto')}
+      onPrimary={() => navigation.navigate(nextAfter('invitee', 'MeetFamily') as 'HowItWorks')}
     >
       <Card padding={18}>
         <View style={styles.faces}>

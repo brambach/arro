@@ -19,7 +19,8 @@ export type RootStackParamList = {
   NotificationsPrompt: { returning?: boolean } | undefined;
   // The app: only in the stack once there is one.
   Main: NavigatorScreenParams<MainTabParamList> | undefined;
-  Milestone: { kind?: 'family' } | undefined;
+  /** family: the end of the first 30 days · personal: a run of `days` in a row on Me. */
+  Milestone: { kind: 'family' } | { kind: 'personal'; days: number };
   Settings: undefined;
   StreakRules: undefined;
   MoveMethod: undefined;

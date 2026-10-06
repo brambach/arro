@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { AppState as RNAppState, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { AppState as RNAppState, Linking, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { colors, radii, spacing } from '../theme/tokens';
 import { type, weights } from '../theme/typography';
@@ -21,6 +21,15 @@ const ICONS: Record<string, React.ReactNode> = {
   bell: <BellIcon color={colors.inkSoft} />,
   lock: <LockIcon color={colors.inkSoft} />,
 };
+
+// The live pages on arrofamily.com, the same ones the App Store listing links to.
+const LINKS: Record<string, string> = {
+  privacy: 'https://arrofamily.com/privacy',
+  help: 'https://arrofamily.com/support',
+};
+
+const openLink = (url: string) =>
+  Linking.openURL(url).catch(() => showError('Couldn’t open the page', `It’s at ${url.replace('https://', '')}.`));
 
 /** Prototype only: look at the fake family in different moments. Gone from release builds. */
 const PREVIEWS: { label: string; value: Preview | null }[] = [
@@ -122,7 +131,9 @@ export function SettingsScreen({ navigation }: RootStackScreenProps<'Settings'>)
                       ? () => navigation.navigate('StreakRules')
                       : row.key === 'notifications'
                         ? () => navigation.navigate('Notifications')
-                        : undefined
+                        : LINKS[row.key]
+                          ? () => openLink(LINKS[row.key])
+                          : undefined
               }
               accessibilityRole="button"
               accessibilityLabel={row.label}
@@ -137,16 +148,27 @@ export function SettingsScreen({ navigation }: RootStackScreenProps<'Settings'>)
         </View>
 
         <View style={[styles.card, { marginTop: 14 }]}>
-          {settings.about.map((row, i) => (
-            <View key={row.key} style={[styles.row, i < settings.about.length - 1 && styles.rowBorder]}>
-              <View style={styles.iconTile}>
-                <Text style={styles.glyph}>{row.glyph}</Text>
-              </View>
-              <Text style={styles.label}>{row.label}</Text>
-              {row.value ? <Text style={styles.value}>{row.value}</Text> : null}
-              <ChevronRight />
-            </View>
-          ))}
+          {settings.about.map((row, i) => {
+            // About Arro only shows the version, so it has no arrow.
+            const link = LINKS[row.key];
+            return (
+              <Pressable
+                key={row.key}
+                onPress={link ? () => openLink(link) : undefined}
+                disabled={!link}
+                accessibilityRole={link ? 'link' : 'text'}
+                accessibilityLabel={row.value ? `${row.label}, ${row.value}` : row.label}
+                style={[styles.row, i < settings.about.length - 1 && styles.rowBorder]}
+              >
+                <View style={styles.iconTile}>
+                  <Text style={styles.glyph}>{row.glyph}</Text>
+                </View>
+                <Text style={styles.label}>{row.label}</Text>
+                {row.value ? <Text style={styles.value}>{row.value}</Text> : null}
+                {link ? <ChevronRight /> : null}
+              </Pressable>
+            );
+          })}
         </View>
 
         {__DEV__ ? (

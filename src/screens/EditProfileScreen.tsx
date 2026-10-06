@@ -9,7 +9,7 @@ import { TextButton } from '../components/TextButton';
 import { TextField } from '../components/TextField';
 import { useApp, useView } from '../state/AppState';
 import { showError } from '../state/confirm';
-import { pickPhoto } from '../state/photos';
+import { PHOTOS_ON, pickPhoto } from '../state/photos';
 import { RootStackScreenProps } from '../navigation/types';
 
 /** Edit profile: the name and photo your family sees. The colour is automatic and stays. */
@@ -34,14 +34,16 @@ export function EditProfileScreen({ navigation }: RootStackScreenProps<'EditProf
         <Text style={type.title}>Edit profile</Text>
         <View style={styles.avatarWrap}>
           <AvatarRing name={name || me.name} color={me.color} photoUri={photoUri} size={96} />
-          <TextButton
-            label={photoUri ? 'Choose a different photo' : 'Choose a photo'}
-            onPress={async () => {
-              const uri = await pickPhoto();
-              if (uri) setPhotoUri(uri);
-            }}
-            style={{ marginTop: 14 }}
-          />
+          {PHOTOS_ON ? (
+            <TextButton
+              label={photoUri ? 'Choose a different photo' : 'Choose a photo'}
+              onPress={async () => {
+                const uri = await pickPhoto();
+                if (uri) setPhotoUri(uri);
+              }}
+              style={{ marginTop: 14 }}
+            />
+          ) : null}
           {photoUri ? <TextButton label="Remove photo" onPress={() => setPhotoUri(null)} style={{ fontSize: 15, marginTop: 10, color: colors.muted }} /> : null}
         </View>
         <TextField label="Name" value={name} onChangeText={setName} autoCapitalize="words" maxLength={24} />

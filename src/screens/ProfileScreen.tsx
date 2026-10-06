@@ -58,7 +58,7 @@ export function ProfileScreen({ navigation }: MainTabScreenProps<'Me'>) {
       </FadeInView>
 
       <FadeInView delay={120} style={styles.section}>
-        <SectionHeader title="Recent workouts" action="See all" titleColor={colors.ink} style={styles.sectionHead} />
+        <SectionHeader title="Recent workouts" titleColor={colors.ink} style={styles.sectionHead} />
         {profile.recentWorkouts.length === 0 ? (
           <Text style={styles.empty}>Your workouts show up here once you log one.</Text>
         ) : null}
@@ -82,18 +82,18 @@ export function ProfileScreen({ navigation }: MainTabScreenProps<'Me'>) {
       </FadeInView>
 
       <FadeInView delay={160} style={styles.section}>
-        <SectionHeader title="Milestones" action="See all" titleColor={colors.ink} style={styles.sectionHead} />
+        <SectionHeader title="Milestones" titleColor={colors.ink} style={styles.sectionHead} />
         {profile.milestones.length === 0 ? (
           <Text style={styles.empty}>Your first one is 7 days in a row.</Text>
         ) : null}
         <View style={styles.milestones}>
-          {profile.milestones.map((n, i) => (
+          {profile.milestones.map((n) => (
             <Pressable
               key={n}
               style={styles.msCol}
-              accessibilityRole={i === 0 ? 'button' : undefined}
-              accessibilityLabel={i === 0 ? `${n} day milestone` : undefined}
-              onPress={i === 0 ? () => navigation.navigate('Milestone') : undefined}
+              accessibilityRole="button"
+              accessibilityLabel={`${n} day milestone`}
+              onPress={() => navigation.navigate('Milestone', { kind: 'personal', days: n })}
             >
               <View style={styles.msCircle}>
                 <Text style={styles.msNumber}>{n}</Text>

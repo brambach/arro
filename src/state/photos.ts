@@ -5,6 +5,13 @@
 import { Alert, Linking } from 'react-native';
 import * as ImagePicker from 'expo-image-picker';
 
+/**
+ * Off for v1: photos never leave the phone that took them until Storage is set up,
+ * so the family would never see them. Turning this on brings back the photo
+ * buttons on Log today and Edit profile and the photo step in onboarding.
+ */
+export const PHOTOS_ON = false;
+
 export async function pickPhoto(): Promise<string | null> {
   const permission = await ImagePicker.requestMediaLibraryPermissionsAsync();
   if (!permission.granted) {
