@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { Image, KeyboardAvoidingView, Platform, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
+import * as Haptics from 'expo-haptics';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { colors, radii, spacing } from '../theme/tokens';
 import { type, weights } from '../theme/typography';
@@ -43,6 +44,8 @@ export function LogTodayScreen({ navigation, route }: RootStackScreenProps<'LogT
     setError(null);
     try {
       await logWorkout({ day, type: workoutType, minutes, note, photoUri });
+      // A small "done" in the hand as Today takes over with the tick.
+      if (Platform.OS !== 'web') Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success).catch(() => {});
       navigation.goBack();
     } catch (e) {
       setSaving(false);

@@ -1,0 +1,996 @@
+/* Arro website. Paper and clay, from src/theme/tokens.ts and
+   design/visual-direction.md. Clay is spent once per page at most.
+
+   Motion follows the house default (design/motion/default): one statement
+   move per screen, played once; 200ms ease-out for hover; 140ms ease-in for
+   anything leaving; transform and opacity only; reduced-motion block at the
+   bottom. */
+
+:root {
+  color-scheme: light;
+
+  /* Colours, same values as the app */
+  --paper: #F5F1E8;
+  --card: #FFFDF8;
+  --border: #E6DFD2;
+  --divider: #ECE5D9;
+  --ink: #2B2722;
+  --ink-soft: #575049;
+  --muted: #6B645B;
+  --faint: #7D766C;
+  --clay: #A65A3C;
+  --clay-press: #8A4A31;
+  --kept: #5D7A63;
+  --kept-bg: #E8ECE3;
+  --today-bg: #EDE6DA;
+  --freeze: #5E7C93;
+  --freeze-bg: #E6EAEE;
+
+  /* Type. ui-serif is New York on Apple devices; the rest fall back to a
+     book serif already on the machine. No web fonts to download. */
+  --serif: ui-serif, "New York", "Iowan Old Style", "Palatino Linotype", Palatino, Georgia, serif;
+  --sans: system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", sans-serif;
+
+  --measure: 36rem;
+  --page: 70rem;
+  --gutter: clamp(1.25rem, 5vw, 2.5rem);
+
+  /* Motion */
+  --ease-statement: cubic-bezier(0.19, 1, 0.22, 1);
+  --dur-statement: 900ms;
+  --ease-signature: cubic-bezier(0.2, 1.4, 0.4, 1);
+  --dur-signature: 400ms;
+  --ease-utility: ease-out;
+  --dur-utility: 200ms;
+  --dur-micro: 120ms;
+  --ease-exit: ease-in;
+  --dur-exit: 140ms;
+}
+
+*, *::before, *::after { box-sizing: border-box; }
+
+html {
+  background: var(--paper);
+  -webkit-text-size-adjust: 100%;
+  text-size-adjust: 100%;
+}
+
+body {
+  margin: 0;
+  color: var(--ink);
+  background: var(--paper);
+  font-family: var(--sans);
+  font-size: 1.125rem;
+  line-height: 1.6;
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+}
+
+h1, h2, h3 {
+  font-family: var(--serif);
+  font-weight: 500;
+  line-height: 1.12;
+  letter-spacing: -0.01em;
+  margin: 0;
+  text-wrap: balance;
+}
+
+p { margin: 0; text-wrap: pretty; }
+
+a {
+  color: inherit;
+  text-decoration-line: underline;
+  text-decoration-thickness: 1px;
+  text-underline-offset: 0.2em;
+  text-decoration-color: rgb(43 39 34 / 0.35);
+  transition: text-decoration-color var(--dur-utility) var(--ease-utility);
+}
+a:hover { text-decoration-color: currentColor; }
+
+:focus-visible {
+  outline: 2px solid var(--ink);
+  outline-offset: 3px;
+  border-radius: 4px;
+}
+
+::selection { background: #EADBD0; color: var(--ink); }
+
+.skip {
+  position: absolute;
+  left: 1rem;
+  top: -4rem;
+  background: var(--ink);
+  color: var(--paper);
+  padding: 0.5rem 0.9rem;
+  border-radius: 999px;
+  text-decoration: none;
+  z-index: 10;
+}
+.skip:focus { top: 1rem; }
+
+.wrap {
+  width: 100%;
+  max-width: var(--page);
+  margin: 0 auto;
+  padding: 0 var(--gutter);
+}
+
+/* --- Header ------------------------------------------------------------- */
+
+.site-header {
+  padding-top: clamp(1.25rem, 3vw, 2rem);
+}
+.site-header .wrap {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+}
+
+.brand {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.7rem;
+  text-decoration: none;
+  font-family: var(--serif);
+  font-size: 1.6rem;
+  line-height: 1;
+  letter-spacing: -0.01em;
+}
+.brand img {
+  width: 2.25rem;
+  height: 2.25rem;
+  border-radius: 0.6rem;
+  display: block;
+}
+
+.site-nav {
+  display: flex;
+  gap: 1.5rem;
+  font-size: 1rem;
+}
+.site-nav a {
+  text-decoration-color: transparent;
+  color: var(--ink-soft);
+}
+.site-nav a:hover,
+.site-nav a[aria-current="page"] {
+  color: var(--ink);
+  text-decoration-color: rgb(43 39 34 / 0.35);
+}
+
+/* --- Small type --------------------------------------------------------- */
+
+.eyebrow {
+  font-family: var(--sans);
+  font-size: 0.8125rem;
+  font-weight: 600;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--faint);
+}
+
+.lede {
+  font-size: clamp(1.25rem, 2.2vw, 1.4rem);
+  line-height: 1.5;
+  color: var(--ink-soft);
+  max-width: 30rem;
+}
+
+/* --- Landing: hero ------------------------------------------------------ */
+
+.hero {
+  position: relative;
+  padding: clamp(3rem, 9vw, 6.5rem) 0 clamp(9rem, 20vw, 15rem);
+}
+.hero .wrap { position: relative; z-index: 1; }
+.hero .wrap {
+  display: grid;
+  gap: clamp(2.75rem, 6vw, 4rem);
+  align-items: center;
+}
+@media (min-width: 900px) {
+  .hero .wrap { grid-template-columns: minmax(0, 1.1fr) minmax(0, 0.9fr); }
+}
+
+.hero h1 {
+  font-size: clamp(3rem, 9.5vw, 5.4rem);
+  line-height: 1.02;
+  letter-spacing: -0.02em;
+  margin: 1rem 0 1.5rem;
+}
+.hero h1 em {
+  font-style: italic;
+  color: var(--clay);
+}
+
+.soon {
+  margin-top: 2rem;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.75rem 1.25rem;
+}
+.pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.55rem;
+  border: 1px solid var(--border);
+  background: var(--card);
+  border-radius: 999px;
+  padding: 0.55rem 1.1rem 0.55rem 0.95rem;
+  font-size: 1rem;
+  color: var(--ink);
+}
+.pill svg { width: 1.05rem; height: 1.05rem; }
+.soon a {
+  font-size: 1rem;
+  color: var(--ink-soft);
+}
+
+/* The day, drawn as a card. An illustration of the idea in the app's own
+   colours and words, not a screenshot. */
+.day {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: 1.25rem;
+  padding: clamp(1.25rem, 3vw, 1.75rem);
+  max-width: 28rem;
+  width: 100%;
+  justify-self: center;
+}
+.day-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  padding-bottom: 1rem;
+  border-bottom: 1px solid var(--divider);
+}
+.day-head .eyebrow { font-size: 0.75rem; }
+.day-streak {
+  font-family: var(--serif);
+  font-size: 2.6rem;
+  line-height: 1;
+}
+.day-streak small {
+  font-family: var(--sans);
+  font-size: 0.95rem;
+  color: var(--muted);
+  margin-left: 0.35rem;
+}
+.day ul {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+.day li {
+  display: grid;
+  grid-template-columns: 2.6rem 1fr auto;
+  align-items: center;
+  gap: 0.85rem;
+  padding: 0.9rem 0;
+  border-bottom: 1px solid var(--divider);
+}
+.day li:last-child { border-bottom: 0; padding-bottom: 0.2rem; }
+.avatar {
+  width: 2.6rem;
+  height: 2.6rem;
+  border-radius: 50%;
+  display: grid;
+  place-items: center;
+  background: var(--paper);
+  border: 1px solid var(--border);
+  font-family: var(--serif);
+  font-size: 1.15rem;
+}
+.who { line-height: 1.3; }
+.who strong { display: block; font-weight: 600; font-size: 1.05rem; }
+.who span { color: var(--muted); font-size: 0.95rem; }
+.status {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  border-radius: 999px;
+  padding: 0.3rem 0.75rem;
+  font-size: 0.875rem;
+  font-weight: 600;
+  white-space: nowrap;
+}
+.status.kept { background: var(--kept-bg); color: var(--kept); }
+.status.kept svg { width: 0.85rem; height: 0.85rem; }
+.status.today { background: var(--today-bg); color: var(--ink-soft); font-weight: 500; }
+.day-caption {
+  text-wrap: balance;
+  margin-top: 1rem;
+  text-align: center;
+  font-size: 0.95rem;
+  color: var(--muted);
+  max-width: 28rem;
+  justify-self: center;
+}
+.day-figure { margin: 0; display: grid; }
+
+/* --- Landing: sections -------------------------------------------------- */
+
+.section {
+  border-top: 1px solid var(--border);
+  padding: clamp(3.5rem, 9vw, 6.5rem) 0;
+}
+
+.split {
+  display: grid;
+  gap: 1.5rem 4rem;
+}
+@media (min-width: 900px) {
+  .split { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); align-items: start; }
+}
+.split h2 {
+  font-size: clamp(2.2rem, 5.5vw, 3.4rem);
+  line-height: 1.06;
+}
+.split .eyebrow + h2 { margin-top: 1rem; }
+.split .body { display: grid; gap: 1.1rem; max-width: var(--measure); color: var(--ink-soft); }
+.split .body p:first-child { color: var(--ink); font-size: 1.25rem; line-height: 1.5; }
+
+
+.features {
+  display: grid;
+  gap: 2.5rem 3rem;
+  margin-top: clamp(2.5rem, 6vw, 4rem);
+}
+@media (min-width: 760px) {
+  .features { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+}
+.feature h3 {
+  font-size: 1.6rem;
+  margin-bottom: 0.7rem;
+}
+.feature p { color: var(--ink-soft); }
+
+.steps {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: 0;
+  counter-reset: step;
+}
+.steps li {
+  counter-increment: step;
+  display: grid;
+  grid-template-columns: 2.75rem 1fr;
+  gap: 1rem;
+  padding: 1.4rem 0;
+  border-bottom: 1px solid var(--border);
+}
+.steps li:first-child { padding-top: 0.3rem; }
+.steps li:last-child { border-bottom: 0; }
+.steps li::before {
+  content: counter(step);
+  font-family: var(--serif);
+  font-size: 1.6rem;
+  line-height: 1.1;
+  color: var(--faint);
+}
+.steps h3 { font-family: var(--sans); font-size: 1.15rem; font-weight: 600; line-height: 1.4; margin-bottom: 0.3rem; }
+.steps p { color: var(--ink-soft); }
+
+.closing {
+  position: relative;
+  border-top: 1px solid var(--border);
+  padding: clamp(4rem, 12vw, 8rem) 0 clamp(14rem, 30vw, 22rem);
+  text-align: center;
+}
+.closing .wrap { position: relative; z-index: 1; }
+.closing h2 {
+  font-size: clamp(2.6rem, 8vw, 4.6rem);
+  line-height: 1.04;
+  letter-spacing: -0.02em;
+  max-width: 14ch;
+  margin: 0 auto 1.5rem;
+}
+.closing p { color: var(--ink-soft); font-size: 1.25rem; }
+
+/* --- Text pages (privacy, support, join) -------------------------------- */
+
+.doc {
+  padding: clamp(2.75rem, 8vw, 5rem) 0 clamp(4rem, 10vw, 6rem);
+}
+.doc .wrap { max-width: calc(var(--measure) + 2 * var(--gutter) + 4rem); }
+.doc-head { margin-bottom: clamp(2.25rem, 6vw, 3.5rem); }
+.doc-head h1 {
+  font-size: clamp(2.6rem, 8vw, 3.8rem);
+  line-height: 1.04;
+  letter-spacing: -0.02em;
+  margin: 0.9rem 0 1.1rem;
+}
+.doc-head .lede { max-width: var(--measure); }
+.prose { max-width: var(--measure); }
+.prose > * + * { margin-top: 1.1rem; }
+.prose h2 {
+  font-size: 1.85rem;
+  margin-top: 3rem;
+  padding-top: 2rem;
+  border-top: 1px solid var(--border);
+}
+.prose h3 {
+  font-family: var(--sans);
+  font-size: 1.125rem;
+  font-weight: 600;
+  line-height: 1.45;
+  margin-top: 2rem;
+}
+.prose h3 + p { margin-top: 0.35rem; }
+.prose p, .prose li { color: var(--ink-soft); }
+.prose strong { color: var(--ink); font-weight: 600; }
+.prose ul { padding-left: 1.2rem; }
+.prose li + li { margin-top: 0.6rem; }
+.prose li::marker { color: var(--faint); }
+.meta { color: var(--faint); font-size: 1rem; }
+
+.contact {
+  margin-top: 1.75rem;
+  max-width: var(--measure);
+  display: inline-flex;
+  flex-wrap: wrap;
+  gap: 0.3rem 0.6rem;
+  align-items: baseline;
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: 1rem;
+  padding: 1rem 1.25rem;
+}
+.contact span { color: var(--muted); }
+
+/* Join */
+.code {
+  margin: 0 0 2.5rem;
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: 1.25rem;
+  padding: 1.4rem 1.5rem;
+  max-width: var(--measure);
+}
+.code[hidden] { display: none; }
+.code p { color: var(--muted); font-size: 1rem; }
+.code output {
+  display: block;
+  font-family: var(--serif);
+  font-size: clamp(2.4rem, 10vw, 3.2rem);
+  letter-spacing: 0.14em;
+  line-height: 1.15;
+  margin-top: 0.35rem;
+}
+.doc .steps { max-width: var(--measure); }
+.note {
+  margin-top: 2rem;
+  max-width: var(--measure);
+  color: var(--muted);
+  font-size: 1rem;
+}
+
+/* --- Footer ------------------------------------------------------------- */
+
+.site-footer {
+  border-top: 1px solid var(--border);
+  padding: 2rem 0 2.5rem;
+  font-size: 1rem;
+  color: var(--muted);
+}
+.site-footer .wrap {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem 2rem;
+}
+.site-footer nav { display: flex; gap: 1.5rem; }
+.site-footer a { color: var(--ink-soft); }
+.site-footer .brand { font-size: 1.25rem; color: var(--ink); }
+.site-footer .brand img { width: 1.75rem; height: 1.75rem; border-radius: 0.45rem; }
+
+/* --- Landing: living pieces -------------------------------------------- */
+
+/* A warm light behind the hero that drifts very slowly. */
+html, body { overflow-x: hidden; overflow-x: clip; }
+body { position: relative; }
+.site-header, main, .site-footer { position: relative; }
+.hero-wash {
+  position: absolute;
+  z-index: 0;
+  width: min(70rem, 140vw);
+  aspect-ratio: 1;
+  right: -22rem;
+  top: -18rem;
+  border-radius: 50%;
+  background: radial-gradient(closest-side, rgb(166 90 60 / 0.13), rgb(166 90 60 / 0.05) 55%, rgb(166 90 60 / 0));
+  pointer-events: none;
+}
+@media (max-width: 899px) {
+  .hero-wash { right: -45%; top: 26rem; }
+}
+
+/* Landscapes: the same hills at dawn behind the hero and at dusk behind
+   the closing line. Each hill is its own layer for the scroll parallax in
+   site.js, which only ever moves layers down, so no gaps open. */
+.scene {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  height: clamp(15rem, 34vw, 27rem);
+  overflow: hidden;
+  pointer-events: none;
+}
+.scene .layer {
+  position: absolute;
+  left: 0;
+  bottom: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: center bottom;
+}
+/* The sky fades in from the page's paper, so the scene has no top edge. */
+.scene .layer:first-child {
+  -webkit-mask-image: linear-gradient(to bottom, transparent, #000 45%);
+  mask-image: linear-gradient(to bottom, transparent, #000 45%);
+}
+.scene .grain {
+  position: absolute;
+  inset: 0;
+  background: url(grain.svg);
+  opacity: 0.22;
+  mix-blend-mode: multiply;
+  -webkit-mask-image: linear-gradient(to bottom, transparent, #000 55%);
+  mask-image: linear-gradient(to bottom, transparent, #000 55%);
+}
+.scene-dusk { height: clamp(16rem, 36vw, 28rem); }
+@media (max-width: 899px) {
+  .hero { padding-bottom: 13rem; }
+  .scene-dawn { height: 19rem; }
+}
+
+/* The day card. Each row stacks both statuses and shows one. */
+.day li { position: relative; }
+.day li::before {
+  content: "";
+  position: absolute;
+  inset: 0 -0.9rem;
+  border-radius: 0.75rem;
+  background: var(--kept-bg);
+  opacity: 0;
+  z-index: -1;
+}
+.day ul { position: relative; z-index: 0; }
+.state { display: grid; justify-items: end; }
+.state > .status { grid-area: 1 / 1; }
+.day li:not(.is-kept) .status.kept { opacity: 0; transform: scale(0.7); }
+.day li.is-kept .status.today { opacity: 0; transform: scale(0.9); }
+
+.act { display: grid; overflow: hidden; }
+.act > span { grid-area: 1 / 1; }
+.act > span + span { opacity: 0; transform: translateY(100%); }
+.act.on > span:first-child { opacity: 0; transform: translateY(-100%); }
+.act.on > span + span { opacity: 1; transform: none; }
+
+.roll {
+  display: inline-grid;
+  overflow: hidden;
+  line-height: 1;
+  padding-bottom: 0.08em;
+  vertical-align: bottom;
+}
+.roll > span { grid-area: 1 / 1; text-align: right; }
+.roll > span + span { opacity: 0; transform: translateY(100%); }
+.roll.on > span:first-child { opacity: 0; transform: translateY(-100%); }
+.roll.on > span + span { opacity: 1; transform: none; }
+
+.day-done {
+  margin-top: 0.6rem;
+  text-align: center;
+  font-family: var(--serif);
+  font-style: italic;
+  font-size: 1.1rem;
+  color: var(--kept);
+  opacity: 0;
+}
+.day-done { display: none; }
+.js .day-done { display: block; }
+.day-done.on { opacity: 1; transform: none; }
+
+/* Dividers that draw in from the left. */
+.steps li { border-bottom: 0; position: relative; }
+.steps li::after {
+  content: "";
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  height: 1px;
+  background: var(--border);
+  transform-origin: left center;
+}
+.steps li:last-child::after { display: none; }
+
+.closing-mark {
+  display: block;
+  width: 3.5rem;
+  height: 3.5rem;
+  border-radius: 0.9rem;
+  margin: 0 auto 2rem;
+}
+
+.pill { transition: transform var(--dur-utility) var(--ease-utility); }
+.pill:hover { transform: translateY(-2px); }
+
+
+/* --- Landing: the family week ----------------------------------------- */
+
+.fam-week {
+  margin-top: 2.25rem;
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: 1.25rem;
+  padding: clamp(1rem, 3vw, 1.4rem) clamp(1rem, 3vw, 1.5rem) 0;
+  max-width: 30rem;
+}
+.fw-row {
+  display: grid;
+  grid-template-columns: 3.4rem repeat(7, minmax(0, 1fr));
+  align-items: center;
+  justify-items: center;
+  gap: 0.35rem;
+  padding: 0.38rem 0;
+}
+.fw-days { padding-top: 0; }
+.fw-days i {
+  font-style: normal;
+  font-size: 0.75rem;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  color: var(--faint);
+}
+.fw-days i.is-today { color: var(--ink); }
+.fw-name {
+  justify-self: start;
+  font-size: 0.95rem;
+  font-weight: 600;
+  color: var(--ink-soft);
+}
+.c {
+  width: clamp(1.7rem, 6.5vw, 2.15rem);
+  aspect-ratio: 1;
+  border-radius: 50%;
+  display: grid;
+  place-items: center;
+}
+.c svg { width: 52%; height: 52%; }
+.c.k { background: var(--kept-bg); color: var(--kept); }
+.c.f { background: var(--freeze-bg); color: var(--freeze); }
+.c.t { border: 1.5px dashed var(--faint); }
+.fw-foot {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: 1rem;
+  margin-top: 0.6rem;
+  padding: 0.85rem 0 1rem;
+  border-top: 1px solid var(--divider);
+  font-size: 0.95rem;
+  color: var(--muted);
+}
+.fw-foot strong {
+  font-family: var(--serif);
+  font-weight: 500;
+  font-size: 1.6rem;
+  line-height: 1;
+  color: var(--ink);
+}
+.fw-foot small { font-family: var(--sans); font-size: 0.9rem; color: var(--muted); }
+
+/* --- Landing: features as small scenes from the app -------------------- */
+
+.section.band { background: var(--card); }
+.band .features { margin-top: 0; }
+.vignette {
+  height: 11.5rem;
+  margin-bottom: 1.6rem;
+  border-radius: 1.1rem;
+  background: var(--paper);
+  border: 1px solid var(--border);
+  padding: 1.1rem;
+  display: flex;
+  flex-wrap: wrap;
+  align-content: center;
+  justify-content: center;
+  gap: 0.5rem;
+  overflow: hidden;
+}
+.feature h3 { margin-bottom: 0.6rem; }
+
+.chip {
+  border: 1px solid var(--border);
+  background: var(--card);
+  border-radius: 999px;
+  padding: 0.35rem 0.85rem;
+  font-size: 0.9rem;
+  color: var(--ink-soft);
+}
+.chip.is-on {
+  border-color: var(--ink);
+  background: var(--paper);
+  color: var(--ink);
+  font-weight: 600;
+}
+
+.v-hello { flex-direction: column; align-items: stretch; align-content: stretch; justify-content: center; gap: 0.6rem; }
+.note-row { display: flex; align-items: flex-end; gap: 0.55rem; }
+.avatar.sm { width: 1.9rem; height: 1.9rem; font-size: 0.85rem; flex: none; background: var(--card); }
+.bubble {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: 1rem 1rem 1rem 0.3rem;
+  padding: 0.45rem 0.8rem;
+  font-size: 0.9rem;
+  line-height: 1.35;
+  color: var(--ink);
+}
+.nudge {
+  align-self: flex-start;
+  margin-left: 2.45rem;
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: var(--ink);
+  text-decoration: underline;
+  text-decoration-color: rgb(43 39 34 / 0.35);
+  text-underline-offset: 0.2em;
+}
+
+.v-moment { padding-bottom: 0; align-content: end; }
+.mini-phone {
+  width: 8.6rem;
+  height: 10.4rem;
+  margin-bottom: -0.1rem;
+  border: 1px solid var(--border);
+  border-bottom: 0;
+  border-radius: 1.4rem 1.4rem 0 0;
+  background: var(--card);
+  padding: 0.9rem 0.85rem 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.45rem;
+}
+.mp-label { font-family: var(--serif); font-size: 0.95rem; line-height: 1; }
+.mp-streak { font-family: var(--serif); font-size: 1.9rem; line-height: 1; }
+.mp-streak small { font-family: var(--sans); font-size: 0.7rem; color: var(--muted); margin-left: 0.25rem; }
+.mp-people, .mp-week { display: flex; gap: 0.3rem; }
+.mp-people i {
+  width: 1.15rem; height: 1.15rem; border-radius: 50%;
+  border: 1.2px dashed var(--faint);
+}
+.mp-people i.on { border: 0; background: var(--kept); opacity: 0.55; }
+.mp-week { gap: 0.22rem; }
+.mp-week i { width: 0.78rem; height: 0.78rem; border-radius: 50%; background: var(--kept-bg); }
+.mp-week i.t { background: none; border: 1px dashed var(--faint); }
+.mp-end { margin-top: auto; padding: 0.5rem 0 0.7rem; border-top: 1px solid var(--divider); font-size: 0.68rem; color: var(--faint); text-align: center; }
+
+/* --- Landing: invite ticket and the things Arro leaves out ------------- */
+
+.ticket {
+  margin-top: 2rem;
+  max-width: 22rem;
+  display: grid;
+  gap: 0.5rem;
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: 1.1rem;
+  padding: 1.2rem 1.35rem 1.15rem;
+}
+.ticket .eyebrow { font-size: 0.72rem; }
+.ticket-code { display: flex; gap: 0.4rem; }
+.ticket-code i {
+  font-style: normal;
+  font-family: var(--serif);
+  font-size: clamp(1.7rem, 6vw, 2.1rem);
+  line-height: 1;
+  width: 1.45em;
+  padding: 0.28em 0;
+  text-align: center;
+  border-radius: 0.5rem;
+  background: var(--paper);
+  border: 1px solid var(--divider);
+}
+.ticket-foot { font-size: 0.9rem; color: var(--muted); }
+
+.nots {
+  list-style: none;
+  margin: 1.75rem 0 0;
+  padding: 0;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+.nots li {
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  padding: 0.35rem 0.9rem;
+  font-size: 0.95rem;
+  color: var(--ink-soft);
+  background: var(--card);
+}
+
+/* --- Motion ------------------------------------------------------------- */
+
+/* Statement: content arriving, once per screen. Only hidden when JS is
+   running, so the page still reads without it. Inside each block the parts
+   follow 40ms apart, which reads as one wave rather than a queue. */
+.js .reveal {
+  opacity: 0;
+  transform: translateY(1.5rem);
+  transition: transform var(--dur-statement) var(--ease-statement),
+              opacity var(--dur-statement) var(--ease-statement);
+}
+.js .reveal.is-in { opacity: 1; transform: none; }
+
+/* Headings rise word by word from behind a clip. site.js wraps the words
+   and sets --i on each. */
+.word {
+  display: inline-block;
+  overflow: clip;
+  vertical-align: top;
+  padding: 0 0.08em 0.14em 0;
+  margin: 0 -0.08em -0.14em 0;
+}
+.word > span { display: inline-block; }
+.js [data-words] .word > span {
+  transform: translateY(105%);
+  transition: transform var(--dur-statement) var(--ease-statement);
+  transition-delay: calc(var(--i, 0) * 45ms + 60ms);
+}
+.js .is-in [data-words] .word > span { transform: none; }
+
+/* The hero's own wave: words, then the lede and the pill. */
+.js .hero-copy.reveal { transform: none; }
+.js .hero-copy > :not(h1) {
+  opacity: 0;
+  transform: translateY(0.9rem);
+  transition: transform var(--dur-statement) var(--ease-statement),
+              opacity var(--dur-statement) var(--ease-statement);
+}
+.js .hero-copy.is-in > :not(h1) { opacity: 1; transform: none; }
+.js .hero-copy.is-in .lede { transition-delay: 320ms; }
+.js .hero-copy.is-in .soon { transition-delay: 400ms; }
+.js .day-figure.reveal { transition-delay: 180ms; }
+
+/* The card's day. Signature overshoot for the check-ins, the one thing on
+   the page with character. */
+.js .state > .status {
+  transition: opacity var(--dur-utility) var(--ease-utility),
+              transform var(--dur-signature) var(--ease-signature);
+}
+.js .status.kept svg {
+  transition: transform var(--dur-signature) var(--ease-signature) 120ms;
+}
+.js .day li:not(.is-kept) .status.kept svg { transform: scale(0); }
+.js .day li::before { transition: opacity 900ms var(--ease-statement); }
+.js .day li.just::before { opacity: 0.55; transition-duration: 160ms; }
+.js .avatar { transition: transform var(--dur-signature) var(--ease-signature); }
+.js .day li.just .avatar { transform: scale(1.12); }
+.js .act > span,
+.js .roll > span {
+  transition: transform 700ms var(--ease-statement),
+              opacity 400ms var(--ease-utility);
+}
+.js .day-done {
+  transform: translateY(0.5rem);
+  transition: transform var(--dur-statement) var(--ease-statement),
+              opacity var(--dur-statement) var(--ease-statement);
+}
+.js .day-done.on { transform: none; }
+.js .instant, .js .instant * { transition: none !important; }
+
+/* Family week: each day's check-ins land column by column, with the
+   signature overshoot. Today's empty ring waits. */
+.js .fam-week .c:not(.t) {
+  transform: scale(0);
+  transition: transform var(--dur-signature) var(--ease-signature);
+  transition-delay: calc(var(--i, 0) * 75ms + var(--r, 0) * 25ms + 450ms);
+}
+.js .is-in .fam-week .c { transform: none; }
+.js .fw-foot strong {
+  opacity: 0;
+  transition: opacity var(--dur-statement) var(--ease-statement) 1100ms;
+}
+.js .is-in .fw-foot strong { opacity: 1; }
+
+/* Vignettes: their small parts settle in after the card arrives. */
+.js .vignette > * {
+  opacity: 0;
+  transform: translateY(0.5rem);
+  transition: transform var(--dur-statement) var(--ease-statement),
+              opacity var(--dur-statement) var(--ease-statement);
+  transition-delay: calc(var(--i, 0) * 90ms + var(--j, 0) * 40ms + 350ms);
+}
+.js .is-in .vignette > * { opacity: 1; transform: none; }
+
+/* The invite code types itself in, one character after another. */
+.js .ticket-code i {
+  opacity: 0;
+  transform: translateY(0.35em);
+  transition: transform var(--dur-statement) var(--ease-statement),
+              opacity 200ms var(--ease-utility);
+  transition-delay: calc(var(--i, 0) * 80ms + 500ms);
+}
+.js .is-in .ticket-code i { opacity: 1; transform: none; }
+
+/* Dividers draw once their block arrives. */
+.js .reveal .steps li::after {
+  transform: scaleX(0);
+  transition: transform 1100ms var(--ease-statement);
+  transition-delay: calc(var(--i, 0) * 90ms + 250ms);
+}
+.js .is-in .steps li::after { transform: scaleX(1); }
+.js .reveal .steps li,
+.js .reveal .feature {
+  opacity: 0;
+  transform: translateY(0.9rem);
+  transition: transform var(--dur-statement) var(--ease-statement),
+              opacity var(--dur-statement) var(--ease-statement);
+  transition-delay: calc(var(--i, 0) * 90ms + 150ms);
+}
+.js .is-in .steps li,
+.js .is-in .feature { opacity: 1; transform: none; }
+
+.js .closing-mark {
+  opacity: 0;
+  transform: scale(0.6) rotate(-8deg);
+  transition: transform 600ms var(--ease-signature), opacity 300ms var(--ease-utility);
+}
+.js .is-in .closing-mark { opacity: 1; transform: none; }
+
+/* Ambient: untriggered, slow enough that a cycle is never seen whole. */
+@media (prefers-reduced-motion: no-preference) {
+  html { scroll-behavior: smooth; }
+  .hero-wash { animation: sun-drift 21s var(--ease-ambient, ease-in-out) infinite alternate; }
+  .day { animation: card-float 13s ease-in-out infinite alternate; }
+  .fam-week .c.t { animation: today-waits 6s ease-in-out infinite alternate; }
+  .scene .layer { will-change: transform; }
+}
+@keyframes sun-drift {
+  from { transform: translate(0, 0) scale(1); }
+  to { transform: translate(-7%, 5%) scale(1.08); }
+}
+@keyframes card-float {
+  from { transform: translateY(0); }
+  to { transform: translateY(-7px); }
+}
+@keyframes today-waits {
+  from { transform: scale(1); opacity: 1; }
+  to { transform: scale(1.07); opacity: 0.6; }
+}
+
+/* Reduced motion: no travel, no overshoot, no loops. Everything is shown in
+   its finished state; the card keeps its written state (Mum still has
+   today) because site.js doesn't play the day. */
+@media (prefers-reduced-motion: reduce) {
+  :root {
+    --dur-statement: 1ms;
+    --dur-signature: 1ms;
+    --ease-signature: linear;
+  }
+  html { scroll-behavior: auto; }
+  .js .reveal,
+  .js .hero-copy > :not(h1),
+  .js [data-words] .word > span,
+  .js .steps li,
+  .js .feature,
+  .js .closing-mark,
+  .js .fam-week .c,
+  .js .fam-week .c:not(.t),
+  .js .fw-foot strong,
+  .js .vignette > *,
+  .js .ticket-code i,
+  .js .steps li::after { opacity: 1; transform: none; transition: none; }
+  .js .day-done { display: none; }
+}

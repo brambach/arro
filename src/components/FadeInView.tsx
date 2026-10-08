@@ -1,5 +1,5 @@
 import React, { useEffect, useRef, useState } from 'react';
-import { AccessibilityInfo, Animated, Easing, ViewProps } from 'react-native';
+import { AccessibilityInfo, Animated, Easing, EasingFunction, ViewProps } from 'react-native';
 
 /**
  * Entry primitive (Motion Handoff Spec §1): opacity 0→1 + translateY 8→0,
@@ -10,9 +10,11 @@ type Props = ViewProps & {
   delay?: number;
   rise?: number;
   duration?: number;
+  /** Defaults to the entry curve; screens' one big arrival passes motion.statement's. */
+  easing?: EasingFunction;
 };
 
-export function FadeInView({ delay = 0, rise = 8, duration = 280, style, children, ...rest }: Props) {
+export function FadeInView({ delay = 0, rise = 8, duration = 280, easing = Easing.out(Easing.cubic), style, children, ...rest }: Props) {
   const progress = useRef(new Animated.Value(0)).current;
   const [reduceMotion, setReduceMotion] = useState<boolean | null>(null);
 
@@ -33,12 +35,12 @@ export function FadeInView({ delay = 0, rise = 8, duration = 280, style, childre
       toValue: 1,
       duration: reduceMotion ? 120 : duration,
       delay: reduceMotion ? 0 : delay,
-      easing: Easing.out(Easing.cubic),
+      easing,
       useNativeDriver: true,
     });
     anim.start();
     return () => anim.stop();
-  }, [reduceMotion, progress, delay, duration]);
+  }, [reduceMotion, progress, delay, duration, easing]);
 
   const translateY = reduceMotion
     ? 0

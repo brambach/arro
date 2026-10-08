@@ -1,14 +1,16 @@
-import React from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 import { colors, radii, spacing } from '../theme/tokens';
 import { type, weights } from '../theme/typography';
 import { AvatarRing } from '../components/AvatarRing';
 import { AvatarStack } from '../components/AvatarStack';
 import { Card } from '../components/Card';
+import { CheckInPop } from '../components/CheckInPop';
 import { CheerButton } from '../components/CheerButton';
 import { FadeInView } from '../components/FadeInView';
 import { Check } from '../components/Icons';
 import { PrimaryButton } from '../components/PrimaryButton';
+import { RollingText } from '../components/RollingText';
 import { Screen } from '../components/Screen';
 import { SectionHeader } from '../components/SectionHeader';
 import { StreakRing } from '../components/StreakRing';
@@ -27,6 +29,15 @@ export function TodayScreen({ navigation }: MainTabScreenProps<'Today'>) {
   const afterBreak = streak.restartDay;
   let delay = 0;
   const next = () => (delay += 60);
+
+  // The moment you come back from logging: your tick, your row and the count
+  // all land together. Only for the change itself, never on a normal visit.
+  const wasKept = useRef(view.iKeptToday);
+  const [justKept, setJustKept] = useState(false);
+  useEffect(() => {
+    if (!wasKept.current && view.iKeptToday) setJustKept(true);
+    wasKept.current = view.iKeptToday;
+  }, [view.iKeptToday]);
 
   const streakCard = <StreakCard streak={streak} />;
 
@@ -53,7 +64,7 @@ export function TodayScreen({ navigation }: MainTabScreenProps<'Today'>) {
       ) : null}
 
       <FadeInView delay={next()} style={styles.section}>
-        <MoveSection view={view} onLog={(day) => navigation.navigate('LogToday', { day })} />
+        <MoveSection view={view} justKept={justKept} onLog={(day) => navigation.navigate('LogToday', { day })} />
       </FadeInView>
 
       <FadeInView delay={next()} style={styles.section}>
@@ -86,6 +97,7 @@ export function TodayScreen({ navigation }: MainTabScreenProps<'Today'>) {
               <FadeInView key={m.id} delay={delay + i * 40}>
                 <MemberRow
                   member={m}
+                  justKept={justKept && m.id === view.me.id}
                   last={i === all.length - 1}
                   onPress={
                     m.invited
@@ -106,14 +118,22 @@ export function TodayScreen({ navigation }: MainTabScreenProps<'Today'>) {
 
 // ─── Move: the biggest thing on the screen ───────────────────────────────────
 
-function MoveSection({ view, onLog }: { view: AppView; onLog: (day: 'today' | 'yesterday') => void }) {
+function MoveSection({
+  view,
+  justKept,
+  onLog,
+}: {
+  view: AppView;
+  justKept: boolean;
+  onLog: (day: 'today' | 'yesterday') => void;
+}) {
   const yesterdayOk = useYesterdayOpen();
   if (view.iKeptToday) {
     return (
       <Card radius={radii.cardLg} padding={16} background={colors.keptBg} style={styles.keptCard}>
-        <View style={styles.keptTick}>
+        <CheckInPop play={justKept} delay={120} style={styles.keptTick}>
           <Check size={18} color={colors.white} strokeWidth={2.6} />
-        </View>
+        </CheckInPop>
         <View style={{ flex: 1 }}>
           <Text style={styles.keptTitle}>You moved today</Text>
           <Text style={styles.keptMeta} numberOfLines={1}>
@@ -162,9 +182,7 @@ function SummaryCard({
     <Card radius={radii.cardLg} padding={18}>
       <View style={styles.summaryRow}>
         <View>
-          <Text style={type.bigNumber}>
-            {keptCount} of {joinedCount}
-          </Text>
+          <RollingText value={`${keptCount} of ${joinedCount}`} style={type.bigNumber} />
           <Text style={styles.keptLabel}>kept it today</Text>
           <AvatarStack members={view.familyList} size={28} overlap={8} style={{ marginTop: 14 }} />
         </View>
@@ -230,7 +248,7 @@ function StreakCard({ streak }: { streak: StreakView }) {
       ) : (
         <>
           <Text style={styles.cardLabel}>Family streak</Text>
-          <Text style={styles.streakBig}>Day {streak.current}</Text>
+          <RollingText value={`Day ${streak.current}`} style={styles.streakBig} />
         </>
       )}
       <View style={styles.statRow}>
@@ -292,7 +310,17 @@ function GoalCard({ goal, onOpenMilestone }: { goal: GoalView; onOpenMilestone: 
 
 // ─── Family list ─────────────────────────────────────────────────────────────
 
-function MemberRow({ member, last, onPress }: { member: Member; last: boolean; onPress?: () => void }) {
+function MemberRow({
+  member,
+  last,
+  justKept = false,
+  onPress,
+}: {
+  member: Member;
+  last: boolean;
+  justKept?: boolean;
+  onPress?: () => void;
+}) {
   const kept = member.today === 'kept';
   const Wrapper: any = onPress ? Pressable : View;
   return (
@@ -310,7 +338,9 @@ function MemberRow({ member, last, onPress }: { member: Member; last: boolean; o
         </Text>
       </View>
       <View style={styles.rowRight}>
-        <View
+        <CheckInPop
+          play={justKept}
+          delay={260}
           style={[
             styles.pill,
             { backgroundColor: member.invited ? colors.divider : kept ? colors.keptBg : colors.todayPillBg },
@@ -324,7 +354,7 @@ function MemberRow({ member, last, onPress }: { member: Member; last: boolean; o
           >
             {member.invited ? 'Invited' : kept ? 'Kept' : 'Today'}
           </Text>
-        </View>
+        </CheckInPop>
         <Text style={styles.streak}>{member.streak > 0 ? member.streak : ''}</Text>
       </View>
     </Wrapper>

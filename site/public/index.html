@@ -1,0 +1,231 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>Arro: Family Move Streak</title>
+  <meta name="description" content="Everyone moves a little, everyone sees it, and you keep one streak together. A walk counts the same as a marathon. Made for families who live apart.">
+  <meta name="theme-color" content="#F5F1E8">
+  <link rel="canonical" href="https://arrofamily.com/">
+  <meta property="og:type" content="website">
+  <meta property="og:url" content="https://arrofamily.com/">
+  <meta property="og:title" content="Arro: Move a little. Stay close.">
+  <meta property="og:description" content="A daily move streak for families who live apart. Any movement counts, and nobody competes.">
+  <meta property="og:image" content="https://arrofamily.com/icon-512.png">
+  <link rel="icon" href="favicon.png" sizes="48x48" type="image/png">
+  <link rel="apple-touch-icon" href="apple-touch-icon.png">
+  <link rel="stylesheet" href="styles.css">
+  <script src="site.js"></script>
+</head>
+<body>
+  <div class="hero-wash" aria-hidden="true"></div>
+  <a class="skip" href="#main">Skip to content</a>
+
+  <header class="site-header">
+    <div class="wrap">
+      <a class="brand" href="./" aria-label="Arro home"><img src="icon-96.png" alt="" width="36" height="36">Arro</a>
+      <nav class="site-nav" aria-label="Site">
+        <a href="#how">How it works</a>
+        <a href="support/">Support</a>
+      </nav>
+    </div>
+  </header>
+
+  <main id="main">
+    <section class="hero">
+      <div class="scene scene-dawn" aria-hidden="true">
+        <img class="layer" data-depth="0.15" src="scenes/dawn-sky.webp" alt="" width="2400" height="600" decoding="async">
+        <img class="layer" data-depth="0.3" src="scenes/dawn-far.webp" alt="" width="2400" height="600" decoding="async">
+        <img class="layer" data-depth="0.55" src="scenes/dawn-mid.webp" alt="" width="2400" height="600" decoding="async">
+        <img class="layer" data-depth="0.9" src="scenes/dawn-near.webp" alt="" width="2400" height="600" decoding="async">
+        <div class="grain"></div></div>
+      <div class="wrap">
+        <div class="hero-copy reveal">
+          <p class="eyebrow">For families who live apart</p>
+          <h1 data-words>Move a little. <em>Stay close.</em></h1>
+          <p class="lede">Everyone moves a little, everyone sees it, and you keep one streak together. A walk counts the same as a marathon.</p>
+          <div class="soon">
+            <span class="pill">
+              <svg width="17" height="17" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" aria-hidden="true"><rect x="5.5" y="2" width="9" height="16" rx="2.2"/><path d="M8.5 15.2h3"/></svg>
+              Coming soon to iPhone
+            </span>
+            <a href="#how">See how it works</a>
+          </div>
+        </div>
+
+        <figure class="day-figure reveal">
+          <!-- The day, acted out by site.js: people check in one by one, Mum
+               still has today, then she moves and the streak goes up. Without
+               JS, or with reduced motion, it stays as written here. -->
+          <div class="day" role="img" aria-label="An example family's day in Arro: a 24-day streak. You, Dad and Nan have moved. Mum still has today.">
+            <div class="day-head">
+              <span class="eyebrow">Your family today</span>
+              <span class="day-streak"><span class="roll"><span>24</span><span aria-hidden="true">25</span></span><small>days</small></span>
+            </div>
+            <ul>
+              <li class="is-kept">
+                <span class="avatar">Y</span>
+                <span class="who"><strong>You</strong><span class="act"><span>Walk, 25 min</span></span></span>
+                <span class="state"><span class="status today">Still has today</span><span class="status kept"><svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3.5 8.5l3 3 6-7"/></svg>Kept</span></span>
+              </li>
+              <li class="is-kept">
+                <span class="avatar">D</span>
+                <span class="who"><strong>Dad</strong><span class="act"><span>Run, 40 min</span></span></span>
+                <span class="state"><span class="status today">Still has today</span><span class="status kept"><svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3.5 8.5l3 3 6-7"/></svg>Kept</span></span>
+              </li>
+              <li class="is-kept">
+                <span class="avatar">N</span>
+                <span class="who"><strong>Nan</strong><span class="act"><span>Yoga</span></span></span>
+                <span class="state"><span class="status today">Still has today</span><span class="status kept"><svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3.5 8.5l3 3 6-7"/></svg>Kept</span></span>
+              </li>
+              <li class="is-last">
+                <span class="avatar">M</span>
+                <span class="who"><strong>Mum</strong><span class="act swap"><span>Not yet</span><span aria-hidden="true">Walk, 15 min</span></span></span>
+                <span class="state"><span class="status today">Still has today</span><span class="status kept"><svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3.5 8.5l3 3 6-7"/></svg>Kept</span></span>
+              </li>
+            </ul>
+            <p class="day-done" aria-hidden="true">Everyone moved. That’s 25 days together.</p>
+          </div>
+          <figcaption class="day-caption">Arro says “Mum still has today”, never who broke it.</figcaption>
+        </figure>
+      </div>
+    </section>
+
+    <section class="section" aria-labelledby="one-streak">
+      <div class="wrap split reveal">
+        <div>
+          <p class="eyebrow">A daily ritual</p>
+          <h2 id="one-streak" data-words>One streak, the whole family.</h2>
+          <div class="fam-week" role="img" aria-label="An example week. You and Dad moved every day, and Nan's freeze covered Thursday. Mum still has today.">
+            <div class="fw-row fw-days" aria-hidden="true"><span></span><i>M</i><i>T</i><i>W</i><i>T</i><i>F</i><i>S</i><i class="is-today">S</i></div>
+            <div class="fw-row"><span class="fw-name">You</span><b class="c k"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M3.5 8.5l3 3 6-7"/></svg></b><b class="c k"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M3.5 8.5l3 3 6-7"/></svg></b><b class="c k"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M3.5 8.5l3 3 6-7"/></svg></b><b class="c k"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M3.5 8.5l3 3 6-7"/></svg></b><b class="c k"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M3.5 8.5l3 3 6-7"/></svg></b><b class="c k"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M3.5 8.5l3 3 6-7"/></svg></b><b class="c k"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M3.5 8.5l3 3 6-7"/></svg></b></div>
+            <div class="fw-row"><span class="fw-name">Dad</span><b class="c k"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M3.5 8.5l3 3 6-7"/></svg></b><b class="c k"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M3.5 8.5l3 3 6-7"/></svg></b><b class="c k"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M3.5 8.5l3 3 6-7"/></svg></b><b class="c k"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M3.5 8.5l3 3 6-7"/></svg></b><b class="c k"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M3.5 8.5l3 3 6-7"/></svg></b><b class="c k"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M3.5 8.5l3 3 6-7"/></svg></b><b class="c k"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M3.5 8.5l3 3 6-7"/></svg></b></div>
+            <div class="fw-row"><span class="fw-name">Nan</span><b class="c k"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M3.5 8.5l3 3 6-7"/></svg></b><b class="c k"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M3.5 8.5l3 3 6-7"/></svg></b><b class="c k"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M3.5 8.5l3 3 6-7"/></svg></b><b class="c f"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"><path d="M8 2v12M2.8 5l10.4 6M13.2 5L2.8 11"/></svg></b><b class="c k"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M3.5 8.5l3 3 6-7"/></svg></b><b class="c k"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M3.5 8.5l3 3 6-7"/></svg></b><b class="c k"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M3.5 8.5l3 3 6-7"/></svg></b></div>
+            <div class="fw-row"><span class="fw-name">Mum</span><b class="c k"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M3.5 8.5l3 3 6-7"/></svg></b><b class="c k"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M3.5 8.5l3 3 6-7"/></svg></b><b class="c k"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M3.5 8.5l3 3 6-7"/></svg></b><b class="c k"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M3.5 8.5l3 3 6-7"/></svg></b><b class="c k"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M3.5 8.5l3 3 6-7"/></svg></b><b class="c k"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M3.5 8.5l3 3 6-7"/></svg></b><b class="c t"></b></div>
+            <div class="fw-foot"><span>Family streak</span><strong>24 <small>days</small></strong></div>
+          </div>
+        </div>
+        <div class="body">
+          <p>Everyone in the family moves a little each day: a walk, a swim, yoga, a gym session, a bike ride. When they do, the family sees it, and together you keep one streak going.</p>
+          <p>It’s not a fitness app. Nobody’s competing, and a walk round the block counts the same as a marathon.</p>
+          <p>The family streak grows each day everyone moves. Each person also has a free freeze that covers a missed day automatically, so a sick day or a busy day doesn’t cost anyone, and it comes back a week later.</p>
+        </div>
+      </div>
+    </section>
+
+    <section class="section band" aria-label="What it's like">
+      <div class="wrap reveal">
+        <div class="features">
+          <div class="feature">
+            <div class="vignette v-moves" aria-hidden="true">
+              <span class="chip is-on">Walk</span><span class="chip">Run</span><span class="chip">Swim</span>
+              <span class="chip">Yoga</span><span class="chip">Gym</span><span class="chip">Ride</span>
+              <span class="chip">Workout</span>
+            </div>
+            <h3>Any movement counts</h3>
+            <p>Tap “I moved today” and pick what you did. Duration is optional and never ranked. If you already track workouts, connect Apple Health and they count by themselves, including workouts from apps that save to Health.</p>
+          </div>
+          <div class="feature">
+            <div class="vignette v-hello" aria-hidden="true">
+              <div class="note-row"><span class="avatar sm">N</span><span class="bubble">Nan walked: “Lovely morning for it.”</span></div>
+              <div class="note-row"><span class="avatar sm">D</span><span class="bubble">Cheered your walk</span></div>
+              <span class="nudge">Send Mum a gentle nudge</span>
+            </div>
+            <h3>A reason to say hello</h3>
+            <p>See who’s moved today, cheer each other on, and send a gentle nudge to someone who still has today. It’s something small to share every day, without having to think of what to say.</p>
+          </div>
+          <div class="feature">
+            <div class="vignette v-moment" aria-hidden="true">
+              <div class="mini-phone">
+                <span class="mp-label">Today</span>
+                <span class="mp-streak">24<small>days</small></span>
+                <span class="mp-people"><i class="on"></i><i class="on"></i><i class="on"></i><i></i></span>
+                <span class="mp-week"><i></i><i></i><i></i><i></i><i></i><i></i><i class="t"></i></span>
+                <span class="mp-end">That’s all for today</span>
+              </div>
+            </div>
+            <h3>One moment a day</h3>
+            <p>Today and This Week fit on one screen. There’s no endless feed, no leaderboard and no red badges. Check in, see your family, get on with your day.</p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="section" id="how" aria-labelledby="how-title">
+      <div class="wrap split reveal">
+        <div>
+          <p class="eyebrow">How it works</p>
+          <h2 id="how-title" data-words>Start a family. Send the code.</h2>
+          <div class="ticket" aria-hidden="true">
+            <span class="eyebrow">Your invite code</span>
+            <span class="ticket-code"><i>H</i><i>X</i><i>4</i><i>P</i><i>7</i><i>M</i></span>
+            <span class="ticket-foot">Six characters, sent to you from the app.</span>
+          </div>
+        </div>
+        <ol class="steps">
+          <li>
+            <div>
+              <h3>Start your family</h3>
+              <p>Open Arro, sign in with Apple, name your family, then send the invite to your family from the app.</p>
+            </div>
+          </li>
+          <li>
+            <div>
+              <h3>They join with the code</h3>
+              <p>Open Arro, tap “I have an invite”, sign in and enter the 6‑character code from the invite.</p>
+            </div>
+          </li>
+          <li>
+            <div>
+              <h3>Everyone moves a little</h3>
+              <p>The family streak goes up on each day that everyone in the family moved, or was covered by a freeze.</p>
+            </div>
+          </li>
+        </ol>
+      </div>
+    </section>
+
+    <section class="section" aria-labelledby="private-title">
+      <div class="wrap split reveal">
+        <div>
+          <p class="eyebrow">Private by design</p>
+          <h2 id="private-title" data-words>Your family, and nobody else.</h2>
+          <ul class="nots" aria-label="What Arro doesn't have">
+            <li>No public profiles</li><li>No strangers</li><li>No location</li><li>No ads</li>
+          </ul>
+        </div>
+        <div class="body">
+          <p>Families join by invite code only. There are no public profiles, no strangers and no location. Your workouts are shown to your family and nobody else, and Health data is never used for advertising.</p>
+          <p>Arro reads workouts from Apple Health only if you choose to connect it. It reads workouts and nothing else, only today’s and yesterday’s, and never writes to Health.</p>
+          <p><a href="privacy/">Read the privacy policy</a></p>
+        </div>
+      </div>
+    </section>
+
+    <section class="closing" aria-labelledby="closing-title">
+      <div class="scene scene-dusk" aria-hidden="true">
+        <img class="layer" data-depth="0.15" src="scenes/dusk-sky.webp" alt="" width="2400" height="600" decoding="async" loading="lazy">
+        <img class="layer" data-depth="0.3" src="scenes/dusk-far.webp" alt="" width="2400" height="600" decoding="async" loading="lazy">
+        <img class="layer" data-depth="0.55" src="scenes/dusk-mid.webp" alt="" width="2400" height="600" decoding="async" loading="lazy">
+        <img class="layer" data-depth="0.9" src="scenes/dusk-near.webp" alt="" width="2400" height="600" decoding="async" loading="lazy">
+        <div class="grain"></div></div>
+      <div class="wrap reveal">
+        <img class="closing-mark" src="icon-96.png" alt="" width="56" height="56">
+        <h2 id="closing-title" data-words>Every day forward, together.</h2>
+        <p>Arro is coming soon to iPhone.</p>
+      </div>
+    </section>
+  </main>
+
+  <footer class="site-footer">
+    <div class="wrap">
+      <a class="brand" href="./" aria-label="Arro home"><img src="icon-96.png" alt="" width="28" height="28">Arro</a>
+      <nav aria-label="Footer">
+        <a href="privacy/">Privacy</a>
+        <a href="support/">Support</a>
+      </nav>
+      <p>© 2026 Bryce Rambach</p>
+    </div>
+  </footer>
+</body>
+</html>

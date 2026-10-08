@@ -1,0 +1,3 @@
+# Wrangler's local state from `npx wrangler dev`
+.wrangler/
+.backup-before-polish/
