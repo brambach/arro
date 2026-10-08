@@ -5,6 +5,7 @@ import { colors, radii } from '../../theme/tokens';
 import { type, weights } from '../../theme/typography';
 import { ArroMark } from '../../components/Icons';
 import { FadeInView } from '../../components/FadeInView';
+import { Landscape } from '../../components/Landscape';
 import { PrimaryButton } from '../../components/PrimaryButton';
 import { useApp } from '../../state/AppState';
 import { RootStackScreenProps } from '../../navigation/types';
@@ -15,15 +16,18 @@ export function WelcomeScreen({ navigation }: RootStackScreenProps<'Welcome'>) {
 
   return (
     <View style={[styles.root, { paddingTop: insets.top, paddingBottom: insets.bottom + 24 }]}>
-      <FadeInView style={styles.hero}>
+      <FadeInView rise={14} duration={700} style={styles.hero}>
         <ArroMark size={60} />
         <Text style={styles.wordmark}>Arro</Text>
         <Text style={styles.tagline}>Every day forward, together.</Text>
       </FadeInView>
 
-      <View style={styles.spacer} />
+      {/* The same dawn as arrofamily.com, so the app opens where the site left off. */}
+      <View style={styles.scene}>
+        <Landscape time="dawn" height={320} fadeBottom delay={150} style={styles.landscape} />
+      </View>
 
-      <FadeInView delay={120}>
+      <FadeInView delay={380} rise={10} duration={700}>
         <Text style={styles.line}>
           One streak for the whole family. Move a little each day, any way you like, and see everyone’s day in one place.
         </Text>
@@ -56,7 +60,8 @@ const styles = StyleSheet.create({
   hero: { alignItems: 'center', paddingTop: 72 },
   wordmark: { ...type.display, fontSize: 40, lineHeight: 46, color: colors.ink, marginTop: 20 },
   tagline: { ...type.body, marginTop: 6 },
-  spacer: { flex: 1 },
+  scene: { flex: 1, justifyContent: 'flex-end', marginHorizontal: -26, marginBottom: 4 },
+  landscape: { width: '100%' },
   line: { fontSize: 17, lineHeight: 25, fontWeight: weights.regular, color: colors.inkSoft, textAlign: 'center', paddingHorizontal: 6 },
   cta: { marginTop: 28 },
   secondary: {

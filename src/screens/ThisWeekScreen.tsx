@@ -5,6 +5,7 @@ import { type, weights } from '../theme/typography';
 import { AvatarStack } from '../components/AvatarStack';
 import { Card } from '../components/Card';
 import { CalendarIcon } from '../components/Icons';
+import { CheckInPop } from '../components/CheckInPop';
 import { DayPill } from '../components/DayPill';
 import { FadeInView } from '../components/FadeInView';
 import { Screen } from '../components/Screen';
@@ -29,7 +30,10 @@ export function ThisWeekScreen({ navigation }: MainTabScreenProps<'ThisWeek'>) {
           <Text style={styles.headline}>{week.headline}</Text>
           <View style={styles.strip}>
             {week.strip.map((d, i) => (
-              <DayPill key={i} state={d.state} label={d.label} />
+              // The week's check-ins land one after another, as on arrofamily.com; today waits.
+              <CheckInPop key={i} play={d.state === 'kept' || d.state === 'freeze'} delay={250 + i * 70}>
+                <DayPill state={d.state} label={d.label} />
+              </CheckInPop>
             ))}
           </View>
           <Text style={styles.summary}>{week.summary}</Text>
