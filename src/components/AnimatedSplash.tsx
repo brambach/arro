@@ -17,7 +17,7 @@ const STEM = 62; // stem+foot dash length (over-estimate)
  * in, then the whole splash fades out to reveal the app. ~1.2s, one pass, never
  * loops. Reduced Motion → show the finished mark and fade out quickly.
  */
-export function AnimatedSplash({ onDone }: { onDone: () => void }) {
+export function AnimatedSplash({ onReveal, onDone }: { onReveal?: () => void; onDone: () => void }) {
   const circle = useRef(new Animated.Value(CIRC)).current;
   const stem = useRef(new Animated.Value(STEM)).current;
   const word = useRef(new Animated.Value(0)).current;
@@ -27,9 +27,11 @@ export function AnimatedSplash({ onDone }: { onDone: () => void }) {
   // Keep the latest onDone without making it an animation-effect dependency
   // (App passes a fresh arrow each render; we never want to restart the draw).
   const onDoneRef = useRef(onDone);
+  const onRevealRef = useRef(onReveal);
   useEffect(() => {
     onDoneRef.current = onDone;
-  }, [onDone]);
+    onRevealRef.current = onReveal;
+  }, [onDone, onReveal]);
 
   useEffect(() => {
     let m = true;
@@ -50,8 +52,12 @@ export function AnimatedSplash({ onDone }: { onDone: () => void }) {
       stem.setValue(0);
       word.setValue(1);
       const t = Animated.timing(cover, { toValue: 0, duration: 220, delay: 500, useNativeDriver: true });
+      const r = setTimeout(() => onRevealRef.current?.(), 500);
       t.start(({ finished }) => finished && onDoneRef.current());
-      return () => t.stop();
+      return () => {
+        t.stop();
+        clearTimeout(r);
+      };
     }
 
     const seq = Animated.sequence([
@@ -59,36 +65,51 @@ export function AnimatedSplash({ onDone }: { onDone: () => void }) {
       Animated.timing(stem, { toValue: 0, duration: 300, easing: easeInOut, useNativeDriver: false }),
       Animated.timing(word, { toValue: 1, duration: 250, easing: Easing.out(Easing.cubic), useNativeDriver: true }),
       Animated.delay(250),
-      Animated.timing(cover, { toValue: 0, duration: 240, useNativeDriver: true }),
     ]);
-    seq.start(({ finished }) => finished && onDoneRef.current());
-    return () => seq.stop();
+    // The app mounts as the splash starts lifting, so its own entrance plays in view.
+    const lift = Animated.timing(cover, { toValue: 0, duration: 320, easing: Easing.in(Easing.quad), useNativeDriver: true });
+    seq.start(({ finished }) => {
+      if (!finished) return;
+      onRevealRef.current?.();
+      lift.start(({ finished: done }) => done && onDoneRef.current());
+    });
+    return () => {
+      seq.stop();
+      lift.stop();
+    };
   }, [reduceMotion, circle, stem, word, cover]);
 
   return (
-    <Animated.View style={[styles.root, { opacity: cover }]}>
-      <Svg width={SIZE} height={SIZE} viewBox="0 0 120 120" fill="none">
-        <AnimatedCircle
-          cx={53}
-          cy={59}
-          r={25.5}
-          stroke={colors.primary}
-          strokeWidth={13}
-          strokeLinecap="round"
-          strokeDasharray={CIRC}
-          strokeDashoffset={circle}
-        />
-        <AnimatedPath
-          d="M78.5 35 V78 Q78.5 86 88 84.5"
-          stroke={colors.primary}
-          strokeWidth={13}
-          strokeLinecap="round"
-          strokeLinejoin="round"
-          strokeDasharray={STEM}
-          strokeDashoffset={stem}
-        />
-      </Svg>
-      <Animated.Text style={[styles.word, { opacity: word }]}>Arro</Animated.Text>
+    <Animated.View style={[styles.root, { opacity: cover }]} pointerEvents="none">
+      <Animated.View
+        style={[
+          styles.center,
+          { transform: [{ scale: cover.interpolate({ inputRange: [0, 1], outputRange: [1.08, 1] }) }] },
+        ]}
+      >
+        <Svg width={SIZE} height={SIZE} viewBox="0 0 120 120" fill="none">
+          <AnimatedCircle
+            cx={53}
+            cy={59}
+            r={25.5}
+            stroke={colors.primary}
+            strokeWidth={13}
+            strokeLinecap="round"
+            strokeDasharray={CIRC}
+            strokeDashoffset={circle}
+          />
+          <AnimatedPath
+            d="M78.5 35 V78 Q78.5 86 88 84.5"
+            stroke={colors.primary}
+            strokeWidth={13}
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            strokeDasharray={STEM}
+            strokeDashoffset={stem}
+          />
+        </Svg>
+        <Animated.Text style={[styles.word, { opacity: word }]}>Arro</Animated.Text>
+      </Animated.View>
     </Animated.View>
   );
 }
@@ -105,5 +126,6 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     zIndex: 10,
   },
+  center: { alignItems: 'center' },
   word: { fontSize: 30, fontWeight: weights.bold, letterSpacing: -0.6, color: colors.ink, marginTop: 14 },
 });

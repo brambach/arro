@@ -3,10 +3,12 @@ import { Pressable, StyleSheet, Text, View } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { colors, radii } from '../theme/tokens';
-import { type, weights } from '../theme/typography';
+import { fonts, type, weights } from '../theme/typography';
 import { AvatarStack } from '../components/AvatarStack';
 import { ChevronLeft, ShareIcon } from '../components/Icons';
+import { FadeInView } from '../components/FadeInView';
 import { PhotoSlot } from '../components/PhotoSlot';
+import { PopIn } from '../components/PopIn';
 import { PrimaryButton } from '../components/PrimaryButton';
 import { members, milestone } from '../data/family';
 import { RootStackScreenProps } from '../navigation/types';
@@ -38,15 +40,19 @@ export function MilestoneScreen({ navigation }: RootStackScreenProps<'Milestone'
           <ChevronLeft size={20} color="#fff" strokeWidth={2.2} />
         </Pressable>
         <View style={styles.caption}>
-          <View style={styles.dayPill}>
+          <PopIn delay={180} style={styles.dayPill}>
             <Text style={styles.dayPillText}>Day {milestone.day}</Text>
-          </View>
-          <Text style={styles.title}>{milestone.title}</Text>
-          <Text style={styles.subtitle}>{milestone.subtitle}</Text>
+          </PopIn>
+          <FadeInView delay={300} rise={14} duration={420}>
+            <Text style={styles.title}>{milestone.title}</Text>
+          </FadeInView>
+          <FadeInView delay={440} rise={10}>
+            <Text style={styles.subtitle}>{milestone.subtitle}</Text>
+          </FadeInView>
         </View>
       </View>
 
-      <View style={[styles.panel, { paddingBottom: insets.bottom + 22 }]}>
+      <FadeInView delay={520} style={[styles.panel, { paddingBottom: insets.bottom + 22 }]}>
         <Text style={styles.motto}>{milestone.motto}</Text>
         <Text style={styles.dateLine}>{milestone.dateLine}</Text>
         <View style={styles.cheered}>
@@ -59,7 +65,7 @@ export function MilestoneScreen({ navigation }: RootStackScreenProps<'Milestone'
             <ShareIcon size={20} color={colors.inkSoft} />
           </Pressable>
         </View>
-      </View>
+      </FadeInView>
     </View>
   );
 }
@@ -90,7 +96,7 @@ const styles = StyleSheet.create({
   title: { ...type.display, color: '#fff' },
   subtitle: { fontSize: 16, color: 'rgba(255,255,255,0.92)', marginTop: 11 },
   panel: { paddingHorizontal: 22, paddingTop: 19, backgroundColor: colors.screen },
-  motto: { fontSize: 15.5, fontWeight: weights.semibold, color: colors.ink },
+  motto: { fontFamily: fonts.serifItalic, fontSize: 17, color: colors.ink },
   dateLine: { fontSize: 13, color: colors.faint, marginTop: 3 },
   cheered: { flexDirection: 'row', alignItems: 'center', gap: 12, marginTop: 16 },
   cheeredText: { fontSize: 12.5, color: colors.muted, flex: 1 },

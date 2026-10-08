@@ -12,3 +12,8 @@ export { SectionHeader } from './SectionHeader';
 export { StreakRing } from './StreakRing';
 export { TabBar } from './TabBar';
 export * from './Icons';
+export { PressableScale } from './PressableScale';
+export { StreakChain } from './StreakChain';
+export { FamilyRing } from './FamilyRing';
+export { PopIn } from './PopIn';
+export { CountUp } from './CountUp';

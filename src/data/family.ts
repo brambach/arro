@@ -11,6 +11,7 @@ import {
   ProfileStat,
   RecentRun,
   WeekRow,
+  WeekState,
   WeekStripDay,
 } from './types';
 
@@ -42,7 +43,7 @@ export const members: Record<MemberId, Member> = {
     ...memberColors.darcey,
     streak: 12,
     today: 'still',
-    meta: 'Still has today · usually evenings',
+    meta: 'Usually runs in the evening',
     relationship: 'Sister',
     photoUri: null,
   },
@@ -121,6 +122,18 @@ export const week = {
     { dow: 'Sun', date: '30', state: 'today', avatars: ['bryce', 'whit'], badge: 'Today' },
   ] as WeekRow[],
 };
+
+// ─── Welcome illustration ───────────────────────────────────────────────────
+/**
+ * The chain on the welcome screen: each member's last seven days, Mon → Sun.
+ * Illustrative, so it's tidier than `week.rows` (nobody's chain is broken).
+ */
+export const welcomeChain: { memberId: MemberId; days: WeekState[] }[] = [
+  { memberId: 'bryce', days: ['kept', 'kept', 'kept', 'kept', 'kept', 'kept', 'kept'] },
+  { memberId: 'whit', days: ['kept', 'kept', 'kept', 'kept', 'kept', 'freeze', 'kept'] },
+  { memberId: 'darcey', days: ['kept', 'kept', 'kept', 'kept', 'kept', 'kept', 'today'] },
+];
+export const welcomeDayLabels = ['M', 'T', 'W', 'T', 'F', 'S', 'S'];
 
 // ─── Milestone ───────────────────────────────────────────────────────────────
 export const milestone: MilestoneData = {

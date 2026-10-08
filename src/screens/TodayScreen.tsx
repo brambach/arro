@@ -1,7 +1,7 @@
-import React from 'react';
-import { Pressable, StyleSheet, Text, View } from 'react-native';
+import React, { useEffect, useRef } from 'react';
+import { Animated, StyleSheet, Text, View } from 'react-native';
 import { colors, radii, spacing } from '../theme/tokens';
-import { type, weights } from '../theme/typography';
+import { fonts, type, weights } from '../theme/typography';
 import { AvatarRing } from '../components/AvatarRing';
 import { AvatarStack } from '../components/AvatarStack';
 import { Card } from '../components/Card';
@@ -9,14 +9,17 @@ import { CheerButton } from '../components/CheerButton';
 import { FadeInView } from '../components/FadeInView';
 import { Screen } from '../components/Screen';
 import { SectionHeader } from '../components/SectionHeader';
-import { StreakRing } from '../components/StreakRing';
+import { FamilyRing } from '../components/FamilyRing';
+import { FlameIcon } from '../components/Icons';
+import { PressableScale } from '../components/PressableScale';
+import { springs, useReduceMotion } from '../theme/motion';
 import { currentUser, familyList, today } from '../data/family';
 import { Member } from '../data/types';
 import { MainTabScreenProps } from '../navigation/types';
 
 export function TodayScreen({ navigation }: MainTabScreenProps<'Today'>) {
   return (
-    <Screen>
+    <Screen glow>
       <FadeInView delay={0} style={styles.header}>
         <View style={{ flex: 1 }}>
           <Text style={styles.date}>{today.dateLabel}</Text>
@@ -35,7 +38,7 @@ export function TodayScreen({ navigation }: MainTabScreenProps<'Today'>) {
               <Text style={styles.keptLabel}>kept it today</Text>
               <AvatarStack members={familyList} size={28} overlap={8} style={{ marginTop: 14 }} />
             </View>
-            <StreakRing value={today.keptCount} goal={today.total} size={84} strokeWidth={9} />
+            <FamilyRing members={familyList} size={96} strokeWidth={9} delay={260} />
           </View>
           <View style={styles.pending}>
             <Text style={styles.pendingText}>{today.cheerPrompt} — </Text>
@@ -56,6 +59,7 @@ export function TodayScreen({ navigation }: MainTabScreenProps<'Today'>) {
             <FadeInView key={m.id} delay={160 + i * 40}>
               <MemberRow
                 member={m}
+                index={i}
                 last={i === familyList.length - 1}
                 onPress={m.today === 'still' ? () => navigation.navigate('Nudge') : undefined}
               />
@@ -67,9 +71,33 @@ export function TodayScreen({ navigation }: MainTabScreenProps<'Today'>) {
   );
 }
 
-function MemberRow({ member, last, onPress }: { member: Member; last: boolean; onPress?: () => void }) {
+function MemberRow({
+  member,
+  index,
+  last,
+  onPress,
+}: {
+  member: Member;
+  index: number;
+  last: boolean;
+  onPress?: () => void;
+}) {
   const kept = member.today === 'kept';
-  const Wrapper: any = onPress ? Pressable : View;
+  const reduceMotion = useReduceMotion();
+  // Status pills land just after their row, so the eye reads name → verdict.
+  const pop = useRef(new Animated.Value(0)).current;
+  useEffect(() => {
+    if (reduceMotion === null) return;
+    if (reduceMotion) return pop.setValue(1);
+    const a = Animated.sequence([
+      Animated.delay(320 + index * 70),
+      Animated.spring(pop, { toValue: 1, ...springs.pop, useNativeDriver: true }),
+    ]);
+    a.start();
+    return () => a.stop();
+  }, [reduceMotion, pop, index]);
+
+  const Wrapper: any = onPress ? PressableScale : View;
   return (
     <Wrapper
       onPress={onPress}
@@ -85,12 +113,24 @@ function MemberRow({ member, last, onPress }: { member: Member; last: boolean; o
         </Text>
       </View>
       <View style={styles.rowRight}>
-        <View style={[styles.pill, { backgroundColor: kept ? colors.keptBg : colors.todayPillBg }]}>
+        <Animated.View
+          style={[
+            styles.pill,
+            { backgroundColor: kept ? colors.keptBg : colors.todayPillBg },
+            {
+              opacity: pop,
+              transform: [{ scale: pop.interpolate({ inputRange: [0, 1], outputRange: [0.6, 1] }) }],
+            },
+          ]}
+        >
           <Text style={[styles.pillText, { color: kept ? colors.kept : colors.todayPillText }]}>
             {kept ? 'Kept' : 'Today'}
           </Text>
+        </Animated.View>
+        <View style={styles.streakWrap}>
+          <FlameIcon size={15} color={kept ? colors.primary : '#D9CFC1'} />
+          <Text style={[styles.streak, kept && { color: colors.ink }]}>{member.streak}</Text>
         </View>
-        <Text style={styles.streak}>{member.streak}</Text>
       </View>
     </Wrapper>
   );
@@ -123,12 +163,13 @@ const styles = StyleSheet.create({
   rowMiddle: { flex: 1, minWidth: 0 },
   name: { fontSize: 15, fontWeight: weights.semibold, color: colors.ink },
   meta: { fontSize: 12.5, color: colors.faint, marginTop: 1 },
-  rowRight: { flexDirection: 'row', alignItems: 'center', gap: 10 },
+  rowRight: { flexDirection: 'row', alignItems: 'center', gap: 8 },
   pill: { borderRadius: radii.pill, paddingVertical: 3, paddingHorizontal: 9 },
   pillText: { fontSize: 11.5, fontWeight: weights.semibold },
+  streakWrap: { flexDirection: 'row', alignItems: 'center', gap: 2 },
   streak: {
-    fontSize: 17,
-    fontWeight: weights.semibold,
+    fontFamily: fonts.serif,
+    fontSize: 18,
     color: '#B4AA9C',
     fontVariant: ['tabular-nums'],
     minWidth: 20,

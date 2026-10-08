@@ -1,6 +1,6 @@
 # Arro
 
-<img src=".github/readme/screens.jpg" alt="Four Arro screens: sign-up, today's family streak, the week at a glance and the family feed" width="100%">
+<img src=".github/readme/screens.jpg" alt="Four Arro screens: the welcome screen, today's family streak, the week at a glance and the family feed" width="100%">
 
 A private running-streak app for families. Everyone runs once a day, wherever they are, and the whole family sees who's kept the streak and who still has today.
 
@@ -19,7 +19,7 @@ You'll need the iOS Simulator (or Expo Go on a phone). It also builds for the we
 
 | Screen | How you get there |
 | --- | --- |
-| Sign-up | App launch. **Connect Strava** takes you in |
+| Welcome | App launch. **Connect Strava** takes you in |
 | Today | The first tab. Who's kept the streak, who still has today, and a nudge |
 | This Week | The second tab. The family's week, day by day, including freeze days |
 | Feed | Everyone's runs, with cheers |
@@ -29,11 +29,11 @@ You'll need the iOS Simulator (or Expo Go on a phone). It also builds for the we
 
 ## Stack
 
-Expo SDK 57, React Native 0.86, React 19 and TypeScript. React Navigation 7 with a custom tab bar, `react-native-svg` for the logo, rings and icons, and Literata with Nunito for type. Animations use React Native's built-in `Animated`.
+Expo SDK 57, React Native 0.86, React 19 and TypeScript. React Navigation 7 with a custom tab bar, `react-native-svg` for the logo, rings and icons, Literata for display type with the system font for everything else. Animations use React Native's built-in `Animated`, with shared springs and a live Reduce Motion hook in `src/theme/motion.ts`.
 
 ```
 App.tsx          fonts, providers and navigation
-src/theme/       colors, spacing, radii, shadows and type
+src/theme/       colors, spacing, radii, shadows, type and motion
 src/data/        family.ts holds all the fake data
 src/components/  AvatarRing, StreakRing, RunCard, CheerBar and the rest
 src/screens/     one file per screen

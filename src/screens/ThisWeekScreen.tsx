@@ -1,19 +1,20 @@
 import React from 'react';
 import { StyleSheet, Text, View } from 'react-native';
 import { colors, radii, spacing } from '../theme/tokens';
-import { type, weights } from '../theme/typography';
+import { fonts, type, weights } from '../theme/typography';
 import { AvatarStack } from '../components/AvatarStack';
 import { Card } from '../components/Card';
 import { CalendarIcon } from '../components/Icons';
 import { DayPill } from '../components/DayPill';
 import { FadeInView } from '../components/FadeInView';
+import { PopIn } from '../components/PopIn';
 import { Screen } from '../components/Screen';
 import { members, week } from '../data/family';
 import { WeekRow } from '../data/types';
 
 export function ThisWeekScreen(_props: unknown) {
   return (
-    <Screen>
+    <Screen glow>
       <FadeInView style={styles.header}>
         <Text style={type.title}>This Week</Text>
         <CalendarIcon />
@@ -24,7 +25,9 @@ export function ThisWeekScreen(_props: unknown) {
           <Text style={styles.headline}>{week.headline}</Text>
           <View style={styles.strip}>
             {week.strip.map((d, i) => (
-              <DayPill key={i} state={d.state} label={d.label} />
+              <PopIn key={i} delay={220 + i * 55}>
+                <DayPill state={d.state} label={d.label} />
+              </PopIn>
             ))}
           </View>
           <Text style={styles.summary}>{week.summary}</Text>
@@ -73,7 +76,7 @@ const styles = StyleSheet.create({
     paddingTop: 6,
   },
   section: { paddingHorizontal: spacing.gutter, marginTop: 16 },
-  headline: { fontSize: 18, lineHeight: 24, fontWeight: weights.bold, letterSpacing: -0.2, color: colors.ink },
+  headline: { fontFamily: fonts.serifMedium, fontSize: 20, lineHeight: 26, letterSpacing: -0.3, color: colors.ink },
   strip: { flexDirection: 'row', justifyContent: 'space-between', marginTop: 17 },
   summary: { fontSize: 13, lineHeight: 19, color: colors.muted, marginTop: 17 },
   dayRow: { flexDirection: 'row', alignItems: 'center', gap: 11, paddingVertical: 9.5 },

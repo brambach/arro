@@ -1,10 +1,11 @@
 import React from 'react';
-import { Pressable, StyleProp, View, ViewStyle } from 'react-native';
+import { StyleProp, View, ViewStyle } from 'react-native';
 import { colors, radii, shadows } from '../theme/tokens';
+import { PressableScale } from './PressableScale';
 
 /**
  * Flat card: white surface, hairline border, near-zero shadow (the border does
- * the work, not depth). Becomes pressable when onPress is provided.
+ * the work, not depth). Becomes pressable (with a soft sink) when onPress is provided.
  */
 type Props = {
   children: React.ReactNode;
@@ -37,13 +38,9 @@ export function Card({
 
   if (onPress) {
     return (
-      <Pressable
-        onPress={onPress}
-        accessibilityRole="button"
-        style={({ pressed }) => [surface, pressed && { opacity: 0.9 }]}
-      >
+      <PressableScale onPress={onPress} accessibilityRole="button" to={0.98} style={surface}>
         {children}
-      </Pressable>
+      </PressableScale>
     );
   }
   return <View style={surface}>{children}</View>;

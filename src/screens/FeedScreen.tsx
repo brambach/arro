@@ -14,7 +14,7 @@ const COUNT_WORDS = ['zero', 'one', 'two', 'three', 'four', 'five', 'six', 'seve
 export function FeedScreen({ navigation }: MainTabScreenProps<'Feed'>) {
   const count = COUNT_WORDS[familyList.length] ?? familyList.length;
   return (
-    <Screen>
+    <Screen glow>
       <FadeInView style={styles.header}>
         <View style={{ flex: 1 }}>
           <Text style={type.title}>Family feed</Text>

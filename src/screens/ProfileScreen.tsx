@@ -1,10 +1,13 @@
 import React from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 import { colors, radii, spacing } from '../theme/tokens';
-import { type, weights } from '../theme/typography';
+import { fonts, type, weights } from '../theme/typography';
 import { AvatarRing } from '../components/AvatarRing';
 import { CogIcon } from '../components/Icons';
+import { CountUp } from '../components/CountUp';
 import { FadeInView } from '../components/FadeInView';
+import { PopIn } from '../components/PopIn';
+import { PressableScale } from '../components/PressableScale';
 import { Screen } from '../components/Screen';
 import { SectionHeader } from '../components/SectionHeader';
 import { members, profile } from '../data/family';
@@ -14,7 +17,7 @@ export function ProfileScreen({ navigation }: MainTabScreenProps<'Me'>) {
   const me = members[profile.memberId];
 
   return (
-    <Screen>
+    <Screen glow>
       <View style={styles.topBar}>
         <Pressable onPress={() => navigation.navigate('Settings')} hitSlop={10} accessibilityLabel="Settings">
           <CogIcon />
@@ -40,10 +43,9 @@ export function ProfileScreen({ navigation }: MainTabScreenProps<'Me'>) {
               style={[styles.statCell, i % 2 === 0 && styles.cellRight, i < 2 && styles.cellBottom]}
             >
               <Text style={styles.statLabel}>{s.label}</Text>
-              <Text style={[styles.statValue, s.accent && { color: colors.primary }]}>
-                {s.value}
+              <CountUp value={s.value} delay={160 + i * 60} style={[styles.statValue, s.accent && { color: colors.primary }]}>
                 {s.unit ? <Text style={styles.statUnit}> {s.unit}</Text> : null}
-              </Text>
+              </CountUp>
             </View>
           ))}
         </View>
@@ -52,8 +54,9 @@ export function ProfileScreen({ navigation }: MainTabScreenProps<'Me'>) {
       <FadeInView delay={120} style={styles.section}>
         <SectionHeader title="Recent runs" action="See all" titleColor={colors.ink} style={styles.sectionHead} />
         {profile.recentRuns.map((r, i) => (
-          <Pressable
+          <PressableScale
             key={r.when}
+            to={0.98}
             onPress={() => navigation.navigate('RunDetail')}
             accessibilityRole="button"
             accessibilityLabel={`Run ${r.when}`}
@@ -66,7 +69,7 @@ export function ProfileScreen({ navigation }: MainTabScreenProps<'Me'>) {
                 {r.dist} · {r.place}
               </Text>
             </View>
-          </Pressable>
+          </PressableScale>
         ))}
       </FadeInView>
 
@@ -74,18 +77,19 @@ export function ProfileScreen({ navigation }: MainTabScreenProps<'Me'>) {
         <SectionHeader title="Milestones" action="See all" titleColor={colors.ink} style={styles.sectionHead} />
         <View style={styles.milestones}>
           {profile.milestones.map((n, i) => (
-            <Pressable
-              key={n}
-              style={styles.msCol}
-              accessibilityRole={i === 0 ? 'button' : undefined}
-              accessibilityLabel={i === 0 ? `${n} day milestone` : undefined}
-              onPress={i === 0 ? () => navigation.navigate('Milestone') : undefined}
-            >
-              <View style={styles.msCircle}>
-                <Text style={styles.msNumber}>{n}</Text>
-              </View>
-              <Text style={styles.msLabel}>days</Text>
-            </Pressable>
+            <PopIn key={n} delay={260 + i * 70}>
+              <Pressable
+                style={styles.msCol}
+                accessibilityRole={i === 0 ? 'button' : undefined}
+                accessibilityLabel={i === 0 ? `${n} day milestone` : undefined}
+                onPress={i === 0 ? () => navigation.navigate('Milestone') : undefined}
+              >
+                <View style={[styles.msCircle, i === 0 && styles.msLatest]}>
+                  <Text style={[styles.msNumber, i === 0 && { color: colors.white }]}>{n}</Text>
+                </View>
+                <Text style={styles.msLabel}>{i === 0 ? 'latest' : 'days'}</Text>
+              </Pressable>
+            </PopIn>
           ))}
         </View>
       </FadeInView>
@@ -129,8 +133,8 @@ const styles = StyleSheet.create({
   cellRight: { borderRightWidth: 1, borderRightColor: colors.divider },
   cellBottom: { borderBottomWidth: 1, borderBottomColor: colors.divider },
   statLabel: { fontSize: 12, color: colors.muted },
-  statValue: { fontSize: 22, fontWeight: weights.bold, color: colors.ink, marginTop: 3 },
-  statUnit: { fontSize: 13, fontWeight: weights.semibold, color: colors.faint2 },
+  statValue: { fontFamily: fonts.serif, fontSize: 25, lineHeight: 31, letterSpacing: -0.4, color: colors.ink, marginTop: 3 },
+  statUnit: { fontFamily: undefined, fontSize: 13, fontWeight: weights.semibold, letterSpacing: 0, color: colors.faint2 },
   runRow: { flexDirection: 'row', alignItems: 'center', gap: 12, paddingVertical: 8.5 },
   runBorder: { borderBottomWidth: 1, borderBottomColor: colors.divider },
   runWhen: { fontSize: 14, fontWeight: weights.semibold, color: colors.ink },
@@ -146,6 +150,14 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   },
-  msNumber: { fontSize: 18, fontWeight: weights.bold, color: colors.primary },
+  msLatest: {
+    backgroundColor: colors.primary,
+    shadowColor: colors.primary,
+    shadowOpacity: 0.3,
+    shadowRadius: 10,
+    shadowOffset: { width: 0, height: 5 },
+    elevation: 3,
+  },
+  msNumber: { fontFamily: fonts.serif, fontSize: 19, color: colors.primary },
   msLabel: { fontSize: 11, color: colors.faint2 },
 });
