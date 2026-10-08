@@ -1,7 +1,8 @@
 import React from 'react';
-import { Pressable, StyleSheet, Text, View } from 'react-native';
+import { Pressable, StyleSheet, Text, View, useWindowDimensions } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { colors, radii } from '../../theme/tokens';
+import { motion } from '../../theme/motion';
 import { type, weights } from '../../theme/typography';
 import { ArroMark } from '../../components/Icons';
 import { FadeInView } from '../../components/FadeInView';
@@ -12,11 +13,12 @@ import { RootStackScreenProps } from '../../navigation/types';
 
 export function WelcomeScreen({ navigation }: RootStackScreenProps<'Welcome'>) {
   const insets = useSafeAreaInsets();
+  const short = useWindowDimensions().height < 740;
   const { startFlow } = useApp();
 
   return (
     <View style={[styles.root, { paddingTop: insets.top, paddingBottom: insets.bottom + 24 }]}>
-      <FadeInView rise={14} duration={700} style={styles.hero}>
+      <FadeInView rise={14} {...motion.statement} style={styles.hero}>
         <ArroMark size={60} />
         <Text style={styles.wordmark}>Arro</Text>
         <Text style={styles.tagline}>Every day forward, together.</Text>
@@ -24,10 +26,10 @@ export function WelcomeScreen({ navigation }: RootStackScreenProps<'Welcome'>) {
 
       {/* The same dawn as arrofamily.com, so the app opens where the site left off. */}
       <View style={styles.scene}>
-        <Landscape time="dawn" height={320} fadeBottom delay={150} style={styles.landscape} />
+        <Landscape time="dawn" height={short ? 200 : 320} fadeBottom delay={150} style={styles.landscape} />
       </View>
 
-      <FadeInView delay={380} rise={10} duration={700}>
+      <FadeInView delay={380} rise={10} {...motion.statement}>
         <Text style={styles.line}>
           One streak for the whole family. Move a little each day, any way you like, and see everyone’s day in one place.
         </Text>

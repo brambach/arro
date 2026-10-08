@@ -16,15 +16,20 @@ export function RollingText({ value, style }: { value: string; style?: StyleProp
   useEffect(() => {
     if (value === shown) return;
     if (reduceMotion !== false) {
+      p.setValue(1);
+      setLeaving(null);
       setShown(value);
       return;
     }
     setLeaving(shown);
     setShown(value);
     p.setValue(0);
-    const a = Animated.timing(p, { toValue: 1, ...motion.statement, duration: 700, useNativeDriver: true });
+    const a = Animated.timing(p, { toValue: 1, ...motion.statement, useNativeDriver: true });
     a.start(() => setLeaving(null));
-    return () => a.stop();
+    return () => {
+      a.stop();
+      p.setValue(1);
+    };
     // `shown` is what's on screen now; only a new `value` starts a roll.
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [value, reduceMotion]);

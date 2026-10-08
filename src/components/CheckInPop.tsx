@@ -22,11 +22,18 @@ export function CheckInPop({
   const p = useRef(new Animated.Value(1)).current;
 
   useEffect(() => {
-    if (!play || reduceMotion !== false) return;
+    if (!play || reduceMotion !== false) {
+      p.setValue(1);
+      return;
+    }
     p.setValue(0);
     const a = Animated.timing(p, { toValue: 1, ...motion.signature, delay, useNativeDriver: true });
     a.start();
-    return () => a.stop();
+    // Never leave the tick half-popped if the effect re-runs mid-flight.
+    return () => {
+      a.stop();
+      p.setValue(1);
+    };
   }, [play, reduceMotion, p, delay]);
 
   return (

@@ -1,8 +1,9 @@
 import React from 'react';
-import { Pressable, StyleSheet, Text, View } from 'react-native';
+import { Pressable, StyleSheet, Text, View, useWindowDimensions } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { colors, radii, spacing } from '../theme/tokens';
+import { motion } from '../theme/motion';
 import { type, weights } from '../theme/typography';
 import { AvatarStack } from '../components/AvatarStack';
 import { ChevronLeft } from '../components/Icons';
@@ -16,6 +17,8 @@ import { RootStackScreenProps } from '../navigation/types';
 
 export function MilestoneScreen({ navigation, route }: RootStackScreenProps<'Milestone'>) {
   const insets = useSafeAreaInsets();
+  // On short phones (SE) the caption sits under the numeral and the hills shrink, so nothing overlaps.
+  const short = useWindowDimensions().height < 740;
   const view = useView();
   // "Your first 30 days together" ends on the family card; the Me tab shows your own runs.
   const params = route.params;
@@ -51,8 +54,8 @@ export function MilestoneScreen({ navigation, route }: RootStackScreenProps<'Mil
         ) : (
           <>
             {/* Dusk over the same hills the site and Welcome open on: the end of a day, kept. */}
-            <Landscape time="dusk" height={300} fadeFrom={colors.card} delay={250} style={styles.dusk} />
-            <FadeInView delay={80} rise={14} duration={700} style={[styles.numeralWrap, { top: insets.top + 56 }]}>
+            <Landscape time="dusk" height={short ? 170 : 300} fadeFrom={colors.card} delay={250} style={styles.dusk} />
+            <FadeInView delay={80} rise={14} {...motion.statement} style={[styles.numeralWrap, { top: insets.top + 56 }]}>
               <Text style={styles.numeral} accessibilityElementsHidden importantForAccessibility="no">
                 {milestone.day}
               </Text>
@@ -67,7 +70,12 @@ export function MilestoneScreen({ navigation, route }: RootStackScreenProps<'Mil
         >
           <ChevronLeft size={20} color={hasPhoto ? colors.white : colors.ink} strokeWidth={2.2} />
         </Pressable>
-        <FadeInView delay={220} rise={12} duration={700} style={[styles.caption, !hasPhoto && styles.captionPaper]}>
+        <FadeInView
+          delay={220}
+          rise={12}
+          {...motion.statement}
+          style={[styles.caption, !hasPhoto && (short ? { top: insets.top + 200, bottom: undefined } : styles.captionPaper)]}
+        >
           <View style={[styles.dayPill, !hasPhoto && styles.dayPillPaper]}>
             <Text style={[styles.dayPillText, !hasPhoto && { color: colors.todayPillText }]}>Day {milestone.day}</Text>
           </View>
