@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { ActivityIndicator, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { colors, radii, spacing } from '../theme/tokens';
+import { colors, radii, spacing, shadows } from '../theme/tokens';
 import { type, weights } from '../theme/typography';
 import { AvatarStack } from '../components/AvatarStack';
 import { ChevronLeft } from '../components/Icons';
@@ -144,9 +144,8 @@ const styles = StyleSheet.create({
     height: 220,
     borderRadius: radii.card,
     overflow: 'hidden',
-    borderWidth: 1,
-    borderColor: colors.border,
     backgroundColor: colors.track,
+    ...shadows.card,
   },
   photo: { marginHorizontal: spacing.gutter, marginTop: 10, aspectRatio: 4 / 3, borderRadius: radii.card },
   links: { gap: 14, marginTop: 20, alignItems: 'flex-start' },

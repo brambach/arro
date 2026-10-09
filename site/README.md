@@ -26,7 +26,9 @@ reads `{{DATE}}`; replace that in `public/privacy/index.html` on deploy day.
 ## Other files
 
 - `public/styles.css`: Paper and clay colours from `src/theme/tokens.ts`,
-  serif headings (`ui-serif`, New York on Apple devices, Georgia-like
+  depth and glass (lifted cards, sunk trays, the glass day card and header;
+  values shared with the app, see "Depth and glass" in
+  `design/visual-direction.md`), serif headings (`ui-serif`, New York on Apple devices, Georgia-like
   fallbacks elsewhere), and the motion rules: one 900ms easeOutExpo arrival
   per screen, played once, with its parts 40-90ms apart; overshoot only for
   check-ins (the card's ticks, the week dots, the closing mark); slow

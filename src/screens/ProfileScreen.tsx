@@ -1,6 +1,6 @@
 import React from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
-import { colors, radii, spacing } from '../theme/tokens';
+import { colors, radii, spacing, shadows } from '../theme/tokens';
 import { type, weights } from '../theme/typography';
 import { AvatarRing } from '../components/AvatarRing';
 import { ChevronRight, CogIcon, MapPin } from '../components/Icons';
@@ -137,9 +137,9 @@ const styles = StyleSheet.create({
   editPill: {
     alignSelf: 'flex-start',
     marginTop: 9,
-    borderWidth: 1,
-    borderColor: colors.borderStrong,
+    backgroundColor: colors.white,
     borderRadius: radii.pill,
+    ...shadows.card,
     paddingVertical: 5,
     paddingHorizontal: 14,
   },
@@ -150,10 +150,8 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     flexWrap: 'wrap',
     backgroundColor: colors.card,
-    borderWidth: 1,
-    borderColor: colors.border,
     borderRadius: radii.card,
-    overflow: 'hidden',
+    ...shadows.card,
   },
   statCell: { width: '50%', padding: 14 },
   cellRight: { borderRightWidth: 1, borderRightColor: colors.divider },
@@ -166,9 +164,8 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     gap: 12,
     backgroundColor: colors.card,
-    borderWidth: 1,
-    borderColor: colors.border,
     borderRadius: radii.card,
+    ...shadows.card,
     paddingHorizontal: 14,
     paddingVertical: 12,
   },
@@ -186,8 +183,9 @@ const styles = StyleSheet.create({
     height: 56,
     borderRadius: 28,
     borderWidth: 1.5,
-    borderColor: colors.borderStrong,
+    borderColor: 'transparent',
     backgroundColor: colors.card,
+    ...shadows.card,
     alignItems: 'center',
     justifyContent: 'center',
   },

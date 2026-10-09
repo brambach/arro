@@ -12,7 +12,7 @@ import {
   ViewStyle,
 } from 'react-native';
 import * as Haptics from 'expo-haptics';
-import { colors, radii } from '../theme/tokens';
+import { colors, radii, shadows } from '../theme/tokens';
 import { weights } from '../theme/typography';
 import { Heart } from './Icons';
 
@@ -119,8 +119,10 @@ export function CheerButton({
 const styles = StyleSheet.create({
   pill: {
     borderWidth: 1.5,
-    borderColor: colors.borderStrong,
+    borderColor: 'transparent',
+    backgroundColor: colors.white,
     borderRadius: radii.pill,
+    ...shadows.card,
     paddingVertical: 5,
     paddingHorizontal: 15,
     alignItems: 'center',

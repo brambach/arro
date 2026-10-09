@@ -169,7 +169,7 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: colors.border,
     borderStyle: 'dashed',
-    backgroundColor: colors.card,
+    backgroundColor: colors.sunk,
     alignItems: 'center',
     justifyContent: 'center',
   },

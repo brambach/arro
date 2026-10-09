@@ -74,6 +74,14 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   }
 
+  // The header turns to glass once the page has moved under it.
+  const header = document.querySelector('.site-header');
+  if (header) {
+    const stick = () => header.classList.toggle('is-stuck', scrollY > 8);
+    addEventListener('scroll', stick, { passive: true });
+    stick();
+  }
+
   const items = document.querySelectorAll('.reveal');
   const card = document.querySelector('.day');
 

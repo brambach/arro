@@ -1,11 +1,12 @@
 import React from 'react';
 import { Pressable, StyleSheet, Text, View, useWindowDimensions } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { colors, radii } from '../../theme/tokens';
+import { colors, radii, shadows } from '../../theme/tokens';
 import { motion } from '../../theme/motion';
 import { type, weights } from '../../theme/typography';
 import { ArroMark } from '../../components/Icons';
 import { FadeInView } from '../../components/FadeInView';
+import { Glass } from '../../components/Glass';
 import { Landscape } from '../../components/Landscape';
 import { PrimaryButton } from '../../components/PrimaryButton';
 import { useApp } from '../../state/AppState';
@@ -29,29 +30,32 @@ export function WelcomeScreen({ navigation }: RootStackScreenProps<'Welcome'>) {
         <Landscape time="dawn" height={short ? 200 : 320} fadeBottom delay={150} style={styles.landscape} />
       </View>
 
+      {/* The welcome sits on glass over the near hill, the way the day card sits over the hills on the site. */}
       <FadeInView delay={380} rise={10} {...motion.statement}>
-        <Text style={styles.line}>
-          One streak for the whole family. Move a little each day, any way you like, and see everyone’s day in one place.
-        </Text>
-        <PrimaryButton
-          title="Start a family"
-          onPress={() => {
-            startFlow('founder');
-            navigation.navigate('SignIn');
-          }}
-          style={styles.cta}
-        />
-        <Pressable
-          onPress={() => {
-            startFlow('invitee');
-            navigation.navigate('JoinCode');
-          }}
-          accessibilityRole="button"
-          style={styles.secondary}
-        >
-          <Text style={styles.secondaryText}>I have an invite</Text>
-        </Pressable>
-        <Text style={styles.note}>Free for your whole family · no ads</Text>
+        <Glass radius={24} padding={18} style={styles.panel}>
+          <Text style={styles.line}>
+            One streak for the whole family. Move a little each day, any way you like, and see everyone’s day in one place.
+          </Text>
+          <PrimaryButton
+            title="Start a family"
+            onPress={() => {
+              startFlow('founder');
+              navigation.navigate('SignIn');
+            }}
+            style={styles.cta}
+          />
+          <Pressable
+            onPress={() => {
+              startFlow('invitee');
+              navigation.navigate('JoinCode');
+            }}
+            accessibilityRole="button"
+            style={styles.secondary}
+          >
+            <Text style={styles.secondaryText}>I have an invite</Text>
+          </Pressable>
+          <Text style={styles.note}>Free for your whole family · no ads</Text>
+        </Glass>
       </FadeInView>
     </View>
   );
@@ -62,17 +66,17 @@ const styles = StyleSheet.create({
   hero: { alignItems: 'center', paddingTop: 72 },
   wordmark: { ...type.display, fontSize: 40, lineHeight: 46, color: colors.ink, marginTop: 20 },
   tagline: { ...type.body, marginTop: 6 },
-  scene: { flex: 1, justifyContent: 'flex-end', marginHorizontal: -26, marginBottom: 4 },
+  scene: { flex: 1, justifyContent: 'flex-end', marginHorizontal: -26, marginBottom: -96 },
+  panel: { marginHorizontal: -8, paddingTop: 22 },
   landscape: { width: '100%' },
   line: { fontSize: 17, lineHeight: 25, fontWeight: weights.regular, color: colors.inkSoft, textAlign: 'center', paddingHorizontal: 6 },
-  cta: { marginTop: 28 },
+  cta: { marginTop: 22 },
   secondary: {
     marginTop: 12,
     height: 52,
     borderRadius: radii.button,
-    borderWidth: 1,
-    borderColor: colors.border,
     backgroundColor: colors.card,
+    ...shadows.card,
     alignItems: 'center',
     justifyContent: 'center',
   },

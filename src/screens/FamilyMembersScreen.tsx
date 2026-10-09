@@ -74,8 +74,6 @@ const styles = StyleSheet.create({
   groupLabel: { ...type.label, color: colors.muted, marginBottom: 6 },
   card: {
     backgroundColor: colors.card,
-    borderWidth: 1,
-    borderColor: colors.border,
     borderRadius: radii.card,
     paddingHorizontal: 16,
     ...shadows.card,

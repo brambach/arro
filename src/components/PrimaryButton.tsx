@@ -4,7 +4,8 @@ import { colors, radii, shadows } from '../theme/tokens';
 import { weights } from '../theme/typography';
 
 /**
- * PrimaryButton — flat solid clay CTA, no shadow. Press primitive (Motion §3):
+ * PrimaryButton — solid clay CTA with a light top edge and a tight warm shadow
+ * under it (shadows.button), so it sits up off the page. Press primitive (Motion §3):
  * scale 1→0.96 over 90ms down, back to 1 over 140ms up. No gradient, no bounce.
  */
 type Props = {
