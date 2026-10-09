@@ -125,5 +125,5 @@ const styles = StyleSheet.create({
   sub: { ...type.body, marginTop: 6 },
   note: { fontSize: 13, lineHeight: 18, color: colors.faint, marginTop: 2 },
   link: { marginTop: 10, alignSelf: 'flex-start' },
-  linkText: { fontSize: 15, fontWeight: weights.semibold, color: colors.primary },
+  linkText: { fontSize: 15, fontWeight: weights.semibold, color: colors.ink, textDecorationLine: 'underline' },
 });

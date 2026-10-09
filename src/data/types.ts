@@ -1,3 +1,5 @@
+import type { LatLng } from '../state/routes';
+
 /** A family member's id. Any string; colours come from the join-order palette in tokens.ts. */
 export type MemberId = string;
 
@@ -33,6 +35,8 @@ export interface Member {
   photoUri?: PhotoSource;
   /** Invited but hasn't joined yet. Doesn't count towards "x of y kept it today". */
   invited?: boolean;
+  /** Their newest workout today, which their row on Today opens. */
+  todayWorkoutId?: string;
 }
 
 export interface FeedItem {
@@ -45,6 +49,8 @@ export interface FeedItem {
   cheer?: string; // a cheer line, or nudge prompt
   hearts?: number; // heart count (kept posts)
   workoutId?: string; // opens the workout detail (kept posts)
+  photoUri?: PhotoSource; // the workout's photo, shown under the post
+  route?: LatLng[]; // the workout's route, drawn small under the post
 }
 
 export type WeekState = 'kept' | 'freeze' | 'today' | 'missed';
@@ -89,6 +95,7 @@ export interface RecentWorkout {
   source: WorkoutSource;
   when: string; // "Today · 6:21 AM"
   duration?: string; // "32 min" (optional: a check-in can skip it)
+  distance?: string; // "5.4 km" (Health workouts that recorded one)
   place?: string; // "Brisbane"
 }
 
@@ -96,11 +103,9 @@ export interface WorkoutDetail extends RecentWorkout {
   note?: string;
   photoUri?: PhotoSource;
   cheeredBy: MemberId[];
-  /** Only for Health workouts that recorded one. SVG path in a 0 0 320 194 viewBox. */
-  route?: {
-    path: string;
-    start: { x: number; y: number };
-    pin: { x: number; y: number };
-  };
+  /** Only for Health workouts that recorded one, already trimmed at both ends. */
+  route?: LatLng[];
+  /** The photo's path on the server, so its owner can replace or remove it. */
+  photoPath?: string;
 }
 

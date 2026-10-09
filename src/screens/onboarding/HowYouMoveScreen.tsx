@@ -58,7 +58,7 @@ export function HowYouMoveScreen({ navigation }: RootStackScreenProps<'HowYouMov
       {draft.moveMethod === 'health' ? (
         <Text style={styles.note}>
           {canUseHealth
-            ? 'Arro only reads your workouts, never anything else. “I moved today” is always there too.'
+            ? 'Arro only reads your workouts and their routes, nothing else. “I moved today” is always there too.'
             : 'Apple Health isn’t available here. “I moved today” is always there instead.'}
         </Text>
       ) : null}

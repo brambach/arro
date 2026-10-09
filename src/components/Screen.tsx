@@ -2,9 +2,11 @@ import React from 'react';
 import { ScrollView, StyleProp, StyleSheet, View, ViewStyle } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { colors } from '../theme/tokens';
+import { Backdrop } from './Backdrop';
 
 /**
- * Screen scaffold: flat background + top safe-area inset. The tab bar is a solid
+ * Screen scaffold: paper background with the warm dawn light behind it
+ * (Backdrop, paper screens only) + top safe-area inset. The tab bar is a solid
  * bar rendered by the navigator, so scrolling content just needs a little bottom
  * breathing room, not tab clearance.
  */
@@ -28,6 +30,7 @@ export function Screen({
   if (!scroll) {
     return (
       <View style={[styles.root, { backgroundColor: background, paddingTop: insets.top }, style]}>
+        {background === colors.screen ? <Backdrop /> : null}
         {children}
       </View>
     );
@@ -35,6 +38,7 @@ export function Screen({
 
   return (
     <View style={[styles.root, { backgroundColor: background }, style]}>
+      {background === colors.screen ? <Backdrop /> : null}
       <ScrollView
         showsVerticalScrollIndicator={false}
         contentContainerStyle={[{ paddingTop: insets.top + 6, paddingBottom: 24 }, contentStyle]}

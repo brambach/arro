@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { AppState as RNAppState, Linking, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { colors, radii, spacing } from '../theme/tokens';
+import { colors, radii, spacing, shadows } from '../theme/tokens';
 import { type, weights } from '../theme/typography';
 import { AvatarRing } from '../components/AvatarRing';
 import { BellIcon, ChevronLeft, ChevronRight, LockIcon, PulseIcon, TargetIcon, UsersIcon } from '../components/Icons';
@@ -208,9 +208,8 @@ const styles = StyleSheet.create({
   titleRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingTop: 4 },
   card: {
     backgroundColor: colors.card,
-    borderWidth: 1,
-    borderColor: colors.border,
     borderRadius: radii.card,
+    ...shadows.card,
     paddingHorizontal: 15,
   },
   row: { flexDirection: 'row', alignItems: 'center', gap: 13, paddingVertical: 11 },
@@ -230,9 +229,8 @@ const styles = StyleSheet.create({
   signOut: {
     marginTop: 14,
     backgroundColor: colors.card,
-    borderWidth: 1,
-    borderColor: colors.border,
     borderRadius: radii.button,
+    ...shadows.card,
     paddingVertical: 14,
     alignItems: 'center',
   },

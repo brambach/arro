@@ -7,10 +7,13 @@ import { AvatarRing } from './AvatarRing';
 import { Card } from './Card';
 import { CheerButton } from './CheerButton';
 import { Heart } from './Icons';
+import { PhotoSlot } from './PhotoSlot';
+import { RouteThumb } from './RouteThumb';
 
 /**
- * WorkoutCard — a feed entry. A kept post shows a cheer line + heart count; a
- * still-has-today post shows a nudge line + a Cheer button.
+ * WorkoutCard — a feed entry. A kept post shows its photo and route when it has
+ * them, then a cheer line + heart count; a still-has-today post shows a nudge
+ * line + a Cheer button.
  */
 export function WorkoutCard({
   item,
@@ -36,6 +39,8 @@ export function WorkoutCard({
         </View>
       </View>
 
+      <Media item={item} />
+
       {item.cheer ? (
         <View style={styles.footer}>
           <Text style={styles.cheerLine} numberOfLines={1}>
@@ -43,7 +48,7 @@ export function WorkoutCard({
           </Text>
           {item.kind === 'kept' ? (
             <View style={styles.hearts}>
-              <Heart size={15} color={colors.primary} />
+              <Heart size={15} color={colors.inkSoft} />
               <Text style={styles.heartCount}>{item.hearts}</Text>
             </View>
           ) : (
@@ -55,7 +60,35 @@ export function WorkoutCard({
   );
 }
 
+/** The photo and route side by side, or whichever one there is, full width. */
+function Media({ item }: { item: FeedItem }) {
+  const route = item.route;
+  if (!item.photoUri && !route) return null;
+  if (item.photoUri && route) {
+    return (
+      <View style={styles.media}>
+        <PhotoSlot uri={item.photoUri} style={[styles.square, styles.mediaHalf]} />
+        <RouteThumb routes={[route]} width={160} height={160} style={[styles.square, styles.mediaHalf]} />
+      </View>
+    );
+  }
+  return (
+    <View style={styles.media}>
+      {item.photoUri ? (
+        <PhotoSlot uri={item.photoUri} style={styles.photoWide} />
+      ) : (
+        <RouteThumb routes={[route!]} width={320} height={130} style={styles.routeWide} />
+      )}
+    </View>
+  );
+}
+
 const styles = StyleSheet.create({
+  media: { flexDirection: 'row', gap: 8, marginTop: 12 },
+  mediaHalf: { flex: 1 },
+  square: { aspectRatio: 1, borderRadius: 12 },
+  photoWide: { flex: 1, aspectRatio: 4 / 3, borderRadius: 12 },
+  routeWide: { flex: 1, aspectRatio: 320 / 130, borderRadius: 12 },
   card: { paddingHorizontal: 16 },
   header: { flexDirection: 'row', alignItems: 'flex-start', gap: 12 },
   middle: { flex: 1, minWidth: 0 },

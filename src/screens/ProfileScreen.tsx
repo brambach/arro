@@ -1,9 +1,9 @@
 import React from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
-import { colors, radii, spacing } from '../theme/tokens';
+import { colors, radii, spacing, shadows } from '../theme/tokens';
 import { type, weights } from '../theme/typography';
 import { AvatarRing } from '../components/AvatarRing';
-import { CogIcon } from '../components/Icons';
+import { ChevronRight, CogIcon, MapPin } from '../components/Icons';
 import { FadeInView } from '../components/FadeInView';
 import { Screen } from '../components/Screen';
 import { SectionHeader } from '../components/SectionHeader';
@@ -55,6 +55,22 @@ export function ProfileScreen({ navigation }: MainTabScreenProps<'Me'>) {
             </View>
           ))}
         </View>
+      </FadeInView>
+
+      <FadeInView delay={90} style={styles.section}>
+        <Pressable
+          onPress={() => navigation.navigate('Map', { memberId: me.id })}
+          accessibilityRole="button"
+          accessibilityLabel="Your map"
+          style={styles.mapRow}
+        >
+          <MapPin size={20} color={colors.inkSoft} />
+          <View style={{ flex: 1 }}>
+            <Text style={styles.mapTitle}>Your map</Text>
+            <Text style={styles.mapSub}>Every route you’ve recorded, on one map</Text>
+          </View>
+          <ChevronRight />
+        </Pressable>
       </FadeInView>
 
       <FadeInView delay={120} style={styles.section}>
@@ -121,9 +137,9 @@ const styles = StyleSheet.create({
   editPill: {
     alignSelf: 'flex-start',
     marginTop: 9,
-    borderWidth: 1,
-    borderColor: colors.borderStrong,
+    backgroundColor: colors.white,
     borderRadius: radii.pill,
+    ...shadows.card,
     paddingVertical: 5,
     paddingHorizontal: 14,
   },
@@ -134,10 +150,8 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     flexWrap: 'wrap',
     backgroundColor: colors.card,
-    borderWidth: 1,
-    borderColor: colors.border,
     borderRadius: radii.card,
-    overflow: 'hidden',
+    ...shadows.card,
   },
   statCell: { width: '50%', padding: 14 },
   cellRight: { borderRightWidth: 1, borderRightColor: colors.divider },
@@ -145,6 +159,18 @@ const styles = StyleSheet.create({
   statLabel: { ...type.meta, color: colors.muted },
   statValue: { ...type.stat, marginTop: 3 },
   statUnit: { fontFamily: undefined, fontSize: 13, fontWeight: weights.medium, color: colors.faint2 },
+  mapRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+    backgroundColor: colors.card,
+    borderRadius: radii.card,
+    ...shadows.card,
+    paddingHorizontal: 14,
+    paddingVertical: 12,
+  },
+  mapTitle: { fontSize: 15, fontWeight: weights.semibold, color: colors.ink },
+  mapSub: { ...type.meta, marginTop: 1 },
   workoutRow: { flexDirection: 'row', alignItems: 'center', gap: 12, paddingVertical: 10 },
   workoutBorder: { borderBottomWidth: 1, borderBottomColor: colors.divider },
   workoutWhen: { fontSize: 15, fontWeight: weights.semibold, color: colors.ink },
@@ -157,8 +183,9 @@ const styles = StyleSheet.create({
     height: 56,
     borderRadius: 28,
     borderWidth: 1.5,
-    borderColor: colors.borderStrong,
+    borderColor: 'transparent',
     backgroundColor: colors.card,
+    ...shadows.card,
     alignItems: 'center',
     justifyContent: 'center',
   },

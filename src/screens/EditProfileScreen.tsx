@@ -19,6 +19,8 @@ export function EditProfileScreen({ navigation }: RootStackScreenProps<'EditProf
   const { updateProfile } = useApp();
   const [name, setName] = useState(me.name);
   const [photoUri, setPhotoUri] = useState<string | null>(typeof me.photoUri === 'string' ? me.photoUri : null);
+  // Only a new or removed photo is saved; the one already showing came from the server.
+  const [photoChanged, setPhotoChanged] = useState(false);
 
   return (
     <KeyboardAvoidingView
@@ -38,13 +40,25 @@ export function EditProfileScreen({ navigation }: RootStackScreenProps<'EditProf
             <TextButton
               label={photoUri ? 'Choose a different photo' : 'Choose a photo'}
               onPress={async () => {
-                const uri = await pickPhoto();
-                if (uri) setPhotoUri(uri);
+                const uri = await pickPhoto('square');
+                if (uri) {
+                  setPhotoUri(uri);
+                  setPhotoChanged(true);
+                }
               }}
               style={{ marginTop: 14 }}
             />
           ) : null}
-          {photoUri ? <TextButton label="Remove photo" onPress={() => setPhotoUri(null)} style={{ fontSize: 15, marginTop: 10, color: colors.muted }} /> : null}
+          {photoUri ? (
+            <TextButton
+              label="Remove photo"
+              onPress={() => {
+                setPhotoUri(null);
+                setPhotoChanged(true);
+              }}
+              style={{ fontSize: 15, marginTop: 10, color: colors.muted }}
+            />
+          ) : null}
         </View>
         <TextField label="Name" value={name} onChangeText={setName} autoCapitalize="words" maxLength={24} />
         <Text style={styles.note}>Your colour is picked for you, so everyone in the family has a different one.</Text>
@@ -55,7 +69,7 @@ export function EditProfileScreen({ navigation }: RootStackScreenProps<'EditProf
           disabled={!name.trim()}
           onPress={async () => {
             try {
-              await updateProfile({ name, photoUri });
+              await updateProfile(photoChanged ? { name, photoUri } : { name });
               navigation.goBack();
             } catch {
               showError('Couldn’t save', 'Check your connection and try again.');

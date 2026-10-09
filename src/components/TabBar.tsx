@@ -2,7 +2,7 @@ import React from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import type { BottomTabBarProps } from '@react-navigation/bottom-tabs';
-import { colors } from '../theme/tokens';
+import { colors, depth } from '../theme/tokens';
 import { weights } from '../theme/typography';
 import { TabFeed, TabMe, TabToday, TabWeek } from './Icons';
 
@@ -14,9 +14,11 @@ const TABS: Record<string, { label: string; render: (c: string) => React.ReactNo
 };
 
 /**
- * Bottom tab bar (final direction): a solid bar with a hairline top border —
- * content sits above it, nothing scrolls under. 4 fixed tabs, no badges, no
- * "More". Active = clay, inactive = warm grey.
+ * Bottom tab bar: a raised paper bar, lifted by a soft shadow cast upward and a
+ * light top edge rather than a hairline. Content sits above it, nothing scrolls
+ * under. 4 fixed tabs, no badges, no "More". The active tab's icon sits on a
+ * small raised pill (like the active row in Dervo's sidebar) and is clay;
+ * inactive tabs are warm grey.
  */
 export function TabBar({ state, navigation }: BottomTabBarProps) {
   const insets = useSafeAreaInsets();
@@ -43,7 +45,7 @@ export function TabBar({ state, navigation }: BottomTabBarProps) {
             onPress={onPress}
             style={styles.tab}
           >
-            {tab.render(color)}
+            <View style={[styles.iconWrap, focused && styles.iconWrapOn]}>{tab.render(color)}</View>
             <Text style={[styles.label, { color, fontWeight: focused ? weights.semibold : weights.medium }]}>
               {tab.label}
             </Text>
@@ -57,12 +59,13 @@ export function TabBar({ state, navigation }: BottomTabBarProps) {
 const styles = StyleSheet.create({
   bar: {
     flexDirection: 'row',
-    backgroundColor: colors.tabBarBg,
-    borderTopWidth: 1,
-    borderTopColor: colors.tabBarBorder,
-    paddingTop: 9,
+    backgroundColor: colors.card,
+    boxShadow: '0px -1px 0px 0px rgba(70,50,25,0.05), 0px -10px 28px -14px rgba(90,60,35,0.22), ' + depth.sheen,
+    paddingTop: 7,
     paddingHorizontal: 6,
   },
-  tab: { flex: 1, alignItems: 'center', gap: 4 },
+  tab: { flex: 1, alignItems: 'center', gap: 2 },
+  iconWrap: { width: 54, height: 30, borderRadius: 15, alignItems: 'center', justifyContent: 'center' },
+  iconWrapOn: { backgroundColor: colors.white, boxShadow: `${depth.lift}, ${depth.sheen}` },
   label: { fontSize: 11 },
 });

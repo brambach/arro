@@ -8,6 +8,8 @@ import { AppView, Preview, buildView } from './buildView';
 import { dayKey, addDays, deviceTimezone } from './dates';
 import { connectHealth, onHealthWorkoutsChanged, readRecentHealthWorkouts } from './health';
 import { syncHealthWorkouts } from './healthSync';
+import { PhotoShape, photoForUpload } from './photos';
+import { LatLng, decodePolyline, routeLength } from './routes';
 import {
   NotificationPermission,
   expoPushToken,
@@ -59,6 +61,23 @@ export interface LogInput {
   minutes?: number;
   note?: string;
   photoUri?: string | null;
+}
+
+/** How far back a member's map goes. */
+export type MapRange = 'month' | 'year' | 'all';
+
+/** What a member's map shows: their routes and the distance they add up to. */
+export interface MemberRoutes {
+  routes: LatLng[][];
+  meters: number;
+}
+
+/** The first day a map range covers, or null for all time. */
+function rangeStart(range: MapRange): string | null {
+  const today = dayKey();
+  if (range === 'month') return `${today.slice(0, 7)}-01`;
+  if (range === 'year') return `${today.slice(0, 4)}-01-01`;
+  return null;
 }
 
 /** The family people join with any code in the local preview. */
@@ -116,6 +135,10 @@ interface AppContextValue {
   /** "Send a cheer" for someone who hasn't moved yet. 'already' if they've been nudged today. */
   nudge: (memberId: string) => Promise<'sent' | 'already'>;
   updateProfile: (patch: { name?: string; photoUri?: string | null }) => Promise<void>;
+  /** Adds, replaces (a local uri) or removes (null) the photo on one of your workouts. */
+  setWorkoutPhoto: (workoutId: string, photoUri: string | null) => Promise<void>;
+  /** A member's routes for their map. */
+  loadRoutes: (memberId: string, range: MapRange) => Promise<MemberRoutes>;
   /** Settings: switch how moving counts. Apple Health shows Apple's sheet, then syncs. */
   setMoveMethod: (method: MoveMethod) => Promise<void>;
   /** Settings: the daily reminder on or off, and its time. Turning it on asks iOS first. */
@@ -159,6 +182,18 @@ export function AppStateProvider({ children }: { children: React.ReactNode }) {
     }
   }, []);
 
+  /**
+   * Shrinks a picked photo and uploads it to your folder on the server, returning
+   * its path. Each upload gets a new name, so nobody's phone shows a cached old one.
+   */
+  const uploadMine = useCallback(
+    async (remote: NonNullable<SavedSession['remote']>, uri: string, shape: PhotoShape, prefix: string) => {
+      const jpeg = await photoForUpload(uri, shape);
+      return backend.uploadPhoto(remote.familyId, remote.memberId, `${prefix}-${Date.now()}`, jpeg);
+    },
+    [],
+  );
+
   /** Fetch the family again. Keeps the last one if the phone is offline. */
   const refresh = useCallback(async () => {
     const remote = sessionRef.current?.remote;
@@ -189,7 +224,7 @@ export function AppStateProvider({ children }: { children: React.ReactNode }) {
     try {
       const workouts = await readRecentHealthWorkouts();
       const result = await syncHealthWorkouts(current.remote.memberId, workouts);
-      if (result.added > 0) await refresh();
+      if (result.added > 0 || result.updated > 0) await refresh();
     } catch {
       // Offline or Health unavailable: the next launch or Health update tries again.
     }
@@ -414,6 +449,15 @@ export function AppStateProvider({ children }: { children: React.ReactNode }) {
         const next = remoteSession(d, { userId: d.userId, ...remote }, remindersWanted, d.familyName.trim());
         sessionRef.current = next;
         await persist(next);
+        if (d.photoUri) {
+          // The photo from onboarding. If it doesn't upload, it stays on this phone and can be added again later.
+          try {
+            const path = await uploadMine(next.remote!, d.photoUri, 'square', 'avatar');
+            await backend.setMemberPhoto(remote.memberId, path);
+          } catch {
+            // Offline or Storage isn't set up yet.
+          }
+        }
         await refresh();
         registerPush();
         // Health access was asked for at "How you move"; a workout from today counts straight away.
@@ -442,7 +486,7 @@ export function AppStateProvider({ children }: { children: React.ReactNode }) {
         workouts: [],
       });
     },
-    [persist, refresh, registerPush, remoteSession, syncHealth],
+    [persist, refresh, registerPush, remoteSession, syncHealth, uploadMine],
   );
 
   const logWorkout = useCallback(
@@ -459,7 +503,15 @@ export function AppStateProvider({ children }: { children: React.ReactNode }) {
           minutes: input.minutes,
           note: input.note?.trim() || undefined,
         });
-        if (input.photoUri) await persist({ ...current, photos: { ...current.photos, [id]: input.photoUri } });
+        if (input.photoUri) {
+          try {
+            const path = await uploadMine(current.remote, input.photoUri, 'landscape', `workout-${id}`);
+            await backend.setWorkoutPhoto(id, path);
+          } catch {
+            // The workout is saved; the photo stays on this phone, and can be added again from the workout.
+            await persist({ ...current, photos: { ...current.photos, [id]: input.photoUri } });
+          }
+        }
         await refresh();
         return;
       }
@@ -475,7 +527,7 @@ export function AppStateProvider({ children }: { children: React.ReactNode }) {
       };
       await persist({ ...current, workouts: [...current.workouts, workout] });
     },
-    [persist, refresh],
+    [persist, refresh, uploadMine],
   );
 
   const nudge = useCallback(async (memberId: string): Promise<'sent' | 'already'> => {
@@ -495,6 +547,19 @@ export function AppStateProvider({ children }: { children: React.ReactNode }) {
       if (current.remote && name && name !== current.me.name) {
         await backend.updateMember(current.remote.memberId, { name });
       }
+      // A new or removed photo goes to the server, so the family sees it.
+      const remote = current.remote;
+      const oldPath = remote ? familyRef.current?.members.find((m) => m.id === remote.memberId)?.photoPath : null;
+      const changed = patch.photoUri !== undefined && patch.photoUri !== current.me.photoUri;
+      if (remote && changed) {
+        if (patch.photoUri) {
+          const path = await uploadMine(remote, patch.photoUri, 'square', 'avatar');
+          await backend.setMemberPhoto(remote.memberId, path);
+        } else {
+          await backend.setMemberPhoto(remote.memberId, null);
+        }
+        if (oldPath) backend.removePhoto(oldPath).catch(() => undefined);
+      }
       await persist({
         ...current,
         me: {
@@ -505,7 +570,32 @@ export function AppStateProvider({ children }: { children: React.ReactNode }) {
       });
       if (current.remote) await refresh();
     },
-    [persist, refresh],
+    [persist, refresh, uploadMine],
+  );
+
+  const setWorkoutPhoto = useCallback(
+    async (workoutId: string, photoUri: string | null) => {
+      const current = sessionRef.current;
+      if (!current) return;
+      if (!current.remote) {
+        // A family on this phone: the photo stays here.
+        await persist({
+          ...current,
+          workouts: current.workouts.map((w) => (w.id === workoutId ? { ...w, photoUri } : w)),
+        });
+        return;
+      }
+      const oldPath = familyRef.current?.workouts.find((w) => w.id === workoutId)?.photoPath;
+      const path = photoUri ? await uploadMine(current.remote, photoUri, 'landscape', `workout-${workoutId}`) : null;
+      await backend.setWorkoutPhoto(workoutId, path);
+      if (oldPath) backend.removePhoto(oldPath).catch(() => undefined);
+      if (current.photos?.[workoutId]) {
+        const { [workoutId]: _dropped, ...photos } = current.photos;
+        await persist({ ...current, photos });
+      }
+      await refresh();
+    },
+    [persist, refresh, uploadMine],
   );
 
   const setMoveMethod = useCallback(
@@ -577,8 +667,11 @@ export function AppStateProvider({ children }: { children: React.ReactNode }) {
   }, [clearAll]);
 
   const deleteAccount = useCallback(async () => {
+    const remote = sessionRef.current?.remote;
+    // Storage files aren't deleted with the account's rows, so remove the photos first.
+    if (remote) await backend.deleteMyPhotos(remote.familyId, remote.memberId).catch(() => undefined);
     // Deleting the account removes its push tokens on the server too.
-    if (sessionRef.current?.remote) await backend.deleteAccount();
+    if (remote) await backend.deleteAccount();
     pushTokenRef.current = null;
     await scheduleReminders(null, false);
     await clearMoveMethod().catch(() => undefined);
@@ -590,6 +683,31 @@ export function AppStateProvider({ children }: { children: React.ReactNode }) {
   const lastView = useRef<AppView | null>(null);
   if (builtView) lastView.current = builtView;
   const view = builtView ?? lastView.current;
+
+  const loadRoutes = useCallback(
+    async (memberId: string, range: MapRange): Promise<MemberRoutes> => {
+      const since = rangeStart(range);
+      const remote = sessionRef.current?.remote;
+      // A real family: the server has every route. The preview and a family on this phone: what's in the view.
+      if (remote && !preview) {
+        const rows = await backend.fetchRoutes(memberId, since);
+        const routes: LatLng[][] = [];
+        let meters = 0;
+        for (const r of rows) {
+          const points = decodePolyline(r.route);
+          if (points.length < 2) continue;
+          routes.push(points);
+          meters += r.distanceMeters ?? routeLength(points);
+        }
+        return { routes, meters };
+      }
+      const routes = Object.values(lastView.current?.workouts ?? {})
+        .filter((w) => w.memberId === memberId && w.route)
+        .map((w) => w.route!);
+      return { routes, meters: routes.reduce((sum, r) => sum + routeLength(r), 0) };
+    },
+    [preview],
+  );
 
   const value = useMemo<AppContextValue>(
     () => ({
@@ -608,6 +726,8 @@ export function AppStateProvider({ children }: { children: React.ReactNode }) {
       logWorkout,
       nudge,
       updateProfile,
+      setWorkoutPhoto,
+      loadRoutes,
       setMoveMethod,
       setReminder,
       turnOnNotifications,
@@ -633,6 +753,8 @@ export function AppStateProvider({ children }: { children: React.ReactNode }) {
       logWorkout,
       nudge,
       updateProfile,
+      setWorkoutPhoto,
+      loadRoutes,
       setMoveMethod,
       setReminder,
       turnOnNotifications,

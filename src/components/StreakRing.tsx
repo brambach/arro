@@ -26,7 +26,7 @@ export function StreakRing({
   goal,
   size = 84,
   strokeWidth = 9,
-  color = colors.primary,
+  color = colors.kept,
   track = colors.track,
   children,
   style,

@@ -28,14 +28,22 @@ export function FamilyMembersScreen({ navigation }: RootStackScreenProps<'Family
         <Text style={styles.groupLabel}>The crew</Text>
         <View style={styles.card}>
           {allMembers.map((m, i) => (
-            <View key={m.id} style={[styles.row, i < allMembers.length - 1 && styles.rowBorder]}>
+            <Pressable
+              key={m.id}
+              // People who've joined have a map; someone only invited doesn't yet.
+              onPress={m.invited ? undefined : () => navigation.navigate('Map', { memberId: m.id })}
+              disabled={m.invited}
+              accessibilityRole={m.invited ? undefined : 'button'}
+              accessibilityLabel={m.invited ? m.name : `${m.name}, open their map`}
+              style={[styles.row, i < allMembers.length - 1 && styles.rowBorder]}
+            >
               <AvatarRing member={m} size={40} />
               <View style={{ flex: 1 }}>
                 <Text style={styles.name}>{m.name}</Text>
                 {m.relationship ? <Text style={styles.rel}>{m.relationship}</Text> : null}
               </View>
-              <View style={[styles.dot, { backgroundColor: m.color }]} />
-            </View>
+              {m.invited ? null : <ChevronRight />}
+            </Pressable>
           ))}
         </View>
 
@@ -66,8 +74,6 @@ const styles = StyleSheet.create({
   groupLabel: { ...type.label, color: colors.muted, marginBottom: 6 },
   card: {
     backgroundColor: colors.card,
-    borderWidth: 1,
-    borderColor: colors.border,
     borderRadius: radii.card,
     paddingHorizontal: 16,
     ...shadows.card,
@@ -76,7 +82,6 @@ const styles = StyleSheet.create({
   rowBorder: { borderBottomWidth: 1, borderBottomColor: colors.divider },
   name: { ...type.name },
   rel: { ...type.meta, marginTop: 1 },
-  dot: { width: 9, height: 9, borderRadius: 5 },
   inviteRow: { flexDirection: 'row', alignItems: 'center', gap: 13, paddingVertical: 14, marginTop: 16 },
   inviteIcon: {
     width: 40,

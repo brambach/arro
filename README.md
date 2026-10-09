@@ -38,7 +38,9 @@ npx expo start --web   # quick look in a browser (react-native-web)
 - **Expo SDK 57** · React Native 0.86 · React 19 · TypeScript (strict)
 - **React Navigation 7**: native-stack (Onboarding, Tabs, modals and pushed screens)
   with a custom bottom tab bar
-- **react-native-svg**: logo, checks, icons, streak rings, the optional route map
+- **react-native-svg**: logo, checks, icons, streak rings, the small route drawings in the feed
+- **react-native-maps**: routes on Apple Maps (workout page and each person's map)
+- **expo-image-manipulator**: shrinks photos before they upload
 - **expo-linear-gradient**: photo overlays
 - **expo-haptics**: cheer feedback
 - System font only. Animations use React Native's built-in `Animated` API.

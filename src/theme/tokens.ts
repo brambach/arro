@@ -1,6 +1,7 @@
 /**
- * Arro design tokens — "Paper and clay" (design/visual-direction.md, direction A).
- * Warm paper surfaces, dark ink, flat cards with a hairline border and no shadow.
+ * Arro design tokens — "Paper and clay" (design/visual-direction.md, direction A),
+ * with the depth pass from the same doc: cards are lifted by a soft warm ring and
+ * a long shadow instead of a hairline, and a few surfaces are frosted glass.
  * One muted clay accent, kept for the main action on a screen and the active tab.
  */
 
@@ -9,6 +10,11 @@ export const colors = {
   screen: '#F5F1E8', // app / screen background (paper)
   card: '#FFFDF8', // cards
   cardAlt: '#F5F1E8', // tab bar, subtle panels
+  sunk: '#EFEADF', // trays and wells that sit below the page
+
+  // Glass: the card colour, see-through, over a blur (components/Glass.tsx)
+  glass: 'rgba(255,253,248,0.62)',
+  glassStrong: 'rgba(255,253,248,0.86)',
 
   // Borders & dividers (warm hairlines)
   border: '#E6DFD2', // card border
@@ -88,22 +94,40 @@ export const radii = {
 } as const;
 
 /**
- * No shadows: cards are paper sections edged by a hairline, and the button is a
- * flat block of clay. Kept as objects so screens can still spread them.
+ * Depth, as CSS box-shadow strings (React Native's boxShadow, new architecture).
+ * The same values as arrofamily.com's --ring, --lift, --float and --sheen.
+ *
+ * - ring: a 1px warm edge with no blur, in place of a border.
+ * - lift: a card or chip. The ring, a close contact shadow and a long soft
+ *   shadow that starts well below the edge, so it reads as raised, not outlined.
+ * - float: something that sits higher, like a glass card or a sheet.
+ * - sheen: a light top edge, the way light catches the rim.
+ * - sunk: a tray or well, pressed into the page.
+ */
+export const depth = {
+  ring: '0px 0px 0px 1px rgba(70,50,25,0.07)',
+  lift:
+    '0px 0px 0px 1px rgba(70,50,25,0.06), 0px 1px 2px 0px rgba(70,50,25,0.05), ' +
+    '0px 4px 10px -4px rgba(70,50,25,0.08), 0px 18px 36px -18px rgba(90,60,35,0.24)',
+  float:
+    '0px 0px 0px 1px rgba(70,50,25,0.06), 0px 2px 6px 0px rgba(70,50,25,0.04), ' +
+    '0px 30px 60px -30px rgba(90,60,35,0.40)',
+  sheen: 'inset 0px 1px 0px 0px rgba(255,255,255,0.75)',
+  sunk: 'inset 0px 0px 0px 1px rgba(70,50,25,0.06), inset 0px 2px 6px 0px rgba(70,50,25,0.05)',
+} as const;
+
+/**
+ * Ready-made shadows to spread into a style. The button is clay with a light
+ * top edge and a tight warm-brown shadow under it: depth, not the old orange
+ * glow (no coloured halo around it).
  */
 export const shadows = {
-  card: {
-    shadowColor: colors.shadowWarm,
-    shadowOpacity: 0,
-    shadowRadius: 0,
-    shadowOffset: { width: 0, height: 0 },
-    elevation: 0,
-  },
+  card: { boxShadow: `${depth.lift}, ${depth.sheen}` },
+  float: { boxShadow: `${depth.float}, ${depth.sheen}` },
   button: {
-    shadowColor: colors.shadowWarm,
-    shadowOpacity: 0,
-    shadowRadius: 0,
-    shadowOffset: { width: 0, height: 0 },
-    elevation: 0,
+    boxShadow:
+      'inset 0px 1px 0px 0px rgba(255,255,255,0.18), 0px 1px 2px 0px rgba(70,40,20,0.16), ' +
+      '0px 10px 20px -10px rgba(70,40,20,0.45)',
   },
+  sunk: { boxShadow: depth.sunk },
 } as const;

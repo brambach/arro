@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
-import { colors } from '../theme/tokens';
+import { colors, shadows } from '../theme/tokens';
 import { type, weights } from '../theme/typography';
 import { AvatarRing } from '../components/AvatarRing';
 import { PrimaryButton } from '../components/PrimaryButton';
@@ -67,12 +67,8 @@ const styles = StyleSheet.create({
     paddingTop: 28,
     paddingBottom: 18,
     alignItems: 'center',
-    // The only lifted surface in the app: a sheet over a dimmed screen, softly.
-    shadowColor: colors.shadowWarm,
-    shadowOpacity: 0.18,
-    shadowRadius: 24,
-    shadowOffset: { width: 0, height: 12 },
-    elevation: 12,
+    // A sheet over a dimmed screen: the highest surface in the app.
+    ...shadows.float,
   },
   title: { ...type.greeting, textAlign: 'center', marginTop: 16 },
   sub: { ...type.body, marginTop: 4 },

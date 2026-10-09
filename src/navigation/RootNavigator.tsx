@@ -18,6 +18,7 @@ import { StreakRulesScreen } from '../screens/StreakRulesScreen';
 import { MoveMethodScreen } from '../screens/MoveMethodScreen';
 import { NotificationsScreen } from '../screens/NotificationsScreen';
 import { WorkoutDetailScreen } from '../screens/WorkoutDetailScreen';
+import { MapScreen } from '../screens/MapScreen';
 import { NudgeModalScreen } from '../screens/NudgeModalScreen';
 import { FamilyMembersScreen } from '../screens/FamilyMembersScreen';
 import { InviteScreen } from '../screens/InviteScreen';
@@ -48,6 +49,7 @@ export function RootNavigator() {
           <Stack.Screen name="MoveMethod" component={MoveMethodScreen} options={{ animation: 'slide_from_right' }} />
           <Stack.Screen name="Notifications" component={NotificationsScreen} options={{ animation: 'slide_from_right' }} />
           <Stack.Screen name="WorkoutDetail" component={WorkoutDetailScreen} options={{ animation: 'slide_from_right' }} />
+          <Stack.Screen name="Map" component={MapScreen} options={{ animation: 'slide_from_right' }} />
           <Stack.Screen name="FamilyMembers" component={FamilyMembersScreen} options={{ animation: 'slide_from_right' }} />
           <Stack.Screen name="Invite" component={InviteScreen} options={{ presentation: 'modal' }} />
           <Stack.Screen name="EditProfile" component={EditProfileScreen} options={{ presentation: 'modal' }} />

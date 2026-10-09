@@ -108,6 +108,9 @@ thread's changes committed:
    `npx expo prebuild --platform ios --clean`
    This deletes and rebuilds the git-ignored `ios/` folder, so app.json
    changes (build number, purpose strings, icon) are actually in it.
+   If CocoaPods stops with a Unicode/ASCII encoding error during pod install,
+   run it with a UTF-8 locale:
+   `LANG=en_US.UTF-8 LC_ALL=en_US.UTF-8 npx expo prebuild --platform ios --clean`.
    `npx expo run:ios` recreates it for dev builds later.
 3. Check `ios/Arro/Info.plist` now has your photo text, no camera or
    microphone text, `CFBundleVersion` matching the build number and
@@ -153,6 +156,31 @@ thread's changes committed:
 
 Your dad (Strava) should turn on Strava's Apple Health connection, so his runs
 reach Arro through Health.
+
+## Build 3: workout details, maps and photos
+
+Build 3 reads distance and routes from Health, shows them on Apple Maps and
+uploads photos. Before archiving it, in this order:
+
+1. **Apply the migration** `supabase/migrations/20261008000001_workout_details_and_photos.sql`
+   to the hosted project: `npx supabase db push`, or paste it into the SQL
+   editor. It adds three columns to `workouts` and the private `photos`
+   bucket. Build 2 keeps working after it; nothing it uses changes.
+2. **Install and prebuild**: `npm install`, then step 3.2. Two new native
+   modules (`react-native-maps`, `expo-image-manipulator`) need the fresh
+   `ios/` folder. Apple Maps needs no key.
+3. **Check Info.plist** (step 3.3): the new Health and photo texts, and
+   `CFBundleVersion` 3.
+4. **App Privacy answers** in App Store Connect: add Photos or Videos and
+   Precise Location, as `app-privacy.md` now lists.
+5. **Deploy arrofamily.com** so the live privacy policy matches
+   (`site/public/privacy/index.html` is updated in the repo).
+6. Archive and upload (steps 3.4 to 3.9), then add the build to the Family
+   group. A build that changes data collection can take a fresh Beta App
+   Review.
+
+On the phone, people who already connected Health see Apple's Health sheet
+once more, asking for workout routes.
 
 ## The EAS route, if you'd rather
 

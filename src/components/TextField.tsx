@@ -1,6 +1,6 @@
 import React from 'react';
 import { StyleProp, StyleSheet, Text, TextInput, TextInputProps, View, ViewStyle } from 'react-native';
-import { colors, radii } from '../theme/tokens';
+import { colors, radii, shadows } from '../theme/tokens';
 import { weights } from '../theme/typography';
 
 /** A labelled single-line (or multiline) text box in the flat card style. */
@@ -23,10 +23,9 @@ export function TextField({ label, wrapStyle, style, multiline, ...rest }: Props
 const styles = StyleSheet.create({
   label: { fontSize: 14, fontWeight: weights.semibold, color: colors.muted, marginBottom: 6 },
   input: {
-    backgroundColor: colors.card,
-    borderWidth: 1,
-    borderColor: colors.border,
+    backgroundColor: colors.sunk,
     borderRadius: radii.button,
+    ...shadows.sunk,
     paddingHorizontal: 16,
     height: 52,
     fontSize: 16,

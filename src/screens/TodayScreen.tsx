@@ -104,7 +104,9 @@ export function TodayScreen({ navigation }: MainTabScreenProps<'Today'>) {
                       ? () => navigation.navigate('Invite')
                       : nudgeable
                         ? () => navigation.navigate('Nudge', { memberId: m.id })
-                        : undefined
+                        : m.todayWorkoutId
+                          ? () => navigation.navigate('WorkoutDetail', { workoutId: m.todayWorkoutId! })
+                          : undefined
                   }
                 />
               </FadeInView>
@@ -179,7 +181,7 @@ function SummaryCard({
   const pendingId = today.pending?.id;
 
   return (
-    <Card radius={radii.cardLg} padding={18}>
+    <Card radius={radii.cardLg} padding={18} glass>
       <View style={styles.summaryRow}>
         <View>
           <RollingText value={`${keptCount} of ${joinedCount}`} style={type.bigNumber} />
@@ -225,7 +227,7 @@ function SummaryCard({
 function StreakCard({ streak }: { streak: StreakView }) {
   if (streak.kind === 'solo') {
     return (
-      <Card radius={radii.cardLg} padding={18}>
+      <Card radius={radii.cardLg} padding={18} glass>
         <Text style={styles.cardLabel}>Your streak</Text>
         <Text style={styles.streakBig}>{streak.current > 0 ? `Day ${streak.current}` : 'Start today'}</Text>
         <Text style={styles.cardNote}>
@@ -238,7 +240,7 @@ function StreakCard({ streak }: { streak: StreakView }) {
   // After a break there's no zero: lead with days together and the longest streak.
   const leadsWithTogether = streak.kind === 'afterBreak';
   return (
-    <Card radius={radii.cardLg} padding={18}>
+    <Card radius={radii.cardLg} padding={18} glass>
       {leadsWithTogether ? (
         <>
           <Text style={styles.cardLabel}>Days together this year</Text>
@@ -270,7 +272,7 @@ function StreakCard({ streak }: { streak: StreakView }) {
 /** Day 1 after a break. Says nothing about who missed. */
 function BackAtItCard() {
   return (
-    <Card radius={radii.cardLg} padding={18} background={colors.todayPillBg} style={{ borderColor: colors.border }}>
+    <Card radius={radii.cardLg} padding={18} background={colors.todayPillBg}>
       <Text style={styles.backTitle}>Back at it, together</Text>
       <Text style={styles.backBody}>
         A fresh start today. Every day you’ve spent together still counts, and a new streak begins when everyone moves.
@@ -327,7 +329,15 @@ function MemberRow({
     <Wrapper
       onPress={onPress}
       accessibilityRole={onPress ? 'button' : undefined}
-      accessibilityLabel={onPress ? (member.invited ? `Invite ${member.name} again` : `Nudge ${member.name}`) : undefined}
+      accessibilityLabel={
+        onPress
+          ? member.invited
+            ? `Invite ${member.name} again`
+            : kept
+              ? `See ${member.name}’s workout`
+              : `Nudge ${member.name}`
+          : undefined
+      }
       style={[styles.row, !last && styles.rowBorder]}
     >
       <AvatarRing member={member} size={40} />
@@ -371,7 +381,7 @@ const styles = StyleSheet.create({
   },
   date: { ...type.meta, color: colors.muted },
   section: { paddingHorizontal: spacing.gutter, marginTop: 20 },
-  keptCard: { flexDirection: 'row', alignItems: 'center', gap: 12, borderColor: colors.border },
+  keptCard: { flexDirection: 'row', alignItems: 'center', gap: 12 },
   keptTick: {
     width: 32,
     height: 32,

@@ -2,8 +2,10 @@
 
 Answers for App Store Connect > App Privacy, checked against the code on
 2026-10-05, not the plan. Phase 4's push data is covered below ("Push
-notifications"). Re-check when photos move to Supabase Storage: that changes
-the answers.
+notifications"). Updated 2026-10-09 for build 3, which uploads photos and
+reads workout distance and routes: **Photos or Videos** and **Precise
+Location** are now declared. Change the answers in App Store Connect before
+build 3 goes to review.
 
 ## Do you or your third-party partners collect data from this app?
 
@@ -25,8 +27,10 @@ Yes** (it's tied to their account). **Used for tracking: No.**
 | --- | --- | --- |
 | Contact Info > **Name** | Display name, prefilled from Apple's first name, editable | `members.display_name`; `signInWithApple()` and `updateMember()` in `src/state/backend.ts` |
 | Contact Info > **Email Address** | The email Apple shares (often a private relay address), kept by Supabase Auth | `signInWithApple()` asks for the EMAIL scope; Supabase stores it in `auth.users` |
-| Health & Fitness > **Health** | Workouts read through HealthKit | `connectHealth()` and `readRecentHealthWorkouts()` in `src/state/health.ts` |
-| Health & Fitness > **Fitness** | Each workout's date, kind, optional duration, source, Health workout ID; manual check-ins too | `insertWorkout()` and `insertHealthWorkout()` in `backend.ts`; `workouts` table |
+| Health & Fitness > **Health** | Workouts and workout routes read through HealthKit | `connectHealth()` and `readRecentHealthWorkouts()` in `src/state/health.ts` |
+| Health & Fitness > **Fitness** | Each workout's date, kind, optional duration, source, Health workout ID, start time and distance; manual check-ins too | `insertWorkout()` and `insertHealthWorkout()` in `backend.ts`; `workouts` table |
+| Location > **Precise Location** | The route of a Health workout, trimmed by 200 m at each end and thinned, as an encoded polyline. Never the phone's current location | `healthDetails()` in `src/state/healthSync.ts`, `src/state/routes.ts`; `workouts.route` |
+| User Content > **Photos or Videos** | Profile and workout photos the person picks, resized to a JPEG and stored in the private `photos` bucket | `photoForUpload()` in `src/state/photos.ts`, `uploadPhoto()` in `backend.ts`; migration `20261008000001` |
 | User Content > **Other User Content** | Workout notes (up to 500 characters), family name, cheers and nudges | `workouts.note`, `families.name`, `cheers`, `nudges` |
 | Identifiers > **User ID** | Supabase user id and member id | `auth.users.id`, `members.id` |
 
@@ -38,8 +42,7 @@ manual "I moved today" check-ins are. Declaring both is the safe reading.
 
 | Type | Why not |
 | --- | --- |
-| Photos or Videos | Profile and workout photos stay on the phone (`photos` and `me.photoUri` in `src/state/session.ts`, AsyncStorage). `insertWorkout()` never sends them, and `photo_path` is never written. Data processed only on the device isn't "collected". **Declare it as soon as photos upload.** |
-| Location (precise or coarse) | Not read. The time zone (`members.timezone`) is a setting used to work out "today", not location |
+| Coarse Location | Not collected. Routes are declared as Precise Location above; the time zone (`members.timezone`) is a setting used to work out "today", not location |
 | Contacts | Not read. Invites go out through the share sheet as a code |
 | Usage Data, Diagnostics | No analytics or crash reporting |
 | Device ID | Arro stores an Expo push token per phone once phase 4 is live (see "Push notifications" below). Apple's Device ID type is about identifiers like the IDFA or a device ID used to recognise the device; a push token used only to deliver the app's own notifications isn't commonly declared there |
@@ -49,21 +52,26 @@ manual "I moved today" check-ins are. Declaring both is the safe reading.
 
 Checked in code:
 
-- **Read-only.** `requestAuthorization({ toRead: [workout] })`, nothing in
-  `toShare`; app.json sets `healthUpdatePermission: false`.
-- **Workouts only.** No other HealthKit type is requested or read.
+- **Read-only.** `requestAuthorization({ toRead: [workout, workoutRoute] })`,
+  nothing in `toShare`. app.json has a `healthUpdatePermission` text only
+  because App Store Connect rejected build 1 without NSHealthUpdateUsageDescription;
+  the text says Arro never writes to Health.
+- **Workouts and their routes only.** No other HealthKit type is requested or read.
 - **Today and yesterday only.** `readRecentHealthWorkouts()` queries from local
   midnight yesterday; `sendableHealthWorkouts()` drops anything older and the
   server's `workouts_check_date` trigger refuses it too.
-- **Only four fields leave the phone:** HealthKit UUID, local date, mapped type
-  (7 kinds) and whole minutes. The start time, source app, heart rate,
-  calories and route are never read into the upload.
+- **What leaves the phone:** HealthKit UUID, local date, mapped type (7 kinds),
+  whole minutes, start time, distance in whole metres, and the route trimmed
+  by 200 m at each end and thinned to at most 400 points. The source app,
+  heart rate and calories are never read into the upload. Routes are shown
+  only to the person's own family (RLS on `workouts`).
 - **Never for ads**, never sold, never in iCloud. The privacy policy says so in
   its own Health section, which is what 5.1.3 asks for.
 - **The Health purpose string** (app.json, `healthSharePermission`) is specific
-  and matches: "Arro reads your workouts from Apple Health so moving counts
-  toward your family streak. It only reads workouts, and only today's and
-  yesterday's."
+  and matches: "Arro reads your workouts from Apple Health, including distance
+  and route, so moving counts toward your family streak and your family can
+  see what you did. Routes are shared only with your family, with the start
+  and end left off. Arro only reads today's and yesterday's workouts."
 
 ## Push notifications (phase 4)
 
@@ -108,8 +116,8 @@ reminder time, which `members.reminder_time` already held before phase 4.
 ## Purpose strings
 
 Fixed in app.json by the phase 4 thread: the `expo-image-picker` plugin entry
-sets a specific photo text ("Arro uses a photo only when you pick one for your
-profile or a workout. Photos stay on your phone.") and turns the camera and
+sets a specific photo text (build 3: "Arro uses a photo only when you pick one
+for your profile or a workout. Your family sees it in Arro.") and turns the camera and
 microphone texts off, so the build no longer asks for things Arro doesn't do
 (Guideline 5.1.1(ii)). Check the generated `ios/Arro/Info.plist` after
 `npx expo prebuild` (`testflight.md`, step 3).

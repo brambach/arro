@@ -24,9 +24,10 @@ import {
   week as demoWeek,
   workouts as demoWorkouts,
 } from '../data/family';
-import { joinNames, workoutSummary } from '../data/workouts';
+import { distanceLabel, joinNames, workoutSummary } from '../data/workouts';
 import { LoggedWorkout, SavedSession } from './session';
 import type { RemoteFamily, RemoteWorkout } from './backend';
+import { decodePolyline } from './routes';
 import {
   WEEKDAY_LETTER,
   WEEKDAY_SHORT,
@@ -102,8 +103,18 @@ function minutesLabel(minutes?: number): string | undefined {
   return minutes ? `${minutes} min` : undefined;
 }
 
+/** When it happened: a Health workout's own start, or when a check-in was logged. */
+function happenedAt(w: LoggedWorkout): Date {
+  return new Date(w.startedAt ?? w.loggedAt);
+}
+
+/** "Run · 5.4 km · 32 min" */
+function summaryOf(w: LoggedWorkout): string {
+  return workoutSummary({ type: w.type, distance: distanceLabel(w.distanceMeters), duration: minutesLabel(w.minutes) });
+}
+
 function whenLabel(w: LoggedWorkout, todayKey: string): string {
-  const time = timeLabel(new Date(w.loggedAt));
+  const time = timeLabel(happenedAt(w));
   if (w.localDate === todayKey) return `Today · ${time}`;
   if (w.localDate === addDays(todayKey, -1)) return `Yesterday · ${time}`;
   const d = fromKey(w.localDate);
@@ -118,8 +129,11 @@ function toDetail(w: LoggedWorkout, memberId: MemberId, todayKey: string): Worko
     source: 'manual',
     when: whenLabel(w, todayKey),
     duration: minutesLabel(w.minutes),
+    distance: distanceLabel(w.distanceMeters),
     note: w.note,
     photoUri: w.photoUri ?? null,
+    photoPath: w.photoPath,
+    route: w.route,
     cheeredBy: [],
   };
 }
@@ -144,7 +158,7 @@ function personalStreaks(logs: LoggedWorkout[], todayKey: string): { current: nu
 }
 
 function newestFirst(logs: LoggedWorkout[]): LoggedWorkout[] {
-  return [...logs].sort((a, b) => (a.loggedAt < b.loggedAt ? 1 : -1));
+  return [...logs].sort((a, b) => happenedAt(b).getTime() - happenedAt(a).getTime());
 }
 
 function feedItem(w: LoggedWorkout, me: Member, todayKey: string): FeedItem {
@@ -154,9 +168,11 @@ function feedItem(w: LoggedWorkout, me: Member, todayKey: string): FeedItem {
     memberId: me.id,
     kind: 'kept',
     title: `${me.name} ${label}`,
-    meta: workoutSummary({ type: w.type, duration: minutesLabel(w.minutes) }),
-    time: timeLabel(new Date(w.loggedAt)),
+    meta: summaryOf(w),
+    time: timeLabel(happenedAt(w)),
     workoutId: w.id,
+    photoUri: w.photoUri ?? undefined,
+    route: w.route,
   };
 }
 
@@ -169,10 +185,11 @@ function meMember(session: SavedSession, logs: LoggedWorkout[], todayKey: string
     streak,
     today: latestToday ? 'kept' : 'still',
     meta: latestToday
-      ? `${workoutSummary({ type: latestToday.type, duration: minutesLabel(latestToday.minutes) })} · ${timeLabel(new Date(latestToday.loggedAt))}`
+      ? `${summaryOf(latestToday)} · ${timeLabel(happenedAt(latestToday))}`
       : `Still has today · usually ${SLOT_WORD[session.me.reminder]}`,
     relationship: 'You',
     photoUri: session.me.photoUri,
+    todayWorkoutId: latestToday?.id,
   };
 }
 
@@ -341,7 +358,8 @@ function previewFamilyView(session: SavedSession, preview: Preview | null, now: 
   }
   if (preview && myLogsToday[0]) {
     me.today = 'kept';
-    me.meta = `${workoutSummary({ type: myLogsToday[0].type, duration: minutesLabel(myLogsToday[0].minutes) })} · ${timeLabel(new Date(myLogsToday[0].loggedAt))}`;
+    me.meta = `${summaryOf(myLogsToday[0])} · ${timeLabel(happenedAt(myLogsToday[0]))}`;
+    me.todayWorkoutId = myLogsToday[0].id;
   }
 
   const iKeptToday = me.today === 'kept';
@@ -424,15 +442,32 @@ function previewFamilyView(session: SavedSession, preview: Preview | null, now: 
 
 // ─── A real family from the server ───────────────────────────────────────────
 
+/** Decoded routes by encoded string, so a re-render doesn't decode every route again. */
+const decoded = new Map<string, ReturnType<typeof decodePolyline>>();
+function routeOf(encoded?: string) {
+  if (!encoded) return undefined;
+  let points = decoded.get(encoded);
+  if (!points) {
+    points = decodePolyline(encoded);
+    decoded.set(encoded, points);
+  }
+  return points.length > 1 ? points : undefined;
+}
+
 function asLogged(w: RemoteWorkout, photos: Record<string, string> | undefined): LoggedWorkout {
   return {
     id: w.id,
     localDate: w.localDate,
     loggedAt: w.createdAt,
+    startedAt: w.startedAt,
     type: w.type,
     minutes: w.minutes,
+    distanceMeters: w.distanceMeters,
+    route: routeOf(w.route),
     note: w.note,
-    photoUri: photos?.[w.id] ?? null,
+    // The uploaded copy, or the one on this phone when the upload failed.
+    photoUri: w.photoUrl ?? photos?.[w.id] ?? null,
+    photoPath: w.photoPath,
   };
 }
 
@@ -448,7 +483,8 @@ function familyView(session: SavedSession, family: RemoteFamily, now: Date): App
 
   const joined: Member[] = family.members.map((m) => {
     const mine = m.id === myId;
-    const latestToday = family.workouts.find((w) => w.memberId === m.id && w.localDate === todayKey);
+    const latestRemote = family.workouts.find((w) => w.memberId === m.id && w.localDate === todayKey);
+    const latestToday = latestRemote ? asLogged(latestRemote, session.photos) : undefined;
     const server = family.memberStreaks[m.id];
     const moved = server?.movedToday ?? !!latestToday;
     return {
@@ -458,13 +494,14 @@ function familyView(session: SavedSession, family: RemoteFamily, now: Date): App
       streak: server?.personalStreak ?? 0,
       today: moved ? 'kept' : 'still',
       meta: latestToday
-        ? `${workoutSummary({ type: latestToday.type, duration: minutesLabel(latestToday.minutes) })} · ${timeLabel(new Date(latestToday.createdAt))}`
+        ? `${summaryOf(latestToday)} · ${timeLabel(happenedAt(latestToday))}`
         : mine
           ? `Still has today · usually ${SLOT_WORD[session.me.reminder]}`
           : 'Still has today',
       relationship: mine ? 'You' : undefined,
-      // Only your own photo, from this phone, until Storage is set up.
-      photoUri: mine ? session.me.photoUri : null,
+      // The uploaded photo, or your own from this phone when the upload failed.
+      photoUri: m.photoUrl ?? (mine ? session.me.photoUri : null),
+      todayWorkoutId: latestToday?.id,
     };
   });
   const me = joined.find((m) => m.id === myId) ?? joined[0];

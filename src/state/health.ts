@@ -1,6 +1,6 @@
 /**
  * Apple Health through @appeeky/expo-healthkit. Read-only: Arro asks for
- * workouts and nothing else, and never writes to Health.
+ * workouts and their routes, nothing else, and never writes to Health.
  *
  * The module's native side only exists in the dev build. Expo Go and the web
  * preview don't have it, and importing the module there would throw, so it's
@@ -12,6 +12,7 @@ import { Platform } from 'react-native';
 import type * as HealthKitModule from '@appeeky/expo-healthkit';
 import { addDays, dayKey, fromKey } from './dates';
 import { HealthWorkout } from './healthSync';
+import { LatLng } from './routes';
 
 type HealthKit = typeof HealthKitModule;
 
@@ -58,14 +59,16 @@ export async function watchHealthWorkouts(): Promise<void> {
 }
 
 /**
- * Shows Apple's Health sheet for reading workouts, then starts watching.
- * iOS never says whether reading was allowed: a "no" just means no workouts come back.
+ * Shows Apple's Health sheet for reading workouts and workout routes, then starts
+ * watching. iOS never says whether reading was allowed: a "no" just means no
+ * workouts (or no routes) come back. iOS shows the sheet again only for a type it
+ * hasn't asked about, so people who connected before routes see it once more.
  * False when Health isn't available here.
  */
 export async function connectHealth(): Promise<boolean> {
   const hk = healthKit();
   if (!hk) return false;
-  await hk.requestAuthorization({ toRead: [hk.WorkoutType.workout] });
+  await hk.requestAuthorization({ toRead: [hk.WorkoutType.workout, hk.SeriesType.workoutRoute] });
   await watchHealthWorkouts();
   return true;
 }
@@ -77,12 +80,32 @@ export async function readRecentHealthWorkouts(now: Date = new Date()): Promise<
   const from = fromKey(addDays(dayKey(now), -1));
   from.setHours(0, 0, 0, 0);
   const samples = await hk.queryWorkouts({ from, to: now, excludeSources: ['self'] });
-  return samples.map((s) => ({
-    uuid: s.uuid,
-    activityType: activityName(hk, s.workoutActivityType),
-    start: s.startDate,
-    durationSeconds: s.duration,
-  }));
+  return Promise.all(
+    samples.map(async (s) => ({
+      uuid: s.uuid,
+      activityType: activityName(hk, s.workoutActivityType),
+      start: s.startDate,
+      durationSeconds: s.duration,
+      // The module always reports distance in metres.
+      distanceMeters: s.totalDistance && s.totalDistance > 0 ? s.totalDistance : undefined,
+      route: await readRoute(hk, s.uuid),
+    })),
+  );
+}
+
+/**
+ * The GPS track of one workout, or undefined when it has none (gym, yoga, a
+ * treadmill) or route access was turned off. A watch can save the route a little
+ * after the workout, so a later sync picks it up.
+ */
+async function readRoute(hk: HealthKit, workoutUUID: string): Promise<LatLng[] | undefined> {
+  try {
+    const routes = await hk.queryWorkoutRoute({ workoutUUID });
+    const points = routes.flatMap((r) => r.locations.map((l) => ({ latitude: l.latitude, longitude: l.longitude })));
+    return points.length > 1 ? points : undefined;
+  } catch {
+    return undefined;
+  }
 }
 
 /**

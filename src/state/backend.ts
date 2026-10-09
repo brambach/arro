@@ -27,6 +27,8 @@ export interface RemoteMember {
   name: string;
   color: string;
   photoPath: string | null;
+  /** A signed link to the profile photo, for anyone in the family. */
+  photoUrl: string | null;
   timezone: string;
   joinedAt: string;
   joinedOn: string;
@@ -41,6 +43,14 @@ export interface RemoteWorkout {
   source: WorkoutSource;
   note?: string;
   createdAt: string;
+  /** When a Health workout actually started. Check-ins don't have one. */
+  startedAt?: string;
+  distanceMeters?: number;
+  /** The trimmed route as an encoded polyline (routes.ts). */
+  route?: string;
+  photoPath?: string;
+  /** A signed link to the photo, for anyone in the family. */
+  photoUrl?: string;
   /** Member ids of everyone who cheered it. */
   cheeredBy: string[];
 }
@@ -109,6 +119,7 @@ function toMember(row: MemberRow): RemoteMember {
     name: row.display_name,
     color: row.colour,
     photoPath: row.photo_path,
+    photoUrl: null,
     timezone: row.timezone,
     joinedAt: row.joined_at,
     joinedOn: row.joined_on,
@@ -304,11 +315,34 @@ export async function fetchFamily(familyId: string, myMemberId: string): Promise
 
   const workouts = await db
     .from('workouts')
-    .select('id, member_id, local_date, type, duration_minutes, source, note, created_at, cheers (member_id)')
+    .select(
+      'id, member_id, local_date, type, duration_minutes, source, note, created_at, started_at, distance_m, route, photo_path, cheers (member_id)',
+    )
     .in('member_id', memberIds)
     .gte('local_date', since)
     .order('created_at', { ascending: false });
   if (workouts.error) throw workouts.error;
+
+  const workoutRows = workouts.data as {
+    id: string;
+    member_id: string;
+    local_date: string;
+    type: WorkoutType;
+    duration_minutes: number | null;
+    source: WorkoutSource;
+    note: string | null;
+    created_at: string;
+    started_at: string | null;
+    distance_m: number | null;
+    route: string | null;
+    photo_path: string | null;
+    cheers: { member_id: string }[];
+  }[];
+  const urls = await signPhotos([
+    ...memberRows.map((m) => m.photoPath),
+    ...workoutRows.map((w) => w.photo_path),
+  ]);
+  for (const m of memberRows) m.photoUrl = (m.photoPath && urls[m.photoPath]) || null;
 
   const s = (streak.data as {
     family_streak: number;
@@ -322,17 +356,7 @@ export async function fetchFamily(familyId: string, myMemberId: string): Promise
     name: family.data.name,
     joinCode,
     members: memberRows,
-    workouts: (workouts.data as {
-      id: string;
-      member_id: string;
-      local_date: string;
-      type: WorkoutType;
-      duration_minutes: number | null;
-      source: WorkoutSource;
-      note: string | null;
-      created_at: string;
-      cheers: { member_id: string }[];
-    }[]).map((w) => ({
+    workouts: workoutRows.map((w) => ({
       id: w.id,
       memberId: w.member_id,
       localDate: w.local_date,
@@ -341,6 +365,11 @@ export async function fetchFamily(familyId: string, myMemberId: string): Promise
       source: w.source,
       note: w.note ?? undefined,
       createdAt: w.created_at,
+      startedAt: w.started_at ?? undefined,
+      distanceMeters: w.distance_m ?? undefined,
+      route: w.route ?? undefined,
+      photoPath: w.photo_path ?? undefined,
+      photoUrl: (w.photo_path && urls[w.photo_path]) || undefined,
       cheeredBy: w.cheers.map((c) => c.member_id),
     })),
     streak: {
@@ -417,7 +446,7 @@ export async function sendNudge(fromMemberId: string, toMemberId: string): Promi
   return 'sent';
 }
 
-/** A manual "I moved today" check-in. Photos stay on the phone until Storage is set up. */
+/** A manual "I moved today" check-in. A photo is uploaded separately (uploadPhoto, setWorkoutPhoto). */
 export async function insertWorkout(
   memberId: string,
   input: { localDate: string; type: WorkoutType; minutes?: number; note?: string },
@@ -449,7 +478,15 @@ export async function insertWorkout(
  */
 export async function insertHealthWorkout(
   memberId: string,
-  input: { healthWorkoutId: string; localDate: string; type: WorkoutType; minutes?: number },
+  input: {
+    healthWorkoutId: string;
+    localDate: string;
+    type: WorkoutType;
+    minutes?: number;
+    startedAt?: string;
+    distanceMeters?: number;
+    route?: string;
+  },
 ): Promise<'added' | 'synced'> {
   const { error } = await client()
     .from('workouts')
@@ -460,6 +497,9 @@ export async function insertHealthWorkout(
       duration_minutes: input.minutes ?? null,
       source: 'health',
       health_workout_id: input.healthWorkoutId,
+      started_at: input.startedAt ?? null,
+      distance_m: input.distanceMeters ?? null,
+      route: input.route ?? null,
     });
   if (error) {
     // 23505: unique violation, so this Health workout is already on the server.
@@ -468,4 +508,118 @@ export async function insertHealthWorkout(
     throw error;
   }
   return 'added';
+}
+
+/**
+ * Adds the start time, distance and route to a Health workout saved without them
+ * (before its route arrived, or by a build that didn't read routes). Only touches
+ * a row still missing what's being added, so repeat syncs change nothing. True when it did.
+ */
+export async function fillHealthWorkoutDetails(
+  memberId: string,
+  healthWorkoutId: string,
+  details: { startedAt?: string; distanceMeters?: number; route?: string },
+): Promise<boolean> {
+  const patch: Record<string, string | number> = {};
+  if (details.startedAt) patch.started_at = details.startedAt;
+  if (details.distanceMeters) patch.distance_m = details.distanceMeters;
+  if (details.route) patch.route = details.route;
+  const { data, error } = await client()
+    .from('workouts')
+    .update(patch)
+    .eq('member_id', memberId)
+    .eq('health_workout_id', healthWorkoutId)
+    .is(details.route ? 'route' : 'distance_m', null)
+    .select('id');
+  if (error) throw error;
+  return data.length > 0;
+}
+
+/** One member's routes since a day, newest first, for their map. */
+export async function fetchRoutes(
+  memberId: string,
+  since: string | null,
+): Promise<{ id: string; localDate: string; type: WorkoutType; distanceMeters?: number; route: string }[]> {
+  let query = client()
+    .from('workouts')
+    .select('id, local_date, type, distance_m, route')
+    .eq('member_id', memberId)
+    .not('route', 'is', null)
+    .order('local_date', { ascending: false })
+    .limit(1000);
+  if (since) query = query.gte('local_date', since);
+  const { data, error } = await query;
+  if (error) throw error;
+  return (data as { id: string; local_date: string; type: WorkoutType; distance_m: number | null; route: string }[]).map(
+    (w) => ({ id: w.id, localDate: w.local_date, type: w.type, distanceMeters: w.distance_m ?? undefined, route: w.route }),
+  );
+}
+
+// ─── Photos (the private `photos` bucket, migration 20261008000001) ──────────
+
+const PHOTO_BUCKET = 'photos';
+/** Signed links last a week; one is reused until it has less than a day left. */
+const SIGNED_SECONDS = 7 * 24 * 60 * 60;
+const signed = new Map<string, { url: string; expires: number }>();
+
+/**
+ * Signed links for photo paths, by path. Reusing a link keeps the image cache
+ * warm, since a new link is a new URL to the phone. Paths that fail are left out.
+ */
+async function signPhotos(paths: (string | null | undefined)[]): Promise<Record<string, string>> {
+  const now = Date.now();
+  const unique = [...new Set(paths.filter((p): p is string => !!p))];
+  const missing = unique.filter((p) => (signed.get(p)?.expires ?? 0) - now < 24 * 60 * 60 * 1000);
+  if (missing.length) {
+    const { data, error } = await client().storage.from(PHOTO_BUCKET).createSignedUrls(missing, SIGNED_SECONDS);
+    // No bucket yet (the migration hasn't run) or offline: show initials and no photos.
+    if (!error && data) {
+      for (const d of data) {
+        if (d.path && d.signedUrl && !d.error) signed.set(d.path, { url: d.signedUrl, expires: now + SIGNED_SECONDS * 1000 });
+      }
+    }
+  }
+  return Object.fromEntries(unique.filter((p) => signed.has(p)).map((p) => [p, signed.get(p)!.url]));
+}
+
+/** Uploads a JPEG to `<family>/<member>/<name>.jpg` and returns its path. */
+export async function uploadPhoto(familyId: string, memberId: string, name: string, jpeg: ArrayBuffer): Promise<string> {
+  const path = `${familyId}/${memberId}/${name}.jpg`;
+  const { error } = await client()
+    .storage.from(PHOTO_BUCKET)
+    .upload(path, jpeg, { contentType: 'image/jpeg', upsert: true });
+  if (error) throw error;
+  signed.delete(path);
+  return path;
+}
+
+export async function removePhoto(path: string): Promise<void> {
+  signed.delete(path);
+  const { error } = await client().storage.from(PHOTO_BUCKET).remove([path]);
+  if (error) throw error;
+}
+
+export async function setMemberPhoto(memberId: string, path: string | null): Promise<void> {
+  const { error } = await client().from('members').update({ photo_path: path }).eq('id', memberId);
+  if (error) throw error;
+}
+
+export async function setWorkoutPhoto(workoutId: string, path: string | null): Promise<void> {
+  const { error } = await client().from('workouts').update({ photo_path: path }).eq('id', workoutId);
+  if (error) throw error;
+}
+
+/**
+ * Removes every photo this member uploaded. Called before deleting the account,
+ * because Storage files aren't deleted with the database rows.
+ */
+export async function deleteMyPhotos(familyId: string, memberId: string): Promise<void> {
+  const bucket = client().storage.from(PHOTO_BUCKET);
+  const folder = `${familyId}/${memberId}`;
+  for (;;) {
+    const { data, error } = await bucket.list(folder, { limit: 100 });
+    if (error || !data?.length) return;
+    const { error: removeError } = await bucket.remove(data.map((f) => `${folder}/${f.name}`));
+    if (removeError) return;
+  }
 }
