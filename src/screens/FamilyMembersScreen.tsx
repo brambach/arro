@@ -42,7 +42,6 @@ export function FamilyMembersScreen({ navigation }: RootStackScreenProps<'Family
                 <Text style={styles.name}>{m.name}</Text>
                 {m.relationship ? <Text style={styles.rel}>{m.relationship}</Text> : null}
               </View>
-              <View style={[styles.dot, { backgroundColor: m.color }]} />
               {m.invited ? null : <ChevronRight />}
             </Pressable>
           ))}
@@ -85,7 +84,6 @@ const styles = StyleSheet.create({
   rowBorder: { borderBottomWidth: 1, borderBottomColor: colors.divider },
   name: { ...type.name },
   rel: { ...type.meta, marginTop: 1 },
-  dot: { width: 9, height: 9, borderRadius: 5 },
   inviteRow: { flexDirection: 'row', alignItems: 'center', gap: 13, paddingVertical: 14, marginTop: 16 },
   inviteIcon: {
     width: 40,

@@ -70,21 +70,7 @@ export function WorkoutDetailScreen({ navigation, route }: RootStackScreenProps<
         ) : null}
 
         {workout.photoUri ? (
-          <PhotoSlot uri={workout.photoUri} style={styles.photo}>
-            {savingPhoto ? <ActivityIndicator style={StyleSheet.absoluteFill} color={colors.white} /> : null}
-          </PhotoSlot>
-        ) : null}
-
-        {mine && PHOTOS_ON ? (
-          <View style={styles.photoActions}>
-            {savingPhoto && !workout.photoUri ? <ActivityIndicator color={colors.muted} /> : null}
-            {!savingPhoto ? (
-              <TextButton label={workout.photoUri ? 'Change photo' : 'Add a photo'} onPress={() => changePhoto(false)} />
-            ) : null}
-            {!savingPhoto && workout.photoUri ? (
-              <TextButton label="Remove photo" onPress={() => changePhoto(true)} style={{ color: colors.muted }} />
-            ) : null}
-          </View>
+          <PhotoSlot uri={workout.photoUri} style={styles.photo} />
         ) : null}
 
         <View style={styles.headline}>
@@ -112,13 +98,25 @@ export function WorkoutDetailScreen({ navigation, route }: RootStackScreenProps<
               <Text style={styles.cheeredText}>{joinNames(cheerers.map((c) => c.name))} cheered</Text>
             </View>
           ) : null}
-          {workout.route ? (
-            <TextButton
-              label={mine ? 'See all your routes' : `See all of ${owner?.name ?? 'their'}’s routes`}
-              onPress={() => navigation.navigate('Map', { memberId: workout.memberId })}
-              style={styles.allRoutes}
-            />
-          ) : null}
+          <View style={styles.links}>
+            {workout.route ? (
+              <TextButton
+                label={mine ? 'See all your routes' : `See all of ${owner?.name ?? 'their'}’s routes`}
+                onPress={() => navigation.navigate('Map', { memberId: workout.memberId })}
+              />
+            ) : null}
+            {mine && PHOTOS_ON ? (
+              <View style={styles.photoActions}>
+                {savingPhoto ? <ActivityIndicator color={colors.muted} /> : null}
+                {!savingPhoto ? (
+                  <TextButton label={workout.photoUri ? 'Change photo' : 'Add a photo'} onPress={() => changePhoto(false)} />
+                ) : null}
+                {!savingPhoto && workout.photoUri ? (
+                  <TextButton label="Remove photo" onPress={() => changePhoto(true)} style={{ color: colors.muted }} />
+                ) : null}
+              </View>
+            ) : null}
+          </View>
         </FadeInView>
       </ScrollView>
     </View>
@@ -151,7 +149,8 @@ const styles = StyleSheet.create({
     backgroundColor: colors.track,
   },
   photo: { marginHorizontal: spacing.gutter, marginTop: 10, aspectRatio: 4 / 3, borderRadius: radii.card },
-  photoActions: { flexDirection: 'row', gap: 20, paddingHorizontal: spacing.gutter, paddingTop: 12 },
+  links: { gap: 14, marginTop: 20, alignItems: 'flex-start' },
+  photoActions: { flexDirection: 'row', alignItems: 'center', gap: 20 },
   headline: { paddingHorizontal: spacing.gutter, paddingTop: 18 },
   when: { ...type.meta, color: colors.muted },
   kind: { ...type.title, fontSize: 32, lineHeight: 38, marginTop: 2 },
@@ -165,5 +164,4 @@ const styles = StyleSheet.create({
   note: { ...type.body, color: colors.inkSoft },
   cheered: { flexDirection: 'row', alignItems: 'center', gap: 11, marginTop: 15 },
   cheeredText: { ...type.meta, color: colors.muted },
-  allRoutes: { marginTop: 18, alignSelf: 'flex-start' },
 });

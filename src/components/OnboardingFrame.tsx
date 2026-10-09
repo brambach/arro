@@ -90,7 +90,7 @@ const styles = StyleSheet.create({
   topBar: { flexDirection: 'row', alignItems: 'center', gap: 12, height: 40, paddingHorizontal: 16 },
   back: { width: 28, height: 28, alignItems: 'center', justifyContent: 'center' },
   bar: { flex: 1, height: 4, borderRadius: 2, backgroundColor: colors.divider, overflow: 'hidden' },
-  barFill: { height: 4, borderRadius: 2, backgroundColor: colors.primary },
+  barFill: { height: 4, borderRadius: 2, backgroundColor: colors.ink },
   body: { paddingHorizontal: 26, paddingTop: 18, paddingBottom: 20 },
   title: { fontSize: 28, lineHeight: 33 },
   subtitle: { fontSize: 16, lineHeight: 22, color: colors.muted, marginTop: 8 },

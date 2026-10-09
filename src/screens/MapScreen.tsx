@@ -4,6 +4,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { colors, radii, spacing } from '../theme/tokens';
 import { type } from '../theme/typography';
 import { Chip } from '../components/Chip';
+import { FadeInView } from '../components/FadeInView';
 import { ChevronLeft } from '../components/Icons';
 import { RouteMap } from '../components/RouteMap';
 import { MapRange, MemberRoutes, useApp, useView } from '../state/AppState';
@@ -57,13 +58,13 @@ export function MapScreen({ navigation, route }: RootStackScreenProps<'Map'>) {
         <View style={{ width: 22 }} />
       </View>
 
-      <View style={styles.chips}>
+      <FadeInView style={styles.chips}>
         {RANGES.map((r) => (
           <Chip key={r.key} label={r.label} selected={range === r.key} onPress={() => setRange(r.key)} />
         ))}
-      </View>
+      </FadeInView>
 
-      <View style={styles.mapWrap}>
+      <FadeInView delay={60} style={styles.mapWrap}>
         {data && data.routes.length > 0 ? (
           <RouteMap key={`${range}-${data.routes.length}`} routes={data.routes} interactive style={StyleSheet.absoluteFill} />
         ) : (
@@ -79,9 +80,9 @@ export function MapScreen({ navigation, route }: RootStackScreenProps<'Map'>) {
             ) : null}
           </View>
         )}
-      </View>
+      </FadeInView>
 
-      <View style={[styles.footer, { paddingBottom: insets.bottom + 16 }]}>
+      <FadeInView delay={120} style={[styles.footer, { paddingBottom: insets.bottom + 16 }]}>
         <View style={styles.stats}>
           <View>
             <Text style={styles.statValue}>{data ? data.routes.length : '–'}</Text>
@@ -93,7 +94,7 @@ export function MapScreen({ navigation, route }: RootStackScreenProps<'Map'>) {
           </View>
         </View>
         <Text style={styles.note}>Darker lines are paths taken more often. The start and end of each route stay off the map.</Text>
-      </View>
+      </FadeInView>
     </View>
   );
 }

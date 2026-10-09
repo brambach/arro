@@ -67,7 +67,7 @@ export function LogTodayScreen({ navigation, route }: RootStackScreenProps<'LogT
         <Pressable onPress={() => navigation.goBack()} hitSlop={10} accessibilityLabel="Cancel">
           <Text style={styles.cancel}>Cancel</Text>
         </Pressable>
-        <Text style={styles.topTitle}>Log {day}</Text>
+        <Text style={styles.topTitle}>{day === 'today' ? 'Log today' : 'Log yesterday'}</Text>
         <View style={{ width: 60 }} />
       </View>
 
@@ -154,7 +154,7 @@ const styles = StyleSheet.create({
   root: { flex: 1, backgroundColor: colors.screen },
   topBar: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', height: 40, paddingHorizontal: spacing.gutter },
   cancel: { fontSize: 16, color: colors.muted, width: 60 },
-  topTitle: { ...type.name, textTransform: 'capitalize' },
+  topTitle: { ...type.name },
   body: { paddingHorizontal: spacing.gutter, paddingTop: 14, paddingBottom: 24 },
   sub: { ...type.body, marginTop: 6 },
   label: { ...type.label, color: colors.muted, marginTop: 24, marginBottom: 10 },

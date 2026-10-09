@@ -48,7 +48,7 @@ export function WorkoutCard({
           </Text>
           {item.kind === 'kept' ? (
             <View style={styles.hearts}>
-              <Heart size={15} color={colors.primary} />
+              <Heart size={15} color={colors.inkSoft} />
               <Text style={styles.heartCount}>{item.hearts}</Text>
             </View>
           ) : (
@@ -77,7 +77,7 @@ function Media({ item }: { item: FeedItem }) {
       {item.photoUri ? (
         <PhotoSlot uri={item.photoUri} style={styles.photoWide} />
       ) : (
-        <RouteThumb routes={[route!]} width={320} height={150} style={styles.routeWide} />
+        <RouteThumb routes={[route!]} width={320} height={130} style={styles.routeWide} />
       )}
     </View>
   );
@@ -88,7 +88,7 @@ const styles = StyleSheet.create({
   mediaHalf: { flex: 1 },
   square: { aspectRatio: 1, borderRadius: 12 },
   photoWide: { flex: 1, aspectRatio: 4 / 3, borderRadius: 12 },
-  routeWide: { flex: 1, aspectRatio: 320 / 150, borderRadius: 12 },
+  routeWide: { flex: 1, aspectRatio: 320 / 130, borderRadius: 12 },
   card: { paddingHorizontal: 16 },
   header: { flexDirection: 'row', alignItems: 'flex-start', gap: 12 },
   middle: { flex: 1, minWidth: 0 },

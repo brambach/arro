@@ -104,7 +104,9 @@ export function TodayScreen({ navigation }: MainTabScreenProps<'Today'>) {
                       ? () => navigation.navigate('Invite')
                       : nudgeable
                         ? () => navigation.navigate('Nudge', { memberId: m.id })
-                        : undefined
+                        : m.todayWorkoutId
+                          ? () => navigation.navigate('WorkoutDetail', { workoutId: m.todayWorkoutId! })
+                          : undefined
                   }
                 />
               </FadeInView>
@@ -327,7 +329,15 @@ function MemberRow({
     <Wrapper
       onPress={onPress}
       accessibilityRole={onPress ? 'button' : undefined}
-      accessibilityLabel={onPress ? (member.invited ? `Invite ${member.name} again` : `Nudge ${member.name}`) : undefined}
+      accessibilityLabel={
+        onPress
+          ? member.invited
+            ? `Invite ${member.name} again`
+            : kept
+              ? `See ${member.name}’s workout`
+              : `Nudge ${member.name}`
+          : undefined
+      }
       style={[styles.row, !last && styles.rowBorder]}
     >
       <AvatarRing member={member} size={40} />

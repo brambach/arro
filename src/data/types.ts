@@ -35,6 +35,8 @@ export interface Member {
   photoUri?: PhotoSource;
   /** Invited but hasn't joined yet. Doesn't count towards "x of y kept it today". */
   invited?: boolean;
+  /** Their newest workout today, which their row on Today opens. */
+  todayWorkoutId?: string;
 }
 
 export interface FeedItem {

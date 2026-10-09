@@ -189,6 +189,7 @@ function meMember(session: SavedSession, logs: LoggedWorkout[], todayKey: string
       : `Still has today · usually ${SLOT_WORD[session.me.reminder]}`,
     relationship: 'You',
     photoUri: session.me.photoUri,
+    todayWorkoutId: latestToday?.id,
   };
 }
 
@@ -358,6 +359,7 @@ function previewFamilyView(session: SavedSession, preview: Preview | null, now: 
   if (preview && myLogsToday[0]) {
     me.today = 'kept';
     me.meta = `${summaryOf(myLogsToday[0])} · ${timeLabel(happenedAt(myLogsToday[0]))}`;
+    me.todayWorkoutId = myLogsToday[0].id;
   }
 
   const iKeptToday = me.today === 'kept';
@@ -499,6 +501,7 @@ function familyView(session: SavedSession, family: RemoteFamily, now: Date): App
       relationship: mine ? 'You' : undefined,
       // The uploaded photo, or your own from this phone when the upload failed.
       photoUri: m.photoUrl ?? (mine ? session.me.photoUri : null),
+      todayWorkoutId: latestToday?.id,
     };
   });
   const me = joined.find((m) => m.id === myId) ?? joined[0];
