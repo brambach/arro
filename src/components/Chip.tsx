@@ -1,6 +1,6 @@
 import React from 'react';
 import { Pressable, StyleSheet, Text } from 'react-native';
-import { colors, radii } from '../theme/tokens';
+import { colors, radii, shadows } from '../theme/tokens';
 import { weights } from '../theme/typography';
 
 /** A small toggle pill: workout types, durations, Today/Yesterday. */
@@ -21,8 +21,9 @@ const styles = StyleSheet.create({
   chip: {
     borderRadius: radii.pill,
     borderWidth: 1,
-    borderColor: colors.border,
+    borderColor: 'transparent',
     backgroundColor: colors.card,
+    ...shadows.card,
     paddingVertical: 9,
     paddingHorizontal: 16,
   },

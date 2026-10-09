@@ -1,6 +1,6 @@
 import React from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
-import { colors, radii } from '../theme/tokens';
+import { colors, radii, shadows } from '../theme/tokens';
 import { weights } from '../theme/typography';
 import { Check } from './Icons';
 
@@ -52,8 +52,9 @@ const styles = StyleSheet.create({
     gap: 14,
     backgroundColor: colors.card,
     borderWidth: 1.5,
-    borderColor: colors.border,
+    borderColor: 'transparent',
     borderRadius: radii.card,
+    ...shadows.card,
     paddingVertical: 15,
     paddingHorizontal: 16,
     marginBottom: 12,

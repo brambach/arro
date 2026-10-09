@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { ActivityIndicator, Pressable, StyleSheet, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { colors, radii, spacing } from '../theme/tokens';
+import { colors, radii, spacing, shadows } from '../theme/tokens';
 import { type } from '../theme/typography';
 import { Chip } from '../components/Chip';
 import { FadeInView } from '../components/FadeInView';
@@ -109,9 +109,8 @@ const styles = StyleSheet.create({
     marginHorizontal: spacing.gutter,
     borderRadius: radii.card,
     overflow: 'hidden',
-    borderWidth: 1,
-    borderColor: colors.border,
     backgroundColor: colors.track,
+    ...shadows.card,
   },
   placeholder: { flex: 1, alignItems: 'center', justifyContent: 'center', padding: 28 },
   placeholderText: { ...type.body, textAlign: 'center' },

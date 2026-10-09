@@ -76,10 +76,13 @@ app has.
   web it falls back to Georgia.
 - Cards stay flat with a hairline border, no shadow at all, a smaller radius
   (16), and more space between them, so the page reads as paper sections, not
-  floating tiles.
+  floating tiles. *(Superseded on 9 Oct 2026 by "Depth and glass" below:
+  cards are now lifted, not outlined.)*
 - The "Today" pill becomes neutral (paper tone, ink text). Only "Kept" has a
   colour.
 - No coloured button shadow.
+  *(Still true: the button's shadow since 9 Oct is warm brown and tight, not a
+  clay halo. See "Depth and glass".)*
 
 | Token | Now | A |
 | --- | --- | --- |
@@ -232,3 +235,70 @@ their own sizes and hex values:
 Still the old look, in shared components rather than screens: the "today" ring
 in `DayPill` and the "Cheer" outline and hearts in `CheerButton`/`WorkoutCard`
 are clay. Member colours are unchanged (they need a migration).
+
+## Depth and glass (9 Oct 2026)
+
+Bryce asked for Dervo's landing page (trydervo.com, source in
+`brambach/dervo-website`) as the reference: its glass, and a little more depth
+on everything. This replaces direction A's "flat, hairline border, no shadow"
+rule. Everything else in Paper and clay stands: the paper and ink colours,
+serif headings, clay only for the main action and the active tab, the neutral
+"Today" pill, the motion rules.
+
+What we took from Dervo, adapted to Arro's warm paper rather than Dervo's cool
+off-white and pine:
+
+- **Lifted, not outlined.** A card has no border. It's a 1px warm ring with no
+  blur, a close contact shadow, and a long soft shadow that starts well below
+  the edge (`0 18px 36px -18px`), so it reads as a sheet of paper resting just
+  above the page. A thin white line along the top edge (the "sheen") catches
+  the light. Dervo's `--lift`, in Arro's warm brown instead of green-grey.
+- **Glass where there's something behind it.** Frosted glass is the card colour
+  at about 62% over a 22px blur, with a light rim brightest along the top. It
+  only reads as glass over colour, so it's used where there is some: the site's
+  day card over the dawn hills, the site's header once the page scrolls under
+  it, the app's Welcome panel over the hills, and Today's top cards over the
+  dawn light. On flat paper a card is lifted, not glass.
+- **A light to sit in.** Dervo puts its windows on a blurred meadow photo. Arro
+  already has its hills; the app adds the site's warm light as a fixed, faint
+  clay glow in the top-right of each paper screen (`Backdrop`), with a trace of
+  sage on the left, so glass cards scrolling over it pick up colour.
+- **Two levels: raised and sunk.** Things you act on or read are raised. The
+  trays they sit in are sunk, pressed in with an inset shadow: the feature
+  vignettes on the site, text fields, route thumbnails, the "Add photo" well.
+- **Floating is rarer.** `float` (a longer, softer shadow) is for glass cards,
+  the nudge sheet and the site's illustrations. Most things are `lift`.
+- **The button.** Clay with a light top edge and a tight warm-brown shadow
+  under it. It's depth, not the old orange glow: no coloured halo.
+- **The tab bar.** A raised paper bar with a soft shadow cast upward instead of
+  a hairline. The active tab's icon sits on a small white raised pill, like the
+  active row in Dervo's sidebar, and stays clay.
+
+Values (the site's CSS variables and the app's `depth` in
+`src/theme/tokens.ts` are the same numbers):
+
+| Token | Value |
+| --- | --- |
+| ring | `0 0 0 1px rgba(70,50,25,.07)` |
+| lift | ring at .06, `0 1px 2px` .05, `0 4px 10px -4px` .08, `0 18px 36px -18px rgba(90,60,35,.24)` |
+| float | ring at .06, `0 2px 6px` .04, `0 30px 60px -30px rgba(90,60,35,.40)` (site: `0 40px 80px -40px`, .42) |
+| sheen | `inset 0 1px 0 rgba(255,255,255,.75)` |
+| sunk | `inset 0 0 0 1px` .06, `inset 0 2px 6px` .05 |
+| glass | `rgba(255,253,248,.62)` over `blur(22px) saturate(1.2)` (app: expo-blur, intensity 40) |
+| sunk surface | `#EFEADF` |
+
+How it's built:
+
+- App: `depth` and `shadows` in `src/theme/tokens.ts` use React Native's
+  `boxShadow` (new architecture, so layered and inset shadows work on iOS as on
+  the web). `Card` is lifted by default and takes `glass` for frosted glass.
+  `components/Glass.tsx` is the glass surface (needs `expo-blur`, added in this
+  pass, so the next build needs `npm install` and a prebuild).
+  `components/Backdrop.tsx` is the glow, drawn by `Screen` on paper screens.
+- Site: the "Depth and glass" block in `site/public/styles.css`. Shadows are
+  static; hover moves cards with transform only, per the motion rules in
+  `site/README.md`.
+
+Not done, on purpose: no glass on lists or rows (blur on every row costs
+battery and turns the screen to fog), no dark mode, and the member colours
+are still unchanged.

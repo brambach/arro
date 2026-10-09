@@ -1,7 +1,7 @@
 import React, { useMemo } from 'react';
 import { StyleProp, StyleSheet, View, ViewStyle } from 'react-native';
 import Svg, { Circle, Path } from 'react-native-svg';
-import { colors } from '../theme/tokens';
+import { colors, shadows } from '../theme/tokens';
 import { LatLng, projectRoutes } from '../state/routes';
 
 /**
@@ -56,5 +56,6 @@ export function RouteThumb({
 }
 
 const styles = StyleSheet.create({
-  wrap: { backgroundColor: colors.track, overflow: 'hidden' },
+  // A sunk well, so the route reads as drawn into the card rather than on a sticker.
+  wrap: { backgroundColor: colors.track, overflow: 'hidden', ...shadows.sunk },
 });
