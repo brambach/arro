@@ -34,6 +34,9 @@ reads `{{DATE}}`; replace that in `public/privacy/index.html` on deploy day.
   check-ins (the card's ticks, the week dots, the closing mark); slow
   ambient loops (the warm light, the card's float, today's dot); transform
   and opacity only; a reduced-motion block that shows everything finished.
+- `public/contours.svg` and `scenes/contours.mjs`: the contour map behind
+  every page (see "The contour map" in `design/visual-direction.md`). The
+  script draws the tile and also writes the app's copy, `src/theme/contours.ts`.
 - `public/site.js`: plays `.reveal` elements once as they scroll in, splits
   `[data-words]` headings into words that rise one after another, plays the
   landing card's day once the whole card is on screen (You, Dad and Nan

@@ -7,6 +7,7 @@ import { InvitePanel } from '../components/InvitePanel';
 import { PrimaryButton } from '../components/PrimaryButton';
 import { useSendInvite } from '../state/useSendInvite';
 import { RootStackScreenProps } from '../navigation/types';
+import { Backdrop } from '../components/Backdrop';
 
 /** Invite from inside the app: the "+" and "Invite a family member" on Family members, and Today's invite links. */
 export function InviteScreen({ navigation }: RootStackScreenProps<'Invite'>) {
@@ -18,6 +19,7 @@ export function InviteScreen({ navigation }: RootStackScreenProps<'Invite'>) {
       style={[styles.root, { paddingTop: Platform.OS === 'ios' ? 12 : insets.top }]}
       behavior={Platform.OS === 'ios' ? 'padding' : undefined}
     >
+      <Backdrop />
       <View style={styles.topBar}>
         <Pressable onPress={() => navigation.goBack()} hitSlop={10} accessibilityLabel="Close">
           <Text style={styles.close}>Close</Text>

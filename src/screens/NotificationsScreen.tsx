@@ -11,6 +11,7 @@ import { showError } from '../state/confirm';
 import { NotificationPermission, notificationPermission } from '../state/notifications';
 import { RootStackScreenProps } from '../navigation/types';
 import { REMINDER_SLOTS } from './onboarding/ReminderTimeScreen';
+import { Backdrop } from '../components/Backdrop';
 
 /**
  * Settings > Notifications: the daily reminder's time, or none, and whether
@@ -67,6 +68,7 @@ export function NotificationsScreen({ navigation }: RootStackScreenProps<'Notifi
 
   return (
     <View style={[styles.root, { paddingTop: insets.top }]}>
+      <Backdrop />
       <View style={styles.topBar}>
         <Pressable onPress={() => navigation.goBack()} hitSlop={10} accessibilityLabel="Back">
           <ChevronLeft />

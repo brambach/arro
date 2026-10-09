@@ -11,6 +11,7 @@ import { useApp, useView } from '../state/AppState';
 import { showError } from '../state/confirm';
 import { PHOTOS_ON, pickPhoto } from '../state/photos';
 import { RootStackScreenProps } from '../navigation/types';
+import { Backdrop } from '../components/Backdrop';
 
 /** Edit profile: the name and photo your family sees. The colour is automatic and stays. */
 export function EditProfileScreen({ navigation }: RootStackScreenProps<'EditProfile'>) {
@@ -27,6 +28,7 @@ export function EditProfileScreen({ navigation }: RootStackScreenProps<'EditProf
       style={[styles.root, { paddingTop: Platform.OS === 'ios' ? 12 : insets.top }]}
       behavior={Platform.OS === 'ios' ? 'padding' : undefined}
     >
+      <Backdrop />
       <View style={styles.topBar}>
         <Pressable onPress={() => navigation.goBack()} hitSlop={10} accessibilityLabel="Cancel">
           <Text style={styles.cancel}>Cancel</Text>

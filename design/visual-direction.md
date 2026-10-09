@@ -294,7 +294,8 @@ How it's built:
   the web). `Card` is lifted by default and takes `glass` for frosted glass.
   `components/Glass.tsx` is the glass surface (needs `expo-blur`, added in this
   pass, so the next build needs `npm install` and a prebuild).
-  `components/Backdrop.tsx` is the glow, drawn by `Screen` on paper screens.
+  `components/Backdrop.tsx` is the contour map and the glow (see "The contour
+  map" below), drawn by `Screen`, `OnboardingFrame` and the other paper screens.
 - Site: the "Depth and glass" block in `site/public/styles.css`. Shadows are
   static; hover moves cards with transform only, per the motion rules in
   `site/README.md`.
@@ -302,3 +303,29 @@ How it's built:
 Not done, on purpose: no glass on lists or rows (blur on every row costs
 battery and turns the screen to fog), no dark mode, and the member colours
 are still unchanged.
+
+## The contour map (9 Oct 2026)
+
+Bryce wanted a better background, shared by the site and the app. Four were
+mocked up (contour map, a daylight sky wash, a warm colour mesh, quiet paper
+with grain; preview: https://claude.ai/artifact/PMpQdmBSmAsp85dNsYPVnE) and the
+contour map won: faint topographic lines on the paper, like the map of a walk.
+It belongs to Arro (the hills, the route maps, "your map") rather than to any
+calm app, and it gives the glass something to blur besides colour.
+
+- One tile, drawn by `site/scenes/contours.mjs`: a smooth height field that
+  wraps at the edges, traced into 18 levels, every fourth line a little heavier
+  (an index contour, as on a real map). It repeats without a seam. Run the
+  script to change it; it writes both copies.
+- Site: `site/public/contours.svg`, tiled on `body::before` at 13% (720px tiles,
+  520px on phones), under the existing grain at 12% on `body::after`. It
+  scrolls with the page. The band section is see-through card colour so the
+  lines carry on faintly under it. The hills stay on top in the hero and the
+  closing.
+- App: the same paths in `src/theme/contours.ts`, drawn by `Backdrop` with
+  react-native-svg at 13% in 520pt tiles, with the dawn glow over them. It sits
+  still behind the content, so glass and cards scroll over it. Every paper
+  screen has it except Welcome and Milestone, whose hills fade up out of flat
+  paper and would cut the lines off.
+- The lines are warm ink (`#463219`, the shadow colour), never clay.
+
