@@ -108,6 +108,9 @@ thread's changes committed:
    `npx expo prebuild --platform ios --clean`
    This deletes and rebuilds the git-ignored `ios/` folder, so app.json
    changes (build number, purpose strings, icon) are actually in it.
+   If CocoaPods stops with a Unicode/ASCII encoding error during pod install,
+   run it with a UTF-8 locale:
+   `LANG=en_US.UTF-8 LC_ALL=en_US.UTF-8 npx expo prebuild --platform ios --clean`.
    `npx expo run:ios` recreates it for dev builds later.
 3. Check `ios/Arro/Info.plist` now has your photo text, no camera or
    microphone text, `CFBundleVersion` matching the build number and
