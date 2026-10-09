@@ -26,6 +26,8 @@ export type RootStackParamList = {
   MoveMethod: undefined;
   Notifications: undefined;
   WorkoutDetail: { workoutId: string };
+  /** Every route one member has recorded, on one map. */
+  Map: { memberId: string };
   Nudge: { memberId?: string } | undefined;
   FamilyMembers: undefined;
   Invite: undefined;

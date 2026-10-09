@@ -7,8 +7,9 @@
  * workouts are skipped quietly: no backdating and no import of older history.
  */
 import { WorkoutType } from '../data/types';
-import { insertHealthWorkout, WorkoutDateError } from './backend';
+import { fillHealthWorkoutDetails, insertHealthWorkout, WorkoutDateError } from './backend';
 import { addDays, dayKey, yesterdayOpen } from './dates';
+import { encodePolyline, LatLng, shareableRoute } from './routes';
 
 export interface HealthWorkout {
   /** HealthKit's workout UUID, the server's dedupe key. */
@@ -17,11 +18,17 @@ export interface HealthWorkout {
   activityType: string;
   start: Date;
   durationSeconds: number;
+  /** Total distance in metres, when Health recorded one. */
+  distanceMeters?: number;
+  /** The raw GPS track, when Health recorded one. Trimmed and thinned before it's sent. */
+  route?: LatLng[];
 }
 
 export interface HealthSyncResult {
   added: number;
   alreadySynced: number;
+  /** Already saved, and this sync added its distance or route. */
+  updated: number;
   /** Older than yesterday, or yesterday after the server stopped taking it. */
   skipped: number;
 }
@@ -69,6 +76,17 @@ export function healthMinutes(w: HealthWorkout): number | undefined {
   return Math.min(minutes, 1440);
 }
 
+/** Start time, whole metres and the shareable route for the server, when Health has them. */
+export function healthDetails(w: HealthWorkout): { startedAt: string; distanceMeters?: number; route?: string } {
+  const route = w.route ? shareableRoute(w.route) : null;
+  const meters = w.distanceMeters ? Math.round(w.distanceMeters) : undefined;
+  return {
+    startedAt: w.start.toISOString(),
+    distanceMeters: meters && meters <= 1_000_000 ? meters : undefined,
+    route: route ? encodePolyline(route) : undefined,
+  };
+}
+
 /** Which of these workouts the server would take right now, before any network call. */
 export function sendableHealthWorkouts(workouts: HealthWorkout[], now: Date = new Date()): HealthWorkout[] {
   const today = dayKey(now);
@@ -90,17 +108,25 @@ export async function syncHealthWorkouts(
   now: Date = new Date(),
 ): Promise<HealthSyncResult> {
   const sendable = sendableHealthWorkouts(workouts, now);
-  const result: HealthSyncResult = { added: 0, alreadySynced: 0, skipped: workouts.length - sendable.length };
+  const result: HealthSyncResult = { added: 0, alreadySynced: 0, updated: 0, skipped: workouts.length - sendable.length };
   for (const w of sendable) {
     try {
+      const details = healthDetails(w);
       const outcome = await insertHealthWorkout(memberId, {
         healthWorkoutId: w.uuid,
         localDate: healthLocalDate(w),
         type: workoutTypeFor(w.activityType),
         minutes: healthMinutes(w),
+        ...details,
       });
       if (outcome === 'added') result.added += 1;
-      else result.alreadySynced += 1;
+      else {
+        result.alreadySynced += 1;
+        // Saved before its route arrived, or before Arro read routes: fill in what's new.
+        if (details.route || details.distanceMeters) {
+          if (await fillHealthWorkoutDetails(memberId, w.uuid, details)) result.updated += 1;
+        }
+      }
     } catch (e) {
       // The day closed between the check above and the insert. Skip it quietly.
       if (e instanceof WorkoutDateError) result.skipped += 1;

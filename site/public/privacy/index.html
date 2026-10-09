@@ -30,7 +30,7 @@
       <div class="doc-head reveal">
         <p class="eyebrow">Privacy policy</p>
         <h1>Arro privacy policy</h1>
-        <p class="meta">Last updated: 5 October 2026</p>
+        <p class="meta">Last updated: 9 October 2026</p>
       </div>
 
       <div class="prose">
@@ -41,7 +41,7 @@
         <ul>
           <li>Arro collects what it needs to run your family’s streak and nothing else.</li>
           <li>Your workouts are shown to the members of your family and nobody else.</li>
-          <li>Apple Health is optional, read-only, and limited to today’s and yesterday’s workouts.</li>
+          <li>Apple Health is optional, read-only, and limited to today’s and yesterday’s workouts. Routes leave off where you start and finish.</li>
           <li>We don’t sell your data, show ads, or use tracking or analytics tools.</li>
           <li>You can delete your account and everything in it from Settings in the app.</li>
         </ul>
@@ -50,10 +50,11 @@
         <p><strong>Account.</strong> You sign in with Apple. Apple gives us an account identifier and the email address you chose to share (which can be Apple’s private relay address). The first time you sign in, Apple may also share your first name, which Arro offers as your display name. You can change it.</p>
         <p><strong>Your family.</strong> The family name, your display name, the colour Arro gives you, your time zone and the reminder time you pick. Your time zone is used to work out what “today” is for you. It isn’t your location.</p>
         <p><strong>Workouts.</strong> For each workout: the date, the kind (walk, run, gym, yoga, swim, ride or other), the duration if you give one, and a short note if you write one. Also the cheers and nudges family members send each other.</p>
-        <p><strong>Apple Health, only if you connect it.</strong> Arro asks Apple Health for permission to read workouts. It reads nothing else: no heart rate, calories, steps, routes, location or other health data. It only reads workouts from yesterday and today, and never writes anything to Health. From each Health workout Arro saves the date, the kind of workout, the duration in minutes and Health’s identifier for it (so it isn’t counted twice). Workouts recorded by other apps that save to Health, such as Strava or Apple Watch, are read the same way.</p>
-        <p><strong>Photos stay on your phone.</strong> If you add a profile photo or a photo to a workout, it’s kept on your phone only. It isn’t uploaded, and your family doesn’t see it.</p>
+        <p><strong>Apple Health, only if you connect it.</strong> Arro asks Apple Health for permission to read workouts and workout routes. It reads nothing else: no heart rate, calories, steps or other health data. It only reads workouts from yesterday and today, and never writes anything to Health. From each Health workout Arro saves the date, the time it started, the kind of workout, the duration in minutes, the distance, the route if one was recorded, and Health’s identifier for it (so it isn’t counted twice). Workouts recorded by other apps that save to Health, such as Strava or Apple Watch, are read the same way.</p>
+        <p><strong>Routes.</strong> Before a route leaves your phone, Arro cuts off its first and last 200 metres, so where you start and finish, such as your home, isn’t on the map, and keeps only enough points to draw it. Your family sees the route on the workout and on your map in Arro. Arro never reads your current location.</p>
+        <p><strong>Photos, only if you add one.</strong> If you add a profile photo or a photo to a workout, Arro shrinks it and uploads it, and the members of your family can see it. Photos are stored privately: only people signed in to your family can open them. You can change or remove a photo at any time, and deleting your account deletes your photos.</p>
         <p><strong>Notifications, only if you allow them.</strong> Arro reminds you once a day at the time you pick. That reminder is set up on your phone. If you allow notifications, Arro also saves a push token for your phone, an address Apple gives Arro for sending notifications to it, so it can tell you when someone cheers your workout, cheers you on before you’ve moved, joins your family, or hasn’t moved yet that evening. Each notification’s text is kept for up to 7 days, then deleted.</p>
-        <p><strong>What we don’t collect.</strong> No location, contacts, advertising identifier, analytics, crash reporting or tracking of any kind.</p>
+        <p><strong>What we don’t collect.</strong> No current location, contacts, advertising identifier, analytics, crash reporting or tracking of any kind.</p>
 
         <h2>Why we use it</h2>
         <p>Only to run Arro: to sign you in, show your family who’s moved, work out the family streak and freeze days, and let you cheer and nudge each other.</p>
@@ -63,15 +64,15 @@
 
         <h2>Who sees it</h2>
         <ul>
-          <li><strong>Your family.</strong> Members of your family see your display name and colour, your workouts (date, kind, duration and note), and cheers and nudges. Nobody outside your family can see them. Families are joined only with an invite code.</li>
+          <li><strong>Your family.</strong> Members of your family see your display name and colour, your workouts (date, kind, duration, distance, route, photo and note), your profile photo, and cheers and nudges. Nobody outside your family can see them. Families are joined only with an invite code.</li>
           <li><strong>Our hosting provider.</strong> Arro’s data is stored with Supabase, a database provider, on servers in the United States (California). Supabase processes it on our behalf and may not use it for anything else.</li>
           <li><strong>Expo</strong>, which delivers Arro’s push notifications. It receives your phone’s push token and the notification’s text, passes them to Apple, and processes them on our behalf only.</li>
-          <li><strong>Apple</strong> handles Sign in with Apple and Apple Health under Apple’s own privacy policy.</li>
+          <li><strong>Apple</strong> handles Sign in with Apple and Apple Health, and draws the maps behind routes with Apple Maps, under Apple’s own privacy policy.</li>
           <li>Nobody else, unless the law requires it.</li>
         </ul>
 
         <h2>How long it’s kept and how to delete it</h2>
-        <p>Your data is kept while you have an account. To delete everything, open <strong>Settings &gt; Delete account</strong> in Arro. That removes your account, your place in the family, your workouts, cheers, nudges and push tokens. If you were the last person in a family, the family is deleted too. Data can remain in the hosting provider’s backups for a short time before it’s overwritten.</p>
+        <p>Your data is kept while you have an account. To delete everything, open <strong>Settings &gt; Delete account</strong> in Arro. That removes your account, your place in the family, your workouts and their routes, your photos, cheers, nudges and push tokens. If you were the last person in a family, the family is deleted too. Data can remain in the hosting provider’s backups for a short time before it’s overwritten.</p>
         <p>Signing out keeps your account. Deleting the app keeps your account too; sign in again to get back to your family.</p>
         <p>You can also disconnect Apple Health at any time in the iPhone’s Settings app, under Health &gt; Data Access &amp; Devices &gt; Arro, or switch to “I moved today” in Arro’s Settings. Workouts already counted stay until you delete them with your account.</p>
 

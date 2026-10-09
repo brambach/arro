@@ -9,7 +9,7 @@
     "ios": {
       "supportsTablet": false,
       "bundleIdentifier": "com.arrofamily.arro",
-      "buildNumber": "1",
+      "buildNumber": "3",
       "usesAppleSignIn": true,
       "config": {
         "usesNonExemptEncryption": false
@@ -33,15 +33,15 @@
       [
         "@appeeky/expo-healthkit",
         {
-          "healthSharePermission": "Arro reads your workouts from Apple Health so moving counts toward your family streak. It only reads workouts, and only today's and yesterday's.",
-          "healthUpdatePermission": false,
+          "healthSharePermission": "Arro reads your workouts from Apple Health, including distance and route, so moving counts toward your family streak and your family can see what you did. Routes are shared only with your family, with the start and end left off. Arro only reads today's and yesterday's workouts.",
+          "healthUpdatePermission": "Arro never writes to Apple Health. It only reads your workouts so moving counts toward your family streak.",
           "isBackgroundDeliveryEnabled": true
         }
       ],
       [
         "expo-image-picker",
         {
-          "photosPermission": "Arro uses a photo only when you pick one for your profile or a workout. Photos stay on your phone.",
+          "photosPermission": "Arro uses a photo only when you pick one for your profile or a workout. Your family sees it in Arro.",
           "cameraPermission": false,
           "microphonePermission": false
         }

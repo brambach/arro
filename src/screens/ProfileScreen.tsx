@@ -3,7 +3,7 @@ import { Pressable, StyleSheet, Text, View } from 'react-native';
 import { colors, radii, spacing } from '../theme/tokens';
 import { type, weights } from '../theme/typography';
 import { AvatarRing } from '../components/AvatarRing';
-import { CogIcon } from '../components/Icons';
+import { ChevronRight, CogIcon, MapPin } from '../components/Icons';
 import { FadeInView } from '../components/FadeInView';
 import { Screen } from '../components/Screen';
 import { SectionHeader } from '../components/SectionHeader';
@@ -55,6 +55,22 @@ export function ProfileScreen({ navigation }: MainTabScreenProps<'Me'>) {
             </View>
           ))}
         </View>
+      </FadeInView>
+
+      <FadeInView delay={90} style={styles.section}>
+        <Pressable
+          onPress={() => navigation.navigate('Map', { memberId: me.id })}
+          accessibilityRole="button"
+          accessibilityLabel="Your map"
+          style={styles.mapRow}
+        >
+          <MapPin size={20} color={colors.inkSoft} />
+          <View style={{ flex: 1 }}>
+            <Text style={styles.mapTitle}>Your map</Text>
+            <Text style={styles.mapSub}>Every route you’ve recorded, on one map</Text>
+          </View>
+          <ChevronRight />
+        </Pressable>
       </FadeInView>
 
       <FadeInView delay={120} style={styles.section}>
@@ -145,6 +161,19 @@ const styles = StyleSheet.create({
   statLabel: { ...type.meta, color: colors.muted },
   statValue: { ...type.stat, marginTop: 3 },
   statUnit: { fontFamily: undefined, fontSize: 13, fontWeight: weights.medium, color: colors.faint2 },
+  mapRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+    backgroundColor: colors.card,
+    borderWidth: 1,
+    borderColor: colors.border,
+    borderRadius: radii.card,
+    paddingHorizontal: 14,
+    paddingVertical: 12,
+  },
+  mapTitle: { fontSize: 15, fontWeight: weights.semibold, color: colors.ink },
+  mapSub: { ...type.meta, marginTop: 1 },
   workoutRow: { flexDirection: 'row', alignItems: 'center', gap: 12, paddingVertical: 10 },
   workoutBorder: { borderBottomWidth: 1, borderBottomColor: colors.divider },
   workoutWhen: { fontSize: 15, fontWeight: weights.semibold, color: colors.ink },

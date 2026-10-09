@@ -59,7 +59,7 @@ export function MoveMethodScreen({ navigation }: RootStackScreenProps<'MoveMetho
         ) : current === 'health' ? (
           <Text style={styles.note}>
             {canUseHealth
-              ? 'Arro only reads your workouts, never anything else. Workouts from today and yesterday count on their own. If none show up, allow Arro in the iPhone’s Settings under Health > Data Access & Devices.'
+              ? 'Arro only reads your workouts and their routes, nothing else. Routes leave off the start and end. Workouts from today and yesterday count on their own. If none show up, allow Arro in the iPhone’s Settings under Health > Data Access & Devices.'
               : 'Apple Health isn’t available here. “I moved today” is always there instead.'}
           </Text>
         ) : (

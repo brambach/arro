@@ -6,6 +6,7 @@
  */
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { MoveMethod, ReminderSlot, WorkoutType } from '../data/types';
+import type { LatLng } from './routes';
 
 const KEY = 'arro.session.v1';
 
@@ -18,6 +19,12 @@ export interface LoggedWorkout {
   minutes?: number;
   note?: string;
   photoUri?: string | null;
+  /** The photo's path on the server, when it uploaded. */
+  photoPath?: string;
+  /** When a Health workout actually started; check-ins use loggedAt. */
+  startedAt?: string;
+  distanceMeters?: number;
+  route?: LatLng[];
 }
 
 export interface SavedSession {
@@ -43,7 +50,10 @@ export interface SavedSession {
   workouts: LoggedWorkout[];
   /** Set once signed in with Apple and in a family on the server. */
   remote?: { userId: string; memberId: string; familyId: string };
-  /** Photos for server workouts, by workout id. They stay on this phone until Storage is set up. */
+  /**
+   * Photos for server workouts, by workout id, kept on this phone. Shown until the
+   * uploaded copy loads, and the only copy when an upload failed.
+   */
   photos?: Record<string, string>;
 }
 

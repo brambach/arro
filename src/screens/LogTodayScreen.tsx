@@ -117,7 +117,7 @@ export function LogTodayScreen({ navigation, route }: RootStackScreenProps<'LogT
           </View>
         ) : (
           <Pressable
-            onPress={async () => setPhotoUri((await pickPhoto()) ?? null)}
+            onPress={async () => setPhotoUri((await pickPhoto('landscape')) ?? null)}
             accessibilityRole="button"
             accessibilityLabel="Add a photo"
             style={styles.photoButton}
@@ -161,7 +161,7 @@ const styles = StyleSheet.create({
   chips: { flexDirection: 'row', flexWrap: 'wrap', gap: 10 },
   hint: { ...type.meta, color: colors.muted, marginTop: 10 },
   error: { ...type.body, color: colors.ink, marginTop: 10 },
-  photo: { height: 180, borderRadius: radii.card, backgroundColor: colors.photoPlaceholder },
+  photo: { aspectRatio: 4 / 3, borderRadius: radii.card, backgroundColor: colors.photoPlaceholder },
   remove: { marginTop: 10 },
   photoButton: {
     height: 52,
