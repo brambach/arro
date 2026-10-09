@@ -12,6 +12,7 @@ import { useApp, useView } from '../state/AppState';
 import { NotificationPermission, notificationPermission } from '../state/notifications';
 import { RootStackScreenProps } from '../navigation/types';
 import { REMINDER_SLOTS } from './onboarding/ReminderTimeScreen';
+import { Backdrop } from '../components/Backdrop';
 
 // Ink icons on a paper tile: one quiet set instead of five bright hues.
 const ICONS: Record<string, React.ReactNode> = {
@@ -103,6 +104,7 @@ export function SettingsScreen({ navigation }: RootStackScreenProps<'Settings'>)
 
   return (
     <View style={[styles.root, { paddingTop: insets.top }]}>
+      <Backdrop />
       <View style={styles.topBar}>
         <Pressable onPress={() => navigation.goBack()} hitSlop={10} accessibilityLabel="Back">
           <ChevronLeft />

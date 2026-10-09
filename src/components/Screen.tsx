@@ -5,7 +5,7 @@ import { colors } from '../theme/tokens';
 import { Backdrop } from './Backdrop';
 
 /**
- * Screen scaffold: paper background with the warm dawn light behind it
+ * Screen scaffold: paper background with the contour map and dawn light behind it
  * (Backdrop, paper screens only) + top safe-area inset. The tab bar is a solid
  * bar rendered by the navigator, so scrolling content just needs a little bottom
  * breathing room, not tab clearance.

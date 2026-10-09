@@ -7,6 +7,7 @@ import { AvatarRing } from '../components/AvatarRing';
 import { ChevronLeft, ChevronRight, PlusIcon, UserPlusIcon } from '../components/Icons';
 import { useView } from '../state/AppState';
 import { RootStackScreenProps } from '../navigation/types';
+import { Backdrop } from '../components/Backdrop';
 
 export function FamilyMembersScreen({ navigation }: RootStackScreenProps<'FamilyMembers'>) {
   const insets = useSafeAreaInsets();
@@ -14,6 +15,7 @@ export function FamilyMembersScreen({ navigation }: RootStackScreenProps<'Family
 
   return (
     <View style={[styles.root, { paddingTop: insets.top }]}>
+      <Backdrop />
       <View style={styles.header}>
         <Pressable onPress={() => navigation.goBack()} hitSlop={10} accessibilityLabel="Back">
           <ChevronLeft />

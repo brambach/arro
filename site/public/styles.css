@@ -509,7 +509,32 @@ a:hover { text-decoration-color: currentColor; }
 
 /* A warm light behind the hero that drifts very slowly. */
 html, body { overflow-x: hidden; overflow-x: clip; }
-body { position: relative; }
+body { position: relative; isolation: isolate; }
+
+/* The page itself is a contour map: faint topographic lines (contours.svg,
+   drawn by scenes/contours.mjs, a tile that repeats without a seam) under a
+   little paper grain. It scrolls with the page, sits under everything, and
+   is what the glass blurs. The app's paper screens use the same tile
+   (src/components/Backdrop.tsx). */
+body::before, body::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  pointer-events: none;
+}
+body::before {
+  background: url(contours.svg) 0 0 / 720px repeat;
+  opacity: 0.13;
+}
+body::after {
+  background: url(grain.svg);
+  opacity: 0.12;
+  mix-blend-mode: multiply;
+}
+@media (max-width: 899px) {
+  body::before { background-size: 520px; }
+}
 .site-header, main, .site-footer { position: relative; }
 .hero-wash {
   position: absolute;
@@ -519,7 +544,7 @@ body { position: relative; }
   right: -22rem;
   top: -18rem;
   border-radius: 50%;
-  background: radial-gradient(closest-side, rgb(166 90 60 / 0.13), rgb(166 90 60 / 0.05) 55%, rgb(166 90 60 / 0));
+  background: radial-gradient(closest-side, rgb(166 90 60 / 0.17), rgb(166 90 60 / 0.06) 55%, rgb(166 90 60 / 0));
   pointer-events: none;
 }
 @media (max-width: 899px) {
@@ -922,7 +947,8 @@ body { position: relative; }
 /* Sections run into each other without rules; space and the band carry it. */
 .section { border-top: 0; }
 .section.band {
-  background: linear-gradient(180deg, var(--paper), var(--card) 18%, var(--card) 82%, var(--paper));
+  /* The card colour, see-through, so the contours still show faintly. */
+  background: linear-gradient(180deg, rgb(255 253 248 / 0), rgb(255 253 248 / 0.72) 18%, rgb(255 253 248 / 0.72) 82%, rgb(255 253 248 / 0));
 }
 .closing { border-top: 0; }
 .site-footer { border-top: 0; }

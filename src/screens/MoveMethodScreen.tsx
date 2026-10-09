@@ -9,6 +9,7 @@ import { MoveMethod } from '../data/types';
 import { useApp } from '../state/AppState';
 import { healthAvailable } from '../state/health';
 import { RootStackScreenProps } from '../navigation/types';
+import { Backdrop } from '../components/Backdrop';
 
 /** Settings > How you move: the onboarding choice, changeable. Picking Apple Health asks for access straight away. */
 export function MoveMethodScreen({ navigation }: RootStackScreenProps<'MoveMethod'>) {
@@ -30,6 +31,7 @@ export function MoveMethodScreen({ navigation }: RootStackScreenProps<'MoveMetho
 
   return (
     <View style={[styles.root, { paddingTop: insets.top }]}>
+      <Backdrop />
       <View style={styles.topBar}>
         <Pressable onPress={() => navigation.goBack()} hitSlop={10} accessibilityLabel="Back">
           <ChevronLeft />

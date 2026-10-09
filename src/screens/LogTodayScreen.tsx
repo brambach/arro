@@ -17,6 +17,7 @@ import { yesterdayClosedAt } from '../state/dates';
 import { PHOTOS_ON, pickPhoto } from '../state/photos';
 import { useYesterdayOpen } from '../state/useYesterdayOpen';
 import { RootStackScreenProps } from '../navigation/types';
+import { Backdrop } from '../components/Backdrop';
 
 const TYPES = Object.keys(workoutTypeLabels) as WorkoutType[];
 const MINUTES = [10, 20, 30, 45, 60];
@@ -63,6 +64,7 @@ export function LogTodayScreen({ navigation, route }: RootStackScreenProps<'LogT
       style={[styles.root, { paddingTop: Platform.OS === 'ios' ? 12 : insets.top }]}
       behavior={Platform.OS === 'ios' ? 'padding' : undefined}
     >
+      <Backdrop />
       <View style={styles.topBar}>
         <Pressable onPress={() => navigation.goBack()} hitSlop={10} accessibilityLabel="Cancel">
           <Text style={styles.cancel}>Cancel</Text>

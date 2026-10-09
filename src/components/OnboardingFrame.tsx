@@ -6,6 +6,7 @@ import { type, weights } from '../theme/typography';
 import { ChevronLeft } from './Icons';
 import { FadeInView } from './FadeInView';
 import { PrimaryButton } from './PrimaryButton';
+import { Backdrop } from './Backdrop';
 
 /**
  * Shared shell for the onboarding steps: back button, step bar, title, a scrolling
@@ -43,6 +44,7 @@ export function OnboardingFrame({
       style={[styles.root, { paddingTop: insets.top }]}
       behavior={Platform.OS === 'ios' ? 'padding' : undefined}
     >
+      <Backdrop />
       <View style={styles.topBar}>
         {onBack ? (
           <Pressable onPress={onBack} hitSlop={10} accessibilityLabel="Back" style={styles.back}>

@@ -6,12 +6,14 @@ import { type } from '../theme/typography';
 import { ChevronLeft } from '../components/Icons';
 import { StreakRulesList } from '../components/StreakRulesList';
 import { RootStackScreenProps } from '../navigation/types';
+import { Backdrop } from '../components/Backdrop';
 
 /** Settings > Streak rules: the same rules onboarding showed once. */
 export function StreakRulesScreen({ navigation }: RootStackScreenProps<'StreakRules'>) {
   const insets = useSafeAreaInsets();
   return (
     <View style={[styles.root, { paddingTop: insets.top }]}>
+      <Backdrop />
       <View style={styles.topBar}>
         <Pressable onPress={() => navigation.goBack()} hitSlop={10} accessibilityLabel="Back">
           <ChevronLeft />

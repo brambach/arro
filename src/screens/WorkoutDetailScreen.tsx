@@ -15,6 +15,7 @@ import { PHOTOS_ON, pickPhoto } from '../state/photos';
 import { WorkoutDetail } from '../data/types';
 import { joinNames, workoutSourceLabels, workoutTypeLabels } from '../data/workouts';
 import { RootStackScreenProps } from '../navigation/types';
+import { Backdrop } from '../components/Backdrop';
 
 export function WorkoutDetailScreen({ navigation, route }: RootStackScreenProps<'WorkoutDetail'>) {
   const insets = useSafeAreaInsets();
@@ -50,6 +51,7 @@ export function WorkoutDetailScreen({ navigation, route }: RootStackScreenProps<
 
   return (
     <View style={[styles.root, { paddingTop: insets.top }]}>
+      <Backdrop />
       <View style={styles.header}>
         <Pressable onPress={() => navigation.goBack()} hitSlop={10} accessibilityLabel="Back">
           <ChevronLeft />
