@@ -197,7 +197,7 @@ a:hover { text-decoration-color: currentColor; }
 
 .hero {
   position: relative;
-  padding: clamp(3rem, 9vw, 6.5rem) 0 clamp(9rem, 20vw, 15rem);
+  padding: clamp(3rem, 9vw, 6.5rem) 0 clamp(4rem, 10vw, 7rem);
 }
 .hero .wrap { position: relative; z-index: 1; }
 .hero .wrap {
@@ -394,7 +394,8 @@ a:hover { text-decoration-color: currentColor; }
 .closing {
   position: relative;
   border-top: 1px solid var(--border);
-  padding: clamp(4rem, 12vw, 8rem) 0 clamp(14rem, 30vw, 22rem);
+  padding: clamp(5rem, 12vw, 8rem) 0 clamp(6rem, 14vw, 10rem);
+  overflow: hidden;
   text-align: center;
 }
 .closing .wrap { position: relative; z-index: 1; }
@@ -511,31 +512,59 @@ a:hover { text-decoration-color: currentColor; }
 html, body { overflow-x: hidden; overflow-x: clip; }
 body { position: relative; isolation: isolate; }
 
-/* The page itself is a contour map: faint topographic lines (contours.svg,
-   drawn by scenes/contours.mjs, a tile that repeats without a seam) under a
-   little paper grain. It scrolls with the page, sits under everything, and
-   is what the glass blurs. The app's paper screens use the same tile
-   (src/components/Backdrop.tsx). */
-body::before, body::after {
+/* The page itself is a contour map: faint topographic lines under a little
+   paper grain. The map is fixed to the screen, so the page scrolls over it
+   the way the app's screens do. It sways very slowly (side to side and up and
+   down on different clocks, so it never repeats the same path), and site.js
+   fades it between nearby moments of the same land (contours-0.svg onwards,
+   drawn by scenes/contours.mjs, each a tile that repeats without a seam), so
+   the lines seem to shift like water. Same motion as the app's Backdrop. */
+.map {
+  --tile: 720px;
+  --sway: 40px;
+  position: fixed;
+  inset: 0;
+  z-index: -1;
+  overflow: hidden;
+  pointer-events: none;
+}
+.map-sway {
+  position: absolute;
+  inset: calc(var(--sway) * -1);
+  animation: map-sway-x 31s ease-in-out infinite alternate;
+}
+.map-layer {
+  position: absolute;
+  inset: 0;
+  background: url(contours-0.svg) center / var(--tile) repeat;
+  opacity: 0;
+  animation: map-sway-y 23s ease-in-out infinite alternate;
+  transition: opacity 3.5s ease-in-out;
+  will-change: transform, opacity;
+}
+.map-layer.on { opacity: 0.13; }
+@keyframes map-sway-x {
+  from { transform: translate3d(calc(var(--sway) * -1), 0, 0); }
+  to { transform: translate3d(var(--sway), 0, 0); }
+}
+@keyframes map-sway-y {
+  from { transform: translate3d(0, calc(var(--sway) * -0.6), 0); }
+  to { transform: translate3d(0, calc(var(--sway) * 0.6), 0); }
+}
+body::after {
   content: "";
   position: absolute;
   inset: 0;
   z-index: -1;
   pointer-events: none;
-}
-body::before {
-  background: url(contours.svg) 0 0 / 720px repeat;
-  opacity: 0.13;
-}
-body::after {
   background: url(grain.svg);
   opacity: 0.12;
   mix-blend-mode: multiply;
 }
 @media (max-width: 899px) {
-  body::before { background-size: 520px; }
+  .map { --tile: 520px; }
 }
-.site-header, main, .site-footer { position: relative; }
+
 .hero-wash {
   position: absolute;
   z-index: 0;
@@ -551,45 +580,20 @@ body::after {
   .hero-wash { right: -45%; top: 26rem; }
 }
 
-/* Landscapes: the same hills at dawn behind the hero and at dusk behind
-   the closing line. Each hill is its own layer for the scroll parallax in
-   site.js, which only ever moves layers down, so no gaps open. */
-.scene {
+/* The closing line sits in the evening light: the same warm light as the
+   hero's, lower and rosier, so the page ends where the day does. */
+.closing::before {
+  content: "";
   position: absolute;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  height: clamp(15rem, 34vw, 27rem);
-  overflow: hidden;
+  z-index: 0;
+  left: 50%;
+  bottom: -12rem;
+  width: min(64rem, 150vw);
+  aspect-ratio: 1.6;
+  transform: translateX(-50%);
+  border-radius: 50%;
+  background: radial-gradient(closest-side, rgb(176 96 82 / 0.14), rgb(176 96 82 / 0.05) 55%, rgb(176 96 82 / 0));
   pointer-events: none;
-}
-.scene .layer {
-  position: absolute;
-  left: 0;
-  bottom: 0;
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-  object-position: center bottom;
-}
-/* The sky fades in from the page's paper, so the scene has no top edge. */
-.scene .layer:first-child {
-  -webkit-mask-image: linear-gradient(to bottom, transparent, #000 45%);
-  mask-image: linear-gradient(to bottom, transparent, #000 45%);
-}
-.scene .grain {
-  position: absolute;
-  inset: 0;
-  background: url(grain.svg);
-  opacity: 0.22;
-  mix-blend-mode: multiply;
-  -webkit-mask-image: linear-gradient(to bottom, transparent, #000 55%);
-  mask-image: linear-gradient(to bottom, transparent, #000 55%);
-}
-.scene-dusk { height: clamp(16rem, 36vw, 28rem); }
-@media (max-width: 899px) {
-  .hero { padding-bottom: 13rem; }
-  .scene-dawn { height: 19rem; }
 }
 
 /* The day card. Each row stacks both statuses and shows one. */
@@ -909,15 +913,6 @@ body::after {
 }
 .status.kept { box-shadow: inset 0 0 0 1px rgb(93 122 99 / 0.12); }
 
-/* On a wide screen the hills come up behind the card's lower half. */
-@media (min-width: 900px) {
-  .hero { padding-bottom: clamp(7rem, 12vw, 10rem); }
-  .scene-dawn { height: clamp(22rem, 40vw, 34rem); }
-}
-@media (max-width: 899px) {
-  .hero { padding-bottom: 11rem; }
-  .scene-dawn { height: 22rem; }
-}
 
 /* Header: glass once the page moves under it. */
 .site-header {
@@ -946,10 +941,8 @@ body::after {
 
 /* Sections run into each other without rules; space and the band carry it. */
 .section { border-top: 0; }
-.section.band {
-  /* The card colour, see-through, so the contours still show faintly. */
-  background: linear-gradient(180deg, rgb(255 253 248 / 0), rgb(255 253 248 / 0.72) 18%, rgb(255 253 248 / 0.72) 82%, rgb(255 253 248 / 0));
-}
+/* No band fill: the map runs unbroken from the top of the page to the end. */
+.section.band { background: none; }
 .closing { border-top: 0; }
 .site-footer { border-top: 0; }
 
@@ -999,7 +992,7 @@ body::after {
   .feature:hover .vignette, .ticket:hover, .fam-week:hover { transform: translateY(-3px); }
 }
 
-/* The closing line sits on a glass pill over the dusk hills. */
+/* The closing line sits on a glass pill in the evening light. */
 .closing .soon-glass {
   display: inline-flex;
   align-items: center;
@@ -1152,7 +1145,6 @@ body::after {
   .hero-wash { animation: sun-drift 21s var(--ease-ambient, ease-in-out) infinite alternate; }
   .day { animation: card-float 13s ease-in-out infinite alternate; }
   .fam-week .c.t { animation: today-waits 6s ease-in-out infinite alternate; }
-  .scene .layer { will-change: transform; }
 }
 @keyframes sun-drift {
   from { transform: translate(0, 0) scale(1); }
@@ -1171,6 +1163,7 @@ body::after {
    its finished state; the card keeps its written state (Mum still has
    today) because site.js doesn't play the day. */
 @media (prefers-reduced-motion: reduce) {
+  .map-sway, .map-layer { animation: none; transition: none; }
   :root {
     --dur-statement: 1ms;
     --dur-signature: 1ms;
