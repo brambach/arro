@@ -2,10 +2,12 @@ import { Platform, TextStyle } from 'react-native';
 import { colors } from './tokens';
 
 /**
- * Typography — system fonts only, nothing to install. Headings use the system
- * serif (New York on iOS, via React Native's 'ui-serif' design); everything else
- * is the system sans (SF Pro). Body starts at 15 so it's easy to read for
- * everyone in the family. `fontFamily: undefined` = system sans.
+ * Typography. Headings use Instrument Serif, the same display face as
+ * arrofamily.com (and trydervo.com): one weight, 400, so headings get bigger,
+ * never bolder. It's embedded by the expo-font config plugin (app.json, from
+ * assets/fonts, OFL) and named by its PostScript name. Everything else is the
+ * system sans (SF Pro). Body starts at 15 so it's easy to read for everyone in
+ * the family. `fontFamily: undefined` = system sans.
  */
 export const weights = {
   regular: '400',
@@ -16,22 +18,21 @@ export const weights = {
 
 export const fonts = {
   serif: Platform.select({
-    ios: 'ui-serif',
-    web: 'ui-serif, "New York", Georgia, serif',
-    default: 'serif',
+    web: '"InstrumentSerif-Regular", Georgia, serif',
+    default: 'InstrumentSerif-Regular',
   }),
 } as const;
 
 export const type = {
   /** Milestone hero — "Bryce kept 30 days" (color applied inline, usually white). */
-  display: { fontFamily: fonts.serif, fontSize: 34, lineHeight: 39, fontWeight: weights.semibold },
+  display: { fontFamily: fonts.serif, fontSize: 42, lineHeight: 44, fontWeight: weights.regular, letterSpacing: -0.6 },
   /** Screen titles — "This Week", "Family feed", "Settings". */
-  title: { fontFamily: fonts.serif, fontSize: 28, lineHeight: 33, fontWeight: weights.semibold, color: colors.ink },
+  title: { fontFamily: fonts.serif, fontSize: 34, lineHeight: 37, fontWeight: weights.regular, letterSpacing: -0.4, color: colors.ink },
   /** Home greeting — "Good morning, Bryce." */
-  greeting: { fontFamily: fonts.serif, fontSize: 22, lineHeight: 27, fontWeight: weights.medium, color: colors.ink },
+  greeting: { fontFamily: fonts.serif, fontSize: 27, lineHeight: 31, fontWeight: weights.regular, letterSpacing: -0.3, color: colors.ink },
   /** Big count — "2 of 3", profile stat numbers use `stat`. */
-  bigNumber: { fontFamily: fonts.serif, fontSize: 32, lineHeight: 37, fontWeight: weights.semibold, color: colors.ink },
-  stat: { fontFamily: fonts.serif, fontSize: 24, lineHeight: 28, fontWeight: weights.semibold, color: colors.ink },
+  bigNumber: { fontFamily: fonts.serif, fontSize: 40, lineHeight: 42, fontWeight: weights.regular, letterSpacing: -0.5, color: colors.ink },
+  stat: { fontFamily: fonts.serif, fontSize: 30, lineHeight: 32, fontWeight: weights.regular, letterSpacing: -0.3, color: colors.ink },
   /** Names / card titles. */
   name: { fontSize: 16, lineHeight: 21, fontWeight: weights.semibold, color: colors.ink },
   /** Row labels, section headers. */

@@ -132,7 +132,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: spacing.gutter,
     paddingTop: 2,
   },
-  name: { ...type.stat, fontSize: 22 },
+  name: { ...type.stat, fontSize: 27, lineHeight: 30 },
   location: { ...type.meta, marginTop: 2 },
   editPill: {
     alignSelf: 'flex-start',
@@ -189,6 +189,6 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   },
-  msNumber: { ...type.stat, fontSize: 20, lineHeight: 24 },
+  msNumber: { ...type.stat, fontSize: 24, lineHeight: 26 },
   msLabel: { ...type.meta, color: colors.faint2 },
 });
