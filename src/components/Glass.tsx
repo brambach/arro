@@ -8,7 +8,7 @@ import { colors, depth, radii } from '../theme/tokens';
  * warmed by the card colour, with a light rim that's brightest along the top.
  * The shadow sits on the outer view and the blur is clipped inside it, so the
  * corners stay round without cutting the shadow off. Glass only reads as glass
- * over something with colour in it (the dawn glow, the hills, a photo); on flat
+ * over something with colour in it (the dawn glow, the contour map, a photo); on flat
  * paper use a plain Card.
  */
 type Props = {

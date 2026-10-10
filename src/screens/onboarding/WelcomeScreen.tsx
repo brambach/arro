@@ -1,36 +1,34 @@
 import React from 'react';
-import { Pressable, StyleSheet, Text, View, useWindowDimensions } from 'react-native';
+import { Pressable, StyleSheet, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { colors, radii, shadows } from '../../theme/tokens';
 import { motion } from '../../theme/motion';
 import { type, weights } from '../../theme/typography';
 import { ArroMark } from '../../components/Icons';
+import { Backdrop } from '../../components/Backdrop';
 import { FadeInView } from '../../components/FadeInView';
 import { Glass } from '../../components/Glass';
-import { Landscape } from '../../components/Landscape';
 import { PrimaryButton } from '../../components/PrimaryButton';
 import { useApp } from '../../state/AppState';
 import { RootStackScreenProps } from '../../navigation/types';
 
 export function WelcomeScreen({ navigation }: RootStackScreenProps<'Welcome'>) {
   const insets = useSafeAreaInsets();
-  const short = useWindowDimensions().height < 740;
   const { startFlow } = useApp();
 
   return (
     <View style={[styles.root, { paddingTop: insets.top, paddingBottom: insets.bottom + 24 }]}>
+      {/* The same map and dawn light as arrofamily.com, so the app opens where the site left off. */}
+      <Backdrop />
       <FadeInView rise={14} {...motion.statement} style={styles.hero}>
         <ArroMark size={60} />
         <Text style={styles.wordmark}>Arro</Text>
         <Text style={styles.tagline}>Every day forward, together.</Text>
       </FadeInView>
 
-      {/* The same dawn as arrofamily.com, so the app opens where the site left off. */}
-      <View style={styles.scene}>
-        <Landscape time="dawn" height={short ? 200 : 320} fadeBottom delay={150} style={styles.landscape} />
-      </View>
+      <View style={styles.space} />
 
-      {/* The welcome sits on glass over the near hill, the way the day card sits over the hills on the site. */}
+      {/* The welcome sits on glass over the map, the way the day card does on the site. */}
       <FadeInView delay={380} rise={10} {...motion.statement}>
         <Glass radius={24} padding={18} style={styles.panel}>
           <Text style={styles.line}>
@@ -66,9 +64,8 @@ const styles = StyleSheet.create({
   hero: { alignItems: 'center', paddingTop: 72 },
   wordmark: { ...type.display, fontSize: 40, lineHeight: 46, color: colors.ink, marginTop: 20 },
   tagline: { ...type.body, marginTop: 6 },
-  scene: { flex: 1, justifyContent: 'flex-end', marginHorizontal: -26, marginBottom: -96 },
+  space: { flex: 1 },
   panel: { marginHorizontal: -8, paddingTop: 22 },
-  landscape: { width: '100%' },
   line: { fontSize: 17, lineHeight: 25, fontWeight: weights.regular, color: colors.inkSoft, textAlign: 'center', paddingHorizontal: 6 },
   cta: { marginTop: 22 },
   secondary: {

@@ -256,11 +256,11 @@ off-white and pine:
 - **Glass where there's something behind it.** Frosted glass is the card colour
   at about 62% over a 22px blur, with a light rim brightest along the top. It
   only reads as glass over colour, so it's used where there is some: the site's
-  day card over the dawn hills, the site's header once the page scrolls under
-  it, the app's Welcome panel over the hills, and Today's top cards over the
-  dawn light. On flat paper a card is lifted, not glass.
+  day card over the dawn light, the site's header once the page scrolls under
+  it, the app's Welcome panel over the contour map, and Today's top cards over
+  the dawn light. On flat paper a card is lifted, not glass.
 - **A light to sit in.** Dervo puts its windows on a blurred meadow photo. Arro
-  already has its hills; the app adds the site's warm light as a fixed, faint
+  has its contour map instead; the app adds the site's warm light as a fixed, faint
   clay glow in the top-right of each paper screen (`Backdrop`), with a trace of
   sage on the left, so glass cards scrolling over it pick up colour.
 - **Two levels: raised and sunk.** Things you act on or read are raised. The
@@ -320,12 +320,43 @@ calm app, and it gives the glass something to blur besides colour.
 - Site: `site/public/contours.svg`, tiled on `body::before` at 13% (720px tiles,
   520px on phones), under the existing grain at 12% on `body::after`. It
   scrolls with the page. The band section is see-through card colour so the
-  lines carry on faintly under it. The hills stay on top in the hero and the
-  closing.
-- App: the same paths in `src/theme/contours.ts`, drawn by `Backdrop` with
-  react-native-svg at 13% in 520pt tiles, with the dawn glow over them. It sits
-  still behind the content, so glass and cards scroll over it. Every paper
-  screen has it except Welcome and Milestone, whose hills fade up out of flat
-  paper and would cut the lines off.
+  lines carry on faintly under it.
+- App: drawn by `Backdrop` with react-native-svg at 13% in 520pt tiles, with
+  the dawn glow over it. It sits still behind the content, so glass and cards
+  scroll over it.
 - The lines are warm ink (`#463219`, the shadow colour), never clay.
+
+### The map moves, and the hills are gone (10 Oct 2026)
+
+Bryce on the first version: the waves should move a little, and the hills next
+to the contour lines looked weird. It all needed to flow. So:
+
+- **No hills anywhere.** The site's dawn and dusk landscapes and the app's
+  `Landscape` (Welcome and Milestone) are deleted, along with their WebP layers
+  and the scripts that drew them. Two kinds of picture on one page fought each
+  other: a painted sky with map lines over it, then a hard ridge cutting
+  across. Now there's one map behind everything and only the light changes.
+- **The light carries the day.** Dawn is the clay glow in the top-right
+  corner behind the hero. The middle of the page is plain daylight. Dusk is a
+  low glow along the bottom of the page under "Every day forward, together",
+  clay fading to a trace of the freeze blue. In the app, every paper screen
+  has the dawn light, and Milestone has the dusk light (`Backdrop light="dusk"`).
+- **The lines drift.** Each wave in the height field turns slowly (a speed of
+  0.015 to 0.045 radians a second, half one way and half the other), so the
+  map reshapes in place like a tide chart. You notice it's moved more than
+  you see it moving. It's traced live: marching squares on a coarse grid
+  (9px on a wide screen, 7px on a phone, 10pt in the app), chained into
+  whole lines, drawn as smooth curves, with loops under six points dropped so
+  specks don't flicker in and out.
+- Site: `site.js` draws it on a canvas fixed behind the page, sampling the
+  field at page coordinates so the map scrolls with the page. Around 20 frames
+  a second while still and every frame while scrolling, about 2.5ms a frame on
+  a laptop. `contours.svg` is the same map held still, shown with JS off or
+  Reduce Motion on.
+- App: `Backdrop` traces it eight times a second, only while its screen is on
+  top and the app is open. All backdrops share one clock, so pushing a screen
+  doesn't make the map jump. With Reduce Motion it holds still.
+- `site/scenes/contours.mjs` is still the one source. It writes the still
+  tile, the wave recipe into `site.js` (between the FIELD markers) and the same
+  recipe as `src/theme/contours.ts`.
 

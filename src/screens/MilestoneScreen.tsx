@@ -6,8 +6,8 @@ import { colors, radii, spacing } from '../theme/tokens';
 import { motion } from '../theme/motion';
 import { type, weights } from '../theme/typography';
 import { AvatarStack } from '../components/AvatarStack';
+import { Backdrop } from '../components/Backdrop';
 import { ChevronLeft } from '../components/Icons';
-import { Landscape } from '../components/Landscape';
 import { PhotoSlot } from '../components/PhotoSlot';
 import { FadeInView } from '../components/FadeInView';
 import { MilestoneData } from '../data/types';
@@ -17,7 +17,7 @@ import { RootStackScreenProps } from '../navigation/types';
 
 export function MilestoneScreen({ navigation, route }: RootStackScreenProps<'Milestone'>) {
   const insets = useSafeAreaInsets();
-  // On short phones (SE) the caption sits under the numeral and the hills shrink, so nothing overlaps.
+  // On short phones (SE) the caption sits under the numeral, so nothing overlaps.
   const short = useWindowDimensions().height < 740;
   const view = useView();
   // "Your first 30 days together" ends on the family card; the Me tab shows your own runs.
@@ -53,8 +53,8 @@ export function MilestoneScreen({ navigation, route }: RootStackScreenProps<'Mil
           </>
         ) : (
           <>
-            {/* Dusk over the same hills the site and Welcome open on: the end of a day, kept. */}
-            <Landscape time="dusk" height={short ? 170 : 300} fadeFrom={colors.card} delay={250} style={styles.dusk} />
+            {/* The same map as every other screen, in the dusk light the site closes on: the end of a day, kept. */}
+            <Backdrop light="dusk" />
             <FadeInView delay={80} rise={14} {...motion.statement} style={[styles.numeralWrap, { top: insets.top + 56 }]}>
               <Text style={styles.numeral} accessibilityElementsHidden importantForAccessibility="no">
                 {milestone.day}
@@ -103,7 +103,6 @@ const styles = StyleSheet.create({
   root: { flex: 1, backgroundColor: colors.screen },
   photo: { flex: 1, overflow: 'hidden' },
   paper: { backgroundColor: colors.card, borderBottomWidth: 1, borderBottomColor: colors.border },
-  dusk: { position: 'absolute', left: 0, right: 0, bottom: 0 },
   numeralWrap: { position: 'absolute', left: spacing.gutter },
   numeral: {
     fontFamily: type.display.fontFamily,
@@ -124,8 +123,8 @@ const styles = StyleSheet.create({
   },
   backPaper: { backgroundColor: colors.screen },
   caption: { position: 'absolute', left: spacing.gutter, right: spacing.gutter, bottom: 24 },
-  // Over the sky, clear of the hills.
-  captionPaper: { bottom: 230 },
+  // Low, in the dusk light, with the numeral above it.
+  captionPaper: { bottom: 40 },
   dayPill: {
     alignSelf: 'flex-start',
     backgroundColor: 'rgba(255,255,255,0.22)',

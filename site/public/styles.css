@@ -1,6 +1,6 @@
 /* Arro website. Paper and clay, from src/theme/tokens.ts and
    design/visual-direction.md. Clay is spent once per page at most. Depth
-   (soft lifted cards, frosted glass over the hills) follows the same doc's
+   (soft lifted cards, frosted glass over the contour map) follows the same doc's
    "Depth and glass" section, and its values match the app's shadows.
 
    Motion follows the house default (design/motion/default): one statement
@@ -197,7 +197,7 @@ a:hover { text-decoration-color: currentColor; }
 
 .hero {
   position: relative;
-  padding: clamp(3rem, 9vw, 6.5rem) 0 clamp(9rem, 20vw, 15rem);
+  padding: clamp(3rem, 9vw, 6.5rem) 0 clamp(3.5rem, 9vw, 6.5rem);
 }
 .hero .wrap { position: relative; z-index: 1; }
 .hero .wrap {
@@ -394,7 +394,7 @@ a:hover { text-decoration-color: currentColor; }
 .closing {
   position: relative;
   border-top: 1px solid var(--border);
-  padding: clamp(4rem, 12vw, 8rem) 0 clamp(14rem, 30vw, 22rem);
+  padding: clamp(5rem, 14vw, 10rem) 0 clamp(6rem, 16vw, 11rem);
   text-align: center;
 }
 .closing .wrap { position: relative; z-index: 1; }
@@ -511,12 +511,13 @@ a:hover { text-decoration-color: currentColor; }
 html, body { overflow-x: hidden; overflow-x: clip; }
 body { position: relative; isolation: isolate; }
 
-/* The page itself is a contour map: faint topographic lines (contours.svg,
-   drawn by scenes/contours.mjs, a tile that repeats without a seam) under a
-   little paper grain. It scrolls with the page, sits under everything, and
-   is what the glass blurs. The app's paper screens use the same tile
-   (src/components/Backdrop.tsx). */
-body::before, body::after {
+/* The page itself is a contour map: faint topographic lines under a little
+   paper grain, the same map behind every screen of the app. site.js traces
+   it live on a canvas fixed behind the page (.map), with each line slowly
+   drifting; contours.svg is the same map held still, shown when JS is off or
+   Reduce Motion is on. Both are drawn from scenes/contours.mjs. It sits under
+   everything and is what the glass blurs. */
+body::before, body::after, .map {
   content: "";
   position: absolute;
   inset: 0;
@@ -525,6 +526,14 @@ body::before, body::after {
 }
 body::before {
   background: url(contours.svg) 0 0 / 720px repeat;
+  opacity: 0.13;
+}
+.live-map body::before { display: none; }
+.map {
+  position: fixed;
+  width: 100%;
+  height: 100vh;
+  height: 100lvh;
   opacity: 0.13;
 }
 body::after {
@@ -536,6 +545,10 @@ body::after {
   body::before { background-size: 520px; }
 }
 .site-header, main, .site-footer { position: relative; }
+
+/* The light moves through the page the way a day does: dawn in the top
+   corner behind the hero, plain daylight through the middle, and a low dusk
+   glow under the closing line. No pictures, only the map and the light. */
 .hero-wash {
   position: absolute;
   z-index: 0;
@@ -550,46 +563,16 @@ body::after {
 @media (max-width: 899px) {
   .hero-wash { right: -45%; top: 26rem; }
 }
-
-/* Landscapes: the same hills at dawn behind the hero and at dusk behind
-   the closing line. Each hill is its own layer for the scroll parallax in
-   site.js, which only ever moves layers down, so no gaps open. */
-.scene {
+.dusk {
   position: absolute;
+  z-index: 0;
   left: 0;
   right: 0;
   bottom: 0;
-  height: clamp(15rem, 34vw, 27rem);
-  overflow: hidden;
+  height: min(60rem, 140vw);
+  background: radial-gradient(60% 70% at 50% 100%, rgb(166 90 60 / 0.17), rgb(176 112 92 / 0.08) 45%, rgb(94 124 147 / 0.035) 75%, rgb(94 124 147 / 0));
+  transform-origin: 50% 100%;
   pointer-events: none;
-}
-.scene .layer {
-  position: absolute;
-  left: 0;
-  bottom: 0;
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-  object-position: center bottom;
-}
-/* The sky fades in from the page's paper, so the scene has no top edge. */
-.scene .layer:first-child {
-  -webkit-mask-image: linear-gradient(to bottom, transparent, #000 45%);
-  mask-image: linear-gradient(to bottom, transparent, #000 45%);
-}
-.scene .grain {
-  position: absolute;
-  inset: 0;
-  background: url(grain.svg);
-  opacity: 0.22;
-  mix-blend-mode: multiply;
-  -webkit-mask-image: linear-gradient(to bottom, transparent, #000 55%);
-  mask-image: linear-gradient(to bottom, transparent, #000 55%);
-}
-.scene-dusk { height: clamp(16rem, 36vw, 28rem); }
-@media (max-width: 899px) {
-  .hero { padding-bottom: 13rem; }
-  .scene-dawn { height: 19rem; }
 }
 
 /* The day card. Each row stacks both statuses and shows one. */
@@ -877,7 +860,7 @@ body::after {
 .pill { background: #FFFFFF; }
 .nots li { background: var(--glass-strong); }
 
-/* The day card is glass: the hills rise behind it and blur through. */
+/* The day card is glass: the map and the dawn light blur through it. */
 .day {
   background: var(--glass);
   -webkit-backdrop-filter: var(--glass-blur);
@@ -908,16 +891,6 @@ body::after {
   box-shadow: var(--lift);
 }
 .status.kept { box-shadow: inset 0 0 0 1px rgb(93 122 99 / 0.12); }
-
-/* On a wide screen the hills come up behind the card's lower half. */
-@media (min-width: 900px) {
-  .hero { padding-bottom: clamp(7rem, 12vw, 10rem); }
-  .scene-dawn { height: clamp(22rem, 40vw, 34rem); }
-}
-@media (max-width: 899px) {
-  .hero { padding-bottom: 11rem; }
-  .scene-dawn { height: 22rem; }
-}
 
 /* Header: glass once the page moves under it. */
 .site-header {
@@ -999,7 +972,7 @@ body::after {
   .feature:hover .vignette, .ticket:hover, .fam-week:hover { transform: translateY(-3px); }
 }
 
-/* The closing line sits on a glass pill over the dusk hills. */
+/* The closing line sits on a glass pill over the dusk light. */
 .closing .soon-glass {
   display: inline-flex;
   align-items: center;
@@ -1152,11 +1125,15 @@ body::after {
   .hero-wash { animation: sun-drift 21s var(--ease-ambient, ease-in-out) infinite alternate; }
   .day { animation: card-float 13s ease-in-out infinite alternate; }
   .fam-week .c.t { animation: today-waits 6s ease-in-out infinite alternate; }
-  .scene .layer { will-change: transform; }
+  .dusk { animation: dusk-glow 17s ease-in-out infinite alternate; }
 }
 @keyframes sun-drift {
   from { transform: translate(0, 0) scale(1); }
   to { transform: translate(-7%, 5%) scale(1.08); }
+}
+@keyframes dusk-glow {
+  from { transform: scale(1); opacity: 0.85; }
+  to { transform: scale(1.05); opacity: 1; }
 }
 @keyframes card-float {
   from { transform: translateY(0); }

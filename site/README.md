@@ -34,29 +34,21 @@ reads `{{DATE}}`; replace that in `public/privacy/index.html` on deploy day.
   check-ins (the card's ticks, the week dots, the closing mark); slow
   ambient loops (the warm light, the card's float, today's dot); transform
   and opacity only; a reduced-motion block that shows everything finished.
-- `public/contours.svg` and `scenes/contours.mjs`: the contour map behind
-  every page (see "The contour map" in `design/visual-direction.md`). The
-  script draws the tile and also writes the app's copy, `src/theme/contours.ts`.
+- The contour map behind every page (see "The contour map" in
+  `design/visual-direction.md`). `site.js` traces it live on a canvas fixed
+  behind the page, and the lines drift very slowly. `public/contours.svg` is
+  the same map held still, for when JS is off or Reduce Motion is on.
+  `scenes/contours.mjs` draws the tile and writes the wave recipe into
+  `site.js` (between the FIELD markers) and into the app's
+  `src/theme/contours.ts`. Run it with `node site/scenes/contours.mjs` after
+  changing the map. The light changes down the page instead of the picture:
+  dawn behind the hero (`.hero-wash`), dusk along the bottom (`.dusk`).
 - `public/site.js`: plays `.reveal` elements once as they scroll in, splits
   `[data-words]` headings into words that rise one after another, plays the
   landing card's day once the whole card is on screen (You, Dad and Nan
   check in, Mum still has today, then she moves and the streak goes from 24
   to 25), and fills in the join code. With reduced motion none of it plays
   and the card stays as written in the HTML.
-- Landscapes: the same hills at dawn behind the hero (`.scene-dawn`) and at
-  dusk behind the closing line (`.scene-dusk`). Each scene is four
-  transparent WebP layers in `public/scenes/` (sky, far, mid, near), stacked
-  as `<img data-depth>` so `site.js` can slide them at different speeds on
-  scroll; layers only move down, so no gaps open. `public/grain.svg` sits on
-  top for a printed feel.
-- `scenes/` (not served): where those layers come from. `make_svg.py` draws
-  each layer as SVG, with ridges from seeded noise (so the same every run),
-  haze toward the distance, field texture and a soft sun glow; `bake.mjs`
-  renders them to the WebP files with a headless Chromium (Playwright's
-  cached headless shell, or set `CHROME`). To change colours or hills, edit
-  `PAL` or `GEO` in `make_svg.py`, then from `site/scenes` run
-  `python3 make_svg.py && node bake.mjs`. To use a photo instead, replace a
-  scene's layers with one `<img class="layer">` in the same `.scene` div.
 - `public/_headers`: security headers, including a content security policy
   that only allows the site's own files. Inline `style=""` and `<script>`
   won't run, so keep styles in `styles.css` and scripts in `site.js`.
