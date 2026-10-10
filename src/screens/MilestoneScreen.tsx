@@ -7,7 +7,7 @@ import { motion } from '../theme/motion';
 import { type, weights } from '../theme/typography';
 import { AvatarStack } from '../components/AvatarStack';
 import { ChevronLeft } from '../components/Icons';
-import { Landscape } from '../components/Landscape';
+import { Backdrop } from '../components/Backdrop';
 import { PhotoSlot } from '../components/PhotoSlot';
 import { FadeInView } from '../components/FadeInView';
 import { MilestoneData } from '../data/types';
@@ -17,7 +17,7 @@ import { RootStackScreenProps } from '../navigation/types';
 
 export function MilestoneScreen({ navigation, route }: RootStackScreenProps<'Milestone'>) {
   const insets = useSafeAreaInsets();
-  // On short phones (SE) the caption sits under the numeral and the hills shrink, so nothing overlaps.
+  // On short phones (SE) the caption sits under the numeral, so nothing overlaps.
   const short = useWindowDimensions().height < 740;
   const view = useView();
   // "Your first 30 days together" ends on the family card; the Me tab shows your own runs.
@@ -40,7 +40,9 @@ export function MilestoneScreen({ navigation, route }: RootStackScreenProps<'Mil
 
   return (
     <View style={styles.root}>
-      <View style={[styles.photo, !hasPhoto && styles.paper]}>
+      {/* The end of a day: the same moving map, under the evening light. */}
+      <Backdrop light="dusk" />
+      <View style={styles.photo}>
         {hasPhoto ? (
           <>
             <PhotoSlot uri={milestone.photoUri} style={StyleSheet.absoluteFill} />
@@ -53,8 +55,6 @@ export function MilestoneScreen({ navigation, route }: RootStackScreenProps<'Mil
           </>
         ) : (
           <>
-            {/* Dusk over the same hills the site and Welcome open on: the end of a day, kept. */}
-            <Landscape time="dusk" height={short ? 170 : 300} fadeFrom={colors.card} delay={250} style={styles.dusk} />
             <FadeInView delay={80} rise={14} {...motion.statement} style={[styles.numeralWrap, { top: insets.top + 56 }]}>
               <Text style={styles.numeral} accessibilityElementsHidden importantForAccessibility="no">
                 {milestone.day}
@@ -102,8 +102,6 @@ export function MilestoneScreen({ navigation, route }: RootStackScreenProps<'Mil
 const styles = StyleSheet.create({
   root: { flex: 1, backgroundColor: colors.screen },
   photo: { flex: 1, overflow: 'hidden' },
-  paper: { backgroundColor: colors.card, borderBottomWidth: 1, borderBottomColor: colors.border },
-  dusk: { position: 'absolute', left: 0, right: 0, bottom: 0 },
   numeralWrap: { position: 'absolute', left: spacing.gutter },
   numeral: {
     fontFamily: type.display.fontFamily,
@@ -124,8 +122,8 @@ const styles = StyleSheet.create({
   },
   backPaper: { backgroundColor: colors.screen },
   caption: { position: 'absolute', left: spacing.gutter, right: spacing.gutter, bottom: 24 },
-  // Over the sky, clear of the hills.
-  captionPaper: { bottom: 230 },
+  // Low on the page, in the evening light.
+  captionPaper: { bottom: 40 },
   dayPill: {
     alignSelf: 'flex-start',
     backgroundColor: 'rgba(255,255,255,0.22)',
@@ -138,7 +136,7 @@ const styles = StyleSheet.create({
   dayPillText: { color: colors.white, fontSize: 13, fontWeight: weights.semibold },
   title: { ...type.display, color: colors.white },
   subtitle: { fontSize: 16, color: 'rgba(255,255,255,0.92)', marginTop: 11 },
-  panel: { paddingHorizontal: spacing.gutter, paddingTop: 20, backgroundColor: colors.screen },
+  panel: { paddingHorizontal: spacing.gutter, paddingTop: 20 },
   motto: { ...type.greeting },
   dateLine: { ...type.meta, marginTop: 4 },
   cheered: { flexDirection: 'row', alignItems: 'center', gap: 12, marginTop: 16 },

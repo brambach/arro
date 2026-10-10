@@ -130,33 +130,29 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   }
 
-  // Landscapes: the hills slide at different speeds as you scroll. Layers
-  // only ever move down (they're clipped at the bottom), so no gap opens.
-  const scenes = [...document.querySelectorAll('.scene')];
-  if (scenes.length && !reduce) {
-    let ticking = false;
-    const update = () => {
-      ticking = false;
-      const vh = innerHeight;
-      for (const scene of scenes) {
-        const box = scene.getBoundingClientRect();
-        if (box.bottom < 0 || box.top > vh) continue;
-        // Dawn sinks once its bottom edge passes the bottom of the screen.
-        // Dusk settles into place as its bottom edge arrives there.
-        const push = scene.classList.contains('scene-dawn')
-          ? Math.max(0, vh - box.bottom) * 0.3
-          : Math.max(0, box.bottom - vh) * 0.3;
-        for (const layer of scene.querySelectorAll('[data-depth]')) {
-          layer.style.transform = `translate3d(0, ${(push * layer.dataset.depth).toFixed(1)}px, 0)`;
-        }
-      }
-    };
-    const onScroll = () => {
-      if (!ticking) { ticking = true; requestAnimationFrame(update); }
-    };
-    addEventListener('scroll', onScroll, { passive: true });
-    addEventListener('resize', onScroll);
-    update();
+  // The map: two layers of the contour tile, one showing. Every few seconds
+  // the hidden one takes the next moment of the land and fades in over the
+  // other (the fade is CSS), going 0, 1 ... 7 and back, so the lines seem to
+  // shift and settle without ever jumping. Off with reduced motion.
+  const layers = document.querySelectorAll('.map-layer');
+  if (layers.length === 2 && !reduce) {
+    const FRAMES = 8;
+    const HOLD = 5000; // each moment, fade included (the fade is 3.5s)
+    const base = getComputedStyle(layers[0]).backgroundImage.replace(/contours-0\.svg/, 'contours-%.svg');
+    for (let f = 1; f < FRAMES; f++) new Image().src = base.slice(5, -2).replace('%', f);
+    let frame = 0;
+    let step = 1;
+    let front = 0;
+    setInterval(() => {
+      if (document.hidden) return;
+      if (frame + step < 0 || frame + step >= FRAMES) step = -step;
+      frame += step;
+      const next = layers[1 - front];
+      next.style.backgroundImage = base.replace('%', frame);
+      next.classList.add('on');
+      layers[front].classList.remove('on');
+      front = 1 - front;
+    }, HOLD);
   }
 
   // Join page: show the code when the link carries one, as

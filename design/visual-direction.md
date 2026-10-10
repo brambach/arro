@@ -256,11 +256,11 @@ off-white and pine:
 - **Glass where there's something behind it.** Frosted glass is the card colour
   at about 62% over a 22px blur, with a light rim brightest along the top. It
   only reads as glass over colour, so it's used where there is some: the site's
-  day card over the dawn hills, the site's header once the page scrolls under
-  it, the app's Welcome panel over the hills, and Today's top cards over the
+  day card over the contour map, the site's header once the page scrolls under
+  it, the app's Welcome panel over the map, and Today's top cards over the
   dawn light. On flat paper a card is lifted, not glass.
 - **A light to sit in.** Dervo puts its windows on a blurred meadow photo. Arro
-  already has its hills; the app adds the site's warm light as a fixed, faint
+  has its moving contour map (below), with the warm light as a fixed, faint
   clay glow in the top-right of each paper screen (`Backdrop`), with a trace of
   sage on the left, so glass cards scrolling over it pick up colour.
 - **Two levels: raised and sunk.** Things you act on or read are raised. The
@@ -304,28 +304,40 @@ Not done, on purpose: no glass on lists or rows (blur on every row costs
 battery and turns the screen to fog), no dark mode, and the member colours
 are still unchanged.
 
-## The contour map (9 Oct 2026)
+## The contour map (9 Oct 2026, moving since 10 Oct)
 
 Bryce wanted a better background, shared by the site and the app. Four were
 mocked up (contour map, a daylight sky wash, a warm colour mesh, quiet paper
 with grain; preview: https://claude.ai/artifact/PMpQdmBSmAsp85dNsYPVnE) and the
 contour map won: faint topographic lines on the paper, like the map of a walk.
-It belongs to Arro (the hills, the route maps, "your map") rather than to any
-calm app, and it gives the glass something to blur besides colour.
+It belongs to Arro (the route maps, "your map") rather than to any calm app,
+and it gives the glass something to blur besides colour.
 
-- One tile, drawn by `site/scenes/contours.mjs`: a smooth height field that
-  wraps at the edges, traced into 18 levels, every fourth line a little heavier
-  (an index contour, as on a real map). It repeats without a seam. Run the
-  script to change it; it writes both copies.
-- Site: `site/public/contours.svg`, tiled on `body::before` at 13% (720px tiles,
-  520px on phones), under the existing grain at 12% on `body::after`. It
-  scrolls with the page. The band section is see-through card colour so the
-  lines carry on faintly under it. The hills stay on top in the hero and the
-  closing.
+On 10 Oct Bryce asked for the lines to move a little, and for the hills to go:
+lines over a painted landscape didn't fit, and the page should flow. So the
+map is now the only scenery, everywhere, and the hills (`Landscape`, the scene
+layers and their generator) are gone. Dawn and dusk survive as light: the
+warm glow in the top-right of the hero and of the app's screens, and a lower,
+rosier evening light behind the site's closing line and the app's Milestone.
+
+- One land, drawn by `site/scenes/contours.mjs`: a smooth height field that
+  wraps at the edges, traced into 18 levels, every fourth line a little
+  heavier (an index contour, as on a real map). Each wave in the field drifts
+  at its own speed, and the script draws the land at 8 nearby moments. Run it
+  to change anything; it writes both copies.
+- Motion, the same on both: the map is fixed to the screen, and sways about
+  40pt side to side (31s) and a little up and down (23s), on different clocks
+  so it never retraces a path. Every 5s it fades (3.5s) to the next moment and
+  then back down the list, so the lines seem to shift like water and never
+  jump. Transform and opacity only. Reduce Motion holds it still at the first
+  moment.
+- Site: `.map` at the top of every page's body, `public/contours-0.svg` to
+  `contours-7.svg` at 13% in 720px tiles (520px on phones), fades driven by
+  `site.js`, under the grain (12% on `body::after`). No section has a fill of
+  its own, so the map runs unbroken from the header to the footer.
 - App: the same paths in `src/theme/contours.ts`, drawn by `Backdrop` with
-  react-native-svg at 13% in 520pt tiles, with the dawn glow over them. It sits
-  still behind the content, so glass and cards scroll over it. Every paper
-  screen has it except Welcome and Milestone, whose hills fade up out of flat
-  paper and would cut the lines off.
+  react-native-svg at 13% in 520pt tiles. Every Backdrop shares one clock,
+  so going from screen to screen the map carries on rather than restarting.
+  Every paper screen has it, Welcome and Milestone (with `light="dusk"`)
+  included.
 - The lines are warm ink (`#463219`, the shadow colour), never clay.
-
