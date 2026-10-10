@@ -94,7 +94,7 @@ const styles = StyleSheet.create({
   bar: { flex: 1, height: 4, borderRadius: 2, backgroundColor: colors.divider, overflow: 'hidden' },
   barFill: { height: 4, borderRadius: 2, backgroundColor: colors.ink },
   body: { paddingHorizontal: 26, paddingTop: 18, paddingBottom: 20 },
-  title: { fontSize: 28, lineHeight: 33 },
+  title: { fontSize: 34, lineHeight: 37 },
   subtitle: { fontSize: 16, lineHeight: 22, color: colors.muted, marginTop: 8 },
   content: { marginTop: 22 },
   footer: { paddingHorizontal: 26, paddingTop: 10 },

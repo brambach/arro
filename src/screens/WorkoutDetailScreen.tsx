@@ -154,7 +154,7 @@ const styles = StyleSheet.create({
   photoActions: { flexDirection: 'row', alignItems: 'center', gap: 20 },
   headline: { paddingHorizontal: spacing.gutter, paddingTop: 18 },
   when: { ...type.meta, color: colors.muted },
-  kind: { ...type.title, fontSize: 32, lineHeight: 38, marginTop: 2 },
+  kind: { ...type.title, fontSize: 38, lineHeight: 40, marginTop: 2 },
   statsWrap: { paddingHorizontal: spacing.gutter, paddingTop: 16 },
   stats: { flexDirection: 'row', borderTopWidth: 1, borderBottomWidth: 1, borderColor: colors.border },
   stat: { flex: 1, paddingVertical: 13 },

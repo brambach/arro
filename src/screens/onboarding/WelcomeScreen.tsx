@@ -18,8 +18,8 @@ export function WelcomeScreen({ navigation }: RootStackScreenProps<'Welcome'>) {
 
   return (
     <View style={[styles.root, { paddingTop: insets.top, paddingBottom: insets.bottom + 24 }]}>
-      {/* The same moving contour map as arrofamily.com, so the app opens where the site left off. */}
-      <Backdrop />
+      {/* The same mesh and contour map as the top of arrofamily.com, so the app opens where the site left off. */}
+      <Backdrop map />
       <FadeInView rise={14} {...motion.statement} style={styles.hero}>
         <ArroMark size={60} />
         <Text style={styles.wordmark}>Arro</Text>
@@ -62,7 +62,7 @@ export function WelcomeScreen({ navigation }: RootStackScreenProps<'Welcome'>) {
 const styles = StyleSheet.create({
   root: { flex: 1, backgroundColor: colors.screen, paddingHorizontal: 26 },
   hero: { alignItems: 'center', paddingTop: 72 },
-  wordmark: { ...type.display, fontSize: 40, lineHeight: 46, color: colors.ink, marginTop: 20 },
+  wordmark: { ...type.display, fontSize: 52, lineHeight: 54, color: colors.ink, marginTop: 18 },
   tagline: { ...type.body, marginTop: 6 },
   space: { flex: 1 },
   panel: { marginHorizontal: -8, paddingTop: 22 },

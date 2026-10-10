@@ -72,6 +72,6 @@ const styles = StyleSheet.create({
     borderTopColor: colors.dividerSoft,
     alignItems: 'center',
   },
-  streakNumber: { ...type.bigNumber, fontSize: 28, lineHeight: 34 },
+  streakNumber: { ...type.bigNumber, fontSize: 34, lineHeight: 36 },
   streakLabel: { ...type.body, marginTop: 2 },
 });

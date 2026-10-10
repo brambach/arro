@@ -42,10 +42,11 @@
   --glass-strong: rgb(255 253 248 / 0.82);
   --glass-blur: blur(22px) saturate(1.2);
 
-  /* Type. ui-serif is New York on Apple devices; the rest fall back to a
-     book serif already on the machine. No web fonts to download. */
-  --serif: ui-serif, "New York", "Iowan Old Style", "Palatino Linotype", Palatino, Georgia, serif;
-  --sans: system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", sans-serif;
+  /* Type: Instrument Serif for display (one weight, 400, sizes step up but
+     never get bolder) and Instrument Sans for everything else, as on
+     trydervo.com. Served from fonts/ (OFL, licences in licenses/). */
+  --serif: "Instrument Serif", ui-serif, Georgia, serif;
+  --sans: "Instrument Sans", system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
 
   --measure: 36rem;
   --page: 70rem;
@@ -63,6 +64,10 @@
   --dur-exit: 140ms;
 }
 
+@font-face { font-family: "Instrument Serif"; src: url(fonts/InstrumentSerif-latin.woff2) format("woff2"); font-weight: 400; font-style: normal; font-display: swap; }
+@font-face { font-family: "Instrument Serif"; src: url(fonts/InstrumentSerif-Italic-latin.woff2) format("woff2"); font-weight: 400; font-style: italic; font-display: swap; }
+@font-face { font-family: "Instrument Sans"; src: url(fonts/InstrumentSans-latin.woff2) format("woff2"); font-weight: 400 700; font-style: normal; font-display: swap; }
+
 *, *::before, *::after { box-sizing: border-box; }
 
 html {
@@ -76,17 +81,19 @@ body {
   color: var(--ink);
   background: var(--paper);
   font-family: var(--sans);
-  font-size: 1.125rem;
+  font-size: 1.0625rem;
   line-height: 1.6;
+  letter-spacing: 0.002em;
   -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
   text-rendering: optimizeLegibility;
 }
 
 h1, h2, h3 {
   font-family: var(--serif);
-  font-weight: 500;
-  line-height: 1.12;
-  letter-spacing: -0.01em;
+  font-weight: 400;
+  line-height: 1.04;
+  letter-spacing: -0.015em;
   margin: 0;
   text-wrap: balance;
 }
@@ -179,16 +186,17 @@ a:hover { text-decoration-color: currentColor; }
 
 .eyebrow {
   font-family: var(--sans);
-  font-size: 0.8125rem;
+  font-size: 0.78rem;
   font-weight: 600;
-  letter-spacing: 0.1em;
+  letter-spacing: 0.08em;
   text-transform: uppercase;
   color: var(--faint);
 }
 
 .lede {
-  font-size: clamp(1.25rem, 2.2vw, 1.4rem);
+  font-size: clamp(1.2rem, 2vw, 1.35rem);
   line-height: 1.5;
+  letter-spacing: -0.004em;
   color: var(--ink-soft);
   max-width: 30rem;
 }
@@ -210,9 +218,9 @@ a:hover { text-decoration-color: currentColor; }
 }
 
 .hero h1 {
-  font-size: clamp(3rem, 9.5vw, 5.4rem);
-  line-height: 1.02;
-  letter-spacing: -0.02em;
+  font-size: clamp(3.4rem, 8.6vw, 6.2rem);
+  line-height: 0.96;
+  letter-spacing: -0.022em;
   margin: 1rem 0 1.5rem;
 }
 .hero h1 em {
@@ -341,8 +349,8 @@ a:hover { text-decoration-color: currentColor; }
   .split { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); align-items: start; }
 }
 .split h2 {
-  font-size: clamp(2.2rem, 5.5vw, 3.4rem);
-  line-height: 1.06;
+  font-size: clamp(2.5rem, 5.6vw, 3.9rem);
+  line-height: 1;
 }
 .split .eyebrow + h2 { margin-top: 1rem; }
 .split .body { display: grid; gap: 1.1rem; max-width: var(--measure); color: var(--ink-soft); }
@@ -400,8 +408,8 @@ a:hover { text-decoration-color: currentColor; }
 }
 .closing .wrap { position: relative; z-index: 1; }
 .closing h2 {
-  font-size: clamp(2.6rem, 8vw, 4.6rem);
-  line-height: 1.04;
+  font-size: clamp(3rem, 8vw, 5.4rem);
+  line-height: 0.98;
   letter-spacing: -0.02em;
   max-width: 14ch;
   margin: 0 auto 1.5rem;
@@ -512,44 +520,31 @@ a:hover { text-decoration-color: currentColor; }
 html, body { overflow-x: hidden; overflow-x: clip; }
 body { position: relative; isolation: isolate; }
 
-/* The page itself is a contour map: faint topographic lines under a little
-   paper grain. The map is fixed to the screen, so the page scrolls over it
-   the way the app's screens do. It sways very slowly (side to side and up and
-   down on different clocks, so it never repeats the same path), and site.js
-   fades it between nearby moments of the same land (contours-0.svg onwards,
-   drawn by scenes/contours.mjs, each a tile that repeats without a seam), so
-   the lines seem to shift like water. Same motion as the app's Backdrop. */
-.map {
-  --tile: 720px;
-  --sway: 40px;
+/* The page's backdrop, as on trydervo.com: backdrop.js draws a soft mesh of
+   Arro's paper colours on one fixed canvas behind everything, drifting very
+   slowly (still with reduced motion). Without it the page is paper with the
+   warm light. The contour map lives only in the hero, still, fading into the
+   mesh below it (.hero::before). */
+.backdrop-mesh {
   position: fixed;
   inset: 0;
   z-index: -1;
-  overflow: hidden;
   pointer-events: none;
 }
-.map-sway {
+.backdrop-mesh canvas { display: block; width: 100%; height: 100%; }
+.hero::before {
+  content: "";
   position: absolute;
-  inset: calc(var(--sway) * -1);
-  animation: map-sway-x 31s ease-in-out infinite alternate;
+  inset: 0 0 -6rem;
+  z-index: 0;
+  background: url(contours.svg) center top / 720px repeat;
+  opacity: 0.11;
+  -webkit-mask-image: linear-gradient(to bottom, #000, #000 35%, transparent 92%);
+  mask-image: linear-gradient(to bottom, #000, #000 35%, transparent 92%);
+  pointer-events: none;
 }
-.map-layer {
-  position: absolute;
-  inset: 0;
-  background: url(contours-0.svg) center / var(--tile) repeat;
-  opacity: 0;
-  animation: map-sway-y 23s ease-in-out infinite alternate;
-  transition: opacity 3.5s ease-in-out;
-  will-change: transform, opacity;
-}
-.map-layer.on { opacity: 0.13; }
-@keyframes map-sway-x {
-  from { transform: translate3d(calc(var(--sway) * -1), 0, 0); }
-  to { transform: translate3d(var(--sway), 0, 0); }
-}
-@keyframes map-sway-y {
-  from { transform: translate3d(0, calc(var(--sway) * -0.6), 0); }
-  to { transform: translate3d(0, calc(var(--sway) * 0.6), 0); }
+@media (max-width: 899px) {
+  .hero::before { background-size: 520px; }
 }
 body::after {
   content: "";
@@ -558,11 +553,8 @@ body::after {
   z-index: -1;
   pointer-events: none;
   background: url(grain.svg);
-  opacity: 0.12;
+  opacity: 0.08;
   mix-blend-mode: multiply;
-}
-@media (max-width: 899px) {
-  .map { --tile: 520px; }
 }
 
 .hero-wash {
@@ -727,7 +719,7 @@ body::after {
 }
 .fw-foot strong {
   font-family: var(--serif);
-  font-weight: 500;
+  font-weight: 400;
   font-size: 1.6rem;
   line-height: 1;
   color: var(--ink);
@@ -1163,7 +1155,6 @@ body::after {
    its finished state; the card keeps its written state (Mum still has
    today) because site.js doesn't play the day. */
 @media (prefers-reduced-motion: reduce) {
-  .map-sway, .map-layer { animation: none; transition: none; }
   :root {
     --dur-statement: 1ms;
     --dur-signature: 1ms;

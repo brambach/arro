@@ -105,5 +105,5 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     zIndex: 10,
   },
-  word: { fontFamily: fonts.serif, fontSize: 32, fontWeight: weights.semibold, color: colors.ink, marginTop: 14 },
+  word: { fontFamily: fonts.serif, fontSize: 40, fontWeight: weights.regular, color: colors.ink, marginTop: 14 },
 });

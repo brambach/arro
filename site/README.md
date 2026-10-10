@@ -28,28 +28,33 @@ reads `{{DATE}}`; replace that in `public/privacy/index.html` on deploy day.
 - `public/styles.css`: Paper and clay colours from `src/theme/tokens.ts`,
   depth and glass (lifted cards, sunk trays, the glass day card and header;
   values shared with the app, see "Depth and glass" in
-  `design/visual-direction.md`), serif headings (`ui-serif`, New York on Apple devices, Georgia-like
-  fallbacks elsewhere), and the motion rules: one 900ms easeOutExpo arrival
+  `design/visual-direction.md`), Instrument Serif headings and Instrument Sans body text, and the motion rules: one 900ms easeOutExpo arrival
   per screen, played once, with its parts 40-90ms apart; overshoot only for
   check-ins (the card's ticks, the week dots, the closing mark); slow
   ambient loops (the warm light, the card's float, today's dot); transform
   and opacity only; a reduced-motion block that shows everything finished.
-- The contour map behind every page (see "The contour map" in
-  `design/visual-direction.md`): `.map` in each page's HTML, fixed to the
-  screen, drifting slowly. `public/contours-0.svg` to `contours-7.svg` are the
-  same land at eight nearby moments; `site.js` fades between them and back.
-  `scenes/contours.mjs` (not served) draws them and also writes the app's
-  copy, `src/theme/contours.ts`; run `node site/scenes/contours.mjs` after
-  changing it. `public/grain.svg` sits over the map for a printed feel.
+- The backdrop (see "The mesh and Instrument type" in
+  `design/visual-direction.md`): `public/backdrop.js` adds a fixed canvas
+  behind every page and draws a slowly drifting colour mesh on it with
+  `public/vendor/paper-shaders-0.0.81.min.js` (Paper Shaders, Apache-2.0).
+  Each page loads both after `site.js`. Without WebGL the page keeps its paper
+  and warm light. `public/grain.svg` sits over it for a printed feel.
+- The contour map in the hero only: `public/contours.svg`, tiled by
+  `.hero::before`. `scenes/contours.mjs` (not served) draws it and also writes
+  the app's copy, `src/theme/contours.ts`; run `node site/scenes/contours.mjs`
+  after changing it.
+- `public/fonts/`: Instrument Serif (regular and italic) and Instrument Sans,
+  latin subsets, OFL. Licences for the fonts and Paper Shaders are in
+  `public/licenses/`.
 - `public/site.js`: plays `.reveal` elements once as they scroll in, splits
   `[data-words]` headings into words that rise one after another, plays the
   landing card's day once the whole card is on screen (You, Dad and Nan
   check in, Mum still has today, then she moves and the streak goes from 24
-  to 25), moves the contour map, and fills in the join code. With reduced motion none of it plays
+  to 25), and fills in the join code. With reduced motion none of it plays
   and the card stays as written in the HTML.
 - `public/_headers`: security headers, including a content security policy
   that only allows the site's own files. Inline `style=""` and `<script>`
-  won't run, so keep styles in `styles.css` and scripts in `site.js`.
+  won't run, so keep styles in `styles.css` and scripts in their own files.
 - `worker.js`: runs before the files. Redirects `www.arrofamily.com` to
   `arrofamily.com` (301, path kept) and serves the join page for
   `/join/<code>`.

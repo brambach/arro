@@ -256,11 +256,11 @@ off-white and pine:
 - **Glass where there's something behind it.** Frosted glass is the card colour
   at about 62% over a 22px blur, with a light rim brightest along the top. It
   only reads as glass over colour, so it's used where there is some: the site's
-  day card over the contour map, the site's header once the page scrolls under
+  day card over the colour mesh, the site's header once the page scrolls under
   it, the app's Welcome panel over the map, and Today's top cards over the
   dawn light. On flat paper a card is lifted, not glass.
 - **A light to sit in.** Dervo puts its windows on a blurred meadow photo. Arro
-  has its moving contour map (below), with the warm light as a fixed, faint
+  has its drifting colour mesh (below), with the warm light as a fixed, faint
   clay glow in the top-right of each paper screen (`Backdrop`), with a trace of
   sage on the left, so glass cards scrolling over it pick up colour.
 - **Two levels: raised and sunk.** Things you act on or read are raised. The
@@ -294,8 +294,8 @@ How it's built:
   the web). `Card` is lifted by default and takes `glass` for frosted glass.
   `components/Glass.tsx` is the glass surface (needs `expo-blur`, added in this
   pass, so the next build needs `npm install` and a prebuild).
-  `components/Backdrop.tsx` is the contour map and the glow (see "The contour
-  map" below), drawn by `Screen`, `OnboardingFrame` and the other paper screens.
+  `components/Backdrop.tsx` is the colour mesh and the glow (see "The mesh
+  and Instrument type" below), drawn by `Screen`, `OnboardingFrame` and the other paper screens.
 - Site: the "Depth and glass" block in `site/public/styles.css`. Shadows are
   static; hover moves cards with transform only, per the motion rules in
   `site/README.md`.
@@ -305,6 +305,9 @@ battery and turns the screen to fog), no dark mode, and the member colours
 are still unchanged.
 
 ## The contour map (9 Oct 2026, moving since 10 Oct)
+
+*(On 10 Oct, later, the map moved to the hero and Welcome only, still, over a
+drifting colour mesh. See "The mesh and Instrument type" below.)*
 
 Bryce wanted a better background, shared by the site and the app. Four were
 mocked up (contour map, a daylight sky wash, a warm colour mesh, quiet paper
@@ -341,3 +344,34 @@ rosier evening light behind the site's closing line and the app's Milestone.
   Every paper screen has it, Welcome and Milestone (with `light="dusk"`)
   included.
 - The lines are warm ink (`#463219`, the shadow colour), never clay.
+
+## The mesh and Instrument type (10 Oct 2026)
+
+Bryce found the moving map too much: the same wave across the whole site, and
+distracting. He pointed at Dervo's landing page again, for its background and
+for type that matches the glass. So:
+
+- **Background: a soft colour mesh**, the way trydervo.com draws its own. Arro's
+  paper with pools of warm cream, apricot, sage and a pale evening blue, all
+  close to paper, drifting very slowly. Site: `site/public/backdrop.js` puts
+  one fixed canvas behind every page, drawn with Paper Shaders' mesh gradient
+  (`public/vendor/paper-shaders-0.0.81.min.js`, the same build Dervo ships,
+  Apache-2.0, speed 0.06). App: `Backdrop` draws four radial-gradient pools in
+  the same colours, each drifting on its own slow clock (47-71s, native
+  driver), shared by every screen so the colour carries on. Reduce Motion, a
+  hidden tab, or no WebGL leave it still (or plain paper with the warm light).
+- **The contour map stays, but only at the top**, still: the site's hero
+  (`.hero::before`, `public/contours.svg` at 11%, fading out by the end of the
+  hero) and the app's Welcome (`<Backdrop map />`). Nowhere else. The map
+  script now draws one moment; `FRAMES` can bring the motion back.
+- **Type: Instrument Serif and Instrument Sans** (OFL, Dervo's pair). New York
+  read as a system font next to the glass. Headings are Instrument Serif at
+  one weight (400), set larger and tighter (tracking about -1.5% to -2.2%,
+  line height near 1), with the italic for the closing line. Body text on the
+  site is Instrument Sans; the app keeps SF for body, which sits well with it.
+  Site: `public/fonts/` (latin subsets), licences in `public/licenses/`. App:
+  `assets/fonts/InstrumentSerif-Regular.ttf`, embedded by the `expo-font` config
+  plugin at prebuild (so it needs a new build) and loaded with
+  `Font.loadAsync` in `App.tsx` for the web preview. `fonts.serif` in
+  `src/theme/typography.ts` names it.
+- Dawn and dusk light, glass, depth and the grain (now 8%) are unchanged.

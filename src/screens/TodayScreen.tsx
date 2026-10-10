@@ -410,7 +410,7 @@ const styles = StyleSheet.create({
   footerText: { ...type.body },
   cardLabel: { ...type.label, color: colors.muted },
   cardNote: { ...type.body, marginTop: 6 },
-  streakBig: { ...type.bigNumber, fontSize: 34, lineHeight: 40, marginTop: 4 },
+  streakBig: { ...type.bigNumber, fontSize: 42, lineHeight: 44, marginTop: 4 },
   statRow: {
     flexDirection: 'row',
     gap: 24,
