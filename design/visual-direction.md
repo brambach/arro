@@ -375,3 +375,24 @@ for type that matches the glass. So:
   `Font.loadAsync` in `App.tsx` for the web preview. `fonts.serif` in
   `src/theme/typography.ts` names it.
 - Dawn and dusk light, glass, depth and the grain (now 8%) are unchanged.
+
+## Quieter type (11 Oct 2026)
+
+A design review found the site's text trying too hard: seven text styles in
+the hero, spaced capitals over every section, two clay italics, and Instrument
+Serif used at sizes where it goes thin. Bryce chose the smallest fix, type
+only, with the layout, colours, background and words unchanged:
+
+- Labels above headings are sentence case in the sans, not spaced capitals.
+  The hero has none.
+- "Stay close." is the only clay italic. The line under the lede is plain
+  muted sans.
+- "Coming soon to iPhone" is a plain label (icon and text), not a pill that
+  looks tappable, in the hero and the closing.
+- Instrument Serif is for headings only. Small letters and numbers (avatar
+  initials, step numbers, invite and join codes, the "24 days" counts) are
+  Instrument Sans at weight 500-600 with even-width figures.
+- The lede is ink, not ink-soft. Step titles are serif like the other
+  headings.
+
+Preview (before and after): https://claude.ai/artifact/CSW4ojyyULpoujaD7KY4RJ
