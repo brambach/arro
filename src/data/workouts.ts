@@ -46,6 +46,15 @@ export function distanceLabel(meters?: number, miles: boolean = usesMiles()): st
 }
 
 /** "Mom", "Mom and Dad", "Mom, Dad and Grandma". */
+/** "You and Mom cheered", "Mom, Dad and Grandma cheered", or null when nobody has. You come first. */
+export function cheeredLine(cheeredBy: { id: string; name: string }[], meId: string): string | null {
+  if (cheeredBy.length === 0) return null;
+  const names = [...cheeredBy]
+    .sort((a, b) => Number(b.id === meId) - Number(a.id === meId))
+    .map((m) => (m.id === meId ? 'You' : m.name));
+  return `${joinNames(names)} cheered`;
+}
+
 export function joinNames(names: string[]): string {
   if (names.length <= 1) return names[0] ?? '';
   return `${names.slice(0, -1).join(', ')} and ${names[names.length - 1]}`;

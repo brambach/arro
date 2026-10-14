@@ -446,6 +446,16 @@ export async function sendNudge(fromMemberId: string, toMemberId: string): Promi
   return 'sent';
 }
 
+/**
+ * Cheer a family member's workout. Queues "<name> cheered you on" to its owner
+ * (queue_cheer_push, migration 20261005000007). Cheering the same workout twice is a no-op.
+ */
+export async function addCheer(workoutId: string, memberId: string): Promise<void> {
+  const { error } = await client().from('cheers').insert({ workout_id: workoutId, member_id: memberId });
+  // 23505: unique (workout_id, member_id), so it's already there.
+  if (error && error.code !== '23505') throw error;
+}
+
 /** A manual "I moved today" check-in. A photo is uploaded separately (uploadPhoto, setWorkoutPhoto). */
 export async function insertWorkout(
   memberId: string,

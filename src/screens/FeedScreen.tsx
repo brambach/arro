@@ -7,15 +7,22 @@ import { FadeInView } from '../components/FadeInView';
 import { TextButton } from '../components/TextButton';
 import { WorkoutCard } from '../components/WorkoutCard';
 import { Screen } from '../components/Screen';
-import { joinNames } from '../data/workouts';
+import { cheeredLine, joinNames } from '../data/workouts';
 import { useApp, useView } from '../state/AppState';
+import { showError } from '../state/confirm';
 import { MainTabScreenProps } from '../navigation/types';
 
 const COUNT_WORDS = ['zero', 'one', 'two', 'three', 'four', 'five', 'six', 'seven'];
 
 export function FeedScreen({ navigation }: MainTabScreenProps<'Feed'>) {
   const view = useView();
-  const { nudge } = useApp();
+  const { nudge, cheer } = useApp();
+  // The button goes back if it fails, so say why.
+  const cheerWorkout = (workoutId: string) =>
+    cheer(workoutId).catch((e) => {
+      showError('Couldn’t send the cheer', 'Check your connection and try again.');
+      throw e;
+    });
   const joined = view.joinedCount;
   const count = COUNT_WORDS[joined] ?? joined;
   const subtitle =
@@ -38,13 +45,24 @@ export function FeedScreen({ navigation }: MainTabScreenProps<'Feed'>) {
       <View style={styles.list}>
         {view.feed.map((item, i) => {
           const workoutId = item.workoutId;
+          const workout = workoutId ? view.workouts[workoutId] : undefined;
+          const cheerers = workout ? workout.cheeredBy.map((id) => view.members[id]).filter(Boolean) : [];
+          const mine = item.memberId === view.me.id;
           return (
             <FadeInView key={item.id} delay={60 + i * 40} style={{ marginBottom: 12 }}>
               <WorkoutCard
                 item={item}
                 member={view.members[item.memberId]}
                 onPress={workoutId ? () => navigation.navigate('WorkoutDetail', { workoutId }) : undefined}
-                onCheer={item.kind === 'still' ? () => nudge(item.memberId) : undefined}
+                onCheer={
+                  item.kind === 'still'
+                    ? () => nudge(item.memberId)
+                    : workoutId && !mine
+                      ? () => cheerWorkout(workoutId)
+                      : undefined
+                }
+                cheerLine={cheeredLine(cheerers, view.me.id)}
+                cheered={!!workout?.cheeredBy.includes(view.me.id)}
               />
             </FadeInView>
           );

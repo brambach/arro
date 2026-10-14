@@ -28,6 +28,9 @@ type Props = {
   cheeredLabel?: string;
   /** Shows "Cheered" straight away; if the promise rejects, the button goes back. */
   onCheer?: () => unknown;
+  /** Already cheered (a workout you cheered earlier). It stays "Cheered": a cheer isn't taken back. */
+  cheered?: boolean;
+  accessibilityLabel?: string;
   style?: StyleProp<ViewStyle>;
 };
 
@@ -36,9 +39,12 @@ export function CheerButton({
   label = 'Cheer',
   cheeredLabel = 'Cheered',
   onCheer,
+  cheered: alreadyCheered = false,
+  accessibilityLabel,
   style,
 }: Props) {
-  const [cheered, setCheered] = useState(false);
+  const [justCheered, setCheered] = useState(false);
+  const cheered = alreadyCheered || justCheered;
   const scale = useRef(new Animated.Value(1)).current;
   const pulse = useRef(new Animated.Value(0)).current;
   const reduceMotion = useRef(false);
@@ -79,8 +85,11 @@ export function CheerButton({
       onPressIn={() => Animated.timing(scale, { toValue: 0.96, duration: 90, useNativeDriver: true }).start()}
       onPressOut={() => Animated.timing(scale, { toValue: 1, duration: 140, useNativeDriver: true }).start()}
       style={style}
+      // The pill is small; this makes the target 44pt tall.
+      hitSlop={{ top: 8, bottom: 8, left: 6, right: 6 }}
       accessibilityRole="button"
-      accessibilityState={{ selected: cheered }}
+      accessibilityLabel={cheered ? cheeredLabel : accessibilityLabel}
+      accessibilityState={{ selected: cheered, disabled: cheered }}
     >
       <Animated.View
         style={[

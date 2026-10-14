@@ -12,20 +12,29 @@ import { RouteThumb } from './RouteThumb';
 
 /**
  * WorkoutCard — a feed entry. A kept post shows its photo and route when it has
- * them, then a cheer line + heart count; a still-has-today post shows a nudge
- * line + a Cheer button.
+ * them, then who cheered and a Cheer button (not on your own); a still-has-today
+ * post shows a nudge line + a Cheer button.
  */
 export function WorkoutCard({
   item,
   member,
   onPress,
   onCheer,
+  cheerLine,
+  cheered,
 }: {
   item: FeedItem;
   member: Member;
   onPress?: () => void;
+  /** A kept post: cheer it (left out on your own). A still post: send a nudge. */
   onCheer?: () => Promise<unknown>;
+  /** A kept post: "Mom and Dad cheered", or null. */
+  cheerLine?: string | null;
+  /** A kept post you've cheered. */
+  cheered?: boolean;
 }) {
+  const kept = item.kind === 'kept';
+  const showFooter = kept ? !!cheerLine || !!onCheer : !!item.cheer;
   return (
     <Card radius={radii.card} padding={14} style={styles.card} onPress={onPress}>
       <View style={styles.header}>
@@ -41,19 +50,28 @@ export function WorkoutCard({
 
       <Media item={item} />
 
-      {item.cheer ? (
+      {showFooter ? (
         <View style={styles.footer}>
-          <Text style={styles.cheerLine} numberOfLines={1}>
-            {item.cheer}
-          </Text>
-          {item.kind === 'kept' ? (
-            <View style={styles.hearts}>
-              <Heart size={15} color={colors.inkSoft} />
-              <Text style={styles.heartCount}>{item.hearts}</Text>
+          {kept ? (
+            <View style={styles.cheerers}>
+              {cheerLine ? <Heart size={14} color={colors.primary} /> : null}
+              <Text style={styles.cheerLine} numberOfLines={2}>
+                {cheerLine ?? ''}
+              </Text>
             </View>
           ) : (
-            <CheerButton variant="outline" onCheer={onCheer} />
+            <Text style={styles.cheerLine} numberOfLines={1}>
+              {item.cheer}
+            </Text>
           )}
+          {onCheer ? (
+            <CheerButton
+              variant="outline"
+              onCheer={onCheer}
+              cheered={kept && cheered}
+              accessibilityLabel={kept ? `Cheer ${member.name}` : `Send ${member.name} a cheer`}
+            />
+          ) : null}
         </View>
       ) : null}
     </Card>
@@ -106,7 +124,6 @@ const styles = StyleSheet.create({
     borderTopWidth: 1,
     borderTopColor: colors.dividerSoft,
   },
+  cheerers: { flex: 1, minWidth: 0, flexDirection: 'row', alignItems: 'center', gap: 6 },
   cheerLine: { flex: 1, minWidth: 0, fontSize: 14, color: colors.inkSoft },
-  hearts: { flexDirection: 'row', alignItems: 'center', gap: 5 },
-  heartCount: { fontSize: 13, fontWeight: weights.semibold, color: colors.faint2 },
 });

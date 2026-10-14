@@ -4,7 +4,7 @@ import { MoveMethod, ReminderSlot, WorkoutType } from '../data/types';
 import { memberColor } from '../theme/tokens';
 import * as backend from './backend';
 import { InvitePreview, RemoteFamily } from './backend';
-import { AppView, Preview, buildView } from './buildView';
+import { AppView, Preview, buildView, withMyCheers } from './buildView';
 import { dayKey, addDays, deviceTimezone } from './dates';
 import { connectHealth, onHealthWorkoutsChanged, readRecentHealthWorkouts } from './health';
 import { syncHealthWorkouts } from './healthSync';
@@ -134,6 +134,8 @@ interface AppContextValue {
   logWorkout: (input: LogInput) => Promise<void>;
   /** "Send a cheer" for someone who hasn't moved yet. 'already' if they've been nudged today. */
   nudge: (memberId: string) => Promise<'sent' | 'already'>;
+  /** Cheer someone's workout. Shows straight away; throws (and takes it back) if the server refuses. */
+  cheer: (workoutId: string) => Promise<void>;
   updateProfile: (patch: { name?: string; photoUri?: string | null }) => Promise<void>;
   /** Adds, replaces (a local uri) or removes (null) the photo on one of your workouts. */
   setWorkoutPhoto: (workoutId: string, photoUri: string | null) => Promise<void>;
@@ -161,6 +163,8 @@ export function AppStateProvider({ children }: { children: React.ReactNode }) {
   const [ready, setReady] = useState(false);
   const [session, setSession] = useState<SavedSession | null>(null);
   const [family, setFamily] = useState<RemoteFamily | null>(null);
+  /** Workouts you've cheered on this phone, shown before the server's copy of the family catches up. */
+  const [myCheers, setMyCheers] = useState<Record<string, true>>({});
   const [draft, setDraft] = useState<Draft>(emptyDraft('founder'));
   const [preview, setPreview] = useState<Preview | null>(null);
   const draftRef = useRef(draft);
@@ -278,6 +282,7 @@ export function AppStateProvider({ children }: { children: React.ReactNode }) {
     setPreview(null);
     setSession(null);
     setFamily(null);
+    setMyCheers({});
     setDraft(emptyDraft('founder'));
     try {
       await clearSession();
@@ -539,6 +544,24 @@ export function AppStateProvider({ children }: { children: React.ReactNode }) {
     return result;
   }, []);
 
+  const cheer = useCallback(
+    async (workoutId: string) => {
+      setMyCheers((c) => ({ ...c, [workoutId]: true }));
+      const remote = sessionRef.current?.remote;
+      // The local demo family has no server to tell.
+      if (!remote) return;
+      try {
+        await backend.addCheer(workoutId, remote.memberId);
+      } catch (e) {
+        setMyCheers(({ [workoutId]: _, ...rest }) => rest);
+        throw e;
+      }
+      backend.sendQueuedPushes().catch(() => undefined);
+      refresh().catch(() => undefined);
+    },
+    [refresh],
+  );
+
   const updateProfile = useCallback(
     async (patch: { name?: string; photoUri?: string | null }) => {
       const current = sessionRef.current;
@@ -678,7 +701,10 @@ export function AppStateProvider({ children }: { children: React.ReactNode }) {
     await clearAll();
   }, [clearAll]);
 
-  const builtView = useMemo(() => (session ? buildView(session, preview, family) : null), [session, preview, family]);
+  const builtView = useMemo(
+    () => (session ? withMyCheers(buildView(session, preview, family), myCheers) : null),
+    [session, preview, family, myCheers],
+  );
   // Keep the last view while signed out so screens that are animating away don't read null.
   const lastView = useRef<AppView | null>(null);
   if (builtView) lastView.current = builtView;
@@ -725,6 +751,7 @@ export function AppStateProvider({ children }: { children: React.ReactNode }) {
       completeOnboarding,
       logWorkout,
       nudge,
+      cheer,
       updateProfile,
       setWorkoutPhoto,
       loadRoutes,
@@ -752,6 +779,7 @@ export function AppStateProvider({ children }: { children: React.ReactNode }) {
       completeOnboarding,
       logWorkout,
       nudge,
+      cheer,
       updateProfile,
       setWorkoutPhoto,
       loadRoutes,

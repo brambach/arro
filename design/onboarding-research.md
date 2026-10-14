@@ -33,6 +33,12 @@ survives, so most of this is about their path.
   answers what parents ask first (iPhone only? Apple Watch? missed days?
   location? cost?).
 
+- **Cheering a workout.** A Cheer button on everyone else's posts in the feed and
+  on the workout page, with "You, Mom and Dad cheered" in place of the made-up
+  quotes the sample feed used to show. It's one-way, like the cheer motion spec:
+  the database lets a cheer be taken back, but each new cheer sends a push, so
+  cheer-uncheer-cheer would notify twice.
+
 ## Open, needs a decision or an asset
 
 1. **Universal links** (phase 5). Needs the Apple Team ID for
@@ -54,7 +60,10 @@ survives, so most of this is about their path.
    off after a broken streak, less so when it can be repaired. Something like
    "if everyone moves today and tomorrow, yesterday comes back" for after a
    freeze is already spent.
-8. **Founder can see "Mom hasn't opened Arro yet"** and resend: in 3-generation
+8. **Comments.** None yet, on purpose: a thread pulls against "one moment a day".
+   A short optional note with a cheer, or a few preset replies ("So proud of
+   you!"), would fit better if families ask for more than a cheer.
+9. **Founder can see "Mom hasn't opened Arro yet"** and resend: in 3-generation
    families the middle generation ends up doing tech support.
 
 ## Sources

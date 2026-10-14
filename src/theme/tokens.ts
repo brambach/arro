@@ -38,7 +38,7 @@ export const colors = {
   accentTint: '#F2E6DD', // selected chip background
 
   // Semantic states
-  kept: '#5D7A63',
+  kept: '#4F6B55',
   keptBg: '#E8ECE3',
   keptCheck: '#5D7A63',
   freeze: '#5E7C93',

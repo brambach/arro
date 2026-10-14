@@ -4,6 +4,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { colors, radii, spacing, shadows } from '../theme/tokens';
 import { type, weights } from '../theme/typography';
 import { AvatarStack } from '../components/AvatarStack';
+import { CheerButton } from '../components/CheerButton';
 import { ChevronLeft } from '../components/Icons';
 import { FadeInView } from '../components/FadeInView';
 import { PhotoSlot } from '../components/PhotoSlot';
@@ -13,14 +14,14 @@ import { useApp, useView } from '../state/AppState';
 import { showError } from '../state/confirm';
 import { PHOTOS_ON, pickPhoto } from '../state/photos';
 import { WorkoutDetail } from '../data/types';
-import { joinNames, workoutSourceLabels, workoutTypeLabels } from '../data/workouts';
+import { cheeredLine, workoutSourceLabels, workoutTypeLabels } from '../data/workouts';
 import { RootStackScreenProps } from '../navigation/types';
 import { Backdrop } from '../components/Backdrop';
 
 export function WorkoutDetailScreen({ navigation, route }: RootStackScreenProps<'WorkoutDetail'>) {
   const insets = useSafeAreaInsets();
   const view = useView();
-  const { setWorkoutPhoto } = useApp();
+  const { setWorkoutPhoto, cheer } = useApp();
   const [savingPhoto, setSavingPhoto] = useState(false);
   const workout: WorkoutDetail | undefined = view.workouts[route.params.workoutId];
 
@@ -29,7 +30,17 @@ export function WorkoutDetailScreen({ navigation, route }: RootStackScreenProps<
   const label = workoutTypeLabels[workout.type];
   const mine = workout.memberId === view.me.id;
   const owner = view.members[workout.memberId];
-  const cheerers = workout.cheeredBy.map((id) => view.members[id]).filter(Boolean);
+  // You first, as the "You, Bryce and Grandma cheered" line reads.
+  const cheerers = workout.cheeredBy
+    .map((id) => view.members[id])
+    .filter(Boolean)
+    .sort((a, b) => Number(b.id === view.me.id) - Number(a.id === view.me.id));
+  const cheeredByMe = workout.cheeredBy.includes(view.me.id);
+  const cheerWorkout = () =>
+    cheer(workout.id).catch((e) => {
+      showError('Couldn’t send the cheer', 'Check your connection and try again.');
+      throw e;
+    });
   const stats = [
     workout.distance ? { value: workout.distance, label: 'Distance' } : null,
     workout.duration ? { value: workout.duration, label: 'Time' } : null,
@@ -94,10 +105,21 @@ export function WorkoutDetailScreen({ navigation, route }: RootStackScreenProps<
 
         <FadeInView delay={180} style={styles.noteWrap}>
           {workout.note ? <Text style={styles.note}>{workout.note}</Text> : null}
-          {cheerers.length > 0 ? (
+          {cheerers.length > 0 || !mine ? (
             <View style={[styles.cheered, !workout.note && { marginTop: 0 }]}>
-              <AvatarStack members={cheerers} size={26} overlap={6} borderColor={colors.screen} />
-              <Text style={styles.cheeredText}>{joinNames(cheerers.map((c) => c.name))} cheered</Text>
+              {cheerers.length > 0 ? (
+                <AvatarStack members={cheerers} size={26} overlap={6} borderColor={colors.screen} />
+              ) : null}
+              <Text style={styles.cheeredText}>
+                {cheeredLine(cheerers, view.me.id) ?? `Cheer ${owner?.name ?? 'them'} on`}
+              </Text>
+              {!mine ? (
+                <CheerButton
+                  cheered={cheeredByMe}
+                  onCheer={cheerWorkout}
+                  accessibilityLabel={`Cheer ${owner?.name ?? 'them'}`}
+                />
+              ) : null}
             </View>
           ) : null}
           <View style={styles.links}>
@@ -164,5 +186,5 @@ const styles = StyleSheet.create({
   noteWrap: { paddingHorizontal: spacing.gutter, paddingTop: 16 },
   note: { ...type.body, color: colors.inkSoft },
   cheered: { flexDirection: 'row', alignItems: 'center', gap: 11, marginTop: 15 },
-  cheeredText: { ...type.meta, color: colors.muted },
+  cheeredText: { ...type.meta, flex: 1, color: colors.muted },
 });

@@ -154,8 +154,6 @@ export const feed: FeedItem[] = [
     title: 'Bryce kept Day 24',
     meta: 'Run · 5.2 km · 32 min',
     time: '6:21 AM',
-    cheer: 'Mom cheered: “So proud of you”',
-    hearts: 4,
     workoutId: 'bryce-today',
     route: workouts['bryce-today'].route,
   },
@@ -166,8 +164,6 @@ export const feed: FeedItem[] = [
     title: 'Grandma kept Day 19',
     meta: 'Walk · 25 min · checked in',
     time: '9:10 AM',
-    cheer: 'Mom cheered: “Lovely morning for it!”',
-    hearts: 3,
     workoutId: 'grandma-today',
   },
   {
@@ -177,8 +173,6 @@ export const feed: FeedItem[] = [
     title: 'Dad kept Day 31',
     meta: 'Gym · 45 min · checked in',
     time: '12:45 PM',
-    cheer: 'Bryce cheered: “Go Dad 💪”',
-    hearts: 3,
     workoutId: 'dad-today',
   },
   {

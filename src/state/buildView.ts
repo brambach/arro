@@ -614,10 +614,7 @@ function familyView(session: SavedSession, family: RemoteFamily, now: Date): App
       .filter((w) => w.localDate >= addDays(todayKey, -1))
       .map((w) => {
         const who = joined.find((m) => m.id === w.memberId);
-        return {
-          ...feedItem(asLogged(w, session.photos), who ?? me, todayKey),
-          hearts: w.cheeredBy.length || undefined,
-        };
+        return feedItem(asLogged(w, session.photos), who ?? me, todayKey);
       }),
     week: solo
       ? {
@@ -662,4 +659,16 @@ export function buildView(
   if (session.remote) return family ? familyView(session, family, now) : founderView(session, now);
   if (session.role === 'invitee') return previewFamilyView(session, null, now);
   return founderView(session, now);
+}
+
+/** Adds you to `cheeredBy` on the workouts you've just cheered, before the server's copy says so. */
+export function withMyCheers(view: AppView, myCheers: Record<string, true>): AppView {
+  const ids = Object.keys(myCheers).filter((id) => {
+    const w = view.workouts[id];
+    return w && !w.cheeredBy.includes(view.me.id);
+  });
+  if (ids.length === 0) return view;
+  const workouts = { ...view.workouts };
+  for (const id of ids) workouts[id] = { ...workouts[id], cheeredBy: [...workouts[id].cheeredBy, view.me.id] };
+  return { ...view, workouts };
 }

@@ -46,8 +46,7 @@ export interface FeedItem {
   title: string; // "Bryce kept Day 24" / "Mom still has today"
   meta: string;
   time?: string; // "6:21 AM"
-  cheer?: string; // a cheer line, or nudge prompt
-  hearts?: number; // heart count (kept posts)
+  cheer?: string; // the nudge prompt on a "still has today" post; kept posts list who cheered instead
   workoutId?: string; // opens the workout detail (kept posts)
   photoUri?: PhotoSource; // the workout's photo, shown under the post
   route?: LatLng[]; // the workout's route, drawn small under the post
