@@ -2,7 +2,6 @@ import React from 'react';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { WelcomeScreen } from '../screens/onboarding/WelcomeScreen';
 import { JoinCodeScreen } from '../screens/onboarding/JoinCodeScreen';
-import { InvitePreviewScreen } from '../screens/onboarding/InvitePreviewScreen';
 import { SignInScreen } from '../screens/onboarding/SignInScreen';
 import { MeetFamilyScreen } from '../screens/onboarding/MeetFamilyScreen';
 import { NameFamilyScreen } from '../screens/onboarding/NameFamilyScreen';
@@ -10,7 +9,6 @@ import { OnboardingPhotoScreen } from '../screens/onboarding/OnboardingPhotoScre
 import { HowItWorksScreen } from '../screens/onboarding/HowItWorksScreen';
 import { HowYouMoveScreen } from '../screens/onboarding/HowYouMoveScreen';
 import { OnboardingInviteScreen } from '../screens/onboarding/OnboardingInviteScreen';
-import { ReminderTimeScreen } from '../screens/onboarding/ReminderTimeScreen';
 import { NotificationsPromptScreen } from '../screens/onboarding/NotificationsPromptScreen';
 import { MilestoneScreen } from '../screens/MilestoneScreen';
 import { SettingsScreen } from '../screens/SettingsScreen';
@@ -64,7 +62,6 @@ export function RootNavigator() {
         <>
           <Stack.Screen name="Welcome" component={WelcomeScreen} />
           <Stack.Screen name="JoinCode" component={JoinCodeScreen} />
-          <Stack.Screen name="InvitePreview" component={InvitePreviewScreen} />
           <Stack.Screen name="SignIn" component={SignInScreen} />
           <Stack.Screen name="MeetFamily" component={MeetFamilyScreen} />
           <Stack.Screen name="NameFamily" component={NameFamilyScreen} />
@@ -72,7 +69,6 @@ export function RootNavigator() {
           <Stack.Screen name="HowItWorks" component={HowItWorksScreen} />
           <Stack.Screen name="HowYouMove" component={HowYouMoveScreen} />
           <Stack.Screen name="OnboardingInvite" component={OnboardingInviteScreen} />
-          <Stack.Screen name="ReminderTime" component={ReminderTimeScreen} />
           <Stack.Screen name="NotificationsPrompt" component={NotificationsPromptScreen} />
         </>
       )}

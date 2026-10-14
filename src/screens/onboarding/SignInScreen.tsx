@@ -4,7 +4,8 @@ import * as AppleAuthentication from 'expo-apple-authentication';
 import { type } from '../../theme/typography';
 import { OnboardingFrame } from '../../components/OnboardingFrame';
 import { TextField } from '../../components/TextField';
-import { useApp } from '../../state/AppState';
+import { DEMO_FAMILY_NAME, useApp } from '../../state/AppState';
+import { familyMembersList } from '../../data/family';
 import { appleSignInAvailable } from '../../state/backend';
 import { showError } from '../../state/confirm';
 import { RootStackScreenProps } from '../../navigation/types';
@@ -15,6 +16,9 @@ import { nextAfter, stepOf } from './steps';
  * hide it, so the first-name field stays: it's what the family sees.
  * Where Apple sign-in isn't available (web preview, no Supabase config) it's the
  * phase 1 preview sign-in and nothing is created on a server.
+ *
+ * For an invitee this is also where they first see the family they found: before
+ * sign-in the server only says its name and how many people are in it.
  */
 export function SignInScreen({ navigation }: RootStackScreenProps<'SignIn'>) {
   const { draft, updateDraft, signIn } = useApp();
@@ -44,11 +48,18 @@ export function SignInScreen({ navigation }: RootStackScreenProps<'SignIn'>) {
   };
 
   const needsApple = apple && !signedIn;
+  const invitee = draft.role === 'invitee';
+  const familyName = draft.invite?.familyName ?? DEMO_FAMILY_NAME;
+  const count = draft.invite?.memberCount ?? familyMembersList.length;
 
   return (
     <OnboardingFrame
-      title="Sign in"
-      subtitle="Your family will see this name."
+      title={invitee ? `Join ${familyName}` : 'Sign in'}
+      subtitle={
+        invitee
+          ? `${count} ${count === 1 ? 'person is' : 'people are'} in. Sign in to see who, and add your name for them.`
+          : 'Your family will see this name.'
+      }
       step={stepOf(draft.role, 'SignIn')}
       onBack={() => navigation.goBack()}
       primaryLabel={apple ? 'Continue' : 'Continue with Apple'}

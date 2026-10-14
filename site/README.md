@@ -48,8 +48,8 @@ reads `{{DATE}}`; replace that in `public/privacy/index.html` on deploy day.
   `public/licenses/`.
 - `public/site.js`: plays `.reveal` elements once as they scroll in, splits
   `[data-words]` headings into words that rise one after another, plays the
-  landing card's day once the whole card is on screen (You, Dad and Nan
-  check in, Mum still has today, then she moves and the streak goes from 24
+  landing card's day once the whole card is on screen (You, Dad and Grandma
+  check in, Mom still has today, then she moves and the streak goes from 24
   to 25), and fills in the join code. With reduced motion none of it plays
   and the card stays as written in the HTML.
 - `public/_headers`: security headers, including a content security policy

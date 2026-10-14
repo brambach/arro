@@ -29,22 +29,29 @@ const joined: Omit<Member, 'color'>[] = [
     photoUri: null,
   },
   {
-    id: 'darcey',
-    name: 'Darcey',
+    id: 'mom',
+    name: 'Mom',
     streak: 12,
     today: 'still',
     meta: 'Still has today · usually evenings',
-    relationship: 'Sister',
     photoUri: null,
   },
   {
-    id: 'whit',
-    name: 'Whit',
+    id: 'dad',
+    name: 'Dad',
     streak: 31,
     today: 'kept',
     meta: 'Gym · 45 min · 12:45 PM',
-    todayWorkoutId: 'whit-today',
-    relationship: 'Brother',
+    todayWorkoutId: 'dad-today',
+    photoUri: null,
+  },
+  {
+    id: 'grandma',
+    name: 'Grandma',
+    streak: 19,
+    today: 'kept',
+    meta: 'Walk · 25 min · 9:10 AM',
+    todayWorkoutId: 'grandma-today',
     photoUri: null,
   },
 ];
@@ -57,7 +64,7 @@ export const members: Record<MemberId, Member> = Object.fromEntries(
 );
 
 /** Today's list order: whoever kept it first, then whoever still has today. */
-export const familyOrder: MemberId[] = ['bryce', 'whit', 'darcey'];
+export const familyOrder: MemberId[] = ['bryce', 'grandma', 'dad', 'mom'];
 export const familyList: Member[] = familyOrder.map((id) => members[id]);
 export const currentUser = members.bryce;
 
@@ -72,7 +79,7 @@ export const workouts: Record<string, WorkoutDetail> = {
     duration: '32 min',
     place: 'Brisbane',
     note: 'Before work. Already tomorrow over here 🌏',
-    cheeredBy: ['darcey', 'whit'],
+    cheeredBy: ['mom', 'dad', 'grandma'],
     distance: '5.2 km',
     // A loop through New Farm Park and along the river, already trimmed at both ends.
     route: [
@@ -83,15 +90,25 @@ export const workouts: Record<string, WorkoutDetail> = {
       [-27.4642, 153.0495],
     ].map(([latitude, longitude]) => ({ latitude, longitude })),
   },
-  'whit-today': {
-    id: 'whit-today',
-    memberId: 'whit',
+  'dad-today': {
+    id: 'dad-today',
+    memberId: 'dad',
     type: 'gym',
     source: 'manual',
     when: 'Today · 12:45 PM',
     duration: '45 min',
     note: 'Lunch session. Legs, unfortunately.',
-    cheeredBy: ['bryce'],
+    cheeredBy: ['bryce', 'grandma'],
+  },
+  'grandma-today': {
+    id: 'grandma-today',
+    memberId: 'grandma',
+    type: 'walk',
+    source: 'manual',
+    when: 'Today · 9:10 AM',
+    duration: '25 min',
+    note: 'Lovely morning for it.',
+    cheeredBy: ['mom', 'dad'],
   },
   'bryce-yesterday': {
     id: 'bryce-yesterday',
@@ -101,7 +118,7 @@ export const workouts: Record<string, WorkoutDetail> = {
     when: 'Yesterday · 6:10 AM',
     duration: '20 min',
     note: 'Slow one on the balcony.',
-    cheeredBy: ['darcey'],
+    cheeredBy: ['mom'],
   },
   'bryce-fri': {
     id: 'bryce-fri',
@@ -112,7 +129,7 @@ export const workouts: Record<string, WorkoutDetail> = {
     duration: '40 min',
     distance: '3.6 km',
     place: 'Brisbane',
-    cheeredBy: ['whit'],
+    cheeredBy: ['grandma'],
   },
 };
 
@@ -120,11 +137,11 @@ export const workouts: Record<string, WorkoutDetail> = {
 export const today = {
   dateLabel: 'Sunday, June 30',
   greeting: 'Good morning, Bryce.',
-  keptCount: 2,
-  total: 3,
+  keptCount: 3,
+  total: 4,
   /** The person who still has today (drives the "cheer her on" CTA). */
-  pendingId: 'darcey' as MemberId,
-  cheerPrompt: 'Darcey’s still got today',
+  pendingId: 'mom' as MemberId,
+  cheerPrompt: 'Mom’s still got today',
   cheerCta: 'cheer her on',
 };
 
@@ -137,36 +154,47 @@ export const feed: FeedItem[] = [
     title: 'Bryce kept Day 24',
     meta: 'Run · 5.2 km · 32 min',
     time: '6:21 AM',
-    cheer: 'Darcey cheered: “Already tomorrow over here 🌏”',
+    cheer: 'Mom cheered: “So proud of you”',
     hearts: 4,
     workoutId: 'bryce-today',
     route: workouts['bryce-today'].route,
   },
   {
     id: 'f2',
-    memberId: 'whit',
+    memberId: 'grandma',
     kind: 'kept',
-    title: 'Whit kept Day 31',
-    meta: 'Gym · 45 min · checked in',
-    time: '12:45 PM',
-    cheer: 'Bryce cheered: “machine 💪”',
+    title: 'Grandma kept Day 19',
+    meta: 'Walk · 25 min · checked in',
+    time: '9:10 AM',
+    cheer: 'Mom cheered: “Lovely morning for it!”',
     hearts: 3,
-    workoutId: 'whit-today',
+    workoutId: 'grandma-today',
   },
   {
     id: 'f3',
-    memberId: 'darcey',
+    memberId: 'dad',
+    kind: 'kept',
+    title: 'Dad kept Day 31',
+    meta: 'Gym · 45 min · checked in',
+    time: '12:45 PM',
+    cheer: 'Bryce cheered: “Go Dad 💪”',
+    hearts: 3,
+    workoutId: 'dad-today',
+  },
+  {
+    id: 'f4',
+    memberId: 'mom',
     kind: 'still',
-    title: 'Darcey still has today',
+    title: 'Mom still has today',
     meta: 'Usually moves in the evening · 5:30 PM',
-    cheer: 'Go Darce 💪',
+    cheer: 'Go Mom 💪',
   },
 ];
 
 // ─── This Week ───────────────────────────────────────────────────────────────
 export const week = {
   headline: 'This week, your family moved 6 of 7 days.',
-  summary: 'Bryce kept the streak alive in Brisbane. Darcey still has today.',
+  summary: 'Bryce kept the streak alive in Brisbane. Mom still has today.',
   /** Compact strip: 5 kept, 1 freeze (Sat), today (Sun). */
   strip: [
     { label: 'M', state: 'kept' },
@@ -178,13 +206,13 @@ export const week = {
     { label: 'S', state: 'today' },
   ] as WeekStripDay[],
   rows: [
-    { dow: 'Mon', date: '24', state: 'kept', avatars: ['bryce', 'darcey', 'whit'] },
-    { dow: 'Tue', date: '25', state: 'kept', avatars: ['bryce', 'whit'] },
-    { dow: 'Wed', date: '26', state: 'kept', avatars: ['bryce', 'darcey', 'whit'] },
-    { dow: 'Thu', date: '27', state: 'kept', avatars: ['bryce', 'whit'] },
-    { dow: 'Fri', date: '28', state: 'kept', avatars: ['bryce', 'darcey'] },
-    { dow: 'Sat', date: '29', state: 'freeze', avatars: ['bryce'], badge: 'Freeze day' },
-    { dow: 'Sun', date: '30', state: 'today', avatars: ['bryce', 'whit'], badge: 'Today' },
+    { dow: 'Mon', date: '24', state: 'kept', avatars: ['bryce', 'mom', 'dad', 'grandma'] },
+    { dow: 'Tue', date: '25', state: 'kept', avatars: ['bryce', 'mom', 'dad', 'grandma'] },
+    { dow: 'Wed', date: '26', state: 'kept', avatars: ['bryce', 'mom', 'dad', 'grandma'] },
+    { dow: 'Thu', date: '27', state: 'kept', avatars: ['bryce', 'mom', 'dad', 'grandma'] },
+    { dow: 'Fri', date: '28', state: 'kept', avatars: ['bryce', 'mom', 'dad', 'grandma'] },
+    { dow: 'Sat', date: '29', state: 'freeze', avatars: ['bryce', 'dad', 'grandma'], badge: 'Freeze day' },
+    { dow: 'Sun', date: '30', state: 'today', avatars: ['bryce', 'dad', 'grandma'], badge: 'Today' },
   ] as WeekRow[],
 };
 
@@ -196,7 +224,7 @@ export const milestone: MilestoneData = {
   subtitle: 'A month of showing up, from Brisbane.',
   motto: 'Every day forward, together.',
   dateLine: 'June 30 · streak still alive',
-  cheeredBy: ['darcey', 'whit'],
+  cheeredBy: ['mom', 'dad', 'grandma'],
   photoUri: null,
 };
 
@@ -208,7 +236,7 @@ export const familyMilestone: MilestoneData = {
   subtitle: 'Your first month, the whole family.',
   motto: 'Every day forward, together.',
   dateLine: 'June 30 · streak still alive',
-  cheeredBy: ['darcey', 'whit'],
+  cheeredBy: ['mom', 'dad', 'grandma'],
   photoUri: null,
 };
 

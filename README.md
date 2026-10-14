@@ -6,7 +6,7 @@ a walk, the gym, yoga, a swim, a run. Nobody's competing, and a walk counts the
 same as a marathon.
 
 Arro is about staying in touch in a healthy way: one moment a day, not a feed to
-scroll. A missed day is never public ("Darcey still has today", never "Darcey
+scroll. A missed day is never public ("Mom still has today", never "Mom
 broke the streak"), there are no rankings, and nudges are capped.
 
 Workouts will come from Apple Health or a manual "I moved today" check-in. Not
@@ -21,6 +21,7 @@ sign-in, Apple Health or notifications yet. iPhone only for v1.
 - [`design/refactor-plan.md`](design/refactor-plan.md): decisions made and the build phases.
 - [`design/market-research.md`](design/market-research.md): competitors, positioning and the healthy-contact rules.
 - [`design/paid-plan.md`](design/paid-plan.md): how Arro will charge.
+- [`design/onboarding-research.md`](design/onboarding-research.md): onboarding and design research, what changed and what is still open.
 
 `design/Arro-Spec.html` and `design/Arro.dc.html` describe an older warm/serif
 direction. The app's flat iOS look in `src/theme/` wins where they disagree.

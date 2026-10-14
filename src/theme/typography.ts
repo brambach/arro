@@ -36,9 +36,9 @@ export const type = {
   /** Names / card titles. */
   name: { fontSize: 16, lineHeight: 21, fontWeight: weights.semibold, color: colors.ink },
   /** Row labels, section headers. */
-  label: { fontSize: 14, lineHeight: 19, fontWeight: weights.semibold, color: colors.inkSoft },
+  label: { fontSize: 15, lineHeight: 20, fontWeight: weights.semibold, color: colors.inkSoft },
   /** Body copy. */
-  body: { fontSize: 15, lineHeight: 21, fontWeight: weights.regular, color: colors.muted },
+  body: { fontSize: 16, lineHeight: 22, fontWeight: weights.regular, color: colors.muted },
   /** Meta / timestamps. */
-  meta: { fontSize: 13, lineHeight: 18, fontWeight: weights.regular, color: colors.faint },
+  meta: { fontSize: 14, lineHeight: 19, fontWeight: weights.regular, color: colors.faint },
 } satisfies Record<string, TextStyle>;

@@ -63,7 +63,7 @@ export function EditProfileScreen({ navigation }: RootStackScreenProps<'EditProf
           ) : null}
         </View>
         <TextField label="Name" value={name} onChangeText={setName} autoCapitalize="words" maxLength={24} />
-        <Text style={styles.note}>Your colour is picked for you, so everyone in the family has a different one.</Text>
+        <Text style={styles.note}>Your color is picked for you, so everyone in the family has a different one.</Text>
       </ScrollView>
       <View style={[styles.footer, { paddingBottom: insets.bottom + 14 }]}>
         <PrimaryButton

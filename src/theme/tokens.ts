@@ -27,9 +27,9 @@ export const colors = {
   ink: '#2B2722', // primary text
   inkSoft: '#575049', // secondary / emphasis body
   muted: '#6B645B', // body / captions
-  faint: '#7D766C', // meta
-  faint2: '#8C8478', // values, timestamps
-  faint3: '#8C8478', // faint labels
+  faint: '#6F685E', // meta (4.9:1 on paper)
+  faint2: '#726B61', // values, timestamps (4.7:1 on paper)
+  faint3: '#726B61', // faint labels
   chevron: '#B3AA9C', // row chevrons
 
   // Accent — clay, used rarely

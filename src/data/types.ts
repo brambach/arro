@@ -11,7 +11,7 @@ export type WorkoutSource = 'health' | 'manual';
 
 /**
  * A photo source. Use a URL string, or a bundled local image via
- * `require('../../assets/mum.jpg')`. null → the solid-color initial avatar.
+ * `require('../../assets/mom.jpg')`. null → the solid-color initial avatar.
  */
 export type PhotoSource = string | number | null;
 
@@ -31,7 +31,7 @@ export interface Member {
   today: DayStatus; // kept it today, or still has today
   meta: string; // one-line status for the Today list
   location?: string;
-  relationship?: string; // "You", "Sister", "Brother"
+  relationship?: string; // "You", "Invited"
   photoUri?: PhotoSource;
   /** Invited but hasn't joined yet. Doesn't count towards "x of y kept it today". */
   invited?: boolean;
@@ -43,7 +43,7 @@ export interface FeedItem {
   id: string;
   memberId: MemberId;
   kind: 'kept' | 'still';
-  title: string; // "Bryce kept Day 24" / "Darcey still has today"
+  title: string; // "Bryce kept Day 24" / "Mom still has today"
   meta: string;
   time?: string; // "6:21 AM"
   cheer?: string; // a cheer line, or nudge prompt

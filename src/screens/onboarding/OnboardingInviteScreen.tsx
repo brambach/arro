@@ -8,7 +8,7 @@ import { stepOf } from './steps';
 /** The main step for a founder: the streak only starts when a second person joins. */
 export function OnboardingInviteScreen({ navigation }: RootStackScreenProps<'OnboardingInvite'>) {
   const invite = useSendInvite();
-  const goNext = () => navigation.navigate('ReminderTime');
+  const goNext = () => navigation.navigate('NotificationsPrompt');
 
   return (
     <OnboardingFrame
@@ -16,7 +16,7 @@ export function OnboardingInviteScreen({ navigation }: RootStackScreenProps<'Onb
       subtitle="Your streak starts when the second person joins, so this is the step that matters."
       step={stepOf('founder', 'OnboardingInvite')}
       onBack={() => navigation.goBack()}
-      primaryLabel={invite.fallback ? 'Done' : 'Send invite'}
+      primaryLabel={invite.fallback ? 'Done' : invite.name.trim() ? `Send to ${invite.name.trim()}` : 'Send invite'}
       onPrimary={async () => {
         if (invite.fallback) {
           await invite.commit();

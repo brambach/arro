@@ -27,7 +27,7 @@ export function HowYouMoveScreen({ navigation }: RootStackScreenProps<'HowYouMov
         setAsking(false);
       }
     }
-    if (next) navigation.navigate(next as 'ReminderTime');
+    if (next) navigation.navigate(next as 'NotificationsPrompt');
   };
 
   return (

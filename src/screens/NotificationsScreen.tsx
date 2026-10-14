@@ -10,7 +10,7 @@ import { useApp } from '../state/AppState';
 import { showError } from '../state/confirm';
 import { NotificationPermission, notificationPermission } from '../state/notifications';
 import { RootStackScreenProps } from '../navigation/types';
-import { REMINDER_SLOTS } from './onboarding/ReminderTimeScreen';
+import { REMINDER_SLOTS } from '../state/reminders';
 import { Backdrop } from '../components/Backdrop';
 
 /**

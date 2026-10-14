@@ -32,8 +32,8 @@ function splitWords(el) {
   walk(el);
 }
 
-// The day card acts out a day once it's in view: You, Dad and Nan check in,
-// Mum still has today for a moment, then she moves and the streak goes up.
+// The day card acts out a day once it's in view: You, Dad and Grandma check in,
+// Mom still has today for a moment, then she moves and the streak goes up.
 function prepareDay(card) {
   const rows = [...card.querySelectorAll('li')];
   card.classList.add('instant');
@@ -49,14 +49,14 @@ function playDay(card, rows) {
     row.classList.add('is-kept', 'just');
     at(520, () => row.classList.remove('just'));
   };
-  const mum = rows[rows.length - 1];
+  const mom = rows[rows.length - 1];
   at(900, () => checkIn(rows[0]));
   at(1500, () => checkIn(rows[1]));
   at(2100, () => checkIn(rows[2]));
-  // Mum still has today. Hold here long enough to read it.
+  // Mom still has today. Hold here long enough to read it.
   at(4600, () => {
-    mum.querySelector('.act')?.classList.add('on');
-    checkIn(mum);
+    mom.querySelector('.act')?.classList.add('on');
+    checkIn(mom);
   });
   at(5300, () => card.querySelector('.roll')?.classList.add('on'));
   at(5800, () => {
@@ -140,6 +140,17 @@ document.addEventListener('DOMContentLoaded', () => {
     if (code.length >= 4) {
       out.textContent = code;
       out.closest('[hidden]')?.removeAttribute('hidden');
+      // Copy, so it can be pasted into Arro instead of typed.
+      const copy = document.getElementById('copy-code');
+      if (copy && navigator.clipboard) {
+        copy.hidden = false;
+        copy.addEventListener('click', () => {
+          navigator.clipboard.writeText(code).then(
+            () => { copy.textContent = 'Copied'; setTimeout(() => { copy.textContent = 'Copy code'; }, 2000); },
+            () => { copy.hidden = true; },
+          );
+        });
+      }
     }
   }
 });

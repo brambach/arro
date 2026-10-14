@@ -6,7 +6,6 @@ export type RootStackParamList = {
   // Onboarding: only in the stack while there's no saved session.
   Welcome: undefined;
   JoinCode: undefined;
-  InvitePreview: undefined;
   SignIn: undefined;
   MeetFamily: undefined;
   NameFamily: undefined;
@@ -14,7 +13,6 @@ export type RootStackParamList = {
   HowItWorks: undefined;
   HowYouMove: undefined;
   OnboardingInvite: undefined;
-  ReminderTime: undefined;
   /** `returning`: an existing account signing in on a phone that hasn't been asked yet. */
   NotificationsPrompt: { returning?: boolean } | undefined;
   // The app: only in the stack once there is one.

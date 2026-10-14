@@ -14,6 +14,8 @@ export function JoinCodeScreen({ navigation }: RootStackScreenProps<'JoinCode'>)
   const code = draft.joinCode;
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  // Filled in by an invite link before this screen opened.
+  const [fromLink] = useState(() => code.length >= 4);
   const ready = code.trim().length >= 4 && !busy;
 
   const find = async () => {
@@ -22,7 +24,7 @@ export function JoinCodeScreen({ navigation }: RootStackScreenProps<'JoinCode'>)
     setError(null);
     try {
       await lookUpInvite();
-      navigation.navigate('InvitePreview');
+      navigation.navigate('SignIn');
     } catch (e) {
       if (e instanceof InviteError) setError(e.message);
       else showError('Couldn’t check the code', 'Check your connection and try again.');
@@ -34,7 +36,7 @@ export function JoinCodeScreen({ navigation }: RootStackScreenProps<'JoinCode'>)
   return (
     <OnboardingFrame
       title="Enter your code"
-      subtitle="It’s in the message your family member sent."
+      subtitle={fromLink ? 'From your invite. Tap “Find my family” to see who’s in.' : 'It’s in the message your family member sent.'}
       step={stepOf('invitee', 'JoinCode')}
       onBack={() => navigation.goBack()}
       primaryLabel="Find my family"
@@ -67,6 +69,6 @@ export function JoinCodeScreen({ navigation }: RootStackScreenProps<'JoinCode'>)
 
 const styles = StyleSheet.create({
   code: { fontSize: 22, letterSpacing: 4, fontWeight: '600', textAlign: 'center', height: 60 },
-  hint: { fontSize: 13, lineHeight: 18, color: colors.faint, marginTop: 12, textAlign: 'center' },
+  hint: { fontSize: 15, lineHeight: 20, color: colors.faint, marginTop: 12, textAlign: 'center' },
   error: { color: colors.ink },
 });

@@ -36,10 +36,10 @@ Can be changed any time without a new build.
 
 > Arro is a daily ritual for families who live apart.
 >
-> Everyone in the family moves a little each day: a walk, a swim, yoga, a gym session, a bike ride. When they do, the family sees it, and together you keep one streak going. It's not a fitness app. Nobody's competing, and a walk round the block counts the same as a marathon.
+> Everyone in the family moves a little each day: a walk, a swim, yoga, a gym session, a bike ride. When they do, the family sees it, and together you keep one streak going. It's not a fitness app. Nobody's competing, and a walk around the block counts the same as a marathon.
 >
 > ONE STREAK, THE WHOLE FAMILY
-> The family streak grows each day everyone moves. Each person also has a free freeze that covers a missed day automatically, so a sick day or a busy day doesn't cost anyone, and it comes back a week later. Missing a day is never called out. Arro says "Mum still has today", never who broke it.
+> The family streak grows each day everyone moves. Each person also has a free freeze that covers a missed day automatically, so a sick day or a busy day doesn't cost anyone, and it comes back a week later. Missing a day is never called out. Arro says "Mom still has today", never who broke it.
 >
 > ANY MOVEMENT COUNTS
 > Tap "I moved today" and pick what you did. Duration is optional and never ranked. If you already track workouts, connect Apple Health and they count by themselves, including workouts from apps that save to Health.

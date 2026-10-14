@@ -131,23 +131,24 @@ Founder path:
 2. Sign in (stubbed until phase 2).
 3. Name the family.
 4. How you move: Apple Health (automatic) or check in by hand.
-5. Invite (main step): share sheet with a prefilled message and a short join
-   code. "I'll do it later" is secondary. The message adds the link once phase 5
-   is live; until then it says to tap "I have an invite" and enter the code.
-6. "When do you usually move?" morning / lunch / evening. This sets the reminder
-   and the "usually evenings" line on Today. Then the notification pre-prompt.
+5. Invite (main step): share sheet with a prefilled message, the
+   arrofamily.com/join link and a short join code. Quick picks (Mom, Dad,
+   Grandma...) fill "Who's it for?". "I'll do it later" is secondary.
+6. "When do you usually move?" morning / lunch / evening / no reminder, on the
+   same screen as the notification pre-prompt. This sets the reminder and the
+   "usually evenings" line on Today.
 7. Today in its waiting state.
 
 Invitee path:
-1. Link or code -> "Bryce invited you to join <family>" with member faces and
-   the current family streak. Before sign-in the server only returns the family
-   name and member count; names, faces and the streak come after sign-in
-   (`preview_invite`).
-2. Sign in.
-3. Optional photo. Colour assigned automatically.
-4. How you move.
-5. Reminder time and notification pre-prompt.
-6. Today, with "Log today" as the main action.
+1. Link or code.
+2. Sign in, titled "Join <family>" with how many people are in. Before sign-in
+   the server only returns the family name and member count (`preview_invite`).
+3. "Bryce invited you to <family>" with member faces and the current family
+   streak, which come after sign-in.
+4. Optional photo. Colour assigned automatically.
+5. How the streak works, then how you move.
+6. Reminder time and notification pre-prompt, one screen.
+7. Today, with "Log today" as the main action.
 
 Also in this phase:
 - A **Log today** action on `TodayScreen.tsx`: workout type, optional duration,
@@ -218,10 +219,10 @@ Also in this phase:
   served over HTTPS, and `ios.associatedDomains` in `app.json`.
 - Links don't survive an App Store install reliably, so every invite also carries
   a short code, and the welcome screen asks for it.
-- Until the domain is bought, `inviteMessage()` in `src/state/invite.ts` leaves
-  the link out and sends only the code. `inviteLink()` is kept for this phase;
-  add it back to the message here. Joining by code works without the domain, so
-  TestFlight family testing doesn't wait on this phase.
+- arrofamily.com is live, so `inviteMessage()` in `src/state/invite.ts` already
+  sends the link (`/join/<code>`, which shows the code and how to get Arro) with
+  the code under it. Universal links only change where the link opens. Joining by
+  code works without them, so TestFlight family testing doesn't wait on this phase.
 
 ## Phase 6 - App Store
 

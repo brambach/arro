@@ -5,12 +5,13 @@ import { weights } from '../theme/typography';
 import { streakRules } from '../data/streakRules';
 import { Card } from './Card';
 
-/** The streak and freeze rules, one card. Used in onboarding and in Settings > Streak rules. */
-export function StreakRulesList() {
+/** The streak and freeze rules, one card. `brief` (onboarding) keeps the essential ones; Settings > Streak rules shows all. */
+export function StreakRulesList({ brief = false }: { brief?: boolean }) {
+  const rules = brief ? streakRules.filter((r) => 'essential' in r && r.essential) : streakRules;
   return (
     <Card padding={0} style={{ paddingHorizontal: 18 }}>
-      {streakRules.map((rule, i) => (
-        <View key={rule.title} style={[styles.row, i < streakRules.length - 1 && styles.rowBorder]}>
+      {rules.map((rule, i) => (
+        <View key={rule.title} style={[styles.row, i < rules.length - 1 && styles.rowBorder]}>
           <Text style={styles.title}>{rule.title}</Text>
           <Text style={styles.body}>{rule.body}</Text>
         </View>
@@ -22,6 +23,6 @@ export function StreakRulesList() {
 const styles = StyleSheet.create({
   row: { paddingVertical: 14 },
   rowBorder: { borderBottomWidth: 1, borderBottomColor: colors.dividerSoft },
-  title: { fontSize: 16, fontWeight: weights.semibold, color: colors.ink },
-  body: { fontSize: 14.5, lineHeight: 20, color: colors.muted, marginTop: 3 },
+  title: { fontSize: 17, fontWeight: weights.semibold, color: colors.ink },
+  body: { fontSize: 15.5, lineHeight: 21, color: colors.muted, marginTop: 3 },
 });

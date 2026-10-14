@@ -1,5 +1,5 @@
-import React from 'react';
-import { Pressable, StyleSheet, Text, View } from 'react-native';
+import React, { useEffect } from 'react';
+import { Linking, Pressable, StyleSheet, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { colors, radii, shadows } from '../../theme/tokens';
 import { motion } from '../../theme/motion';
@@ -10,11 +10,33 @@ import { Glass } from '../../components/Glass';
 import { Backdrop } from '../../components/Backdrop';
 import { PrimaryButton } from '../../components/PrimaryButton';
 import { useApp } from '../../state/AppState';
+import { joinCodeFromUrl } from '../../state/invite';
 import { RootStackScreenProps } from '../../navigation/types';
+
+/** The launch link is handled once, so signing out later doesn't reopen an old invite. */
+let launchLinkHandled = false;
 
 export function WelcomeScreen({ navigation }: RootStackScreenProps<'Welcome'>) {
   const insets = useSafeAreaInsets();
-  const { startFlow } = useApp();
+  const { startFlow, updateDraft } = useApp();
+
+  // An invite link (arrofamily.com/join/<code>) skips straight to joining with the code filled in.
+  // It reaches the app once phase 5's universal links are set up; on web it's the page URL.
+  useEffect(() => {
+    const open = (url: string | null) => {
+      const code = joinCodeFromUrl(url);
+      if (!code) return;
+      startFlow('invitee');
+      updateDraft({ joinCode: code });
+      navigation.navigate('JoinCode');
+    };
+    if (!launchLinkHandled) {
+      launchLinkHandled = true;
+      Linking.getInitialURL().then(open).catch(() => undefined);
+    }
+    const sub = Linking.addEventListener('url', (e) => open(e.url));
+    return () => sub.remove();
+  }, [startFlow, updateDraft, navigation]);
 
   return (
     <View style={[styles.root, { paddingTop: insets.top, paddingBottom: insets.bottom + 24 }]}>

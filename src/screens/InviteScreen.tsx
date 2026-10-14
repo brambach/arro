@@ -34,7 +34,7 @@ export function InviteScreen({ navigation }: RootStackScreenProps<'Invite'>) {
       </ScrollView>
       <View style={[styles.footer, { paddingBottom: insets.bottom + 14 }]}>
         <PrimaryButton
-          title={invite.fallback ? 'Done' : 'Send invite'}
+          title={invite.fallback ? 'Done' : invite.name.trim() ? `Send to ${invite.name.trim()}` : 'Send invite'}
           onPress={async () => {
             if (invite.fallback) {
               await invite.commit();

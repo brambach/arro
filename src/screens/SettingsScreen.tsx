@@ -11,7 +11,7 @@ import { confirmAction, showError } from '../state/confirm';
 import { useApp, useView } from '../state/AppState';
 import { NotificationPermission, notificationPermission } from '../state/notifications';
 import { RootStackScreenProps } from '../navigation/types';
-import { REMINDER_SLOTS } from './onboarding/ReminderTimeScreen';
+import { REMINDER_SLOTS } from '../state/reminders';
 import { Backdrop } from '../components/Backdrop';
 
 // Ink icons on a paper tile: one quiet set instead of five bright hues.

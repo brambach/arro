@@ -82,7 +82,7 @@ export interface AppView {
   today: {
     dateLabel: string;
     greeting: string;
-    /** The "Darcey's still got today" line under the summary card. */
+    /** The "Mom's still got today" line under the summary card. */
     pending: { id?: MemberId; prompt: string; cta?: string } | null;
   };
   feed: FeedItem[];
@@ -320,8 +320,8 @@ function founderView(session: SavedSession, now: Date): AppView {
 }
 
 /**
- * The preview family: Bryce, Darcey and Whit. With `preview` set, you are Bryce.
- * Without it, you're an invitee who joined them as the fourth member.
+ * The preview family: Bryce, Mom, Dad and Grandma. With `preview` set, you are Bryce.
+ * Without it, you're an invitee who joined them as the fifth member.
  */
 function previewFamilyView(session: SavedSession, preview: Preview | null, now: Date): AppView {
   const todayKey = dayKey(now);
@@ -336,8 +336,8 @@ function previewFamilyView(session: SavedSession, preview: Preview | null, now: 
     byId.bryce.meta = 'Still has today · usually mornings';
   }
   if (preview === 'goalDone') {
-    byId.darcey.today = 'kept';
-    byId.darcey.meta = 'Walk · 30 min · 5:40 PM';
+    byId.mom.today = 'kept';
+    byId.mom.meta = 'Walk · 30 min · 5:40 PM';
   }
 
   // Who has a post in the demo feed is decided before anything you log.
@@ -351,8 +351,6 @@ function previewFamilyView(session: SavedSession, preview: Preview | null, now: 
     members = base;
   } else {
     byId.bryce.relationship = undefined;
-    byId.darcey.relationship = undefined;
-    byId.whit.relationship = undefined;
     me = meMember(session, logs, todayKey, personalStreaks(logs, todayKey).current);
     members = [...base, me];
   }
@@ -386,7 +384,7 @@ function previewFamilyView(session: SavedSession, preview: Preview | null, now: 
   // Pending line under the summary card.
   let pending: AppView['today']['pending'] = null;
   if (nudgeTarget && iKeptToday && preview !== 'afterBreak') {
-    pending = { id: nudgeTarget.id, prompt: `${nudgeTarget.name}’s still got today`, cta: nudgeTarget.id === 'darcey' ? 'cheer her on' : 'cheer them on' };
+    pending = { id: nudgeTarget.id, prompt: `${nudgeTarget.name}’s still got today`, cta: nudgeTarget.id === 'mom' || nudgeTarget.id === 'grandma' ? 'cheer her on' : 'cheer them on' };
   }
 
   // Feed: the demo posts that still match, plus anything you logged.

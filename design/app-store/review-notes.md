@@ -24,14 +24,14 @@ In the hosted `arro` project (ref mvbphoguqaipuqmdbuir):
 
 1. **Three demo users in `auth.users`**, because `members.user_id` must point
    at a real auth user. Create them with the Auth admin API or the dashboard
-   (Authentication > Add user, email like `demo-mum@arrofamily.com`, no
+   (Authentication > Add user, email like `demo-mom@arrofamily.com`, no
    password needed). Nobody signs in as them.
 2. **One family**, for example "The Demo Family", time zone
    `America/Los_Angeles` (Cupertino reviewers).
-3. **Three `members` rows** in it: "Mum", "Dad", "Sam", each with a palette
+3. **Three `members` rows** in it: "Mom", "Dad", "Sam", each with a palette
    colour, the family's time zone, and `joined_on` about 30 days back.
 4. **About 22 days of `workouts`** spread across them, a mix of walk, run,
-   yoga and swim, some with short notes ("Loop round the park with the dog").
+   yoga and swim, some with short notes ("Loop around the park with the dog").
    A streak in the low 20s shows "Your first 30 days together" in progress.
    Don't aim for the milestone card: it only shows while the current streak is
    30 or 31 and equals the longest (`buildView.ts`, goal status `done`), so it

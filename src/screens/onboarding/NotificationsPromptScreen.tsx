@@ -12,30 +12,31 @@ import { showError } from '../../state/confirm';
 import { requestNotificationPermission } from '../../state/notifications';
 import { RootStackScreenProps } from '../../navigation/types';
 import { stepOf } from './steps';
-import { REMINDER_SLOTS } from './ReminderTimeScreen';
+import { REMINDER_SLOTS } from '../../state/reminders';
 
 /**
- * Pre-prompt: explains what the family's notifications are before iOS asks. The ask
- * is for cheers, nudges and joins; the daily reminder is a separate choice on the
- * screen. "Turn on notifications" shows iOS's sheet; either button finishes. A
- * "Don't Allow" there still finishes, and Settings > Notifications shows it's off.
+ * The last onboarding step: when you usually move (the reminder time, and the
+ * "usually evenings" line your family sees), then the pre-prompt before iOS asks.
+ * The ask covers cheers, nudges and joins; "No daily reminder" keeps those but
+ * skips the reminder. One "Continue", as Apple asks for a screen before a system
+ * prompt: it shows iOS's sheet, and either answer there finishes. A "Don't Allow"
+ * still finishes, and Settings > Notifications shows it's off.
  *
  * `returning`: an existing account signing in on a phone that hasn't been asked
  * yet. No reminder choice or steps then; it goes straight to the family.
  */
 export function NotificationsPromptScreen({ navigation, route }: RootStackScreenProps<'NotificationsPrompt'>) {
-  const { draft, completeOnboarding, finishSignIn } = useApp();
+  const { draft, updateDraft, completeOnboarding, finishSignIn } = useApp();
   const returning = !!route.params?.returning;
-  const time = REMINDER_SLOTS.find((s) => s.slot === draft.reminder)?.time ?? '6:30 PM';
   const [reminder, setReminder] = useState(true);
   const [busy, setBusy] = useState(false);
 
   // Joining happens here for an invitee, so a code can expire on the way.
-  const finish = async (allow: boolean) => {
+  const finish = async () => {
     if (busy) return;
     setBusy(true);
     try {
-      const permission = allow ? await requestNotificationPermission() : null;
+      const permission = await requestNotificationPermission();
       // A reminder that can't arrive isn't kept. The web preview has no notifications, so it keeps the choice.
       const canNotify = permission === 'granted' || permission === 'unavailable';
       if (returning) await finishSignIn();
@@ -49,37 +50,52 @@ export function NotificationsPromptScreen({ navigation, route }: RootStackScreen
     }
   };
 
+  if (returning) {
+    return (
+      <OnboardingFrame
+        title="Hear from your family?"
+        subtitle="Arro lets you know when someone cheers you on or joins, and at most once an evening who still has today."
+        primaryLabel="Continue"
+        primaryDisabled={busy}
+        onPrimary={() => finish()}
+      >
+        <Card padding={20} style={styles.card}>
+          <View style={styles.bell}>
+            <BellIcon size={28} color={colors.inkSoft} />
+          </View>
+          <Text style={styles.body}>No red badges, no countdowns. You can turn them off any time in Settings.</Text>
+        </Card>
+        <Text style={styles.also}>Next, your iPhone asks to allow notifications.</Text>
+      </OnboardingFrame>
+    );
+  }
+
   return (
     <OnboardingFrame
-      title="Hear from your family?"
-      subtitle="Arro lets you know when someone cheers you on or joins, and at most once an evening who still has today."
-      step={returning ? undefined : stepOf(draft.role, 'NotificationsPrompt')}
-      onBack={returning ? undefined : () => navigation.goBack()}
-      primaryLabel="Turn on notifications"
+      title="When do you usually move?"
+      subtitle="Arro reminds you then, only if you haven’t moved yet. Your family sees “usually evenings”, never a countdown."
+      step={stepOf(draft.role, 'NotificationsPrompt')}
+      onBack={() => navigation.goBack()}
+      primaryLabel="Continue"
       primaryDisabled={busy}
-      onPrimary={() => finish(true)}
-      secondaryLabel="Not now"
-      onSecondary={() => finish(false)}
+      onPrimary={() => finish()}
     >
-      <Card padding={20} style={styles.card}>
-        <View style={styles.bell}>
-          <BellIcon size={28} color={colors.inkSoft} />
-        </View>
-        <Text style={styles.body}>
-          No red badges, no countdowns. You can turn them off any time in Settings.
-        </Text>
-      </Card>
-      {returning ? null : (
-        <View style={styles.choices}>
-          <ChoiceRow
-            title="Daily reminder too"
-            body={`At ${time}, only if you haven’t moved yet`}
-            selected={reminder}
-            onPress={() => setReminder(true)}
-          />
-          <ChoiceRow title="No daily reminder" selected={!reminder} onPress={() => setReminder(false)} />
-        </View>
-      )}
+      {REMINDER_SLOTS.map((s) => (
+        <ChoiceRow
+          key={s.slot}
+          title={s.title}
+          body={`Reminder at ${s.time}`}
+          selected={reminder && draft.reminder === s.slot}
+          onPress={() => {
+            setReminder(true);
+            updateDraft({ reminder: s.slot });
+          }}
+        />
+      ))}
+      <ChoiceRow title="No daily reminder" selected={!reminder} onPress={() => setReminder(false)} />
+      <Text style={styles.also}>
+        You’ll also hear when someone cheers you on or joins. Next, your iPhone asks to allow notifications.
+      </Text>
     </OnboardingFrame>
   );
 }
@@ -95,5 +111,5 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   body: { ...type.body, textAlign: 'center', marginTop: 12 },
-  choices: { marginTop: 18 },
+  also: { ...type.meta, marginTop: 14 },
 });

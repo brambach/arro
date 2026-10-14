@@ -38,7 +38,7 @@ export function OnboardingPhotoScreen({ navigation }: RootStackScreenProps<'Onbo
         />
         <View style={styles.colorRow}>
           <View style={[styles.dot, { backgroundColor: color }]} />
-          <Text style={styles.colorText}>Your colour is picked for you</Text>
+          <Text style={styles.colorText}>Your color is picked for you</Text>
         </View>
       </View>
     </OnboardingFrame>

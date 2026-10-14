@@ -47,8 +47,9 @@ export function OnboardingFrame({
       <Backdrop />
       <View style={styles.topBar}>
         {onBack ? (
-          <Pressable onPress={onBack} hitSlop={10} accessibilityLabel="Back" style={styles.back}>
+          <Pressable onPress={onBack} accessibilityRole="button" accessibilityLabel="Back" style={styles.backButton}>
             <ChevronLeft />
+            <Text style={styles.backText}>Back</Text>
           </Pressable>
         ) : (
           <View style={styles.back} />
@@ -78,7 +79,7 @@ export function OnboardingFrame({
       <View style={[styles.footer, { paddingBottom: insets.bottom + 14 }]}>
         <PrimaryButton title={primaryLabel} onPress={onPrimary} disabled={primaryDisabled} />
         {secondaryLabel ? (
-          <Pressable onPress={onSecondary} hitSlop={8} accessibilityRole="button" style={styles.secondary}>
+          <Pressable onPress={onSecondary} accessibilityRole="button" style={styles.secondary}>
             <Text style={styles.secondaryText}>{secondaryLabel}</Text>
           </Pressable>
         ) : null}
@@ -89,8 +90,11 @@ export function OnboardingFrame({
 
 const styles = StyleSheet.create({
   root: { flex: 1, backgroundColor: colors.screen },
-  topBar: { flexDirection: 'row', alignItems: 'center', gap: 12, height: 40, paddingHorizontal: 16 },
+  topBar: { flexDirection: 'row', alignItems: 'center', gap: 12, height: 44, paddingHorizontal: 12 },
   back: { width: 28, height: 28, alignItems: 'center', justifyContent: 'center' },
+  // A word next to the arrow, and a full 44pt target: clearer for anyone new to iPhone apps.
+  backButton: { flexDirection: 'row', alignItems: 'center', gap: 2, height: 44, paddingRight: 6 },
+  backText: { fontSize: 17, color: colors.inkSoft },
   bar: { flex: 1, height: 4, borderRadius: 2, backgroundColor: colors.divider, overflow: 'hidden' },
   barFill: { height: 4, borderRadius: 2, backgroundColor: colors.ink },
   body: { paddingHorizontal: 26, paddingTop: 18, paddingBottom: 20 },
@@ -98,6 +102,6 @@ const styles = StyleSheet.create({
   subtitle: { fontSize: 16, lineHeight: 22, color: colors.muted, marginTop: 8 },
   content: { marginTop: 22 },
   footer: { paddingHorizontal: 26, paddingTop: 10 },
-  secondary: { alignItems: 'center', paddingTop: 16, paddingBottom: 4 },
-  secondaryText: { fontSize: 15, fontWeight: weights.semibold, color: colors.muted },
+  secondary: { alignItems: 'center', justifyContent: 'center', minHeight: 44, marginTop: 6 },
+  secondaryText: { fontSize: 16, fontWeight: weights.semibold, color: colors.muted },
 });

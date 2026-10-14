@@ -8,6 +8,13 @@ import { ReminderSlot } from '../data/types';
 import { addDays, dayKey, fromKey } from './dates';
 
 /** The clock time for each slot. Mirrors SLOT_TIMES in backend.ts (members.reminder_time). */
+/** The slots as people pick them: onboarding, Settings and Notifications. */
+export const REMINDER_SLOTS: { slot: ReminderSlot; title: string; time: string }[] = [
+  { slot: 'morning', title: 'Morning', time: '8:00 AM' },
+  { slot: 'lunch', title: 'Lunchtime', time: '12:30 PM' },
+  { slot: 'evening', title: 'Evening', time: '6:30 PM' },
+];
+
 export const REMINDER_CLOCK: Record<ReminderSlot, { hour: number; minute: number }> = {
   morning: { hour: 8, minute: 0 },
   lunch: { hour: 12, minute: 30 },

@@ -1,15 +1,21 @@
-/** Streak and freeze rules. Shown once in onboarding and again in Settings > Streak rules. */
+/**
+ * Streak and freeze rules. Settings > Streak rules shows them all; onboarding shows
+ * only the `essential` ones, so the first run teaches three things, not six.
+ */
 export const streakRules = [
   {
     title: 'One streak for the whole family',
+    essential: true,
     body: 'A day counts when everyone has moved or used a freeze. The streak starts when the second person joins.',
   },
   {
     title: 'Any movement counts',
+    essential: true,
     body: 'A walk, a class, a swim, or a tap on “I moved today”. No minimum, and nobody is ranked.',
   },
   {
     title: 'One freeze each',
+    essential: true,
     body: 'If you can’t move one day, your freeze covers it automatically. It comes back 7 days after you use it.',
   },
   {

@@ -19,7 +19,7 @@
   --ink: #2B2722;
   --ink-soft: #575049;
   --muted: #6B645B;
-  --faint: #7D766C;
+  --faint: #6F685E;
   --clay: #A65A3C;
   --clay-press: #8A4A31;
   --kept: #5D7A63;
@@ -493,6 +493,22 @@ a:hover { text-decoration-color: currentColor; }
   line-height: 1.15;
   margin-top: 0.35rem;
 }
+.code-row { display: flex; align-items: center; justify-content: space-between; gap: 1rem; flex-wrap: wrap; margin-top: 0.35rem; }
+.code-row output { margin-top: 0; }
+.copy {
+  font: inherit;
+  font-size: 1rem;
+  font-weight: 600;
+  color: var(--ink);
+  background: var(--sunk);
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  min-height: 44px;
+  padding: 0 1.15rem;
+  cursor: pointer;
+}
+.copy:hover { background: var(--today-bg); }
+.copy:focus-visible { outline: 2px solid var(--clay); outline-offset: 2px; }
 .doc .steps { max-width: var(--measure); }
 .note {
   margin-top: 2rem;
@@ -500,6 +516,38 @@ a:hover { text-decoration-color: currentColor; }
   color: var(--muted);
   font-size: 1rem;
 }
+
+/* --- Questions (home) --------------------------------------------------- */
+
+.faq { max-width: var(--measure); border-top: 1px solid var(--divider); }
+.faq details { border-bottom: 1px solid var(--divider); }
+.faq summary {
+  list-style: none;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  min-height: 44px;
+  padding: 1.05rem 0;
+  font-size: 1.15rem;
+  font-weight: 600;
+  color: var(--ink);
+}
+.faq summary::-webkit-details-marker { display: none; }
+.faq summary::after {
+  content: "";
+  flex: none;
+  width: 0.6rem;
+  height: 0.6rem;
+  border-right: 2px solid var(--muted);
+  border-bottom: 2px solid var(--muted);
+  transform: translateY(-25%) rotate(45deg);
+  transition: transform var(--dur-utility) var(--ease-utility);
+}
+.faq details[open] summary::after { transform: translateY(25%) rotate(-135deg); }
+.faq summary:focus-visible { outline: 2px solid var(--clay); outline-offset: 4px; border-radius: 4px; }
+.faq details p { color: var(--ink-soft); padding: 0 0 1.15rem; margin: 0; }
 
 /* --- Footer ------------------------------------------------------------- */
 
@@ -683,7 +731,7 @@ body::after {
 }
 .fw-row {
   display: grid;
-  grid-template-columns: 3.4rem repeat(7, minmax(0, 1fr));
+  grid-template-columns: 4.5rem repeat(7, minmax(0, 1fr));
   align-items: center;
   justify-items: center;
   gap: 0.35rem;
@@ -1157,7 +1205,7 @@ body::after {
 }
 
 /* Reduced motion: no travel, no overshoot, no loops. Everything is shown in
-   its finished state; the card keeps its written state (Mum still has
+   its finished state; the card keeps its written state (Mom still has
    today) because site.js doesn't play the day. */
 @media (prefers-reduced-motion: reduce) {
   :root {

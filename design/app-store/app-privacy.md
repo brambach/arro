@@ -94,7 +94,7 @@ is in `package.json`, `registerPushToken()` and `forgetPushToken()` are in
 
 The four kinds: a **cheer** on someone's workout, someone **joined** the
 family, the **evening** "X still has today" message to people who already
-moved, and a **nudge** ("Mum is cheering you on") when someone taps "Send a
+moved, and a **nudge** ("Mom is cheering you on") when someone taps "Send a
 cheer" for a person who hasn't moved yet. A nudge is saved in
 `public.nudges` (sender, recipient, date) as before; its push is only queued
 between 07:00 and 21:00 in the recipient's time zone.
