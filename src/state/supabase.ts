@@ -12,6 +12,25 @@ import { AppState, Platform } from 'react-native';
 const url = process.env.EXPO_PUBLIC_SUPABASE_URL ?? '';
 const anonKey = process.env.EXPO_PUBLIC_SUPABASE_ANON_KEY ?? '';
 
+/**
+ * iOS sometimes hands back a pooled connection the server has already closed,
+ * most often right after the app was in the background (Apple's sign-in sheet
+ * does this), and the request fails with "The network connection was lost"
+ * before it is sent. One immediate retry opens a fresh connection.
+ */
+const fetchWithRetry: typeof fetch = async (input, init) => {
+  try {
+    return await fetch(input, init);
+  } catch (e) {
+    if (!isConnectionLost(e)) throw e;
+    return fetch(input, init);
+  }
+};
+
+function isConnectionLost(e: unknown): boolean {
+  return e instanceof Error && /network connection was lost/i.test(e.message);
+}
+
 export const supabase: SupabaseClient | null =
   url && anonKey
     ? createClient(url, anonKey, {
@@ -22,6 +41,7 @@ export const supabase: SupabaseClient | null =
           persistSession: true,
           detectSessionInUrl: false,
         },
+        global: { fetch: fetchWithRetry },
       })
     : null;
 
