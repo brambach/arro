@@ -149,8 +149,8 @@ interface AppContextValue {
   addInvite: (name: string) => Promise<void>;
   refresh: () => Promise<void>;
   signOut: () => Promise<void>;
-  /** Deletes the account on the server (or the local family) and signs out. */
-  deleteAccount: () => Promise<void>;
+  /** Deletes the account on the server (or the local family) and signs out. 'cancelled' if Apple's sheet was closed. */
+  deleteAccount: () => Promise<'deleted' | 'cancelled'>;
   preview: Preview | null;
   setPreview: (preview: Preview | null) => void;
 }
@@ -668,14 +668,13 @@ export function AppStateProvider({ children }: { children: React.ReactNode }) {
 
   const deleteAccount = useCallback(async () => {
     const remote = sessionRef.current?.remote;
-    // Storage files aren't deleted with the account's rows, so remove the photos first.
-    if (remote) await backend.deleteMyPhotos(remote.familyId, remote.memberId).catch(() => undefined);
-    // Deleting the account removes its push tokens on the server too.
-    if (remote) await backend.deleteAccount();
+    // Deleting the account removes its photos and push tokens on the server too.
+    if (remote && (await backend.deleteAccount(remote)) === 'cancelled') return 'cancelled';
     pushTokenRef.current = null;
     await scheduleReminders(null, false);
     await clearMoveMethod().catch(() => undefined);
     await clearAll();
+    return 'deleted';
   }, [clearAll]);
 
   const builtView = useMemo(() => (session ? buildView(session, preview, family) : null), [session, preview, family]);

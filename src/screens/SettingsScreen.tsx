@@ -90,7 +90,7 @@ export function SettingsScreen({ navigation }: RootStackScreenProps<'Settings'>)
     const ok = await confirmAction(
       'Delete your account?',
       onServer
-        ? 'This deletes your account and every workout you’ve logged. Your family keeps going without you. If you’re the last one in it, the family is deleted too. You can’t undo this.'
+        ? 'This deletes your account, every workout you’ve logged and your photos. Your family keeps going without you. If you’re the last one in it, the family is deleted too. Apple will ask you to confirm. You can’t undo this.'
         : 'This deletes the family and workouts saved on this phone. You can’t undo this.',
       'Delete account',
     );
