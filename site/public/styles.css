@@ -826,7 +826,7 @@ body::after {
 
 .ticket {
   margin-top: 2rem;
-  max-width: 22rem;
+  max-width: 25rem;
   display: grid;
   gap: 0.5rem;
   background: var(--card);
@@ -835,13 +835,13 @@ body::after {
   padding: 1.2rem 1.35rem 1.15rem;
 }
 .ticket .eyebrow { font-size: 0.72rem; }
-.ticket-code { display: flex; gap: 0.4rem; }
+.ticket-code { display: flex; gap: 0.3rem; }
 .ticket-code i {
   font-style: normal;
   font-weight: 500;
-  font-size: clamp(1.7rem, 6vw, 2.1rem);
+  font-size: clamp(1.3rem, 5vw, 1.8rem);
   line-height: 1;
-  width: 1.45em;
+  flex: 1;
   padding: 0.28em 0;
   text-align: center;
   border-radius: 0.5rem;

@@ -3,6 +3,7 @@ import { AppState as RNAppState } from 'react-native';
 import { MoveMethod, ReminderSlot, WorkoutType } from '../data/types';
 import { memberColor } from '../theme/tokens';
 import * as backend from './backend';
+import { showError } from './confirm';
 import { InvitePreview, RemoteFamily } from './backend';
 import { AppView, Preview, buildView } from './buildView';
 import { dayKey, addDays, deviceTimezone } from './dates';
@@ -88,7 +89,7 @@ const CODE_ALPHABET = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789'; // no 0/O/1/I
 
 export function makeJoinCode(): string {
   let code = '';
-  for (let i = 0; i < 6; i++) code += CODE_ALPHABET[Math.floor(Math.random() * CODE_ALPHABET.length)];
+  for (let i = 0; i < 8; i++) code += CODE_ALPHABET[Math.floor(Math.random() * CODE_ALPHABET.length)];
   return code;
 }
 
@@ -151,6 +152,8 @@ interface AppContextValue {
   signOut: () => Promise<void>;
   /** Deletes the account on the server (or the local family) and signs out. */
   deleteAccount: () => Promise<void>;
+  /** For the person who started the family: removes someone, with their workouts. */
+  removeMember: (memberId: string) => Promise<void>;
   preview: Preview | null;
   setPreview: (preview: Preview | null) => void;
 }
@@ -163,6 +166,8 @@ export function AppStateProvider({ children }: { children: React.ReactNode }) {
   const [family, setFamily] = useState<RemoteFamily | null>(null);
   const [draft, setDraft] = useState<Draft>(emptyDraft('founder'));
   const [preview, setPreview] = useState<Preview | null>(null);
+  /** The family's name, once the server says this person has been removed from it. */
+  const [removedFrom, setRemovedFrom] = useState<string | null>(null);
   const draftRef = useRef(draft);
   draftRef.current = draft;
   const sessionRef = useRef(session);
@@ -209,7 +214,10 @@ export function AppStateProvider({ children }: { children: React.ReactNode }) {
         await backend.updateMember(remote.memberId, { timezone: tz });
       }
     } catch {
-      // Offline or the server is down: the cached family stays on screen.
+      // Offline or the server is down: the cached family stays on screen. If the
+      // server answers but has no membership for this person, they were removed.
+      const membership = await backend.myMembership(remote.userId).catch(() => undefined);
+      if (membership === null) setRemovedFrom(familyRef.current?.name ?? 'your family');
     }
   }, []);
 
@@ -666,6 +674,22 @@ export function AppStateProvider({ children }: { children: React.ReactNode }) {
     await clearAll();
   }, [clearAll]);
 
+  useEffect(() => {
+    if (!removedFrom) return;
+    setRemovedFrom(null);
+    showError(`You’re no longer in ${removedFrom}`, 'To join again, ask someone in the family for a new code.');
+    signOut();
+  }, [removedFrom, signOut]);
+
+  const removeMember = useCallback(
+    async (memberId: string) => {
+      if (!sessionRef.current?.remote) return;
+      await backend.removeMember(memberId);
+      await refresh();
+    },
+    [refresh],
+  );
+
   const deleteAccount = useCallback(async () => {
     const remote = sessionRef.current?.remote;
     // Storage files aren't deleted with the account's rows, so remove the photos first.
@@ -735,6 +759,7 @@ export function AppStateProvider({ children }: { children: React.ReactNode }) {
       refresh,
       signOut,
       deleteAccount,
+      removeMember,
       preview,
       setPreview,
     }),
@@ -762,6 +787,7 @@ export function AppStateProvider({ children }: { children: React.ReactNode }) {
       refresh,
       signOut,
       deleteAccount,
+      removeMember,
       preview,
     ],
   );

@@ -5,13 +5,33 @@ import { colors, radii, shadows, spacing } from '../theme/tokens';
 import { type } from '../theme/typography';
 import { AvatarRing } from '../components/AvatarRing';
 import { ChevronLeft, ChevronRight, PlusIcon, UserPlusIcon } from '../components/Icons';
-import { useView } from '../state/AppState';
+import { useApp, useView } from '../state/AppState';
+import { confirmAction, showError } from '../state/confirm';
+import { Member } from '../data/types';
 import { RootStackScreenProps } from '../navigation/types';
 import { Backdrop } from '../components/Backdrop';
 
 export function FamilyMembersScreen({ navigation }: RootStackScreenProps<'FamilyMembers'>) {
   const insets = useSafeAreaInsets();
-  const { allMembers } = useView();
+  const { allMembers, me, canRemoveMembers } = useView();
+  const { removeMember } = useApp();
+
+  // Only the person who started the family can remove someone, and never themselves.
+  const canRemove = (m: Member) => canRemoveMembers && !m.invited && m.id !== me.id;
+
+  const askToRemove = async (m: Member) => {
+    const ok = await confirmAction(
+      `Remove ${m.name}?`,
+      `${m.name} leaves the family and their workouts go with them. Your family’s code changes, so they’d need a new one to join again.`,
+      'Remove',
+    );
+    if (!ok) return;
+    try {
+      await removeMember(m.id);
+    } catch {
+      showError(`Couldn’t remove ${m.name}`, 'Check your connection and try again.');
+    }
+  };
 
   return (
     <View style={[styles.root, { paddingTop: insets.top }]}>
@@ -34,9 +54,12 @@ export function FamilyMembersScreen({ navigation }: RootStackScreenProps<'Family
               key={m.id}
               // People who've joined have a map; someone only invited doesn't yet.
               onPress={m.invited ? undefined : () => navigation.navigate('Map', { memberId: m.id })}
+              onLongPress={canRemove(m) ? () => askToRemove(m) : undefined}
               disabled={m.invited}
               accessibilityRole={m.invited ? undefined : 'button'}
               accessibilityLabel={m.invited ? m.name : `${m.name}, open their map`}
+              accessibilityActions={canRemove(m) ? [{ name: 'remove', label: `Remove ${m.name} from the family` }] : undefined}
+              onAccessibilityAction={(e) => e.nativeEvent.actionName === 'remove' && askToRemove(m)}
               style={[styles.row, i < allMembers.length - 1 && styles.rowBorder]}
             >
               <AvatarRing member={m} size={40} />
@@ -48,6 +71,9 @@ export function FamilyMembersScreen({ navigation }: RootStackScreenProps<'Family
             </Pressable>
           ))}
         </View>
+        {canRemoveMembers && allMembers.some(canRemove) ? (
+          <Text style={styles.hint}>To remove someone, touch and hold their name.</Text>
+        ) : null}
 
         <Pressable
           onPress={() => navigation.navigate('Invite')}
@@ -84,6 +110,7 @@ const styles = StyleSheet.create({
   rowBorder: { borderBottomWidth: 1, borderBottomColor: colors.divider },
   name: { ...type.name },
   rel: { ...type.meta, marginTop: 1 },
+  hint: { ...type.meta, marginTop: 8, marginHorizontal: 4 },
   inviteRow: { flexDirection: 'row', alignItems: 'center', gap: 13, paddingVertical: 14, marginTop: 16 },
   inviteIcon: {
     width: 40,

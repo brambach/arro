@@ -14,10 +14,16 @@ import { supabase } from './supabase';
 /** The server refused the workout's date (migration 20261005000006: today or yesterday, never before yesterday in UTC). */
 export class WorkoutDateError extends Error {}
 
-/** A join code that doesn't exist or has expired, or too many wrong codes (preview_invite's limits). */
+/** A join code that doesn't exist or has expired, too many wrong codes, or a family that's full (migration 20261017000001). */
 export class InviteError extends Error {
-  constructor(public kind: 'notFound' | 'tooMany') {
-    super(kind === 'tooMany' ? 'Too many tries. Wait a few minutes and try again.' : 'That code has expired or doesn’t exist.');
+  constructor(public kind: 'notFound' | 'tooMany' | 'full') {
+    super(
+      kind === 'tooMany'
+        ? 'Too many tries. Wait a few minutes and try again.'
+        : kind === 'full'
+          ? 'That family already has 12 people, which is as many as Arro allows.'
+          : 'That code has expired or doesn’t exist.',
+    );
   }
 }
 
@@ -252,8 +258,8 @@ export async function previewInvite(code: string): Promise<InvitePreview> {
 }
 
 /**
- * Joins with a code. Not rate-limited yet: join_family has no throttle of its own,
- * so a signed-in person can try codes here without the limits preview_invite has.
+ * Joins with a code. Wrong codes count toward the same limit as previews. A wrong
+ * code comes back as no row rather than an error, so the server can log the attempt.
  */
 export async function joinFamily(
   code: string,
@@ -268,12 +274,24 @@ export async function joinFamily(
     p_reminder_time: SLOT_TIMES[reminder],
   });
   if (error) {
-    if (error.code === 'P0002') throw new InviteError('notFound');
     if (isTooMany(error, status)) throw new InviteError('tooMany');
+    if (error.code === 'AR409') throw new InviteError('full');
     throw error;
   }
-  const row = data as MemberRow;
+  // PostgREST sends a null row back as null or as an object of nulls.
+  const row = data as MemberRow | null;
+  if (!row?.id) throw new InviteError('notFound');
   return { memberId: row.id, familyId: row.family_id };
+}
+
+/**
+ * Removes someone from the family, with their workouts. Only the person who started
+ * the family can (remove_member). The family's codes are withdrawn, so the next
+ * refresh makes a new one.
+ */
+export async function removeMember(memberId: string): Promise<void> {
+  const { error } = await client().rpc('remove_member', { p_member_id: memberId });
+  if (error) throw error;
 }
 
 /** The newest unexpired code for the family, making one if there's none. Codes last 14 days. */

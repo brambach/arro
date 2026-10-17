@@ -44,7 +44,11 @@ export function NotificationsPromptScreen({ navigation, route }: RootStackScreen
       setBusy(false);
       showError(
         'Couldn’t join yet',
-        e instanceof InviteError ? `${e.message} Ask your family for a new code.` : 'Check your connection and try again.',
+        e instanceof InviteError
+          ? e.kind === 'notFound'
+            ? `${e.message} Ask your family for a new code.`
+            : e.message
+          : 'Check your connection and try again.',
       );
     }
   };
