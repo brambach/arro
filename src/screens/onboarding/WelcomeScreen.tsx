@@ -14,7 +14,7 @@ import { RootStackScreenProps } from '../../navigation/types';
 
 export function WelcomeScreen({ navigation }: RootStackScreenProps<'Welcome'>) {
   const insets = useSafeAreaInsets();
-  const { startFlow } = useApp();
+  const { startFlow, online } = useApp();
 
   return (
     <View style={[styles.root, { paddingTop: insets.top, paddingBottom: insets.bottom + 24 }]}>
@@ -52,6 +52,19 @@ export function WelcomeScreen({ navigation }: RootStackScreenProps<'Welcome'>) {
           >
             <Text style={styles.secondaryText}>I have an invite</Text>
           </Pressable>
+          {online ? (
+            <Pressable
+              onPress={() => {
+                startFlow('founder');
+                navigation.navigate('SignIn', { returning: true });
+              }}
+              accessibilityRole="button"
+              hitSlop={8}
+              style={styles.signIn}
+            >
+              <Text style={styles.signInText}>Already have an account? Sign in</Text>
+            </Pressable>
+          ) : null}
           <Text style={styles.note}>Free for your whole family · no ads</Text>
         </Glass>
       </FadeInView>
@@ -78,5 +91,7 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   secondaryText: { fontSize: 16, fontWeight: weights.semibold, color: colors.ink },
+  signIn: { alignItems: 'center', paddingTop: 16 },
+  signInText: { fontSize: 15, fontWeight: weights.semibold, color: colors.muted },
   note: { ...type.meta, textAlign: 'center', marginTop: 16 },
 });

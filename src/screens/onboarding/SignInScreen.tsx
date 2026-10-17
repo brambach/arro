@@ -16,7 +16,8 @@ import { nextAfter, stepOf } from './steps';
  * Where Apple sign-in isn't available (web preview, no Supabase config) it's the
  * phase 1 preview sign-in and nothing is created on a server.
  */
-export function SignInScreen({ navigation }: RootStackScreenProps<'SignIn'>) {
+export function SignInScreen({ navigation, route }: RootStackScreenProps<'SignIn'>) {
+  const returning = !!route.params?.returning;
   const { draft, updateDraft, signIn } = useApp();
   const next = nextAfter(draft.role, 'SignIn');
   const [apple, setApple] = useState<boolean | null>(null);
@@ -34,7 +35,10 @@ export function SignInScreen({ navigation }: RootStackScreenProps<'SignIn'>) {
     try {
       const result = await signIn();
       // 'done': an existing account went straight to its family and the stack changes by itself.
-      if (result === 'continue' && draft.name.trim()) goNext();
+      if (result === 'continue' && returning) {
+        // Signed in with Apple, but this Apple ID isn't in a family yet.
+        showError('No Arro account yet', 'This Apple ID isn’t in a family. Go back to start a family or use an invite.');
+      } else if (result === 'continue' && draft.name.trim()) goNext();
       if (result === 'ask') navigation.navigate('NotificationsPrompt', { returning: true });
     } catch (e) {
       showError('Couldn’t sign in', e instanceof Error ? e.message : 'Try again in a moment.');
@@ -47,25 +51,27 @@ export function SignInScreen({ navigation }: RootStackScreenProps<'SignIn'>) {
 
   return (
     <OnboardingFrame
-      title="Sign in"
-      subtitle="Your family will see this name."
-      step={stepOf(draft.role, 'SignIn')}
+      title={returning ? 'Welcome back' : 'Sign in'}
+      subtitle={returning ? 'Sign in with the Apple ID you use for Arro.' : 'Your family will see this name.'}
+      step={returning ? undefined : stepOf(draft.role, 'SignIn')}
       onBack={() => navigation.goBack()}
-      primaryLabel={apple ? 'Continue' : 'Continue with Apple'}
-      primaryDisabled={!draft.name.trim() || !!needsApple || apple === null}
-      onPrimary={goNext}
+      primaryLabel={returning ? 'Sign in with Apple' : apple ? 'Continue' : 'Continue with Apple'}
+      primaryDisabled={returning ? busy || !apple : !draft.name.trim() || !!needsApple || apple === null}
+      onPrimary={returning ? onApple : goNext}
     >
-      <TextField
-        label="Your first name"
-        value={draft.name}
-        onChangeText={(name) => updateDraft({ name })}
-        autoCapitalize="words"
-        autoComplete="given-name"
-        maxLength={24}
-        placeholder="First name"
-        returnKeyType="done"
-      />
-      {needsApple ? (
+      {returning ? null : (
+        <TextField
+          label="Your first name"
+          value={draft.name}
+          onChangeText={(name) => updateDraft({ name })}
+          autoCapitalize="words"
+          autoComplete="given-name"
+          maxLength={24}
+          placeholder="First name"
+          returnKeyType="done"
+        />
+      )}
+      {needsApple && !returning ? (
         <AppleAuthentication.AppleAuthenticationButton
           buttonType={AppleAuthentication.AppleAuthenticationButtonType.SIGN_IN}
           buttonStyle={AppleAuthentication.AppleAuthenticationButtonStyle.BLACK}
@@ -76,7 +82,7 @@ export function SignInScreen({ navigation }: RootStackScreenProps<'SignIn'>) {
       ) : null}
       <Text style={styles.note}>
         {apple
-          ? signedIn
+          ? signedIn && !returning
             ? 'Signed in with Apple.'
             : 'Arro only uses your Apple ID to sign you in. Your email isn’t shared with your family.'
           : 'Preview sign-in: no account is created. Sign in with Apple needs the iPhone app.'}
