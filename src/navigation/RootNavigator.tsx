@@ -16,6 +16,7 @@ import { MilestoneScreen } from '../screens/MilestoneScreen';
 import { SettingsScreen } from '../screens/SettingsScreen';
 import { StreakRulesScreen } from '../screens/StreakRulesScreen';
 import { MoveMethodScreen } from '../screens/MoveMethodScreen';
+import { TakeBreakScreen } from '../screens/TakeBreakScreen';
 import { NotificationsScreen } from '../screens/NotificationsScreen';
 import { WorkoutDetailScreen } from '../screens/WorkoutDetailScreen';
 import { MapScreen } from '../screens/MapScreen';
@@ -47,6 +48,7 @@ export function RootNavigator() {
           <Stack.Screen name="Settings" component={SettingsScreen} options={{ animation: 'slide_from_right' }} />
           <Stack.Screen name="StreakRules" component={StreakRulesScreen} options={{ animation: 'slide_from_right' }} />
           <Stack.Screen name="MoveMethod" component={MoveMethodScreen} options={{ animation: 'slide_from_right' }} />
+          <Stack.Screen name="TakeBreak" component={TakeBreakScreen} options={{ animation: 'slide_from_right' }} />
           <Stack.Screen name="Notifications" component={NotificationsScreen} options={{ animation: 'slide_from_right' }} />
           <Stack.Screen name="WorkoutDetail" component={WorkoutDetailScreen} options={{ animation: 'slide_from_right' }} />
           <Stack.Screen name="Map" component={MapScreen} options={{ animation: 'slide_from_right' }} />

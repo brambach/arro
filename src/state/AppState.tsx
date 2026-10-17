@@ -149,6 +149,10 @@ interface AppContextValue {
   addInvite: (name: string) => Promise<void>;
   refresh: () => Promise<void>;
   signOut: () => Promise<void>;
+  /** "Pause me": a break of `days` days from today (or a new length for the current one). */
+  takeBreak: (days: number) => Promise<void>;
+  /** Ends the current break; today counts as normal again. */
+  endBreak: () => Promise<void>;
   /** Deletes the account on the server (or the local family) and signs out. */
   deleteAccount: () => Promise<void>;
   preview: Preview | null;
@@ -539,6 +543,23 @@ export function AppStateProvider({ children }: { children: React.ReactNode }) {
     return result;
   }, []);
 
+  const takeBreak = useCallback(
+    async (days: number) => {
+      const remote = sessionRef.current?.remote;
+      if (!remote) return;
+      await backend.pauseMe(remote.memberId, days);
+      await refresh();
+    },
+    [refresh],
+  );
+
+  const endBreak = useCallback(async () => {
+    const remote = sessionRef.current?.remote;
+    if (!remote) return;
+    await backend.endMyPause(remote.memberId);
+    await refresh();
+  }, [refresh]);
+
   const updateProfile = useCallback(
     async (patch: { name?: string; photoUri?: string | null }) => {
       const current = sessionRef.current;
@@ -734,6 +755,8 @@ export function AppStateProvider({ children }: { children: React.ReactNode }) {
       addInvite,
       refresh,
       signOut,
+      takeBreak,
+      endBreak,
       deleteAccount,
       preview,
       setPreview,
@@ -761,6 +784,8 @@ export function AppStateProvider({ children }: { children: React.ReactNode }) {
       addInvite,
       refresh,
       signOut,
+      takeBreak,
+      endBreak,
       deleteAccount,
       preview,
     ],

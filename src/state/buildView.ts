@@ -38,6 +38,7 @@ import {
   fromKey,
   greetingFor,
   timeLabel,
+  untilLabel,
   weekdayIndex,
 } from './dates';
 
@@ -76,6 +77,10 @@ export interface AppView {
   invitedList: Member[];
   joinedCount: number;
   keptCount: number;
+  /** Joined members on a break today, so not expected: "2 of 3 kept it today" leaves them out. */
+  awayCount: number;
+  /** Your break, on now or coming up: its last day and "until Friday". */
+  myBreak: { endsOn: string; until: string } | null;
   iKeptToday: boolean;
   /** A joined member (not you) who still has today, for the Nudge screen. */
   nudgeTarget?: Member;
@@ -299,6 +304,8 @@ function founderView(session: SavedSession, now: Date): AppView {
     invitedList: invited,
     joinedCount: 1,
     keptCount: iKeptToday ? 1 : 0,
+    awayCount: 0,
+    myBreak: null,
     iKeptToday,
     today: { dateLabel: dateLabel(now), greeting: `${greetingFor(now)}, ${me.name}.`, pending: null },
     feed: newestFirst(logs)
@@ -420,6 +427,8 @@ function previewFamilyView(session: SavedSession, preview: Preview | null, now: 
     invitedList: [],
     joinedCount: members.length,
     keptCount,
+    awayCount: 0,
+    myBreak: null,
     iKeptToday,
     nudgeTarget,
     today: {
@@ -481,23 +490,31 @@ function familyView(session: SavedSession, family: RemoteFamily, now: Date): App
   const logsBy = (memberId: string) =>
     family.workouts.filter((w) => w.memberId === memberId).map((w) => asLogged(w, session.photos));
 
+  // Breaks ("Pause me"). A day in one isn't expected of that member.
+  const pauses = family.pauses ?? [];
+  const breakOn = (memberId: string, day: string) =>
+    pauses.find((p) => p.memberId === memberId && p.startsOn <= day && day <= p.endsOn);
+
   const joined: Member[] = family.members.map((m) => {
     const mine = m.id === myId;
     const latestRemote = family.workouts.find((w) => w.memberId === m.id && w.localDate === todayKey);
     const latestToday = latestRemote ? asLogged(latestRemote, session.photos) : undefined;
     const server = family.memberStreaks[m.id];
     const moved = server?.movedToday ?? !!latestToday;
+    const away = moved ? undefined : breakOn(m.id, todayKey);
     return {
       id: m.id,
       name: m.name,
       color: m.color,
       streak: server?.personalStreak ?? 0,
-      today: moved ? 'kept' : 'still',
+      today: moved ? 'kept' : away ? 'away' : 'still',
       meta: latestToday
         ? `${summaryOf(latestToday)} · ${timeLabel(happenedAt(latestToday))}`
-        : mine
-          ? `Still has today · usually ${SLOT_WORD[session.me.reminder]}`
-          : 'Still has today',
+        : away
+          ? `On a break until ${untilLabel(away.endsOn, todayKey)}`
+          : mine
+            ? `Still has today · usually ${SLOT_WORD[session.me.reminder]}`
+            : 'Still has today',
       relationship: mine ? 'You' : undefined,
       // The uploaded photo, or your own from this phone when the upload failed.
       photoUri: m.photoUrl ?? (mine ? session.me.photoUri : null),
@@ -523,9 +540,13 @@ function familyView(session: SavedSession, family: RemoteFamily, now: Date): App
 
   const solo = joined.length < 2;
   const keptCount = joined.filter((m) => m.today === 'kept').length;
+  const awayCount = joined.filter((m) => m.today === 'away').length;
   const iKeptToday = me.today === 'kept';
   const nudgeTarget = joined.find((m) => m.id !== me.id && m.today === 'still');
   const myLogs = logsBy(myId);
+  const myNextBreak = pauses
+    .filter((p) => p.memberId === myId && p.endsOn >= todayKey)
+    .sort((a, b) => a.startsOn.localeCompare(b.startsOn))[0];
 
   // Streak and the first-30-days goal.
   const s = family.streak;
@@ -552,14 +573,16 @@ function familyView(session: SavedSession, family: RemoteFamily, now: Date): App
   const monday = addDays(todayKey, -todayIdx);
   const firstJoined = family.members.reduce((min, m) => (m.joinedOn < min ? m.joinedOn : min), todayKey);
   // Once today counts, it's the newest day of the streak; until then the streak ends yesterday.
-  const streakDaysBack = joined.every((m) => m.today === 'kept') ? s.current - 1 : s.current;
+  const todayCounts = keptCount > 0 && joined.every((m) => m.today !== 'still');
+  const streakDaysBack = todayCounts ? s.current - 1 : s.current;
   const strip: WeekStripDay[] = [];
   const rows: WeekRow[] = [];
   let togetherDays = 0;
   for (let i = 0; i < 7; i++) {
     const key = addDays(monday, i);
     const movers = movedOn(key);
-    const expected = family.members.filter((m) => m.joinedOn < key || movers.has(m.id));
+    // Someone on a break that day isn't expected, unless they moved anyway.
+    const expected = family.members.filter((m) => movers.has(m.id) || (m.joinedOn < key && !breakOn(m.id, key)));
     const everyone = expected.length > 0 && expected.every((m) => movers.has(m.id));
     const daysBack = daysBetween(key, todayKey);
     const inStreak = !solo && daysBack >= 1 && daysBack <= streakDaysBack;
@@ -604,6 +627,8 @@ function familyView(session: SavedSession, family: RemoteFamily, now: Date): App
     invitedList: invited,
     joinedCount: joined.length,
     keptCount,
+    awayCount,
+    myBreak: myNextBreak ? { endsOn: myNextBreak.endsOn, until: untilLabel(myNextBreak.endsOn, todayKey) } : null,
     iKeptToday,
     nudgeTarget,
     today: {

@@ -69,6 +69,13 @@ export interface MemberStreak {
   freezeBackOn: string | null;
 }
 
+/** A member's break ("Pause me"): their local dates, both inclusive. */
+export interface RemotePause {
+  memberId: string;
+  startsOn: string;
+  endsOn: string;
+}
+
 /** One family as the server sees it right now. */
 export interface RemoteFamily {
   id: string;
@@ -79,6 +86,8 @@ export interface RemoteFamily {
   workouts: RemoteWorkout[];
   streak: FamilyStreak;
   memberStreaks: Record<string, MemberStreak>;
+  /** Breaks that ended in the last two months, are on now or are coming up. Missing in a family cached by an older build. */
+  pauses?: RemotePause[];
 }
 
 export interface InvitePreview {
@@ -313,6 +322,11 @@ export async function fetchFamily(familyId: string, myMemberId: string): Promise
   const memberRows = (members.data as MemberRow[]).map(toMember);
   const memberIds = memberRows.map((m) => m.id);
 
+  const pausesQuery = db
+    .from('pauses')
+    .select('member_id, starts_on, ends_on')
+    .in('member_id', memberIds)
+    .gte('ends_on', since);
   const workouts = await db
     .from('workouts')
     .select(
@@ -322,6 +336,8 @@ export async function fetchFamily(familyId: string, myMemberId: string): Promise
     .gte('local_date', since)
     .order('created_at', { ascending: false });
   if (workouts.error) throw workouts.error;
+  const pauses = await pausesQuery;
+  if (pauses.error) throw pauses.error;
 
   const workoutRows = workouts.data as {
     id: string;
@@ -395,7 +411,27 @@ export async function fetchFamily(familyId: string, myMemberId: string): Promise
         },
       ]),
     ),
+    pauses: (pauses.data as { member_id: string; starts_on: string; ends_on: string }[]).map((p) => ({
+      memberId: p.member_id,
+      startsOn: p.starts_on,
+      endsOn: p.ends_on,
+    })),
   };
+}
+
+// ─── Breaks ("Pause me") ─────────────────────────────────────────────────────
+
+/** Takes a break from today for `days` days counting today, or changes the current one. Returns its last day. */
+export async function pauseMe(memberId: string, days: number): Promise<string> {
+  const { data, error } = await client().rpc('pause_me', { p_member_id: memberId, p_days: days });
+  if (error) throw error;
+  return data as string;
+}
+
+/** Ends the current break; today counts as normal again. */
+export async function endMyPause(memberId: string): Promise<void> {
+  const { error } = await client().rpc('end_my_pause', { p_member_id: memberId });
+  if (error) throw error;
 }
 
 // ─── Your own row and workouts ───────────────────────────────────────────────

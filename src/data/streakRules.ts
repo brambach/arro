@@ -13,6 +13,10 @@ export const streakRules = [
     body: 'If you can’t move one day, your freeze covers it automatically. It comes back 7 days after you use it.',
   },
   {
+    title: 'Take a break',
+    body: 'Away or unwell? Settings > Take a break pauses you for up to two weeks. The family streak carries on without you.',
+  },
+  {
     title: 'Today or yesterday',
     body: 'You can log today or yesterday, not older days. That keeps every day honest.',
   },
