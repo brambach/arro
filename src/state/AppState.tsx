@@ -14,6 +14,7 @@ import {
   NotificationPermission,
   expoPushToken,
   notificationPermission,
+  notifyWorkoutSaved,
   requestNotificationPermission,
   scheduleReminders,
   showNotificationsInForeground,
@@ -134,6 +135,11 @@ interface AppContextValue {
   logWorkout: (input: LogInput) => Promise<void>;
   /** "Send a cheer" for someone who hasn't moved yet. 'already' if they've been nudged today. */
   nudge: (memberId: string) => Promise<'sent' | 'already'>;
+  /** A heart on someone's finished workout. */
+  cheer: (workoutId: string) => Promise<void>;
+  /** A short comment on a workout. Throws when it couldn't be saved. */
+  comment: (workoutId: string, body: string) => Promise<void>;
+  deleteComment: (commentId: string) => Promise<void>;
   updateProfile: (patch: { name?: string; photoUri?: string | null }) => Promise<void>;
   /** Adds, replaces (a local uri) or removes (null) the photo on one of your workouts. */
   setWorkoutPhoto: (workoutId: string, photoUri: string | null) => Promise<void>;
@@ -154,6 +160,18 @@ interface AppContextValue {
   preview: Preview | null;
   setPreview: (preview: Preview | null) => void;
 }
+
+/** "Your run is in Arro", "Your gym session is in Arro". */
+const SAVED_NOUN: Record<WorkoutType, string> = {
+  walk: 'walk',
+  run: 'run',
+  gym: 'gym session',
+  yoga: 'yoga',
+  swim: 'swim',
+  ride: 'ride',
+  other: 'workout',
+};
+const SAVED_BODY = 'Your family can see it now. Tap to add a photo.';
 
 const AppContext = createContext<AppContextValue | null>(null);
 
@@ -224,6 +242,15 @@ export function AppStateProvider({ children }: { children: React.ReactNode }) {
     try {
       const workouts = await readRecentHealthWorkouts();
       const result = await syncHealthWorkouts(current.remote.memberId, workouts);
+      if (result.added > 0) {
+        // The family hears "Dad went for a run" (migration 20261017000001).
+        await backend.sendQueuedPushes().catch(() => undefined);
+        // Synced in the background, after a walk or a run: say it's in, so they open Arro to see it.
+        const newest = result.addedWorkouts[result.addedWorkouts.length - 1];
+        if (RNAppState.currentState !== 'active') {
+          await notifyWorkoutSaved(newest.id, `Your ${SAVED_NOUN[newest.type]} is in Arro`, SAVED_BODY);
+        }
+      }
       if (result.added > 0 || result.updated > 0) await refresh();
     } catch {
       // Offline or Health unavailable: the next launch or Health update tries again.
@@ -503,6 +530,7 @@ export function AppStateProvider({ children }: { children: React.ReactNode }) {
           minutes: input.minutes,
           note: input.note?.trim() || undefined,
         });
+        backend.sendQueuedPushes().catch(() => undefined);
         if (input.photoUri) {
           try {
             const path = await uploadMine(current.remote, input.photoUri, 'landscape', `workout-${id}`);
@@ -538,6 +566,38 @@ export function AppStateProvider({ children }: { children: React.ReactNode }) {
     if (result === 'sent') backend.sendQueuedPushes().catch(() => undefined);
     return result;
   }, []);
+
+  const cheer = useCallback(
+    async (workoutId: string) => {
+      const current = sessionRef.current;
+      if (!current?.remote) return;
+      await backend.cheerWorkout(current.remote.memberId, workoutId);
+      backend.sendQueuedPushes().catch(() => undefined);
+      await refresh();
+    },
+    [refresh],
+  );
+
+  const comment = useCallback(
+    async (workoutId: string, body: string) => {
+      const current = sessionRef.current;
+      const text = body.trim();
+      if (!current?.remote || !text) return;
+      await backend.addComment(current.remote.memberId, workoutId, text);
+      backend.sendQueuedPushes().catch(() => undefined);
+      await refresh();
+    },
+    [refresh],
+  );
+
+  const deleteComment = useCallback(
+    async (commentId: string) => {
+      if (!sessionRef.current?.remote) return;
+      await backend.deleteComment(commentId);
+      await refresh();
+    },
+    [refresh],
+  );
 
   const updateProfile = useCallback(
     async (patch: { name?: string; photoUri?: string | null }) => {
@@ -725,6 +785,9 @@ export function AppStateProvider({ children }: { children: React.ReactNode }) {
       completeOnboarding,
       logWorkout,
       nudge,
+      cheer,
+      comment,
+      deleteComment,
       updateProfile,
       setWorkoutPhoto,
       loadRoutes,
@@ -752,6 +815,9 @@ export function AppStateProvider({ children }: { children: React.ReactNode }) {
       completeOnboarding,
       logWorkout,
       nudge,
+      cheer,
+      comment,
+      deleteComment,
       updateProfile,
       setWorkoutPhoto,
       loadRoutes,

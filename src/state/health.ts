@@ -68,8 +68,13 @@ export async function watchHealthWorkouts(): Promise<void> {
 export async function connectHealth(): Promise<boolean> {
   const hk = healthKit();
   if (!hk) return false;
-  await hk.requestAuthorization({ toRead: [hk.WorkoutType.workout, hk.SeriesType.workoutRoute] });
-  await watchHealthWorkouts();
+  try {
+    await hk.requestAuthorization({ toRead: [hk.WorkoutType.workout, hk.SeriesType.workoutRoute] });
+  } finally {
+    // Watch even if the sheet failed this time: access given earlier still lets
+    // iOS wake Arro for new workouts, which is how they reach the family unopened.
+    await watchHealthWorkouts();
+  }
   return true;
 }
 

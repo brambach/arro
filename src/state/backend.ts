@@ -53,6 +53,15 @@ export interface RemoteWorkout {
   photoUrl?: string;
   /** Member ids of everyone who cheered it. */
   cheeredBy: string[];
+  /** Oldest first. */
+  comments: RemoteComment[];
+}
+
+export interface RemoteComment {
+  id: string;
+  memberId: string;
+  body: string;
+  createdAt: string;
 }
 
 export interface FamilyStreak {
@@ -316,7 +325,7 @@ export async function fetchFamily(familyId: string, myMemberId: string): Promise
   const workouts = await db
     .from('workouts')
     .select(
-      'id, member_id, local_date, type, duration_minutes, source, note, created_at, started_at, distance_m, route, photo_path, cheers (member_id)',
+      'id, member_id, local_date, type, duration_minutes, source, note, created_at, started_at, distance_m, route, photo_path, cheers (member_id), comments (id, member_id, body, created_at)',
     )
     .in('member_id', memberIds)
     .gte('local_date', since)
@@ -337,6 +346,7 @@ export async function fetchFamily(familyId: string, myMemberId: string): Promise
     route: string | null;
     photo_path: string | null;
     cheers: { member_id: string }[];
+    comments: { id: string; member_id: string; body: string; created_at: string }[];
   }[];
   const urls = await signPhotos([
     ...memberRows.map((m) => m.photoPath),
@@ -371,6 +381,9 @@ export async function fetchFamily(familyId: string, myMemberId: string): Promise
       photoPath: w.photo_path ?? undefined,
       photoUrl: (w.photo_path && urls[w.photo_path]) || undefined,
       cheeredBy: w.cheers.map((c) => c.member_id),
+      comments: w.comments
+        .map((c) => ({ id: c.id, memberId: c.member_id, body: c.body, createdAt: c.created_at }))
+        .sort((a, b) => a.createdAt.localeCompare(b.createdAt)),
     })),
     streak: {
       current: s?.family_streak ?? 0,
@@ -425,7 +438,7 @@ export async function forgetPushToken(token: string): Promise<void> {
   if (error) throw error;
 }
 
-/** Sends whatever pushes are queued (the send-push edge function). Called after a join or a nudge. */
+/** Sends whatever pushes are queued (the send-push edge function). Called after a join, a nudge, a workout, a cheer or a comment. */
 export async function sendQueuedPushes(): Promise<void> {
   const { error } = await client().functions.invoke('send-push');
   if (error) throw error;
@@ -444,6 +457,27 @@ export async function sendNudge(fromMemberId: string, toMemberId: string): Promi
     throw error;
   }
   return 'sent';
+}
+
+/**
+ * A heart on someone's finished workout, which pushes to its owner once
+ * (migration 20261017000001). Cheering twice is fine: unique (workout_id, member_id).
+ */
+export async function cheerWorkout(memberId: string, workoutId: string): Promise<void> {
+  const { error } = await client().from('cheers').insert({ workout_id: workoutId, member_id: memberId });
+  if (error && error.code !== '23505') throw error;
+}
+
+/** A short comment on a workout ("Proud of you"), which pushes to its owner. */
+export async function addComment(memberId: string, workoutId: string, body: string): Promise<void> {
+  const { error } = await client().from('comments').insert({ workout_id: workoutId, member_id: memberId, body });
+  if (error) throw error;
+}
+
+/** Deletes one of your own comments. */
+export async function deleteComment(commentId: string): Promise<void> {
+  const { error } = await client().from('comments').delete().eq('id', commentId);
+  if (error) throw error;
 }
 
 /** A manual "I moved today" check-in. A photo is uploaded separately (uploadPhoto, setWorkoutPhoto). */
@@ -472,9 +506,9 @@ export async function insertWorkout(
 }
 
 /**
- * A workout read from Apple Health, keyed by its HealthKit UUID. 'added' when it's
- * new; 'synced' when it was already saved (unique (member_id, health_workout_id)).
- * Throws WorkoutDateError for a date outside today or yesterday.
+ * A workout read from Apple Health, keyed by its HealthKit UUID. 'added' (with the
+ * new row's id) when it's new; 'synced' when it was already saved (unique
+ * (member_id, health_workout_id)). Throws WorkoutDateError for a date outside today or yesterday.
  */
 export async function insertHealthWorkout(
   memberId: string,
@@ -487,8 +521,8 @@ export async function insertHealthWorkout(
     distanceMeters?: number;
     route?: string;
   },
-): Promise<'added' | 'synced'> {
-  const { error } = await client()
+): Promise<{ outcome: 'added'; id: string } | { outcome: 'synced' }> {
+  const { data, error } = await client()
     .from('workouts')
     .insert({
       member_id: memberId,
@@ -500,14 +534,16 @@ export async function insertHealthWorkout(
       started_at: input.startedAt ?? null,
       distance_m: input.distanceMeters ?? null,
       route: input.route ?? null,
-    });
+    })
+    .select('id')
+    .single();
   if (error) {
     // 23505: unique violation, so this Health workout is already on the server.
-    if (error.code === '23505') return 'synced';
+    if (error.code === '23505') return { outcome: 'synced' };
     if (error.code === '22023') throw new WorkoutDateError(error.message);
     throw error;
   }
-  return 'added';
+  return { outcome: 'added', id: data.id };
 }
 
 /**

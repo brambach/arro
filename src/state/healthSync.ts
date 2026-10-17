@@ -31,6 +31,8 @@ export interface HealthSyncResult {
   updated: number;
   /** Older than yesterday, or yesterday after the server stopped taking it. */
   skipped: number;
+  /** The workouts this sync added, so Arro can say so. */
+  addedWorkouts: { id: string; type: WorkoutType }[];
 }
 
 const TYPE_FOR_ACTIVITY: Record<string, WorkoutType> = {
@@ -108,19 +110,28 @@ export async function syncHealthWorkouts(
   now: Date = new Date(),
 ): Promise<HealthSyncResult> {
   const sendable = sendableHealthWorkouts(workouts, now);
-  const result: HealthSyncResult = { added: 0, alreadySynced: 0, updated: 0, skipped: workouts.length - sendable.length };
+  const result: HealthSyncResult = {
+    added: 0,
+    alreadySynced: 0,
+    updated: 0,
+    skipped: workouts.length - sendable.length,
+    addedWorkouts: [],
+  };
   for (const w of sendable) {
     try {
       const details = healthDetails(w);
-      const outcome = await insertHealthWorkout(memberId, {
+      const type = workoutTypeFor(w.activityType);
+      const saved = await insertHealthWorkout(memberId, {
         healthWorkoutId: w.uuid,
         localDate: healthLocalDate(w),
-        type: workoutTypeFor(w.activityType),
+        type,
         minutes: healthMinutes(w),
         ...details,
       });
-      if (outcome === 'added') result.added += 1;
-      else {
+      if (saved.outcome === 'added') {
+        result.added += 1;
+        result.addedWorkouts.push({ id: saved.id, type });
+      } else {
         result.alreadySynced += 1;
         // Saved before its route arrived, or before Arro read routes: fill in what's new.
         if (details.route || details.distanceMeters) {

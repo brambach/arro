@@ -99,10 +99,18 @@ export interface RecentWorkout {
   place?: string; // "Brisbane"
 }
 
+export interface WorkoutComment {
+  id: string;
+  memberId: MemberId;
+  body: string;
+}
+
 export interface WorkoutDetail extends RecentWorkout {
   note?: string;
   photoUri?: PhotoSource;
   cheeredBy: MemberId[];
+  /** Oldest first. */
+  comments: WorkoutComment[];
   /** Only for Health workouts that recorded one, already trimmed at both ends. */
   route?: LatLng[];
   /** The photo's path on the server, so its owner can replace or remove it. */

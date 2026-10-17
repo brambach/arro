@@ -6,6 +6,7 @@ import { RootStackParamList } from './types';
 
 /**
  * Opens the right screen for a tapped notification: the workout someone cheered,
+ * commented on or just finished (or your own, just saved from Health),
  * the family list after a join, the "still has today" card for the evening nudge.
  * A nudge and the daily reminder just open the app. A tap that arrives before the session has
  * loaded (Arro opened from closed) waits for it.
@@ -16,7 +17,7 @@ export function NotificationTaps({ navigation }: { navigation: NavigationContain
   const signedIn = ready && !!session;
 
   const open = useRef((tap: NotificationTap) => {
-    if (tap.kind === 'cheer') navigation.navigate('WorkoutDetail', { workoutId: tap.workoutId });
+    if (tap.kind === 'cheer' || tap.kind === 'comment' || tap.kind === 'moved' || tap.kind === 'saved') navigation.navigate('WorkoutDetail', { workoutId: tap.workoutId });
     else if (tap.kind === 'joined') navigation.navigate('FamilyMembers');
     else if (tap.kind === 'evening') navigation.navigate('Nudge', { memberId: tap.memberId });
     // Someone cheered you on before you'd moved: Today, where "I moved today" is.

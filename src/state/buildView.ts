@@ -135,6 +135,7 @@ function toDetail(w: LoggedWorkout, memberId: MemberId, todayKey: string): Worko
     photoPath: w.photoPath,
     route: w.route,
     cheeredBy: [],
+    comments: [],
   };
 }
 
@@ -584,7 +585,10 @@ function familyView(session: SavedSession, family: RemoteFamily, now: Date): App
 
   const details: Record<string, WorkoutDetail> = {};
   for (const w of family.workouts) {
-    details[w.id] = { ...toDetail(asLogged(w, session.photos), w.memberId, todayKey), source: w.source, cheeredBy: w.cheeredBy };
+    details[w.id] = { ...toDetail(asLogged(w, session.photos), w.memberId, todayKey), source: w.source,
+      cheeredBy: w.cheeredBy,
+      comments: w.comments.map((c) => ({ id: c.id, memberId: c.memberId, body: c.body })),
+    };
   }
 
   const profile = ownProfile(myLogs, todayKey, family.name, me);

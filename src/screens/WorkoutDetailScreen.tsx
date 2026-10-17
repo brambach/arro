@@ -1,16 +1,28 @@
 import React, { useState } from 'react';
-import { ActivityIndicator, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
+import {
+  ActivityIndicator,
+  KeyboardAvoidingView,
+  Platform,
+  Pressable,
+  ScrollView,
+  StyleSheet,
+  Text,
+  TextInput,
+  View,
+} from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { colors, radii, spacing, shadows } from '../theme/tokens';
 import { type, weights } from '../theme/typography';
+import { AvatarRing } from '../components/AvatarRing';
 import { AvatarStack } from '../components/AvatarStack';
+import { CheerButton } from '../components/CheerButton';
 import { ChevronLeft } from '../components/Icons';
 import { FadeInView } from '../components/FadeInView';
 import { PhotoSlot } from '../components/PhotoSlot';
 import { RouteMap } from '../components/RouteMap';
 import { TextButton } from '../components/TextButton';
 import { useApp, useView } from '../state/AppState';
-import { showError } from '../state/confirm';
+import { confirmAction, showError } from '../state/confirm';
 import { PHOTOS_ON, pickPhoto } from '../state/photos';
 import { WorkoutDetail } from '../data/types';
 import { joinNames, workoutSourceLabels, workoutTypeLabels } from '../data/workouts';
@@ -20,8 +32,10 @@ import { Backdrop } from '../components/Backdrop';
 export function WorkoutDetailScreen({ navigation, route }: RootStackScreenProps<'WorkoutDetail'>) {
   const insets = useSafeAreaInsets();
   const view = useView();
-  const { setWorkoutPhoto } = useApp();
+  const { online, setWorkoutPhoto, cheer, comment, deleteComment } = useApp();
   const [savingPhoto, setSavingPhoto] = useState(false);
+  const [draft, setDraft] = useState('');
+  const [sending, setSending] = useState(false);
   const workout: WorkoutDetail | undefined = view.workouts[route.params.workoutId];
 
   if (!workout) return null;
@@ -30,11 +44,31 @@ export function WorkoutDetailScreen({ navigation, route }: RootStackScreenProps<
   const mine = workout.memberId === view.me.id;
   const owner = view.members[workout.memberId];
   const cheerers = workout.cheeredBy.map((id) => view.members[id]).filter(Boolean);
+  const cheeredByMe = workout.cheeredBy.includes(view.me.id);
   const stats = [
     workout.distance ? { value: workout.distance, label: 'Distance' } : null,
     workout.duration ? { value: workout.duration, label: 'Time' } : null,
     workout.place && !workout.route ? { value: workout.place, label: 'Where' } : null,
   ].filter((s): s is { value: string; label: string } => s !== null);
+
+  const send = async (body: string) => {
+    const text = body.trim();
+    if (!text || sending) return;
+    setSending(true);
+    try {
+      await comment(workout.id, text);
+      setDraft('');
+    } catch {
+      showError('Couldn’t send that', 'Check your connection and try again.');
+    } finally {
+      setSending(false);
+    }
+  };
+
+  const removeComment = async (id: string) => {
+    if (!(await confirmAction('Delete your comment?', 'Your family won’t see it any more.', 'Delete'))) return;
+    deleteComment(id).catch(() => showError('Couldn’t delete it', 'Check your connection and try again.'));
+  };
 
   const changePhoto = async (remove: boolean) => {
     const uri = remove ? null : await pickPhoto('landscape');
@@ -50,7 +84,10 @@ export function WorkoutDetailScreen({ navigation, route }: RootStackScreenProps<
   };
 
   return (
-    <View style={[styles.root, { paddingTop: insets.top }]}>
+    <KeyboardAvoidingView
+      style={[styles.root, { paddingTop: insets.top }]}
+      behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+    >
       <Backdrop />
       <View style={styles.header}>
         <Pressable onPress={() => navigation.goBack()} hitSlop={10} accessibilityLabel="Back">
@@ -60,7 +97,11 @@ export function WorkoutDetailScreen({ navigation, route }: RootStackScreenProps<
         <View style={{ width: 22 }} />
       </View>
 
-      <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{ paddingBottom: insets.bottom + 24 }}>
+      <ScrollView
+        showsVerticalScrollIndicator={false}
+        keyboardShouldPersistTaps="handled"
+        contentContainerStyle={{ paddingBottom: insets.bottom + 24 }}
+      >
         {workout.route ? (
           <Pressable
             onPress={() => navigation.navigate('Map', { memberId: workout.memberId })}
@@ -94,10 +135,81 @@ export function WorkoutDetailScreen({ navigation, route }: RootStackScreenProps<
 
         <FadeInView delay={180} style={styles.noteWrap}>
           {workout.note ? <Text style={styles.note}>{workout.note}</Text> : null}
+          {!mine && online ? (
+            <CheerButton
+              key={cheeredByMe ? 'cheered' : 'not-yet'}
+              initiallyCheered={cheeredByMe}
+              label={`Cheer ${owner?.name ?? 'them'} on`}
+              onCheer={() => cheer(workout.id)}
+              style={[styles.cheerButton, !workout.note && { marginTop: 0 }]}
+            />
+          ) : null}
           {cheerers.length > 0 ? (
-            <View style={[styles.cheered, !workout.note && { marginTop: 0 }]}>
+            <View style={[styles.cheered, !workout.note && mine && { marginTop: 0 }]}>
               <AvatarStack members={cheerers} size={26} overlap={6} borderColor={colors.screen} />
               <Text style={styles.cheeredText}>{joinNames(cheerers.map((c) => c.name))} cheered</Text>
+            </View>
+          ) : null}
+
+          {workout.comments.length > 0 ? (
+            <View style={styles.comments}>
+              {workout.comments.map((c) => {
+                const who = view.members[c.memberId];
+                const own = c.memberId === view.me.id;
+                return (
+                  <Pressable
+                    key={c.id}
+                    style={styles.comment}
+                    onLongPress={own ? () => removeComment(c.id) : undefined}
+                    accessibilityHint={own ? 'Long press to delete' : undefined}
+                  >
+                    <AvatarRing member={who} name={who?.name} size={26} />
+                    <Text style={styles.commentText}>
+                      <Text style={styles.commentName}>{own ? 'You' : (who?.name ?? 'Someone')} </Text>
+                      {c.body}
+                    </Text>
+                  </Pressable>
+                );
+              })}
+            </View>
+          ) : null}
+
+          {online ? (
+            <View style={styles.compose}>
+              <ScrollView
+                horizontal
+                showsHorizontalScrollIndicator={false}
+                keyboardShouldPersistTaps="handled"
+                contentContainerStyle={styles.quick}
+              >
+                {(mine ? OWN_QUICK : workout.route ? [...QUICK, 'Great route'] : QUICK).map((q) => (
+                  <Pressable
+                    key={q}
+                    onPress={() => send(q)}
+                    disabled={sending}
+                    accessibilityRole="button"
+                    accessibilityLabel={`Send “${q}”`}
+                    style={({ pressed }) => [styles.quickChip, pressed && { opacity: 0.6 }]}
+                  >
+                    <Text style={styles.quickText}>{q}</Text>
+                  </Pressable>
+                ))}
+              </ScrollView>
+              <View style={styles.inputRow}>
+                <TextInput
+                  value={draft}
+                  onChangeText={setDraft}
+                  placeholder={mine ? 'Say something' : `Say something to ${owner?.name ?? 'them'}`}
+                  placeholderTextColor={colors.faint3}
+                  maxLength={200}
+                  returnKeyType="send"
+                  onSubmitEditing={() => send(draft)}
+                  style={styles.input}
+                />
+                {draft.trim() ? (
+                  <TextButton label={sending ? 'Sending…' : 'Send'} onPress={() => send(draft)} />
+                ) : null}
+              </View>
             </View>
           ) : null}
           <View style={styles.links}>
@@ -121,9 +233,13 @@ export function WorkoutDetailScreen({ navigation, route }: RootStackScreenProps<
           </View>
         </FadeInView>
       </ScrollView>
-    </View>
+    </KeyboardAvoidingView>
   );
 }
+
+/** One tap sends these, so a cheer with words takes no typing. */
+const QUICK = ['Proud of you', 'Nice one!', 'Go you', 'Love this'];
+const OWN_QUICK = ['Thanks!', 'Thank you all'];
 
 function Stat({ value, label, first }: { value: string; label: string; first?: boolean }) {
   return (
@@ -165,4 +281,30 @@ const styles = StyleSheet.create({
   note: { ...type.body, color: colors.inkSoft },
   cheered: { flexDirection: 'row', alignItems: 'center', gap: 11, marginTop: 15 },
   cheeredText: { ...type.meta, color: colors.muted },
+  cheerButton: { alignSelf: 'flex-start', marginTop: 15 },
+  comments: { gap: 12, marginTop: 18 },
+  comment: { flexDirection: 'row', alignItems: 'flex-start', gap: 10 },
+  commentText: { ...type.body, color: colors.inkSoft, flex: 1, paddingTop: 2 },
+  commentName: { fontWeight: weights.semibold, color: colors.ink },
+  compose: { marginTop: 18, gap: 10 },
+  quick: { gap: 8, paddingRight: 8 },
+  quickChip: {
+    borderRadius: radii.pill,
+    backgroundColor: colors.card,
+    ...shadows.card,
+    paddingVertical: 7,
+    paddingHorizontal: 13,
+  },
+  quickText: { fontSize: 14, fontWeight: weights.medium, color: colors.inkSoft },
+  inputRow: { flexDirection: 'row', alignItems: 'center', gap: 12 },
+  input: {
+    flex: 1,
+    backgroundColor: colors.sunk,
+    borderRadius: radii.button,
+    ...shadows.sunk,
+    paddingHorizontal: 14,
+    height: 44,
+    fontSize: 15,
+    color: colors.ink,
+  },
 });

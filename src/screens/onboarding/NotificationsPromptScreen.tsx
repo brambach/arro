@@ -52,7 +52,7 @@ export function NotificationsPromptScreen({ navigation, route }: RootStackScreen
   return (
     <OnboardingFrame
       title="Hear from your family?"
-      subtitle="Arro lets you know when someone cheers you on or joins, and at most once an evening who still has today."
+      subtitle="Arro lets you know when someone in your family moves, cheers you on or joins, and at most once an evening who still has today."
       step={returning ? undefined : stepOf(draft.role, 'NotificationsPrompt')}
       onBack={returning ? undefined : () => navigation.goBack()}
       primaryLabel="Turn on notifications"

@@ -64,6 +64,8 @@ reset role;
 insert into public.workouts (id, member_id, local_date, type, source) values
   ('9aaaaaaa-0000-0000-0000-000000000000', '92222222-0000-0000-0000-000000000000',
    (now() at time zone 'Australia/Brisbane')::date, 'gym', 'manual');
+-- Mum may be told Dad moved, depending on the hour; workout_pushes.test.sql tests that.
+delete from private.push_outbox where kind = 'moved';
 
 set local role authenticated;
 set local request.jwt.claims = '{"sub": "91000000-0000-0000-0000-000000000000", "role": "authenticated"}';
