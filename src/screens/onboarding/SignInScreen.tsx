@@ -49,7 +49,14 @@ export function SignInScreen({ navigation, route }: RootStackScreenProps<'SignIn
       } else if (result === 'continue' && draft.name.trim()) goNext();
       if (result === 'ask') navigation.navigate('NotificationsPrompt', { returning: true });
     } catch (e) {
-      showError('Couldn’t sign in', e instanceof Error ? e.message : 'Try again in a moment.');
+      // Raw fetch errors read like a crash; anything network-shaped gets a plain sentence.
+      const message = e instanceof Error ? e.message : '';
+      showError(
+        'Couldn’t sign in',
+        !message || /fetch failed|network/i.test(message)
+          ? 'Arro couldn’t reach the server. Check your connection and try again.'
+          : message,
+      );
     } finally {
       setBusy(false);
     }
