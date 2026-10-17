@@ -15,7 +15,7 @@ const COUNT_WORDS = ['zero', 'one', 'two', 'three', 'four', 'five', 'six', 'seve
 
 export function FeedScreen({ navigation }: MainTabScreenProps<'Feed'>) {
   const view = useView();
-  const { nudge } = useApp();
+  const { nudge, cheer } = useApp();
   const joined = view.joinedCount;
   const count = COUNT_WORDS[joined] ?? joined;
   const subtitle =
@@ -45,6 +45,7 @@ export function FeedScreen({ navigation }: MainTabScreenProps<'Feed'>) {
                 member={view.members[item.memberId]}
                 onPress={workoutId ? () => navigation.navigate('WorkoutDetail', { workoutId }) : undefined}
                 onCheer={item.kind === 'still' ? () => nudge(item.memberId) : undefined}
+                onToggleCheer={workoutId ? (on) => cheer(workoutId, on) : undefined}
               />
             </FadeInView>
           );

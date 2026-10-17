@@ -396,3 +396,17 @@ only, with the layout, colours, background and words unchanged:
   headings.
 
 Preview (before and after): https://claude.ai/artifact/CSW4ojyyULpoujaD7KY4RJ
+
+## Hearts on finished workouts (17 Oct 2026)
+
+Cheering a finished workout is a heart, in ink like the other counts, not clay:
+
+- Someone else's post: an outline heart (`inkSoft`) that fills (`ink`) once
+  you've cheered, with the count beside it. Tap again to take it back. One
+  small pulse and a light haptic when you cheer; reduced motion skips the pulse.
+- Your own post: the filled heart and count, not tappable.
+- The line on the left names who cheered, you first ("You and Dad cheered").
+  With no cheers yet the card shows only the heart, with no divider above it.
+- The workout screen shows the same heart beside the cheerers' avatars, or
+  "Send Dad a heart" before anyone has.
+- "Cheer" on a still-has-today post stays as it was: it sends a nudge.

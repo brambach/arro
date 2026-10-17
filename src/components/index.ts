@@ -4,6 +4,7 @@ export { Card } from './Card';
 export { Chip } from './Chip';
 export { ChoiceRow } from './ChoiceRow';
 export { CheerButton } from './CheerButton';
+export { HeartButton } from './HeartButton';
 export { DayPill } from './DayPill';
 export { FadeInView } from './FadeInView';
 export { InvitePanel } from './InvitePanel';

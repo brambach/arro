@@ -161,6 +161,15 @@ function newestFirst(logs: LoggedWorkout[]): LoggedWorkout[] {
   return [...logs].sort((a, b) => happenedAt(b).getTime() - happenedAt(a).getTime());
 }
 
+/** "You and Mum cheered", or nothing when nobody has. */
+function cheerLine(cheeredBy: string[], myId: string, members: Member[]): string | undefined {
+  const names = [...cheeredBy]
+    .sort((a, b) => Number(b === myId) - Number(a === myId))
+    .map((id) => (id === myId ? 'You' : members.find((m) => m.id === id)?.name))
+    .filter((n): n is string => !!n);
+  return names.length ? `${joinNames(names)} cheered` : undefined;
+}
+
 function feedItem(w: LoggedWorkout, me: Member, todayKey: string): FeedItem {
   const label = w.localDate === todayKey ? 'moved today' : 'moved yesterday';
   return {
@@ -390,7 +399,9 @@ function previewFamilyView(session: SavedSession, preview: Preview | null, now: 
   }
 
   // Feed: the demo posts that still match, plus anything you logged.
-  const feedItems = demoFeed.filter((f) => baseToday[f.memberId] === (f.kind === 'still' ? 'still' : 'kept'));
+  const feedItems = demoFeed
+    .filter((f) => baseToday[f.memberId] === (f.kind === 'still' ? 'still' : 'kept'))
+    .map((f) => (f.kind === 'kept' && f.memberId !== me.id ? { ...f, canCheer: true, cheeredByMe: false } : f));
   // In the preview you're Bryce, and his demo post already stands in for a workout you logged.
   const bryceHasPost = !!preview && baseToday.bryce === 'kept';
   const myItems = bryceHasPost
@@ -619,6 +630,9 @@ function familyView(session: SavedSession, family: RemoteFamily, now: Date): App
         return {
           ...feedItem(asLogged(w, session.photos), who ?? me, todayKey),
           hearts: w.cheeredBy.length || undefined,
+          cheer: cheerLine(w.cheeredBy, myId, joined),
+          canCheer: w.memberId !== myId,
+          cheeredByMe: w.cheeredBy.includes(myId),
         };
       }),
     week: solo
