@@ -1,8 +1,16 @@
 import React, { useEffect, useState } from 'react';
-import { StyleSheet, Text } from 'react-native';
+import { Pressable, StyleSheet, Text, View } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import * as AppleAuthentication from 'expo-apple-authentication';
-import { type } from '../../theme/typography';
+import { colors } from '../../theme/tokens';
+import { motion } from '../../theme/motion';
+import { type, weights } from '../../theme/typography';
 import { OnboardingFrame } from '../../components/OnboardingFrame';
+import { ArroMark, ChevronLeft } from '../../components/Icons';
+import { FadeInView } from '../../components/FadeInView';
+import { Glass } from '../../components/Glass';
+import { Backdrop } from '../../components/Backdrop';
+import { PrimaryButton } from '../../components/PrimaryButton';
 import { TextField } from '../../components/TextField';
 import { useApp } from '../../state/AppState';
 import { appleSignInAvailable } from '../../state/backend';
@@ -49,29 +57,38 @@ export function SignInScreen({ navigation, route }: RootStackScreenProps<'SignIn
 
   const needsApple = apple && !signedIn;
 
+  if (returning) {
+    return (
+      <WelcomeBack
+        apple={apple}
+        busy={busy}
+        onApple={onApple}
+        onBack={() => navigation.goBack()}
+      />
+    );
+  }
+
   return (
     <OnboardingFrame
-      title={returning ? 'Welcome back' : 'Sign in'}
-      subtitle={returning ? 'Sign in with the Apple ID you use for Arro.' : 'Your family will see this name.'}
-      step={returning ? undefined : stepOf(draft.role, 'SignIn')}
+      title="Sign in"
+      subtitle="Your family will see this name."
+      step={stepOf(draft.role, 'SignIn')}
       onBack={() => navigation.goBack()}
-      primaryLabel={returning ? 'Sign in with Apple' : apple ? 'Continue' : 'Continue with Apple'}
-      primaryDisabled={returning ? busy || !apple : !draft.name.trim() || !!needsApple || apple === null}
-      onPrimary={returning ? onApple : goNext}
+      primaryLabel={apple ? 'Continue' : 'Continue with Apple'}
+      primaryDisabled={!draft.name.trim() || !!needsApple || apple === null}
+      onPrimary={goNext}
     >
-      {returning ? null : (
-        <TextField
-          label="Your first name"
-          value={draft.name}
-          onChangeText={(name) => updateDraft({ name })}
-          autoCapitalize="words"
-          autoComplete="given-name"
-          maxLength={24}
-          placeholder="First name"
-          returnKeyType="done"
-        />
-      )}
-      {needsApple && !returning ? (
+      <TextField
+        label="Your first name"
+        value={draft.name}
+        onChangeText={(name) => updateDraft({ name })}
+        autoCapitalize="words"
+        autoComplete="given-name"
+        maxLength={24}
+        placeholder="First name"
+        returnKeyType="done"
+      />
+      {needsApple ? (
         <AppleAuthentication.AppleAuthenticationButton
           buttonType={AppleAuthentication.AppleAuthenticationButtonType.SIGN_IN}
           buttonStyle={AppleAuthentication.AppleAuthenticationButtonStyle.BLACK}
@@ -82,7 +99,7 @@ export function SignInScreen({ navigation, route }: RootStackScreenProps<'SignIn
       ) : null}
       <Text style={styles.note}>
         {apple
-          ? signedIn && !returning
+          ? signedIn
             ? 'Signed in with Apple.'
             : 'Arro only uses your Apple ID to sign you in. Your email isn’t shared with your family.'
           : 'Preview sign-in: no account is created. Sign in with Apple needs the iPhone app.'}
@@ -91,8 +108,73 @@ export function SignInScreen({ navigation, route }: RootStackScreenProps<'SignIn
   );
 }
 
+/**
+ * From Welcome's "Sign in": the same map and glass panel as Welcome, so coming
+ * back feels like the front door rather than a step in setting up.
+ */
+function WelcomeBack({
+  apple,
+  busy,
+  onApple,
+  onBack,
+}: {
+  apple: boolean | null;
+  busy: boolean;
+  onApple: () => void;
+  onBack: () => void;
+}) {
+  const insets = useSafeAreaInsets();
+  return (
+    <View style={[styles.back, { paddingTop: insets.top, paddingBottom: insets.bottom + 24 }]}>
+      <Backdrop map />
+      <Pressable onPress={onBack} hitSlop={10} accessibilityLabel="Back" style={styles.backButton}>
+        <ChevronLeft />
+      </Pressable>
+      <FadeInView rise={14} {...motion.statement} style={styles.hero}>
+        <ArroMark size={60} />
+        <Text style={styles.heading}>Welcome back</Text>
+        <Text style={styles.tagline}>Your family’s been moving.</Text>
+      </FadeInView>
+
+      <View style={styles.space} />
+
+      <FadeInView delay={380} rise={10} {...motion.statement}>
+        <Glass radius={24} padding={18} style={styles.panel}>
+          <Text style={styles.line}>Sign in with the Apple ID you use for Arro and you’ll go straight to your family.</Text>
+          {apple ? (
+            <AppleAuthentication.AppleAuthenticationButton
+              buttonType={AppleAuthentication.AppleAuthenticationButtonType.SIGN_IN}
+              buttonStyle={AppleAuthentication.AppleAuthenticationButtonStyle.BLACK}
+              cornerRadius={14}
+              style={[styles.appleBig, busy && styles.busy]}
+              onPress={busy ? () => undefined : onApple}
+            />
+          ) : (
+            <PrimaryButton title="Sign in with Apple" onPress={onApple} disabled style={styles.cta} />
+          )}
+          <Text style={styles.panelNote}>
+            {apple === false ? 'Sign in with Apple needs the iPhone app.' : 'Your email isn’t shared with your family.'}
+          </Text>
+        </Glass>
+      </FadeInView>
+    </View>
+  );
+}
+
 const styles = StyleSheet.create({
   apple: { height: 52, marginTop: 18 },
   busy: { opacity: 0.5 },
   note: { ...type.meta, marginTop: 14 },
+  // Welcome back, laid out like Welcome.
+  back: { flex: 1, backgroundColor: colors.screen, paddingHorizontal: 26 },
+  backButton: { width: 28, height: 40, justifyContent: 'center', marginLeft: -10 },
+  hero: { alignItems: 'center', paddingTop: 32 },
+  heading: { ...type.display, fontSize: 46, lineHeight: 50, color: colors.ink, marginTop: 18 },
+  tagline: { ...type.body, marginTop: 6 },
+  space: { flex: 1 },
+  panel: { marginHorizontal: -8, paddingTop: 22 },
+  line: { fontSize: 17, lineHeight: 25, fontWeight: weights.regular, color: colors.inkSoft, textAlign: 'center', paddingHorizontal: 6 },
+  appleBig: { height: 52, marginTop: 22 },
+  cta: { marginTop: 22 },
+  panelNote: { ...type.meta, textAlign: 'center', marginTop: 16 },
 });
