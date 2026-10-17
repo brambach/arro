@@ -1,8 +1,16 @@
 import React, { useEffect, useState } from 'react';
-import { StyleSheet, Text } from 'react-native';
+import { Pressable, StyleSheet, Text, View } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import * as AppleAuthentication from 'expo-apple-authentication';
-import { type } from '../../theme/typography';
+import { colors } from '../../theme/tokens';
+import { motion } from '../../theme/motion';
+import { type, weights } from '../../theme/typography';
 import { OnboardingFrame } from '../../components/OnboardingFrame';
+import { ArroMark, ChevronLeft } from '../../components/Icons';
+import { FadeInView } from '../../components/FadeInView';
+import { Glass } from '../../components/Glass';
+import { Backdrop } from '../../components/Backdrop';
+import { PrimaryButton } from '../../components/PrimaryButton';
 import { TextField } from '../../components/TextField';
 import { useApp } from '../../state/AppState';
 import { appleSignInAvailable } from '../../state/backend';
@@ -16,7 +24,8 @@ import { nextAfter, stepOf } from './steps';
  * Where Apple sign-in isn't available (web preview, no Supabase config) it's the
  * phase 1 preview sign-in and nothing is created on a server.
  */
-export function SignInScreen({ navigation }: RootStackScreenProps<'SignIn'>) {
+export function SignInScreen({ navigation, route }: RootStackScreenProps<'SignIn'>) {
+  const returning = !!route.params?.returning;
   const { draft, updateDraft, signIn } = useApp();
   const next = nextAfter(draft.role, 'SignIn');
   const [apple, setApple] = useState<boolean | null>(null);
@@ -34,7 +43,10 @@ export function SignInScreen({ navigation }: RootStackScreenProps<'SignIn'>) {
     try {
       const result = await signIn();
       // 'done': an existing account went straight to its family and the stack changes by itself.
-      if (result === 'continue' && draft.name.trim()) goNext();
+      if (result === 'continue' && returning) {
+        // Signed in with Apple, but this Apple ID isn't in a family yet.
+        showError('No Arro account yet', 'This Apple ID isn’t in a family. Go back to start a family or use an invite.');
+      } else if (result === 'continue' && draft.name.trim()) goNext();
       if (result === 'ask') navigation.navigate('NotificationsPrompt', { returning: true });
     } catch (e) {
       showError('Couldn’t sign in', e instanceof Error ? e.message : 'Try again in a moment.');
@@ -44,6 +56,17 @@ export function SignInScreen({ navigation }: RootStackScreenProps<'SignIn'>) {
   };
 
   const needsApple = apple && !signedIn;
+
+  if (returning) {
+    return (
+      <WelcomeBack
+        apple={apple}
+        busy={busy}
+        onApple={onApple}
+        onBack={() => navigation.goBack()}
+      />
+    );
+  }
 
   return (
     <OnboardingFrame
@@ -85,8 +108,73 @@ export function SignInScreen({ navigation }: RootStackScreenProps<'SignIn'>) {
   );
 }
 
+/**
+ * From Welcome's "Sign in": the same map and glass panel as Welcome, so coming
+ * back feels like the front door rather than a step in setting up.
+ */
+function WelcomeBack({
+  apple,
+  busy,
+  onApple,
+  onBack,
+}: {
+  apple: boolean | null;
+  busy: boolean;
+  onApple: () => void;
+  onBack: () => void;
+}) {
+  const insets = useSafeAreaInsets();
+  return (
+    <View style={[styles.back, { paddingTop: insets.top, paddingBottom: insets.bottom + 24 }]}>
+      <Backdrop map />
+      <Pressable onPress={onBack} hitSlop={10} accessibilityLabel="Back" style={styles.backButton}>
+        <ChevronLeft />
+      </Pressable>
+      <FadeInView rise={14} {...motion.statement} style={styles.hero}>
+        <ArroMark size={60} />
+        <Text style={styles.heading}>Welcome back</Text>
+        <Text style={styles.tagline}>Your family’s been moving.</Text>
+      </FadeInView>
+
+      <View style={styles.space} />
+
+      <FadeInView delay={380} rise={10} {...motion.statement}>
+        <Glass radius={24} padding={18} style={styles.panel}>
+          <Text style={styles.line}>Sign in with the Apple ID you use for Arro and you’ll go straight to your family.</Text>
+          {apple ? (
+            <AppleAuthentication.AppleAuthenticationButton
+              buttonType={AppleAuthentication.AppleAuthenticationButtonType.SIGN_IN}
+              buttonStyle={AppleAuthentication.AppleAuthenticationButtonStyle.BLACK}
+              cornerRadius={14}
+              style={[styles.appleBig, busy && styles.busy]}
+              onPress={busy ? () => undefined : onApple}
+            />
+          ) : (
+            <PrimaryButton title="Sign in with Apple" onPress={onApple} disabled style={styles.cta} />
+          )}
+          <Text style={styles.panelNote}>
+            {apple === false ? 'Sign in with Apple needs the iPhone app.' : 'Your email isn’t shared with your family.'}
+          </Text>
+        </Glass>
+      </FadeInView>
+    </View>
+  );
+}
+
 const styles = StyleSheet.create({
   apple: { height: 52, marginTop: 18 },
   busy: { opacity: 0.5 },
   note: { ...type.meta, marginTop: 14 },
+  // Welcome back, laid out like Welcome.
+  back: { flex: 1, backgroundColor: colors.screen, paddingHorizontal: 26 },
+  backButton: { width: 28, height: 40, justifyContent: 'center', marginLeft: -10 },
+  hero: { alignItems: 'center', paddingTop: 32 },
+  heading: { ...type.display, fontSize: 46, lineHeight: 50, color: colors.ink, marginTop: 18 },
+  tagline: { ...type.body, marginTop: 6 },
+  space: { flex: 1 },
+  panel: { marginHorizontal: -8, paddingTop: 22 },
+  line: { fontSize: 17, lineHeight: 25, fontWeight: weights.regular, color: colors.inkSoft, textAlign: 'center', paddingHorizontal: 6 },
+  appleBig: { height: 52, marginTop: 22 },
+  cta: { marginTop: 22 },
+  panelNote: { ...type.meta, textAlign: 'center', marginTop: 16 },
 });

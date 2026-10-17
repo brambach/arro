@@ -7,7 +7,8 @@ export type RootStackParamList = {
   Welcome: undefined;
   JoinCode: undefined;
   InvitePreview: undefined;
-  SignIn: undefined;
+  /** `returning`: from Welcome's "Sign in", for someone who already has an account (no name step). */
+  SignIn: { returning?: boolean } | undefined;
   MeetFamily: undefined;
   NameFamily: undefined;
   OnboardingPhoto: undefined;
