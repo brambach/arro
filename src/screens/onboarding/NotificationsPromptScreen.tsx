@@ -30,7 +30,7 @@ export function NotificationsPromptScreen({ navigation, route }: RootStackScreen
   const [reminder, setReminder] = useState(true);
   const [busy, setBusy] = useState(false);
 
-  // Joining happens here for an invitee, so a code can expire on the way.
+  // An invitee has joined by now (Meet the family); this saves the reminder and opens the family.
   const finish = async (allow: boolean) => {
     if (busy) return;
     setBusy(true);

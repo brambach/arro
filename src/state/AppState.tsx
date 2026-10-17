@@ -49,7 +49,10 @@ export interface Draft {
   invited: { id: string; name: string }[];
   /** Signed in with Apple (server mode only). */
   userId: string | null;
-  /** The founder's family, made on the server once it's named, so the invite has a real code. */
+  /**
+   * The family on the server: the founder's, made once it's named so the invite has
+   * a real code; the invitee's, joined when they tap "Join the family".
+   */
   remote: { memberId: string; familyId: string } | null;
   /** What the invitee's code opened (server mode only). */
   invite: InvitePreview | null;
@@ -129,6 +132,8 @@ interface AppContextValue {
   saveFamilyName: () => Promise<void>;
   /** Invitee: look up the code on the server. Throws backend.InviteError. */
   lookUpInvite: () => Promise<void>;
+  /** Invitee, server mode: join the family now, at "Join the family". Throws backend.InviteError. */
+  joinInvitedFamily: () => Promise<void>;
   completeOnboarding: (remindersWanted: boolean) => Promise<void>;
   /** Throws backend.WorkoutDateError when the server refuses the date. */
   logWorkout: (input: LogInput) => Promise<void>;
@@ -431,6 +436,18 @@ export function AppStateProvider({ children }: { children: React.ReactNode }) {
     setDraft((cur) => ({ ...cur, invite, familyName: invite.familyName }));
   }, []);
 
+  // Joining at "Join the family" rather than on the last step means someone who
+  // stops partway is still in the family; signing in again takes them to it.
+  const joinInvitedFamily = useCallback(async () => {
+    const d = draftRef.current;
+    if (!backend.backendEnabled || !d.userId || d.remote) return;
+    const remote = await backend.joinFamily(d.joinCode, d.name.trim() || 'Me', deviceTimezone(), d.reminder);
+    draftRef.current = { ...draftRef.current, remote };
+    setDraft((cur) => ({ ...cur, remote }));
+    // Joining queued "<name> joined" for everyone already in the family.
+    backend.sendQueuedPushes().catch(() => undefined);
+  }, []);
+
   const completeOnboarding = useCallback(
     async (remindersWanted: boolean) => {
       const d = draftRef.current;
@@ -438,11 +455,12 @@ export function AppStateProvider({ children }: { children: React.ReactNode }) {
 
       if (backend.backendEnabled && d.userId) {
         let remote = d.remote;
-        if (founder && remote) {
+        if (remote) {
+          // Made or joined earlier in onboarding, before the reminder time was picked.
           await backend.updateMember(remote.memberId, { reminder: d.reminder });
         } else if (!founder) {
+          // Not joined yet (an older path into this screen): join now.
           remote = await backend.joinFamily(d.joinCode, d.name.trim() || 'Me', deviceTimezone(), d.reminder);
-          // Joining queued "<name> joined" for everyone already in the family.
           backend.sendQueuedPushes().catch(() => undefined);
         }
         if (!remote) throw new Error('No family yet');
@@ -722,6 +740,7 @@ export function AppStateProvider({ children }: { children: React.ReactNode }) {
       finishSignIn,
       saveFamilyName,
       lookUpInvite,
+      joinInvitedFamily,
       completeOnboarding,
       logWorkout,
       nudge,
@@ -749,6 +768,7 @@ export function AppStateProvider({ children }: { children: React.ReactNode }) {
       finishSignIn,
       saveFamilyName,
       lookUpInvite,
+      joinInvitedFamily,
       completeOnboarding,
       logWorkout,
       nudge,

@@ -1,4 +1,4 @@
-import React, { useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import { StyleSheet, Text, View } from 'react-native';
 import { colors } from '../../theme/tokens';
 import { type, weights } from '../../theme/typography';
@@ -6,15 +6,42 @@ import { AvatarRing } from '../../components/AvatarRing';
 import { Card } from '../../components/Card';
 import { OnboardingFrame } from '../../components/OnboardingFrame';
 import { DEMO_FAMILY_NAME, useApp } from '../../state/AppState';
+import { InviteError } from '../../state/backend';
+import { showError } from '../../state/confirm';
 import { familyMembersList } from '../../data/family';
 import { Member } from '../../data/types';
 import { RootStackScreenProps } from '../../navigation/types';
 import { nextAfter, stepOf } from './steps';
 
-/** After sign-in the server can say who's in the family and how the streak is going. */
+/**
+ * After sign-in the server can say who's in the family and how the streak is going.
+ * "Join the family" joins it on the server there and then; the steps after it set
+ * up this phone.
+ */
 export function MeetFamilyScreen({ navigation }: RootStackScreenProps<'MeetFamily'>) {
-  const { draft, online, lookUpInvite } = useApp();
+  const { draft, online, lookUpInvite, joinInvitedFamily } = useApp();
   const invite = draft.invite;
+  const [busy, setBusy] = useState(false);
+
+  const join = async () => {
+    if (busy) return;
+    setBusy(true);
+    try {
+      await joinInvitedFamily();
+      navigation.navigate(nextAfter('invitee', 'MeetFamily') as 'HowItWorks');
+    } catch (e) {
+      showError(
+        'Couldn’t join yet',
+        e instanceof InviteError
+          ? e.kind === 'notFound'
+            ? `${e.message} Ask your family for a new code.`
+            : e.message
+          : 'Check your connection and try again.',
+      );
+    } finally {
+      setBusy(false);
+    }
+  };
 
   // Signed in now, the same code also returns names, colours and the streak.
   useEffect(() => {
@@ -35,7 +62,8 @@ export function MeetFamilyScreen({ navigation }: RootStackScreenProps<'MeetFamil
       step={stepOf('invitee', 'MeetFamily')}
       onBack={() => navigation.goBack()}
       primaryLabel="Join the family"
-      onPrimary={() => navigation.navigate(nextAfter('invitee', 'MeetFamily') as 'HowItWorks')}
+      primaryDisabled={busy}
+      onPrimary={join}
     >
       <Card padding={18}>
         <View style={styles.faces}>
