@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import {
   ActivityIndicator,
   KeyboardAvoidingView,
@@ -34,14 +34,46 @@ import { WorkoutType } from '../data/types';
 export function WorkoutDetailScreen({ navigation, route }: RootStackScreenProps<'WorkoutDetail'>) {
   const insets = useSafeAreaInsets();
   const view = useView();
-  const { online, setWorkoutPhoto, cheer, comment, deleteComment, removeWorkout, changeWorkoutType } = useApp();
+  const { online, refresh, setWorkoutPhoto, cheer, comment, deleteComment, removeWorkout, changeWorkoutType } = useApp();
   const [editingType, setEditingType] = useState(false);
   const [savingPhoto, setSavingPhoto] = useState(false);
   const [draft, setDraft] = useState('');
   const [sending, setSending] = useState(false);
   const workout: WorkoutDetail | undefined = view.workouts[route.params.workoutId];
+  // A push can open a workout before the family has loaded it, or after it was removed.
+  const [looking, setLooking] = useState(!workout);
+  useEffect(() => {
+    if (workout || !looking) return;
+    let live = true;
+    refresh()
+      .catch(() => undefined)
+      .finally(() => {
+        if (live) setLooking(false);
+      });
+    return () => {
+      live = false;
+    };
+  }, [workout, looking, refresh]);
 
-  if (!workout) return null;
+  if (!workout) {
+    return (
+      <View style={[styles.root, { paddingTop: insets.top }]}>
+        <Backdrop />
+        <View style={styles.header}>
+          <Pressable onPress={() => navigation.goBack()} hitSlop={10} accessibilityLabel="Back">
+            <ChevronLeft />
+          </Pressable>
+        </View>
+        <View style={styles.missing}>
+          {looking ? (
+            <ActivityIndicator color={colors.muted} accessibilityLabel="Loading the workout" />
+          ) : (
+            <Text style={styles.missingText}>This workout was removed.</Text>
+          )}
+        </View>
+      </View>
+    );
+  }
 
   const label = workoutTypeLabels[workout.type];
   const mine = workout.memberId === view.me.id;
@@ -315,6 +347,8 @@ const styles = StyleSheet.create({
   root: { flex: 1, backgroundColor: colors.screen },
   header: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', height: 40, paddingHorizontal: 16 },
   headerTitle: { ...type.name },
+  missing: { flex: 1, alignItems: 'center', justifyContent: 'center', paddingBottom: 80 },
+  missingText: { ...type.body, color: colors.muted },
   map: {
     marginHorizontal: spacing.gutter,
     marginTop: 6,
