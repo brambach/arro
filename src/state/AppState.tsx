@@ -9,6 +9,7 @@ import { AppView, Preview, buildView } from './buildView';
 import { dayKey, addDays, deviceTimezone, inWakingHours, yesterdayOpen } from './dates';
 import { connectHealth, onHealthWorkoutsChanged, readRecentHealthWorkouts } from './health';
 import { syncHealthWorkouts } from './healthSync';
+import { makeJoinCode } from './joinCode';
 import { PhotoShape, photoForUpload } from './photos';
 import { LatLng, decodePolyline, routeLength } from './routes';
 import {
@@ -88,14 +89,6 @@ function rangeStart(range: MapRange): string | null {
 /** The family people join with any code in the local preview. */
 export const DEMO_FAMILY_NAME = 'Home crew';
 const DEMO_MEMBER_COUNT = 3;
-
-const CODE_ALPHABET = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789'; // no 0/O/1/I
-
-export function makeJoinCode(): string {
-  let code = '';
-  for (let i = 0; i < 8; i++) code += CODE_ALPHABET[Math.floor(Math.random() * CODE_ALPHABET.length)];
-  return code;
-}
 
 const emptyDraft = (role: Draft['role']): Draft => ({
   role,
