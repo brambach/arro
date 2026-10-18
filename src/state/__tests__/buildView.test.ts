@@ -49,6 +49,7 @@ function workout(id: string, memberId: string, localDate: string, hour = 7): Rem
     source: 'manual',
     createdAt: new Date(`${localDate}T${String(hour).padStart(2, '0')}:00:00-07:00`).toISOString(),
     cheeredBy: [],
+    comments: [],
   };
 }
 

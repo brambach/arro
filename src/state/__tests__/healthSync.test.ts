@@ -6,20 +6,33 @@ import {
   healthDetails,
   healthLocalDate,
   healthMinutes,
+  MIN_HEALTH_SECONDS,
+  planHealthSync,
   sendableHealthWorkouts,
   syncHealthWorkouts,
   workoutTypeFor,
 } from '../healthSync';
-import { fillHealthWorkoutDetails, insertHealthWorkout, WorkoutDateError } from '../backend';
+import {
+  deleteWorkout,
+  fillHealthWorkoutDetails,
+  insertHealthWorkout,
+  replaceHealthWorkout,
+  SavedHealthWorkout,
+  WorkoutDateError,
+} from '../backend';
 
 jest.mock('../backend', () => ({
   insertHealthWorkout: jest.fn(),
   fillHealthWorkoutDetails: jest.fn(),
+  replaceHealthWorkout: jest.fn(),
+  deleteWorkout: jest.fn(),
   WorkoutDateError: class WorkoutDateError extends Error {},
 }));
 
 const insert = jest.mocked(insertHealthWorkout);
 const fill = jest.mocked(fillHealthWorkoutDetails);
+const replace = jest.mocked(replaceHealthWorkout);
+const remove = jest.mocked(deleteWorkout);
 
 // 10am on 17 October in Los Angeles.
 const NOW = new Date('2026-10-17T17:00:00Z');
@@ -40,6 +53,8 @@ function line(meters: number): LatLng[] {
 beforeEach(() => {
   insert.mockReset();
   fill.mockReset();
+  replace.mockReset();
+  remove.mockReset();
 });
 
 describe('mapping a Health workout', () => {
@@ -92,12 +107,50 @@ describe('which workouts go to the server', () => {
   });
 });
 
+function savedRow(id: string, healthWorkoutId: string, startIso: string, minutes = 30): SavedHealthWorkout {
+  return { id, healthWorkoutId, localDate: startIso.slice(0, 10), startedAt: startIso, minutes };
+}
+
+describe('planHealthSync', () => {
+  const watch = workout('watch', '2026-10-17T16:00:00Z', { sourceId: 'com.apple.health.abc', route: line(2000) });
+  const whoop = workout('whoop', '2026-10-17T16:02:00Z', { sourceId: 'com.whoop.iphone' });
+
+  it('counts a workout two apps recorded once, keeping the copy with a route', () => {
+    const plan = planHealthSync([whoop, watch], [], NOW);
+    expect(plan.insert.map((w) => w.uuid)).toEqual(['watch']);
+    expect(plan.skipped).toBe(1);
+  });
+
+  it('leaves out workouts under five minutes', () => {
+    const blip = workout('blip', '2026-10-17T15:00:00Z', { durationSeconds: MIN_HEALTH_SECONDS - 1 });
+    expect(planHealthSync([blip], [], NOW).insert).toEqual([]);
+  });
+
+  it('points a saved worse copy at the better one instead of adding another row', () => {
+    const plan = planHealthSync([whoop, watch], [savedRow('row-1', 'whoop', '2026-10-17T16:02:00Z')], NOW);
+    expect(plan.insert).toEqual([]);
+    expect(plan.replace).toEqual([{ rowId: 'row-1', with: watch }]);
+    expect(plan.remove).toEqual([]);
+  });
+
+  it('removes a row gone from Health only when Health could be read in full', () => {
+    const saved = [savedRow('row-gone', 'gone', '2026-10-17T14:00:00Z')];
+    expect(planHealthSync([], saved, NOW).remove).toEqual([]);
+    expect(planHealthSync([], saved, NOW, { canRemove: true }).remove).toEqual(['row-gone']);
+  });
+
+  it('skips a workout its owner removed from Arro', () => {
+    expect(planHealthSync([watch], [], NOW, { dismissed: new Set(['watch']) }).insert).toEqual([]);
+  });
+});
+
 describe('syncHealthWorkouts', () => {
   it('counts what was added, already there, filled in and skipped', async () => {
+    // Inserts run oldest first: late, raced, new.
     insert
-      .mockResolvedValueOnce('added')
-      .mockResolvedValueOnce('synced')
-      .mockRejectedValueOnce(new WorkoutDateError('closed'));
+      .mockRejectedValueOnce(new WorkoutDateError('closed'))
+      .mockResolvedValueOnce({ outcome: 'synced' })
+      .mockResolvedValueOnce({ outcome: 'added', id: 'row-new' });
     fill.mockResolvedValueOnce(true);
 
     const result = await syncHealthWorkouts(
@@ -105,20 +158,50 @@ describe('syncHealthWorkouts', () => {
       [
         workout('new', '2026-10-17T16:00:00Z'),
         workout('known', '2026-10-17T15:00:00Z', { route: line(2000) }),
+        // Saved by another sync between reading the server and inserting.
+        workout('raced', '2026-10-17T14:00:00Z'),
         workout('late', '2026-10-16T16:00:00Z'),
         workout('old', '2026-10-10T16:00:00Z'),
       ],
+      [savedRow('row-known', 'known', '2026-10-17T15:00:00Z')],
       NOW,
     );
 
-    expect(result).toEqual({ added: 1, alreadySynced: 1, updated: 1, skipped: 2 });
+    expect(result).toEqual({
+      added: 1,
+      alreadySynced: 2,
+      updated: 1,
+      skipped: 2,
+      addedWorkouts: [{ id: 'row-new', type: 'walk' }],
+      replaced: 0,
+      removed: 0,
+    });
     expect(insert).toHaveBeenCalledTimes(3);
-    expect(insert.mock.calls[0][1]).toMatchObject({ healthWorkoutId: 'new', localDate: '2026-10-17', type: 'walk', minutes: 30 });
+    expect(insert.mock.calls.find((c) => c[1].healthWorkoutId === 'new')?.[1]).toMatchObject({
+      localDate: '2026-10-17',
+      type: 'walk',
+      minutes: 30,
+    });
     expect(fill).toHaveBeenCalledWith('member-1', 'known', expect.objectContaining({ route: expect.any(String) }));
+  });
+
+  it('swaps in the better copy and removes rows gone from Health', async () => {
+    const result = await syncHealthWorkouts(
+      'member-1',
+      [workout('watch', '2026-10-17T16:00:00Z', { sourceId: 'com.apple.health.abc', sourceName: 'Apple Watch' })],
+      [savedRow('row-1', 'whoop', '2026-10-17T16:02:00Z'), savedRow('row-gone', 'gone', '2026-10-17T13:00:00Z')],
+      NOW,
+      { canRemove: true },
+    );
+    expect(result).toMatchObject({ added: 0, replaced: 1, removed: 1 });
+    expect(replace).toHaveBeenCalledWith('row-1', expect.objectContaining({ healthWorkoutId: 'watch', sourceApp: 'Apple Watch' }));
+    expect(remove).toHaveBeenCalledWith('row-gone');
   });
 
   it('passes on errors other than a closed day', async () => {
     insert.mockRejectedValueOnce(new Error('offline'));
-    await expect(syncHealthWorkouts('member-1', [workout('new', '2026-10-17T16:00:00Z')], NOW)).rejects.toThrow('offline');
+    await expect(syncHealthWorkouts('member-1', [workout('new', '2026-10-17T16:00:00Z')], [], NOW)).rejects.toThrow(
+      'offline',
+    );
   });
 });
