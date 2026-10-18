@@ -6,6 +6,7 @@
  * mapping happens here and nowhere else.
  */
 import * as AppleAuthentication from 'expo-apple-authentication';
+import { FunctionsHttpError } from '@supabase/supabase-js';
 import { Platform } from 'react-native';
 import { ReminderSlot, WorkoutSource, WorkoutType } from '../data/types';
 import { addDays, dayKey } from './dates';
@@ -176,14 +177,40 @@ export async function signOut(): Promise<void> {
 }
 
 /**
- * Deletes the auth user on the server, which removes their member rows, workouts,
- * cheers and nudges, and any family they leave empty (delete_my_account).
+ * Deletes the account through the delete-account edge function: every photo, the
+ * Sign in with Apple token, then the auth user, which removes their member rows,
+ * workouts, cheers and nudges, and any family they leave empty.
+ *
+ * Apple's sheet comes up first for a fresh authorization code, which the function
+ * needs to revoke the token. 'cancelled' when the person closes it.
  */
-export async function deleteAccount(): Promise<void> {
-  const { error } = await client().rpc('delete_my_account');
-  if (error) throw error;
+export async function deleteAccount(me: { familyId: string; memberId: string }): Promise<'deleted' | 'cancelled'> {
+  const code = await appleCodeForDeletion();
+  if (code === 'cancelled') return 'cancelled';
+  const { error } = await client().functions.invoke('delete-account', { body: { appleAuthorizationCode: code } });
+  if (error) {
+    // Until the function is deployed: photos from the phone, then the delete_my_account RPC.
+    if (!(error instanceof FunctionsHttpError && error.context?.status === 404)) throw error;
+    await deleteMyPhotos(me.familyId, me.memberId).catch(() => undefined);
+    const { error: rpcError } = await client().rpc('delete_my_account');
+    if (rpcError) throw rpcError;
+  }
   // The user no longer exists, so a server-side sign-out would fail. Clear the local login only.
   await client().auth.signOut({ scope: 'local' }).catch(() => undefined);
+  return 'deleted';
+}
+
+/** A fresh Sign in with Apple authorization code; null where there's no Apple sign-in or it failed. */
+async function appleCodeForDeletion(): Promise<string | null | 'cancelled'> {
+  if (Platform.OS !== 'ios' || !(await AppleAuthentication.isAvailableAsync().catch(() => false))) return null;
+  try {
+    const credential = await AppleAuthentication.signInAsync({ requestedScopes: [] });
+    return credential.authorizationCode ?? null;
+  } catch (e) {
+    if ((e as { code?: string }).code === 'ERR_REQUEST_CANCELED') return 'cancelled';
+    // Deleting matters more than revoking: carry on without the code.
+    return null;
+  }
 }
 
 // ─── Families ────────────────────────────────────────────────────────────────
@@ -610,13 +637,14 @@ export async function setWorkoutPhoto(workoutId: string, path: string | null): P
 }
 
 /**
- * Removes every photo this member uploaded. Called before deleting the account,
- * because Storage files aren't deleted with the database rows.
+ * Removes every photo this member uploaded in one family. Only the fallback in
+ * deleteAccount uses it now; the delete-account function does this on the server.
  */
-export async function deleteMyPhotos(familyId: string, memberId: string): Promise<void> {
+async function deleteMyPhotos(familyId: string, memberId: string): Promise<void> {
   const bucket = client().storage.from(PHOTO_BUCKET);
   const folder = `${familyId}/${memberId}`;
-  for (;;) {
+  // Capped, in case Storage keeps listing files it won't remove.
+  for (let round = 0; round < 50; round++) {
     const { data, error } = await bucket.list(folder, { limit: 100 });
     if (error || !data?.length) return;
     const { error: removeError } = await bucket.remove(data.map((f) => `${folder}/${f.name}`));
