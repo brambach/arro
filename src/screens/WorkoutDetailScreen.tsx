@@ -73,8 +73,14 @@ export function WorkoutDetailScreen({ navigation, route }: RootStackScreenProps<
     }
   };
 
-  const removeComment = async (id: string) => {
-    if (!(await confirmAction('Delete your comment?', 'Your family won’t see it any more.', 'Delete'))) return;
+  /** `author` is null for your own comment, or whose comment it is on your workout. */
+  const removeComment = async (id: string, author: string | null) => {
+    const ok = await confirmAction(
+      author ? `Delete ${author}’s comment?` : 'Delete your comment?',
+      author ? 'It comes off your workout for everyone.' : 'Your family won’t see it any more.',
+      'Delete',
+    );
+    if (!ok) return;
     deleteComment(id).catch(() => showError('Couldn’t delete it', 'Check your connection and try again.'));
   };
 
@@ -188,12 +194,18 @@ export function WorkoutDetailScreen({ navigation, route }: RootStackScreenProps<
               {workout.comments.map((c) => {
                 const who = view.members[c.memberId];
                 const own = c.memberId === view.me.id;
+                // Your own comments, and anyone's on your workout.
+                const canDelete = online && (own || mine);
                 return (
                   <Pressable
                     key={c.id}
                     style={styles.comment}
-                    onLongPress={own ? () => removeComment(c.id) : undefined}
-                    accessibilityHint={own ? 'Long press to delete' : undefined}
+                    onLongPress={canDelete ? () => removeComment(c.id, own ? null : (who?.name ?? 'this person')) : undefined}
+                    accessibilityHint={canDelete ? 'Long press to delete' : undefined}
+                    accessibilityActions={canDelete ? [{ name: 'delete', label: 'Delete comment' }] : undefined}
+                    onAccessibilityAction={
+                      canDelete ? () => removeComment(c.id, own ? null : (who?.name ?? 'this person')) : undefined
+                    }
                   >
                     <AvatarRing member={who} name={who?.name} size={26} />
                     <Text style={styles.commentText}>
