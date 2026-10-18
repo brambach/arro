@@ -259,10 +259,39 @@ export function sendableHealthWorkouts(workouts: HealthWorkout[], now: Date = ne
   });
 }
 
-/** The source name stored with a workout, trimmed to what the server takes. */
-function sourceApp(w: HealthWorkout): string | undefined {
-  const name = w.sourceName?.trim();
-  return name ? name.slice(0, 60) : undefined;
+const SOURCE_LABELS: [RegExp, string][] = [
+  [/whoop/, 'WHOOP'],
+  [/strava/, 'Strava'],
+  [/garmin/, 'Garmin'],
+  [/oura/, 'Oura'],
+  [/fitbit/, 'Fitbit'],
+  [/peloton/, 'Peloton'],
+  [/nike/, 'Nike Run Club'],
+  [/zwift/, 'Zwift'],
+  [/wahoo/, 'Wahoo'],
+  [/polar/, 'Polar'],
+  [/suunto/, 'Suunto'],
+  [/coros/, 'COROS'],
+  [/runkeeper|fitnesskeeper/, 'Runkeeper'],
+  [/ultrahuman/, 'Ultrahuman'],
+  [/fitbod/, 'Fitbod'],
+  [/hevy/, 'Hevy'],
+];
+
+/**
+ * The fixed label stored with a Health workout ("From WHOOP"). Health names
+ * devices after their owner ("Bryce’s Apple Watch"), so the name itself is never
+ * stored: the bundle id picks the label, and the name only tells a watch from a phone.
+ */
+export function healthSourceLabel(w: Pick<HealthWorkout, 'sourceId' | 'sourceName'>): string {
+  const id = (w.sourceId ?? '').toLowerCase();
+  if (id.startsWith('com.apple.')) {
+    const name = (w.sourceName ?? '').toLowerCase();
+    if (name.includes('watch')) return 'Apple Watch';
+    if (name.includes('iphone')) return 'iPhone';
+    return 'Apple Health';
+  }
+  return SOURCE_LABELS.find(([pattern]) => pattern.test(id))?.[1] ?? 'Health';
 }
 
 /**
@@ -301,7 +330,7 @@ export async function syncHealthWorkouts(
         healthWorkoutId: w.uuid,
         type: workoutTypeFor(w.activityType),
         minutes: healthMinutes(w),
-        sourceApp: sourceApp(w),
+        sourceApp: healthSourceLabel(w),
         ...healthDetails(w),
       });
       result.replaced += 1;
@@ -318,12 +347,12 @@ export async function syncHealthWorkouts(
         localDate: healthLocalDate(w),
         type,
         minutes: healthMinutes(w),
-        sourceApp: sourceApp(w),
+        sourceApp: healthSourceLabel(w),
         ...healthDetails(w),
       });
       if (row.outcome === 'added') {
         result.added += 1;
-        result.addedWorkouts.push({ id: row.id, type, sourceName: sourceApp(w) });
+        result.addedWorkouts.push({ id: row.id, type, sourceName: healthSourceLabel(w) });
       } else {
         result.alreadySynced += 1;
       }
