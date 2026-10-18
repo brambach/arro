@@ -6,6 +6,7 @@ import {
   dayKey,
   daysBetween,
   fromKey,
+  inWakingHours,
   timeLabel,
   utcDayKey,
   weekdayIndex,
@@ -65,5 +66,14 @@ describe('timeLabel', () => {
     expect(timeLabel(new Date(2026, 9, 17, 0, 5))).toBe('12:05 AM');
     expect(timeLabel(new Date(2026, 9, 17, 12, 30))).toBe('12:30 PM');
     expect(timeLabel(new Date(2026, 9, 17, 18, 0))).toBe('6:00 PM');
+  });
+});
+
+describe('inWakingHours', () => {
+  it('is 07:00 up to 21:00 on this phone', () => {
+    expect(inWakingHours(new Date(2026, 9, 17, 6, 59))).toBe(false);
+    expect(inWakingHours(new Date(2026, 9, 17, 7, 0))).toBe(true);
+    expect(inWakingHours(new Date(2026, 9, 17, 20, 59))).toBe(true);
+    expect(inWakingHours(new Date(2026, 9, 17, 21, 0))).toBe(false);
   });
 });

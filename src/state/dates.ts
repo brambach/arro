@@ -69,6 +69,12 @@ export function timeLabel(d: Date): string {
   return `${h % 12 === 0 ? 12 : h % 12}:${m} ${h < 12 ? 'AM' : 'PM'}`;
 }
 
+/** 07:00 to 21:00 on this phone, the same window the server keeps for pushes. */
+export function inWakingHours(d: Date = new Date()): boolean {
+  const h = d.getHours();
+  return h >= 7 && h < 21;
+}
+
 export function greetingFor(d: Date = new Date()): string {
   const h = d.getHours();
   if (h < 12) return 'Good morning';
