@@ -16,11 +16,7 @@
 //   APPLE_CLIENT_ID     the app's bundle id
 import { createClient } from 'npm:@supabase/supabase-js@2';
 import { importPKCS8, SignJWT } from 'npm:jose@5';
-
-const BUCKET = 'photos';
-// 100 files a round; 50 rounds is far more photos than one person uploads.
-const PAGE = 100;
-const MAX_ROUNDS = 50;
+import { removePhotoFolder } from '../_shared/photos.ts';
 
 Deno.serve(async (req) => {
   if (req.method !== 'POST') return Response.json({ error: 'POST only' }, { status: 405 });
@@ -42,21 +38,8 @@ Deno.serve(async (req) => {
   if (membersError) return Response.json({ error: membersError.message }, { status: 500 });
 
   for (const m of memberships ?? []) {
-    const folder = `${m.family_id}/${m.id}`;
-    for (let round = 0; ; round++) {
-      if (round === MAX_ROUNDS) return Response.json({ error: 'too many photos to remove' }, { status: 500 });
-      const { data: files, error: listError } = await db.storage.from(BUCKET).list(folder, { limit: PAGE });
-      if (listError) return Response.json({ error: listError.message }, { status: 500 });
-      if (!files || files.length === 0) break;
-      const { data: removed, error: removeError } = await db.storage
-        .from(BUCKET)
-        .remove(files.map((f) => `${folder}/${f.name}`));
-      if (removeError) return Response.json({ error: removeError.message }, { status: 500 });
-      // Nothing removed means the next list returns the same files: stop instead of looping.
-      if (!removed || removed.length === 0) {
-        return Response.json({ error: 'photos could not be removed' }, { status: 500 });
-      }
-    }
+    const photoError = await removePhotoFolder(db, `${m.family_id}/${m.id}`);
+    if (photoError) return Response.json({ error: photoError }, { status: 500 });
   }
 
   // 2. Apple --------------------------------------------------------------------

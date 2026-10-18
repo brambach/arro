@@ -358,9 +358,16 @@ export async function joinFamily(
  * the family can (remove_member). The family's codes are withdrawn, so the next
  * refresh makes a new one.
  */
+/**
+ * Removes someone through the remove-member edge function, which also deletes
+ * their photos. Until the function is deployed, the remove_member RPC alone.
+ */
 export async function removeMember(memberId: string): Promise<void> {
-  const { error } = await client().rpc('remove_member', { p_member_id: memberId });
-  if (error) throw error;
+  const { error } = await client().functions.invoke('remove-member', { body: { memberId } });
+  if (!error) return;
+  if (!(error instanceof FunctionsHttpError && error.context?.status === 404)) throw error;
+  const { error: rpcError } = await client().rpc('remove_member', { p_member_id: memberId });
+  if (rpcError) throw rpcError;
 }
 
 /** The newest unexpired code for the family, making one if there's none. Codes last 14 days. */
