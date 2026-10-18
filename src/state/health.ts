@@ -90,7 +90,10 @@ export async function readRecentHealthWorkouts(now: Date = new Date()): Promise<
       uuid: s.uuid,
       activityType: activityName(hk, s.workoutActivityType),
       start: s.startDate,
+      end: s.endDate,
       durationSeconds: s.duration,
+      sourceId: s.sourceId,
+      sourceName: s.sourceName,
       // The module always reports distance in metres.
       distanceMeters: s.totalDistance && s.totalDistance > 0 ? s.totalDistance : undefined,
       route: await readRoute(hk, s.uuid),

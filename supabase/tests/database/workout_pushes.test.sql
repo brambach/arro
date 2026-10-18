@@ -6,7 +6,7 @@ begin;
 create extension if not exists pgtap with schema extensions;
 set local search_path = public, extensions;
 
-select plan(17);
+select plan(19);
 
 create temp table zones on commit drop as
 with offsets as (
@@ -135,6 +135,24 @@ select throws_ok(
   $$ insert into public.comments (workout_id, member_id, body)
      values ('ca000000-0000-0000-0000-000000000000', 'c1110000-0000-0000-0000-000000000000', 'One more') $$,
   'P0001', 'too many comments today', 'At most 20 comments a day from one person');
+
+-- Which app recorded it -----------------------------------------------------------------
+insert into public.workouts (id, member_id, local_date, type, source, health_workout_id, source_app)
+select 'cb000000-0000-0000-0000-000000000000', 'c2220000-0000-0000-0000-000000000000',
+       (now() at time zone awake)::date, 'run', 'health', 'whoop-copy', 'WHOOP'
+  from zones;
+
+set local role authenticated;
+set local request.jwt.claims = '{"sub": "c2000000-0000-0000-0000-000000000000", "role": "authenticated"}';
+select results_eq(
+  $$ update public.workouts set health_workout_id = 'watch-copy', source_app = 'Dad''s Apple Watch'
+      where id = 'cb000000-0000-0000-0000-000000000000' returning health_workout_id, source_app $$,
+  $$ values ('watch-copy'::text, 'Dad''s Apple Watch'::text) $$,
+  'Dad can point his own Health workout at a better copy');
+select throws_ok(
+  $$ update public.workouts set source = 'manual' where id = 'cb000000-0000-0000-0000-000000000000' $$,
+  '42501', null, 'but can''t change where it came from');
+reset role;
 
 select * from finish();
 rollback;

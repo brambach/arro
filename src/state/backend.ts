@@ -55,6 +55,19 @@ export interface RemoteWorkout {
   cheeredBy: string[];
   /** Oldest first. */
   comments: RemoteComment[];
+  /** HealthKit's UUID, for Health workouts. */
+  healthWorkoutId?: string;
+  /** The app or device that recorded a Health workout, such as "WHOOP". */
+  sourceApp?: string;
+}
+
+/** One of your Health workouts as saved, for a sync to compare with Health. */
+export interface SavedHealthWorkout {
+  id: string;
+  healthWorkoutId: string;
+  localDate: string;
+  startedAt?: string;
+  minutes?: number;
 }
 
 export interface RemoteComment {
@@ -325,7 +338,7 @@ export async function fetchFamily(familyId: string, myMemberId: string): Promise
   const workouts = await db
     .from('workouts')
     .select(
-      'id, member_id, local_date, type, duration_minutes, source, note, created_at, started_at, distance_m, route, photo_path, cheers (member_id), comments (id, member_id, body, created_at)',
+      'id, member_id, local_date, type, duration_minutes, source, note, created_at, started_at, distance_m, route, photo_path, health_workout_id, source_app, cheers (member_id), comments (id, member_id, body, created_at)',
     )
     .in('member_id', memberIds)
     .gte('local_date', since)
@@ -345,6 +358,8 @@ export async function fetchFamily(familyId: string, myMemberId: string): Promise
     distance_m: number | null;
     route: string | null;
     photo_path: string | null;
+    health_workout_id: string | null;
+    source_app: string | null;
     cheers: { member_id: string }[];
     comments: { id: string; member_id: string; body: string; created_at: string }[];
   }[];
@@ -380,6 +395,8 @@ export async function fetchFamily(familyId: string, myMemberId: string): Promise
       route: w.route ?? undefined,
       photoPath: w.photo_path ?? undefined,
       photoUrl: (w.photo_path && urls[w.photo_path]) || undefined,
+      healthWorkoutId: w.health_workout_id ?? undefined,
+      sourceApp: w.source_app ?? undefined,
       cheeredBy: w.cheers.map((c) => c.member_id),
       comments: w.comments
         .map((c) => ({ id: c.id, memberId: c.member_id, body: c.body, createdAt: c.created_at }))
@@ -520,6 +537,7 @@ export async function insertHealthWorkout(
     startedAt?: string;
     distanceMeters?: number;
     route?: string;
+    sourceApp?: string;
   },
 ): Promise<{ outcome: 'added'; id: string } | { outcome: 'synced' }> {
   const { data, error } = await client()
@@ -534,6 +552,7 @@ export async function insertHealthWorkout(
       started_at: input.startedAt ?? null,
       distance_m: input.distanceMeters ?? null,
       route: input.route ?? null,
+      source_app: input.sourceApp ?? null,
     })
     .select('id')
     .single();
@@ -569,6 +588,78 @@ export async function fillHealthWorkoutDetails(
     .select('id');
   if (error) throw error;
   return data.length > 0;
+}
+
+/** Your Health workouts from a day on, for a sync to compare with what Health has now. */
+export async function fetchMyHealthWorkouts(memberId: string, since: string): Promise<SavedHealthWorkout[]> {
+  const { data, error } = await client()
+    .from('workouts')
+    .select('id, health_workout_id, local_date, started_at, duration_minutes')
+    .eq('member_id', memberId)
+    .eq('source', 'health')
+    .gte('local_date', since);
+  if (error) throw error;
+  return (
+    data as {
+      id: string;
+      health_workout_id: string;
+      local_date: string;
+      started_at: string | null;
+      duration_minutes: number | null;
+    }[]
+  ).map((r) => ({
+    id: r.id,
+    healthWorkoutId: r.health_workout_id,
+    localDate: r.local_date,
+    startedAt: r.started_at ?? undefined,
+    minutes: r.duration_minutes ?? undefined,
+  }));
+}
+
+/**
+ * Points a saved Health workout at a better copy of the same workout (another app
+ * recorded it too), keeping its cheers, comments and photo.
+ */
+export async function replaceHealthWorkout(
+  rowId: string,
+  input: {
+    healthWorkoutId: string;
+    type: WorkoutType;
+    minutes?: number;
+    startedAt?: string;
+    distanceMeters?: number;
+    route?: string;
+    sourceApp?: string;
+  },
+): Promise<void> {
+  const { error } = await client()
+    .from('workouts')
+    .update({
+      health_workout_id: input.healthWorkoutId,
+      type: input.type,
+      duration_minutes: input.minutes ?? null,
+      started_at: input.startedAt ?? null,
+      distance_m: input.distanceMeters ?? null,
+      route: input.route ?? null,
+      source_app: input.sourceApp ?? null,
+    })
+    .eq('id', rowId);
+  if (error) {
+    if (error.code === '22023') throw new WorkoutDateError(error.message);
+    throw error;
+  }
+}
+
+/** Deletes one of your workouts, with its cheers and comments. */
+export async function deleteWorkout(workoutId: string): Promise<void> {
+  const { error } = await client().from('workouts').delete().eq('id', workoutId);
+  if (error) throw error;
+}
+
+/** Corrects the kind of one of your workouts ("it was a ride, not a run"). */
+export async function setWorkoutType(workoutId: string, type: WorkoutType): Promise<void> {
+  const { error } = await client().from('workouts').update({ type }).eq('id', workoutId);
+  if (error) throw error;
 }
 
 /** One member's routes since a day, newest first, for their map. */

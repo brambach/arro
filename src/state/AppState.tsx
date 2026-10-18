@@ -5,7 +5,7 @@ import { memberColor } from '../theme/tokens';
 import * as backend from './backend';
 import { InvitePreview, RemoteFamily } from './backend';
 import { AppView, Preview, buildView } from './buildView';
-import { dayKey, addDays, deviceTimezone } from './dates';
+import { dayKey, addDays, deviceTimezone, yesterdayOpen } from './dates';
 import { connectHealth, onHealthWorkoutsChanged, readRecentHealthWorkouts } from './health';
 import { syncHealthWorkouts } from './healthSync';
 import { PhotoShape, photoForUpload } from './photos';
@@ -140,6 +140,12 @@ interface AppContextValue {
   /** A short comment on a workout. Throws when it couldn't be saved. */
   comment: (workoutId: string, body: string) => Promise<void>;
   deleteComment: (commentId: string) => Promise<void>;
+  /** Takes one of your workouts off. A Health workout stays off, even though Health still has it. */
+  removeWorkout: (workoutId: string) => Promise<void>;
+  /** Corrects the kind of one of your workouts. */
+  changeWorkoutType: (workoutId: string, type: WorkoutType) => Promise<void>;
+  /** Pull to refresh: Apple Health first, then the family. */
+  syncNow: () => Promise<void>;
   updateProfile: (patch: { name?: string; photoUri?: string | null }) => Promise<void>;
   /** Adds, replaces (a local uri) or removes (null) the photo on one of your workouts. */
   setWorkoutPhoto: (workoutId: string, photoUri: string | null) => Promise<void>;
@@ -189,6 +195,7 @@ export function AppStateProvider({ children }: { children: React.ReactNode }) {
   familyRef.current = family;
   /** The push token registered for whoever is signed in, so signing out can remove it. */
   const pushTokenRef = useRef<string | null>(null);
+  const healthSyncQueue = useRef<Promise<void>>(Promise.resolve());
 
   const persist = useCallback(async (next: SavedSession) => {
     setSession(next);
@@ -236,25 +243,47 @@ export function AppStateProvider({ children }: { children: React.ReactNode }) {
    * who chose Apple Health. Reads the session from storage when it hasn't loaded
    * yet, because iOS can wake Arro in the background for a new workout.
    */
-  const syncHealth = useCallback(async () => {
-    const current = sessionRef.current ?? (await loadSession());
-    if (!current?.remote || current.me.moveMethod !== 'health') return;
-    try {
-      const workouts = await readRecentHealthWorkouts();
-      const result = await syncHealthWorkouts(current.remote.memberId, workouts);
-      if (result.added > 0) {
-        // The family hears "Dad went for a run" (migration 20261017000001).
-        await backend.sendQueuedPushes().catch(() => undefined);
-        // Synced in the background, after a walk or a run: say it's in, so they open Arro to see it.
-        const newest = result.addedWorkouts[result.addedWorkouts.length - 1];
-        if (RNAppState.currentState !== 'active') {
-          await notifyWorkoutSaved(newest.id, `Your ${SAVED_NOUN[newest.type]} is in Arro`, SAVED_BODY);
+  const syncHealth = useCallback(() => {
+    // One at a time: launch, coming back, pull to refresh and Health's own wake-ups
+    // can all ask at once, and two syncs could both swap or remove the same row.
+    const run = healthSyncQueue.current.then(async () => {
+      const current = sessionRef.current ?? (await loadSession());
+      if (!current?.remote || current.me.moveMethod !== 'health') return;
+      try {
+        const now = new Date();
+        const today = dayKey(now);
+        const since = yesterdayOpen(now) ? addDays(today, -1) : today;
+        const [workouts, saved] = await Promise.all([
+          readRecentHealthWorkouts(now),
+          backend.fetchMyHealthWorkouts(current.remote.memberId, since),
+        ]);
+        const active = RNAppState.currentState === 'active';
+        const result = await syncHealthWorkouts(current.remote.memberId, workouts, saved, now, {
+          dismissed: new Set(current.dismissedHealth ?? []),
+          // Open on screen means unlocked, so Health read in full: a workout missing
+          // from it was deleted (or fixed) in the app that recorded it.
+          canRemove: active,
+        });
+        if (result.added > 0) {
+          // The family hears "Dad went for a run" (migration 20261017000001).
+          await backend.sendQueuedPushes().catch(() => undefined);
+          // Say it's in, so it never feels like a workout went missing: from the
+          // background it brings them into Arro, in the foreground it's the moment it arrives.
+          const newest = result.addedWorkouts[result.addedWorkouts.length - 1];
+          await notifyWorkoutSaved(
+            newest.id,
+            `Your ${SAVED_NOUN[newest.type]} is in Arro`,
+            newest.sourceName ? `From ${newest.sourceName}. ${SAVED_BODY}` : SAVED_BODY,
+          );
         }
+        if (result.added + result.updated + result.replaced + result.removed > 0) await refresh();
+      } catch {
+        // Offline, or the phone is locked so Health can't be read: the next launch,
+        // Health update or pull to refresh tries again.
       }
-      if (result.added > 0 || result.updated > 0) await refresh();
-    } catch {
-      // Offline or Health unavailable: the next launch or Health update tries again.
-    }
+    });
+    healthSyncQueue.current = run;
+    return run;
   }, [refresh]);
 
   // Register early: on a background relaunch, iOS's queued Health update waits for this listener.
@@ -599,6 +628,47 @@ export function AppStateProvider({ children }: { children: React.ReactNode }) {
     [refresh],
   );
 
+  const removeWorkout = useCallback(
+    async (workoutId: string) => {
+      const current = sessionRef.current;
+      if (!current) return;
+      if (!current.remote) {
+        await persist({ ...current, workouts: current.workouts.filter((w) => w.id !== workoutId) });
+        return;
+      }
+      const healthId = familyRef.current?.workouts.find((w) => w.id === workoutId)?.healthWorkoutId;
+      if (healthId) {
+        // Remembered on this phone so the next sync doesn't bring it straight back.
+        const dismissed = [...(current.dismissedHealth ?? []), healthId].slice(-200);
+        const next = { ...current, dismissedHealth: dismissed };
+        sessionRef.current = next;
+        await persist(next);
+      }
+      await backend.deleteWorkout(workoutId);
+      await refresh();
+    },
+    [persist, refresh],
+  );
+
+  const changeWorkoutType = useCallback(
+    async (workoutId: string, type: WorkoutType) => {
+      const current = sessionRef.current;
+      if (!current) return;
+      if (!current.remote) {
+        await persist({ ...current, workouts: current.workouts.map((w) => (w.id === workoutId ? { ...w, type } : w)) });
+        return;
+      }
+      await backend.setWorkoutType(workoutId, type);
+      await refresh();
+    },
+    [persist, refresh],
+  );
+
+  const syncNow = useCallback(async () => {
+    await syncHealth();
+    await refresh();
+  }, [refresh, syncHealth]);
+
   const updateProfile = useCallback(
     async (patch: { name?: string; photoUri?: string | null }) => {
       const current = sessionRef.current;
@@ -788,6 +858,9 @@ export function AppStateProvider({ children }: { children: React.ReactNode }) {
       cheer,
       comment,
       deleteComment,
+      removeWorkout,
+      changeWorkoutType,
+      syncNow,
       updateProfile,
       setWorkoutPhoto,
       loadRoutes,
@@ -818,6 +891,9 @@ export function AppStateProvider({ children }: { children: React.ReactNode }) {
       cheer,
       comment,
       deleteComment,
+      removeWorkout,
+      changeWorkoutType,
+      syncNow,
       updateProfile,
       setWorkoutPhoto,
       loadRoutes,

@@ -10,6 +10,8 @@
 --   4. The 15-minute schedule sends anything still queued, not only evening rows,
 --      so a push queued by a background Health sync that couldn't call send-push
 --      still goes out within the hour.
+--   5. Health workouts remember which app recorded them (Whoop, Apple Watch,
+--      Strava), and a sync can swap in the better copy of a workout recorded twice.
 
 -- 1. "Went for a run" ------------------------------------------------------------
 alter table private.push_outbox drop constraint push_outbox_kind_check;
@@ -235,3 +237,11 @@ revoke all on function private.queue_cheer_push() from public;
 revoke all on function private.run_evening_nudges() from public;
 revoke all on function private.check_comment_rate() from public;
 revoke all on function private.queue_comment_push() from public;
+
+-- 5. Which app recorded a Health workout ---------------------------------------------
+-- HealthKit's source name, such as "WHOOP" or "Bryce’s Apple Watch". When two apps
+-- record the same workout, the app keeps one row and points it at the better copy
+-- (health_workout_id), so cheers and comments on it stay.
+alter table public.workouts add column source_app text check (char_length(source_app) <= 60);
+grant insert (source_app) on public.workouts to authenticated;
+grant update (health_workout_id, source_app) on public.workouts to authenticated;

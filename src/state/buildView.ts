@@ -587,6 +587,7 @@ function familyView(session: SavedSession, family: RemoteFamily, now: Date): App
   for (const w of family.workouts) {
     details[w.id] = { ...toDetail(asLogged(w, session.photos), w.memberId, todayKey), source: w.source,
       cheeredBy: w.cheeredBy,
+      sourceApp: w.sourceApp,
       comments: w.comments.map((c) => ({ id: c.id, memberId: c.memberId, body: c.body })),
     };
   }

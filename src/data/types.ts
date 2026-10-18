@@ -111,6 +111,8 @@ export interface WorkoutDetail extends RecentWorkout {
   cheeredBy: MemberId[];
   /** Oldest first. */
   comments: WorkoutComment[];
+  /** The app or device that recorded a Health workout, such as "WHOOP". */
+  sourceApp?: string;
   /** Only for Health workouts that recorded one, already trimmed at both ends. */
   route?: LatLng[];
   /** The photo's path on the server, so its owner can replace or remove it. */

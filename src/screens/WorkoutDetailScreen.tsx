@@ -28,11 +28,14 @@ import { WorkoutDetail } from '../data/types';
 import { joinNames, workoutSourceLabels, workoutTypeLabels } from '../data/workouts';
 import { RootStackScreenProps } from '../navigation/types';
 import { Backdrop } from '../components/Backdrop';
+import { Chip } from '../components/Chip';
+import { WorkoutType } from '../data/types';
 
 export function WorkoutDetailScreen({ navigation, route }: RootStackScreenProps<'WorkoutDetail'>) {
   const insets = useSafeAreaInsets();
   const view = useView();
-  const { online, setWorkoutPhoto, cheer, comment, deleteComment } = useApp();
+  const { online, setWorkoutPhoto, cheer, comment, deleteComment, removeWorkout, changeWorkoutType } = useApp();
+  const [editingType, setEditingType] = useState(false);
   const [savingPhoto, setSavingPhoto] = useState(false);
   const [draft, setDraft] = useState('');
   const [sending, setSending] = useState(false);
@@ -68,6 +71,30 @@ export function WorkoutDetailScreen({ navigation, route }: RootStackScreenProps<
   const removeComment = async (id: string) => {
     if (!(await confirmAction('Delete your comment?', 'Your family won’t see it any more.', 'Delete'))) return;
     deleteComment(id).catch(() => showError('Couldn’t delete it', 'Check your connection and try again.'));
+  };
+
+  const pickType = async (next: WorkoutType) => {
+    setEditingType(false);
+    if (next === workout.type) return;
+    changeWorkoutType(workout.id, next).catch(() => showError('Couldn’t change it', 'Check your connection and try again.'));
+  };
+
+  const remove = async () => {
+    const fromHealth = workout.source === 'health';
+    const ok = await confirmAction(
+      'Remove this workout?',
+      fromHealth
+        ? 'It comes off Arro for your family, with its cheers and comments. Apple Health keeps it.'
+        : 'It comes off Arro for your family, with its cheers and comments.',
+      'Remove',
+    );
+    if (!ok) return;
+    try {
+      await removeWorkout(workout.id);
+      navigation.goBack();
+    } catch {
+      showError('Couldn’t remove it', 'Check your connection and try again.');
+    }
   };
 
   const changePhoto = async (remove: boolean) => {
@@ -118,7 +145,7 @@ export function WorkoutDetailScreen({ navigation, route }: RootStackScreenProps<
 
         <View style={styles.headline}>
           <Text style={styles.when}>
-            {workout.when} · {workoutSourceLabels[workout.source]}
+            {workout.when} · {workout.sourceApp ? `From ${workout.sourceApp}` : workoutSourceLabels[workout.source]}
           </Text>
           <Text style={styles.kind}>{label}</Text>
         </View>
@@ -219,6 +246,19 @@ export function WorkoutDetailScreen({ navigation, route }: RootStackScreenProps<
                 onPress={() => navigation.navigate('Map', { memberId: workout.memberId })}
               />
             ) : null}
+            {mine ? (
+              editingType ? (
+                <View style={styles.types}>
+                  {TYPES.map((t) => (
+                    <Chip key={t} label={workoutTypeLabels[t]} selected={t === workout.type} onPress={() => pickType(t)} />
+                  ))}
+                </View>
+              ) : (
+                <View style={styles.photoActions}>
+                  <TextButton label="Change type" onPress={() => setEditingType(true)} />
+                </View>
+              )
+            ) : null}
             {mine && PHOTOS_ON ? (
               <View style={styles.photoActions}>
                 {savingPhoto ? <ActivityIndicator color={colors.muted} /> : null}
@@ -230,6 +270,7 @@ export function WorkoutDetailScreen({ navigation, route }: RootStackScreenProps<
                 ) : null}
               </View>
             ) : null}
+            {mine ? <TextButton label="Remove workout" onPress={remove} style={{ color: colors.muted }} /> : null}
           </View>
         </FadeInView>
       </ScrollView>
@@ -240,6 +281,7 @@ export function WorkoutDetailScreen({ navigation, route }: RootStackScreenProps<
 /** One tap sends these, so a cheer with words takes no typing. */
 const QUICK = ['Proud of you', 'Nice one!', 'Go you', 'Love this'];
 const OWN_QUICK = ['Thanks!', 'Thank you all'];
+const TYPES: WorkoutType[] = ['walk', 'run', 'ride', 'swim', 'gym', 'yoga', 'other'];
 
 function Stat({ value, label, first }: { value: string; label: string; first?: boolean }) {
   return (
@@ -282,6 +324,7 @@ const styles = StyleSheet.create({
   cheered: { flexDirection: 'row', alignItems: 'center', gap: 11, marginTop: 15 },
   cheeredText: { ...type.meta, color: colors.muted },
   cheerButton: { alignSelf: 'flex-start', marginTop: 15 },
+  types: { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
   comments: { gap: 12, marginTop: 18 },
   comment: { flexDirection: 'row', alignItems: 'flex-start', gap: 10 },
   commentText: { ...type.body, color: colors.inkSoft, flex: 1, paddingTop: 2 },

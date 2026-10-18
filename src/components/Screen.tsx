@@ -1,5 +1,5 @@
-import React from 'react';
-import { ScrollView, StyleProp, StyleSheet, View, ViewStyle } from 'react-native';
+import React, { useState } from 'react';
+import { RefreshControl, ScrollView, StyleProp, StyleSheet, View, ViewStyle } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { colors } from '../theme/tokens';
 import { Backdrop } from './Backdrop';
@@ -16,6 +16,8 @@ type Props = {
   background?: string;
   contentStyle?: StyleProp<ViewStyle>;
   style?: StyleProp<ViewStyle>;
+  /** Pull to refresh. The spinner shows until the promise settles. */
+  onRefresh?: () => Promise<unknown>;
 };
 
 export function Screen({
@@ -24,8 +26,18 @@ export function Screen({
   background = colors.screen,
   contentStyle,
   style,
+  onRefresh,
 }: Props) {
   const insets = useSafeAreaInsets();
+  const [refreshing, setRefreshing] = useState(false);
+  const pull = onRefresh
+    ? () => {
+        setRefreshing(true);
+        onRefresh()
+          .catch(() => undefined)
+          .finally(() => setRefreshing(false));
+      }
+    : undefined;
 
   if (!scroll) {
     return (
@@ -41,6 +53,11 @@ export function Screen({
       {background === colors.screen ? <Backdrop /> : null}
       <ScrollView
         showsVerticalScrollIndicator={false}
+        refreshControl={
+          pull ? (
+            <RefreshControl refreshing={refreshing} onRefresh={pull} tintColor={colors.muted} progressViewOffset={insets.top} />
+          ) : undefined
+        }
         contentContainerStyle={[{ paddingTop: insets.top + 6, paddingBottom: 24 }, contentStyle]}
       >
         {children}
