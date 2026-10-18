@@ -70,7 +70,7 @@ what each one is for:
       [
         "expo-image-picker",
         {
-          "photosPermission": "Arro uses a photo only when you pick one for your profile or a workout. Photos stay on your phone.",
+          "photosPermission": "Arro uses a photo only when you pick one for your profile or a workout. Your family sees it in Arro.",
           "cameraPermission": false,
           "microphonePermission": false
         }

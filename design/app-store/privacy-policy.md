@@ -61,7 +61,7 @@ cheers your workout, cheers you on before you've moved, joins your family, or
 hasn't moved yet that evening. Each notification's text is
 kept for up to 7 days, then deleted.
 
-**What we don't collect.** No location, contacts, advertising identifier,
+**What we don't collect.** No current location, contacts, advertising identifier,
 analytics, crash reporting or tracking of any kind.
 
 ## Why we use it
