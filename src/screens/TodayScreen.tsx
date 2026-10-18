@@ -17,7 +17,7 @@ import { StreakRing } from '../components/StreakRing';
 import { TextButton } from '../components/TextButton';
 import { joinNames } from '../data/workouts';
 import { Member } from '../data/types';
-import { AppView, GoalView, StreakView } from '../state/buildView';
+import { AppView, GoalView, StreakView, keptSummary } from '../state/buildView';
 import { useApp, useView } from '../state/AppState';
 import { useYesterdayOpen } from '../state/useYesterdayOpen';
 import { MainTabScreenProps } from '../navigation/types';
@@ -177,20 +177,19 @@ function SummaryCard({
 }) {
   const { joinedCount, keptCount, awayCount, invitedList, today } = view;
   const solo = joinedCount === 1;
-  // Someone on a break isn't expected today.
-  const expected = Math.max(1, joinedCount - awayCount);
-  const everyone = joinedCount > 1 && keptCount === expected;
+  const summary = keptSummary(keptCount, joinedCount, awayCount);
+  const everyone = joinedCount > 1 && summary.expected > 0 && keptCount === summary.expected;
   const pendingId = today.pending?.id;
 
   return (
     <Card radius={radii.cardLg} padding={18} glass>
       <View style={styles.summaryRow}>
         <View>
-          <RollingText value={`${keptCount} of ${expected}`} style={type.bigNumber} />
-          <Text style={styles.keptLabel}>kept it today</Text>
+          <RollingText value={summary.value} style={type.bigNumber} />
+          <Text style={styles.keptLabel}>{summary.label}</Text>
           <AvatarStack members={view.familyList.filter((m) => m.today !== 'away')} size={28} overlap={8} style={{ marginTop: 14 }} />
         </View>
-        <StreakRing value={keptCount} goal={expected} size={84} strokeWidth={9} />
+        <StreakRing value={keptCount} goal={Math.max(1, summary.expected)} size={84} strokeWidth={9} />
       </View>
 
       {solo ? (

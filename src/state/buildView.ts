@@ -716,3 +716,15 @@ export function buildView(
   if (session.role === 'invitee') return previewFamilyView(session, null, now);
   return founderView(session, now);
 }
+
+/**
+ * Today's "2 of 3 kept it today". Someone on a break isn't expected; with nobody
+ * expected (everyone away) it says so instead of "0 of 1".
+ */
+export function keptSummary(kept: number, joined: number, away: number): { value: string; label: string; expected: number } {
+  const expected = joined - away;
+  if (expected <= 0) {
+    return { value: 'All away', label: joined > 1 ? 'everyone’s on a break today' : 'you’re on a break today', expected: 0 };
+  }
+  return { value: `${kept} of ${expected}`, label: 'kept it today', expected };
+}

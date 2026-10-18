@@ -1,6 +1,6 @@
 // Runs with TZ=America/Los_Angeles (package.json "test").
 import { describe, expect, it } from '@jest/globals';
-import { buildView } from '../buildView';
+import { buildView, keptSummary } from '../buildView';
 import type { RemoteFamily, RemoteWorkout } from '../backend';
 import type { SavedSession } from '../session';
 
@@ -134,5 +134,34 @@ describe('before the server family loads', () => {
     const view = buildView(session, null, null, NOW);
     expect(view.joinedCount).toBe(1);
     expect(view.feed).toEqual([]);
+  });
+});
+
+describe('breaks on Today', () => {
+  it('leaves people on a break out of the count', () => {
+    expect(keptSummary(1, 3, 1)).toEqual({ value: '1 of 2', label: 'kept it today', expected: 2 });
+  });
+
+  it('says everyone is away instead of "0 of 1"', () => {
+    expect(keptSummary(0, 2, 2)).toEqual({ value: 'All away', label: 'everyone’s on a break today', expected: 0 });
+    expect(keptSummary(0, 1, 1).value).toBe('All away');
+  });
+
+  it('shows everyone away when the whole family is on a break', () => {
+    const today = '2026-10-21';
+    const f = family({
+      workouts: family().workouts.filter((w) => w.localDate !== today),
+      memberStreaks: {
+        me: { ...family().memberStreaks.me, movedToday: false },
+        mum: { ...family().memberStreaks.mum, movedToday: false },
+      },
+      pauses: [
+        { memberId: 'me', startsOn: today, endsOn: '2026-10-23' },
+        { memberId: 'mum', startsOn: '2026-10-20', endsOn: today },
+      ],
+    });
+    const view = buildView(session, null, f, NOW);
+    expect(keptSummary(view.keptCount, view.joinedCount, view.awayCount).value).toBe('All away');
+    expect(view.myPauses).toEqual([{ startsOn: today, endsOn: '2026-10-23' }]);
   });
 });
