@@ -6,7 +6,7 @@ import * as backend from './backend';
 import { showError } from './confirm';
 import { InvitePreview, RemoteFamily } from './backend';
 import { AppView, Preview, buildView } from './buildView';
-import { dayKey, addDays, deviceTimezone, yesterdayOpen } from './dates';
+import { dayKey, addDays, deviceTimezone, inWakingHours, yesterdayOpen } from './dates';
 import { connectHealth, onHealthWorkoutsChanged, readRecentHealthWorkouts } from './health';
 import { syncHealthWorkouts } from './healthSync';
 import { PhotoShape, photoForUpload } from './photos';
@@ -284,8 +284,11 @@ export function AppStateProvider({ children }: { children: React.ReactNode }) {
         if (result.added > 0) {
           // The family hears "Dad went for a run" (migration 20261017000004).
           await backend.sendQueuedPushes().catch(() => undefined);
+        }
+        if (result.added > 0 && inWakingHours(now)) {
           // Say it's in, so it never feels like a workout went missing: from the
           // background it brings them into Arro, in the foreground it's the moment it arrives.
+          // Not overnight: a strap can save a workout at any hour.
           const newest = result.addedWorkouts[result.addedWorkouts.length - 1];
           await notifyWorkoutSaved(
             newest.id,
