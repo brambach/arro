@@ -6,6 +6,7 @@ import { type, weights } from '../theme/typography';
 import { AvatarStack } from '../components/AvatarStack';
 import { ChevronLeft } from '../components/Icons';
 import { FadeInView } from '../components/FadeInView';
+import { HeartButton } from '../components/HeartButton';
 import { PhotoSlot } from '../components/PhotoSlot';
 import { RouteMap } from '../components/RouteMap';
 import { TextButton } from '../components/TextButton';
@@ -20,7 +21,7 @@ import { Backdrop } from '../components/Backdrop';
 export function WorkoutDetailScreen({ navigation, route }: RootStackScreenProps<'WorkoutDetail'>) {
   const insets = useSafeAreaInsets();
   const view = useView();
-  const { setWorkoutPhoto } = useApp();
+  const { setWorkoutPhoto, cheer } = useApp();
   const [savingPhoto, setSavingPhoto] = useState(false);
   const workout: WorkoutDetail | undefined = view.workouts[route.params.workoutId];
 
@@ -29,7 +30,12 @@ export function WorkoutDetailScreen({ navigation, route }: RootStackScreenProps<
   const label = workoutTypeLabels[workout.type];
   const mine = workout.memberId === view.me.id;
   const owner = view.members[workout.memberId];
-  const cheerers = workout.cheeredBy.map((id) => view.members[id]).filter(Boolean);
+  // You first, as "You".
+  const cheerers = [...workout.cheeredBy]
+    .sort((a, b) => Number(b === view.me.id) - Number(a === view.me.id))
+    .map((id) => view.members[id])
+    .filter(Boolean);
+  const cheererNames = cheerers.map((c) => (c.id === view.me.id ? 'You' : c.name));
   const stats = [
     workout.distance ? { value: workout.distance, label: 'Distance' } : null,
     workout.duration ? { value: workout.duration, label: 'Time' } : null,
@@ -94,10 +100,23 @@ export function WorkoutDetailScreen({ navigation, route }: RootStackScreenProps<
 
         <FadeInView delay={180} style={styles.noteWrap}>
           {workout.note ? <Text style={styles.note}>{workout.note}</Text> : null}
-          {cheerers.length > 0 ? (
+          {cheerers.length > 0 || !mine ? (
             <View style={[styles.cheered, !workout.note && { marginTop: 0 }]}>
-              <AvatarStack members={cheerers} size={26} overlap={6} borderColor={colors.screen} />
-              <Text style={styles.cheeredText}>{joinNames(cheerers.map((c) => c.name))} cheered</Text>
+              {cheerers.length > 0 ? (
+                <AvatarStack members={cheerers} size={26} overlap={6} borderColor={colors.screen} />
+              ) : null}
+              <Text style={styles.cheeredText}>
+                {cheerers.length > 0 ? `${joinNames(cheererNames)} cheered` : `Send ${owner?.name ?? 'them'} a heart`}
+              </Text>
+              {!mine ? (
+                <HeartButton
+                  cheered={workout.cheeredBy.includes(view.me.id)}
+                  count={workout.cheeredBy.length}
+                  onToggle={(on) => cheer(workout.id, on)}
+                  label={`Cheer ${owner?.name ?? 'their'}’s ${label.toLowerCase()}`}
+                  size={21}
+                />
+              ) : null}
             </View>
           ) : null}
           <View style={styles.links}>
@@ -164,5 +183,5 @@ const styles = StyleSheet.create({
   noteWrap: { paddingHorizontal: spacing.gutter, paddingTop: 16 },
   note: { ...type.body, color: colors.inkSoft },
   cheered: { flexDirection: 'row', alignItems: 'center', gap: 11, marginTop: 15 },
-  cheeredText: { ...type.meta, color: colors.muted },
+  cheeredText: { ...type.meta, color: colors.muted, flex: 1 },
 });

@@ -6,26 +6,34 @@ import { FeedItem, Member } from '../data/types';
 import { AvatarRing } from './AvatarRing';
 import { Card } from './Card';
 import { CheerButton } from './CheerButton';
+import { HeartButton } from './HeartButton';
 import { Heart } from './Icons';
 import { PhotoSlot } from './PhotoSlot';
 import { RouteThumb } from './RouteThumb';
 
 /**
  * WorkoutCard — a feed entry. A kept post shows its photo and route when it has
- * them, then a cheer line + heart count; a still-has-today post shows a nudge
- * line + a Cheer button.
+ * them, then who cheered and the hearts: a heart button on someone else's post,
+ * the count on your own. A still-has-today post shows a nudge line + a Cheer button.
  */
 export function WorkoutCard({
   item,
   member,
   onPress,
   onCheer,
+  onToggleCheer,
 }: {
   item: FeedItem;
   member: Member;
   onPress?: () => void;
+  /** Still has today: send them a cheer (a nudge). */
   onCheer?: () => Promise<unknown>;
+  /** Kept: heart the workout, or take the heart back. */
+  onToggleCheer?: (on: boolean) => Promise<unknown>;
 }) {
+  const kept = item.kind === 'kept';
+  const heartable = kept && item.canCheer && onToggleCheer;
+  const footer = kept ? !!(item.cheer || item.hearts || heartable) : !!item.cheer;
   return (
     <Card radius={radii.card} padding={14} style={styles.card} onPress={onPress}>
       <View style={styles.header}>
@@ -41,12 +49,20 @@ export function WorkoutCard({
 
       <Media item={item} />
 
-      {item.cheer ? (
-        <View style={styles.footer}>
+      {footer ? (
+        // Just the heart, when nobody has cheered yet: no divider above it.
+        <View style={[styles.footer, !item.cheer && !item.hearts && styles.footerBare]}>
           <Text style={styles.cheerLine} numberOfLines={1}>
-            {item.cheer}
+            {item.cheer ?? ''}
           </Text>
-          {item.kind === 'kept' ? (
+          {heartable ? (
+            <HeartButton
+              cheered={!!item.cheeredByMe}
+              count={item.hearts ?? 0}
+              onToggle={heartable}
+              label={`Cheer ${member.name}’s ${item.meta.split(' · ')[0].toLowerCase()}`}
+            />
+          ) : kept ? (
             <View style={styles.hearts}>
               <Heart size={15} color={colors.inkSoft} />
               <Text style={styles.heartCount}>{item.hearts}</Text>
@@ -106,6 +122,7 @@ const styles = StyleSheet.create({
     borderTopWidth: 1,
     borderTopColor: colors.dividerSoft,
   },
+  footerBare: { marginTop: 8, paddingTop: 0, borderTopWidth: 0 },
   cheerLine: { flex: 1, minWidth: 0, fontSize: 14, color: colors.inkSoft },
   hearts: { flexDirection: 'row', alignItems: 'center', gap: 5 },
   heartCount: { fontSize: 13, fontWeight: weights.semibold, color: colors.faint2 },

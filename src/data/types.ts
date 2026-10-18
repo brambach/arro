@@ -49,6 +49,8 @@ export interface FeedItem {
   time?: string; // "6:21 AM"
   cheer?: string; // a cheer line, or nudge prompt
   hearts?: number; // heart count (kept posts)
+  canCheer?: boolean; // someone else's kept post: show the heart button
+  cheeredByMe?: boolean;
   workoutId?: string; // opens the workout detail (kept posts)
   photoUri?: PhotoSource; // the workout's photo, shown under the post
   route?: LatLng[]; // the workout's route, drawn small under the post

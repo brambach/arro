@@ -140,6 +140,8 @@ interface AppContextValue {
   logWorkout: (input: LogInput) => Promise<void>;
   /** "Send a cheer" for someone who hasn't moved yet. 'already' if they've been nudged today. */
   nudge: (memberId: string) => Promise<'sent' | 'already'>;
+  /** A heart on someone's finished workout, or (on = false) taking it back. */
+  cheer: (workoutId: string, on: boolean) => Promise<void>;
   updateProfile: (patch: { name?: string; photoUri?: string | null }) => Promise<void>;
   /** Adds, replaces (a local uri) or removes (null) the photo on one of your workouts. */
   setWorkoutPhoto: (workoutId: string, photoUri: string | null) => Promise<void>;
@@ -586,6 +588,37 @@ export function AppStateProvider({ children }: { children: React.ReactNode }) {
     await refresh();
   }, [refresh]);
 
+  const cheer = useCallback(
+    async (workoutId: string, on: boolean) => {
+      const remote = sessionRef.current?.remote;
+      // The preview and a family on this phone have no server: the heart only changes on screen.
+      if (!remote || preview) return;
+      const me = remote.memberId;
+      const mark = (add: boolean) =>
+        setFamily((f) =>
+          f
+            ? {
+                ...f,
+                workouts: f.workouts.map((w) =>
+                  w.id !== workoutId
+                    ? w
+                    : { ...w, cheeredBy: [...w.cheeredBy.filter((id) => id !== me), ...(add ? [me] : [])] },
+                ),
+              }
+            : f,
+        );
+      mark(on);
+      try {
+        await backend.setCheer(workoutId, me, on);
+      } catch (e) {
+        mark(!on);
+        throw e;
+      }
+      if (on) backend.sendQueuedPushes().catch(() => undefined);
+    },
+    [preview],
+  );
+
   const updateProfile = useCallback(
     async (patch: { name?: string; photoUri?: string | null }) => {
       const current = sessionRef.current;
@@ -788,6 +821,7 @@ export function AppStateProvider({ children }: { children: React.ReactNode }) {
       completeOnboarding,
       logWorkout,
       nudge,
+      cheer,
       updateProfile,
       setWorkoutPhoto,
       loadRoutes,
@@ -819,6 +853,7 @@ export function AppStateProvider({ children }: { children: React.ReactNode }) {
       completeOnboarding,
       logWorkout,
       nudge,
+      cheer,
       updateProfile,
       setWorkoutPhoto,
       loadRoutes,

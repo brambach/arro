@@ -506,7 +506,20 @@ export async function forgetPushToken(token: string): Promise<void> {
   if (error) throw error;
 }
 
-/** Sends whatever pushes are queued (the send-push edge function). Called after a join or a nudge. */
+/**
+ * Cheers someone's workout, or takes the cheer back. The first cheer from each
+ * person on a workout pushes to its owner (migration 20261017000002).
+ */
+export async function setCheer(workoutId: string, memberId: string, on: boolean): Promise<void> {
+  const db = client();
+  const { error } = on
+    ? await db.from('cheers').insert({ workout_id: workoutId, member_id: memberId })
+    : await db.from('cheers').delete().eq('workout_id', workoutId).eq('member_id', memberId);
+  // 23505: already cheered, which is what was asked for.
+  if (error && !(on && error.code === '23505')) throw error;
+}
+
+/** Sends whatever pushes are queued (the send-push edge function). Called after a join, a nudge or a cheer. */
 export async function sendQueuedPushes(): Promise<void> {
   const { error } = await client().functions.invoke('send-push');
   if (error) throw error;
