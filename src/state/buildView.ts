@@ -83,6 +83,8 @@ export interface AppView {
   awayCount: number;
   /** Your break, on now or coming up: its last day and "until Friday". */
   myBreak: { endsOn: string; until: string } | null;
+  /** Your breaks in the last two months, for the 14-in-30 limit (breaks.ts). */
+  myPauses: { startsOn: string; endsOn: string }[];
   iKeptToday: boolean;
   /** A joined member (not you) who still has today, for the Nudge screen. */
   nudgeTarget?: Member;
@@ -319,6 +321,7 @@ function founderView(session: SavedSession, now: Date): AppView {
     keptCount: iKeptToday ? 1 : 0,
     awayCount: 0,
     myBreak: null,
+    myPauses: [],
     iKeptToday,
     today: { dateLabel: dateLabel(now), greeting: `${greetingFor(now)}, ${me.name}.`, pending: null },
     feed: newestFirst(logs)
@@ -443,6 +446,7 @@ function previewFamilyView(session: SavedSession, preview: Preview | null, now: 
     keptCount,
     awayCount: 0,
     myBreak: null,
+    myPauses: [],
     iKeptToday,
     nudgeTarget,
     today: {
@@ -649,6 +653,7 @@ function familyView(session: SavedSession, family: RemoteFamily, now: Date): App
     keptCount,
     awayCount,
     myBreak: myNextBreak ? { endsOn: myNextBreak.endsOn, until: untilLabel(myNextBreak.endsOn, todayKey) } : null,
+    myPauses: pauses.filter((p) => p.memberId === myId).map((p) => ({ startsOn: p.startsOn, endsOn: p.endsOn })),
     iKeptToday,
     nudgeTarget,
     today: {

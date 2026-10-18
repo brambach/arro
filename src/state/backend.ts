@@ -28,6 +28,17 @@ export class InviteError extends Error {
   }
 }
 
+/** pause_me refused the break (migration 20261018000001): longer than 14 days, or over 14 days in 30. */
+export class BreakError extends Error {
+  constructor(public kind: 'tooLong' | 'tooMany') {
+    super(
+      kind === 'tooLong'
+        ? 'A break can be up to two weeks long, counted from the day it started.'
+        : 'You can be on a break for up to 14 days in any 30.',
+    );
+  }
+}
+
 export interface RemoteMember {
   id: string;
   userId: string;
@@ -499,6 +510,8 @@ export async function fetchFamily(familyId: string, myMemberId: string): Promise
 /** Takes a break from today for `days` days counting today, or changes the current one. Returns its last day. */
 export async function pauseMe(memberId: string, days: number): Promise<string> {
   const { data, error } = await client().rpc('pause_me', { p_member_id: memberId, p_days: days });
+  if (error?.code === 'ARB14') throw new BreakError('tooLong');
+  if (error?.code === 'ARB30') throw new BreakError('tooMany');
   if (error) throw error;
   return data as string;
 }
