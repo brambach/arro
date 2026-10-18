@@ -105,7 +105,10 @@ export function SettingsScreen({ navigation }: RootStackScreenProps<'Settings'>)
     try {
       await deleteAccount();
     } catch {
-      showError('Couldn’t delete your account', 'Nothing was deleted. Check your connection and try again.');
+      showError(
+        'Couldn’t delete your account',
+        'Your account is still here, though some of your photos may already be gone. Check your connection and try again.',
+      );
     }
   };
 
