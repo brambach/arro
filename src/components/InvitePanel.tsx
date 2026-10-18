@@ -21,7 +21,7 @@ export function InvitePanel({
     <View>
       <Card padding={20} style={styles.codeCard}>
         <Text style={styles.codeLabel}>Your family’s join code</Text>
-        <Text style={styles.code} accessibilityLabel={`Join code ${code.split('').join(' ')}`}>
+        <Text style={styles.code} numberOfLines={1} adjustsFontSizeToFit accessibilityLabel={`Join code ${code.split('').join(' ')}`}>
           {code}
         </Text>
         <Text style={styles.codeNote}>It’s in the message. They tap “I have an invite” in Arro and type it in.</Text>

@@ -50,8 +50,9 @@ export function JoinCodeScreen({ navigation }: RootStackScreenProps<'JoinCode'>)
         }}
         autoCapitalize="characters"
         autoCorrect={false}
-        maxLength={8}
-        placeholder="K7P4QX"
+        // Codes are eight characters (six before October 2026); room for a pasted space.
+        maxLength={12}
+        placeholder="K7P4QX9M"
         returnKeyType="go"
         onSubmitEditing={find}
         style={styles.code}

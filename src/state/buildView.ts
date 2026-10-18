@@ -70,6 +70,8 @@ export interface AppView {
   me: Member;
   /** Everyone, in join order, including people who haven't joined yet. */
   allMembers: Member[];
+  /** You started the family (you've been in it longest), so you can remove people. */
+  canRemoveMembers: boolean;
   members: Record<MemberId, Member>;
   /** Joined members in Today's order. */
   familyList: Member[];
@@ -294,6 +296,7 @@ function founderView(session: SavedSession, now: Date): AppView {
     joinCode: session.family.joinCode,
     me,
     allMembers: [me, ...invited],
+    canRemoveMembers: false,
     members: Object.fromEntries([me, ...invited].map((m) => [m.id, m])),
     familyList: [me],
     invitedList: invited,
@@ -415,6 +418,7 @@ function previewFamilyView(session: SavedSession, preview: Preview | null, now: 
     joinCode: preview ? 'HOME42' : session.family.joinCode,
     me,
     allMembers: members,
+    canRemoveMembers: false,
     members: Object.fromEntries(members.map((m) => [m.id, m])),
     familyList,
     invitedList: [],
@@ -599,6 +603,8 @@ function familyView(session: SavedSession, family: RemoteFamily, now: Date): App
     joinCode: family.joinCode,
     me,
     allMembers: [...joined, ...invited],
+    // Same rule as private.family_founder on the server.
+    canRemoveMembers: [...family.members].sort((a, b) => a.joinedAt.localeCompare(b.joinedAt) || a.id.localeCompare(b.id))[0]?.id === myId,
     members: Object.fromEntries([...joined, ...invited].map((m) => [m.id, m])),
     familyList: [...joined].sort((a, b) => Number(b.today === 'kept') - Number(a.today === 'kept')),
     invitedList: invited,

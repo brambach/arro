@@ -11,7 +11,7 @@ Need help? Email {{SUPPORT_EMAIL}}. We usually answer within two days.
 then send the invite to your family from the app.
 
 **How do I join my family?** Ask whoever started it for the invite. Open Arro,
-sign in and enter the 6-character code from the invite. Codes last 14 days; ask for
+sign in and enter the code from the invite. Codes last 14 days; ask for
 a new one if yours has run out.
 
 **Does everyone need an iPhone?** For now, yes. Arro is iPhone-only.
