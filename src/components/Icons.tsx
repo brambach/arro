@@ -135,6 +135,13 @@ export const TargetIcon = ({ size = 18, color = '#fff', strokeWidth = 1.9 }: Ico
   </Svg>
 );
 
+export const PauseIcon = ({ size = 18, color = colors.ink, strokeWidth = 1.9 }: IconProps) => (
+  <Stroke size={size} color={color} strokeWidth={strokeWidth}>
+    <Path d="M9 6.5v11" />
+    <Path d="M15 6.5v11" />
+  </Stroke>
+);
+
 export const BellIcon = ({ size = 18, color = '#fff', strokeWidth = 1.9 }: IconProps) => (
   <Stroke size={size} color={color} strokeWidth={strokeWidth}>
     <Path d="M6 9.5a6 6 0 0 1 12 0c0 4.5 1.8 5.8 1.8 5.8H4.2S6 14 6 9.5z" />

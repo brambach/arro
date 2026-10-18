@@ -83,3 +83,12 @@ export function weekdayIndex(key: string): number {
 
 export const WEEKDAY_SHORT = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
 export const WEEKDAY_LETTER = ['M', 'T', 'W', 'T', 'F', 'S', 'S'];
+
+/** When a break ends, from today: "today", "tomorrow", "Friday", or "Friday 31 Oct" further out. */
+export function untilLabel(endKey: string, todayKey: string = dayKey()): string {
+  const days = daysBetween(todayKey, endKey);
+  if (days <= 0) return 'today';
+  if (days === 1) return 'tomorrow';
+  const d = fromKey(endKey);
+  return d.toLocaleDateString(undefined, days < 7 ? { weekday: 'long' } : { weekday: 'long', day: 'numeric', month: 'short' });
+}

@@ -4,7 +4,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { colors, radii, spacing, shadows } from '../theme/tokens';
 import { type, weights } from '../theme/typography';
 import { AvatarRing } from '../components/AvatarRing';
-import { BellIcon, ChevronLeft, ChevronRight, LockIcon, PulseIcon, TargetIcon, UsersIcon } from '../components/Icons';
+import { BellIcon, ChevronLeft, ChevronRight, LockIcon, PauseIcon, PulseIcon, TargetIcon, UsersIcon } from '../components/Icons';
 import { settings } from '../data/family';
 import { Preview } from '../state/buildView';
 import { confirmAction, showError } from '../state/confirm';
@@ -20,6 +20,7 @@ const ICONS: Record<string, React.ReactNode> = {
   users: <UsersIcon size={18} color={colors.inkSoft} strokeWidth={1.9} />,
   target: <TargetIcon color={colors.inkSoft} />,
   bell: <BellIcon color={colors.inkSoft} />,
+  pause: <PauseIcon color={colors.inkSoft} />,
   lock: <LockIcon color={colors.inkSoft} />,
 };
 
@@ -62,8 +63,14 @@ export function SettingsScreen({ navigation }: RootStackScreenProps<'Settings'>)
   }, [navigation]);
 
   const notificationsOff = permission === 'denied' || permission === 'undetermined';
-  const rows = settings.connection.map((row) =>
-    row.key === 'moving' ? { ...row, value: session?.me.moveMethod === 'health' ? 'Apple Health' : 'I moved today' }
+  // A break needs the family on the server; the local family has nobody to carry on.
+  const rows = [
+    ...settings.connection.slice(0, 1),
+    ...(onServer ? [{ key: 'break', label: 'Take a break', value: '', icon: 'pause' }] : []),
+    ...settings.connection.slice(1),
+  ].map((row) =>
+    row.key === 'break' ? { ...row, value: view.myBreak ? `Until ${view.myBreak.until}` : '' }
+    : row.key === 'moving' ? { ...row, value: session?.me.moveMethod === 'health' ? 'Apple Health' : 'I moved today' }
     : row.key === 'members' ? { ...row, value: `${view.allMembers.length} ${view.allMembers.length === 1 ? 'member' : 'members'}` }
     : row.key === 'notifications'
       ? {
@@ -127,6 +134,8 @@ export function SettingsScreen({ navigation }: RootStackScreenProps<'Settings'>)
               onPress={
                 row.key === 'moving'
                   ? () => navigation.navigate('MoveMethod')
+                  : row.key === 'break'
+                    ? () => navigation.navigate('TakeBreak')
                   : row.key === 'members'
                     ? () => navigation.navigate('FamilyMembers')
                     : row.key === 'rules'

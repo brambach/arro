@@ -175,20 +175,22 @@ function SummaryCard({
   onInvite: () => void;
   onCheer: (memberId: string) => Promise<unknown>;
 }) {
-  const { joinedCount, keptCount, invitedList, today } = view;
+  const { joinedCount, keptCount, awayCount, invitedList, today } = view;
   const solo = joinedCount === 1;
-  const everyone = joinedCount > 1 && keptCount === joinedCount;
+  // Someone on a break isn't expected today.
+  const expected = Math.max(1, joinedCount - awayCount);
+  const everyone = joinedCount > 1 && keptCount === expected;
   const pendingId = today.pending?.id;
 
   return (
     <Card radius={radii.cardLg} padding={18} glass>
       <View style={styles.summaryRow}>
         <View>
-          <RollingText value={`${keptCount} of ${joinedCount}`} style={type.bigNumber} />
+          <RollingText value={`${keptCount} of ${expected}`} style={type.bigNumber} />
           <Text style={styles.keptLabel}>kept it today</Text>
-          <AvatarStack members={view.familyList} size={28} overlap={8} style={{ marginTop: 14 }} />
+          <AvatarStack members={view.familyList.filter((m) => m.today !== 'away')} size={28} overlap={8} style={{ marginTop: 14 }} />
         </View>
-        <StreakRing value={keptCount} goal={joinedCount} size={84} strokeWidth={9} />
+        <StreakRing value={keptCount} goal={expected} size={84} strokeWidth={9} />
       </View>
 
       {solo ? (
@@ -324,6 +326,8 @@ function MemberRow({
   onPress?: () => void;
 }) {
   const kept = member.today === 'kept';
+  // Invited and on a break share the quiet grey pill.
+  const quiet = member.invited || member.today === 'away';
   const Wrapper: any = onPress ? Pressable : View;
   return (
     <Wrapper
@@ -353,16 +357,16 @@ function MemberRow({
           delay={260}
           style={[
             styles.pill,
-            { backgroundColor: member.invited ? colors.divider : kept ? colors.keptBg : colors.todayPillBg },
+            { backgroundColor: quiet ? colors.divider : kept ? colors.keptBg : colors.todayPillBg },
           ]}
         >
           <Text
             style={[
               styles.pillText,
-              { color: member.invited ? colors.muted : kept ? colors.kept : colors.todayPillText },
+              { color: quiet ? colors.muted : kept ? colors.kept : colors.todayPillText },
             ]}
           >
-            {member.invited ? 'Invited' : kept ? 'Kept' : 'Today'}
+            {member.invited ? 'Invited' : kept ? 'Kept' : member.today === 'away' ? 'Away' : 'Today'}
           </Text>
         </CheckInPop>
         <Text style={styles.streak}>{member.streak > 0 ? member.streak : ''}</Text>
