@@ -15,7 +15,7 @@ const COUNT_WORDS = ['zero', 'one', 'two', 'three', 'four', 'five', 'six', 'seve
 
 export function FeedScreen({ navigation }: MainTabScreenProps<'Feed'>) {
   const view = useView();
-  const { nudge, cheer } = useApp();
+  const { nudge, syncNow } = useApp();
   const joined = view.joinedCount;
   const count = COUNT_WORDS[joined] ?? joined;
   const subtitle =
@@ -27,7 +27,7 @@ export function FeedScreen({ navigation }: MainTabScreenProps<'Feed'>) {
   const waiting = joined === 1;
 
   return (
-    <Screen>
+    <Screen onRefresh={syncNow}>
       <FadeInView style={styles.header}>
         <View style={{ flex: 1 }}>
           <Text style={type.title}>Family feed</Text>
@@ -45,7 +45,6 @@ export function FeedScreen({ navigation }: MainTabScreenProps<'Feed'>) {
                 member={view.members[item.memberId]}
                 onPress={workoutId ? () => navigation.navigate('WorkoutDetail', { workoutId }) : undefined}
                 onCheer={item.kind === 'still' ? () => nudge(item.memberId) : undefined}
-                onToggleCheer={workoutId ? (on) => cheer(workoutId, on) : undefined}
               />
             </FadeInView>
           );

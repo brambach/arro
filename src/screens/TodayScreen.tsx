@@ -24,7 +24,7 @@ import { MainTabScreenProps } from '../navigation/types';
 
 export function TodayScreen({ navigation }: MainTabScreenProps<'Today'>) {
   const view = useView();
-  const { nudge } = useApp();
+  const { nudge, syncNow } = useApp();
   const { streak, goal } = view;
   const afterBreak = streak.restartDay;
   let delay = 0;
@@ -42,7 +42,7 @@ export function TodayScreen({ navigation }: MainTabScreenProps<'Today'>) {
   const streakCard = <StreakCard streak={streak} />;
 
   return (
-    <Screen>
+    <Screen onRefresh={syncNow}>
       <FadeInView delay={0} style={styles.header}>
         <View style={{ flex: 1 }}>
           <Text style={styles.date}>{view.today.dateLabel}</Text>

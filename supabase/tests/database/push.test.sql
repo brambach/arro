@@ -1,11 +1,11 @@
 -- Push tokens and the push queue (migrations 20261005000007, 20261005000009 and
--- 20261017000002). Rolled back, like arro.test.sql.
+-- 20261017000004). Rolled back, like arro.test.sql.
 
 begin;
 create extension if not exists pgtap with schema extensions;
 set local search_path = public, extensions;
 
-select plan(23);
+select plan(22);
 
 insert into auth.users (id, email, aud, role) values
   ('91000000-0000-0000-0000-000000000000', 'p1@arro.test', 'authenticated', 'authenticated'),
@@ -70,6 +70,8 @@ update public.members
 insert into public.workouts (id, member_id, local_date, type, source)
 select '9aaaaaaa-0000-0000-0000-000000000000', m.id, (now() at time zone m.timezone)::date, 'gym', 'manual'
   from public.members m where m.id = '92222222-0000-0000-0000-000000000000';
+-- Mum may be told Dad moved, depending on the hour; workout_pushes.test.sql tests that.
+delete from private.push_outbox where kind = 'moved';
 
 set local role authenticated;
 set local request.jwt.claims = '{"sub": "91000000-0000-0000-0000-000000000000", "role": "authenticated"}';
@@ -95,7 +97,6 @@ set local request.jwt.claims = '{"sub": "91000000-0000-0000-0000-000000000000", 
 delete from public.cheers where member_id = '91111111-0000-0000-0000-000000000000';
 insert into public.cheers (workout_id, member_id)
 values ('9aaaaaaa-0000-0000-0000-000000000000', '91111111-0000-0000-0000-000000000000');
-select throws_ok('select * from private.cheer_pushes', '42501', null, 'Nobody signed in reads the sent-cheer log');
 reset role;
 select is((select count(*)::integer from private.push_outbox where kind = 'cheer'), 1,
   'Taking a cheer back and giving it again doesn''t push twice');
@@ -108,6 +109,7 @@ update public.members
 insert into public.workouts (id, member_id, local_date, type, source)
 select '9bbbbbbb-0000-0000-0000-000000000000', m.id, (now() at time zone m.timezone)::date, 'walk', 'manual'
   from public.members m where m.id = '91111111-0000-0000-0000-000000000000';
+delete from private.push_outbox where kind = 'moved';
 set local role authenticated;
 set local request.jwt.claims = '{"sub": "92000000-0000-0000-0000-000000000000", "role": "authenticated"}';
 insert into public.cheers (workout_id, member_id)

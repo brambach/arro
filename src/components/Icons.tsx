@@ -50,17 +50,8 @@ export const Snowflake = ({ size = 15, color = colors.freezeIcon, strokeWidth = 
   </Stroke>
 );
 
-/** Filled by default; `filled={false}` draws the outline, for a heart you haven't given yet. */
-export const Heart = ({ size = 15, color = colors.primary, filled = true }: IconProps & { filled?: boolean }) => (
-  <Svg
-    width={size}
-    height={size}
-    viewBox="0 0 24 24"
-    fill={filled ? color : 'none'}
-    stroke={filled ? 'none' : color}
-    strokeWidth={filled ? 0 : 1.8}
-    strokeLinejoin="round"
-  >
+export const Heart = ({ size = 15, color = colors.primary }: IconProps) => (
+  <Svg width={size} height={size} viewBox="0 0 24 24" fill={color}>
     <Path d="M12 20.2S3.4 15 3.4 9.2C3.4 6.4 5.5 4.7 7.9 4.7c1.7 0 3.1 1 4.1 2.3 1-1.3 2.4-2.3 4.1-2.3 2.4 0 4.5 1.7 4.5 4.5 0 5.8-8.6 11-8.6 11z" />
   </Svg>
 );

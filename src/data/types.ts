@@ -49,8 +49,6 @@ export interface FeedItem {
   time?: string; // "6:21 AM"
   cheer?: string; // a cheer line, or nudge prompt
   hearts?: number; // heart count (kept posts)
-  canCheer?: boolean; // someone else's kept post: show the heart button
-  cheeredByMe?: boolean;
   workoutId?: string; // opens the workout detail (kept posts)
   photoUri?: PhotoSource; // the workout's photo, shown under the post
   route?: LatLng[]; // the workout's route, drawn small under the post
@@ -102,10 +100,20 @@ export interface RecentWorkout {
   place?: string; // "Brisbane"
 }
 
+export interface WorkoutComment {
+  id: string;
+  memberId: MemberId;
+  body: string;
+}
+
 export interface WorkoutDetail extends RecentWorkout {
   note?: string;
   photoUri?: PhotoSource;
   cheeredBy: MemberId[];
+  /** Oldest first. */
+  comments: WorkoutComment[];
+  /** The app or device that recorded a Health workout, such as "WHOOP". */
+  sourceApp?: string;
   /** Only for Health workouts that recorded one, already trimmed at both ends. */
   route?: LatLng[];
   /** The photo's path on the server, so its owner can replace or remove it. */

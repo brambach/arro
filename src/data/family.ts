@@ -73,6 +73,7 @@ export const workouts: Record<string, WorkoutDetail> = {
     place: 'Brisbane',
     note: 'Before work. Already tomorrow over here 🌏',
     cheeredBy: ['darcey', 'whit'],
+    comments: [],
     distance: '5.2 km',
     // A loop through New Farm Park and along the river, already trimmed at both ends.
     route: [
@@ -92,6 +93,7 @@ export const workouts: Record<string, WorkoutDetail> = {
     duration: '45 min',
     note: 'Lunch session. Legs, unfortunately.',
     cheeredBy: ['bryce'],
+    comments: [],
   },
   'bryce-yesterday': {
     id: 'bryce-yesterday',
@@ -102,6 +104,7 @@ export const workouts: Record<string, WorkoutDetail> = {
     duration: '20 min',
     note: 'Slow one on the balcony.',
     cheeredBy: ['darcey'],
+    comments: [],
   },
   'bryce-fri': {
     id: 'bryce-fri',
@@ -113,6 +116,7 @@ export const workouts: Record<string, WorkoutDetail> = {
     distance: '3.6 km',
     place: 'Brisbane',
     cheeredBy: ['whit'],
+    comments: [],
   },
 };
 

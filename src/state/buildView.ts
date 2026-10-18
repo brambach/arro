@@ -142,6 +142,7 @@ function toDetail(w: LoggedWorkout, memberId: MemberId, todayKey: string): Worko
     photoPath: w.photoPath,
     route: w.route,
     cheeredBy: [],
+    comments: [],
   };
 }
 
@@ -409,9 +410,7 @@ function previewFamilyView(session: SavedSession, preview: Preview | null, now: 
   }
 
   // Feed: the demo posts that still match, plus anything you logged.
-  const feedItems = demoFeed
-    .filter((f) => baseToday[f.memberId] === (f.kind === 'still' ? 'still' : 'kept'))
-    .map((f) => (f.kind === 'kept' && f.memberId !== me.id ? { ...f, canCheer: true, cheeredByMe: false } : f));
+  const feedItems = demoFeed.filter((f) => baseToday[f.memberId] === (f.kind === 'still' ? 'still' : 'kept'));
   // In the preview you're Bryce, and his demo post already stands in for a workout you logged.
   const bryceHasPost = !!preview && baseToday.bryce === 'kept';
   const myItems = bryceHasPost
@@ -622,7 +621,11 @@ function familyView(session: SavedSession, family: RemoteFamily, now: Date): App
 
   const details: Record<string, WorkoutDetail> = {};
   for (const w of family.workouts) {
-    details[w.id] = { ...toDetail(asLogged(w, session.photos), w.memberId, todayKey), source: w.source, cheeredBy: w.cheeredBy };
+    details[w.id] = { ...toDetail(asLogged(w, session.photos), w.memberId, todayKey), source: w.source,
+      cheeredBy: w.cheeredBy,
+      sourceApp: w.sourceApp,
+      comments: w.comments.map((c) => ({ id: c.id, memberId: c.memberId, body: c.body })),
+    };
   }
 
   const profile = ownProfile(myLogs, todayKey, family.name, me);
@@ -662,8 +665,6 @@ function familyView(session: SavedSession, family: RemoteFamily, now: Date): App
           ...feedItem(asLogged(w, session.photos), who ?? me, todayKey),
           hearts: w.cheeredBy.length || undefined,
           cheer: cheerLine(w.cheeredBy, myId, joined),
-          canCheer: w.memberId !== myId,
-          cheeredByMe: w.cheeredBy.includes(myId),
         };
       }),
     week: solo
