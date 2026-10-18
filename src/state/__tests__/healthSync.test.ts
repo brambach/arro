@@ -135,8 +135,35 @@ describe('planHealthSync', () => {
 
   it('removes a row gone from Health only when Health could be read in full', () => {
     const saved = [savedRow('row-gone', 'gone', '2026-10-17T14:00:00Z')];
-    expect(planHealthSync([], saved, NOW).remove).toEqual([]);
-    expect(planHealthSync([], saved, NOW, { canRemove: true }).remove).toEqual(['row-gone']);
+    expect(planHealthSync([watch], saved, NOW).remove).toEqual([]);
+    expect(planHealthSync([watch], saved, NOW, { canRemove: true }).remove).toEqual(['row-gone']);
+  });
+
+  it('removes nothing as gone when the read comes back empty (Health access turned off)', () => {
+    const saved = [savedRow('row-1', 'a', '2026-10-17T14:00:00Z'), savedRow('row-2', 'b', '2026-10-17T15:00:00Z')];
+    expect(planHealthSync([], saved, NOW, { canRemove: true }).remove).toEqual([]);
+  });
+
+  it('never removes a workout saved for yesterday, gone or duplicate', () => {
+    const gone = savedRow('row-gone', 'gone', '2026-10-16T14:00:00Z');
+    // Yesterday's Whoop copy, now that the Watch's copy of the same walk is in Health too.
+    const yWatch = workout('y-watch', '2026-10-16T16:00:00Z', { sourceId: 'com.apple.health.abc', route: line(2000) });
+    const yWhoop = workout('y-whoop', '2026-10-16T16:02:00Z', { sourceId: 'com.whoop.iphone' });
+    const dupes = [savedRow('row-watch', 'y-watch', '2026-10-16T16:00:00Z'), savedRow('row-whoop', 'y-whoop', '2026-10-16T16:02:00Z')];
+    const plan = planHealthSync([watch, yWatch, yWhoop], [gone, ...dupes], NOW, { canRemove: true });
+    expect(plan.remove).toEqual([]);
+  });
+
+  it('keeps a saved workout under five minutes and only stops new short ones', () => {
+    const shortSaved = workout('short-saved', '2026-10-17T14:00:00Z', { durationSeconds: 120 });
+    const shortNew = workout('short-new', '2026-10-17T15:00:00Z', { durationSeconds: 120 });
+    const plan = planHealthSync([shortSaved, shortNew], [savedRow('row-short', 'short-saved', '2026-10-17T14:00:00Z', 2)], NOW, {
+      canRemove: true,
+    });
+    expect(plan.remove).toEqual([]);
+    expect(plan.fill.map((w) => w.uuid)).toEqual(['short-saved']);
+    expect(plan.insert).toEqual([]);
+    expect(plan.skipped).toBe(1);
   });
 
   it('skips a workout its owner removed from Arro', () => {

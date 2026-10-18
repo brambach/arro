@@ -117,10 +117,17 @@ export interface HealthSyncPlan {
 
 /**
  * What a sync should do, before any network call. `saved` is this member's Health
- * rows for the days the server still takes. Rows whose workout is gone from Health
- * are only removed when `canRemove` (Arro is open, so Health could be read in full:
- * a locked phone can't read it). Duplicates of a workout Health still has are
- * always safe to remove.
+ * rows for the days the server still takes.
+ *
+ * Removing a row can take back a day the family already counted, so it's narrow:
+ * only rows dated today, never yesterday's. A duplicate of a workout Health still
+ * has is safe to remove. A row whose workout is gone from Health is only removed
+ * when `canRemove` (Arro is open, so Health could be read in full: a locked phone
+ * can't read it) and the read found something: with Health access turned off,
+ * HealthKit returns an empty list rather than an error.
+ *
+ * The five-minute minimum only stops new rows. A saved row is never removed for
+ * being short (build 6 had no minimum).
  */
 export function planHealthSync(
   workouts: HealthWorkout[],
@@ -128,8 +135,9 @@ export function planHealthSync(
   now: Date,
   options: { dismissed?: ReadonlySet<string>; canRemove?: boolean } = {},
 ): HealthSyncPlan {
+  const today = dayKey(now);
   const inHealth = new Set(workouts.map((w) => w.uuid));
-  const candidates = workouts.filter((w) => w.durationSeconds >= MIN_HEALTH_SECONDS && !options.dismissed?.has(w.uuid));
+  const candidates = workouts.filter((w) => !options.dismissed?.has(w.uuid));
   const sendable = sendableHealthWorkouts(candidates, now);
   const keep = distinctHealthWorkouts(sendable);
   const plan: HealthSyncPlan = { insert: [], fill: [], replace: [], remove: [], skipped: workouts.length - keep.length };
@@ -161,15 +169,17 @@ export function planHealthSync(
     if (twin) {
       used.add(twin.id);
       plan.replace.push({ rowId: twin.id, with: w });
-    } else {
+    } else if (w.durationSeconds >= MIN_HEALTH_SECONDS) {
       plan.insert.push(w);
+    } else {
+      plan.skipped += 1;
     }
   }
   for (const r of saved) {
-    if (used.has(r.id)) continue;
-    // A duplicate, too short or dismissed: Health still has it, so this read was complete.
+    if (used.has(r.id) || r.localDate < today) continue;
+    // A duplicate or dismissed: Health still has it, so this read was complete.
     if (inHealth.has(r.healthWorkoutId)) plan.remove.push(r.id);
-    else if (options.canRemove) plan.remove.push(r.id);
+    else if (options.canRemove && workouts.length > 0) plan.remove.push(r.id);
   }
   return plan;
 }
