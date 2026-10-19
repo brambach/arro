@@ -45,7 +45,7 @@ export function distanceLabel(meters?: number, miles: boolean = usesMiles()): st
   return `${km < 10 ? km.toFixed(1) : Math.round(km)} km`;
 }
 
-/** "Darcey", "Darcey and Whit", "Darcey, Whit and Mum". */
+/** "Maya", "Maya and Jo", "Maya, Jo and Mum". */
 export function joinNames(names: string[]): string {
   if (names.length <= 1) return names[0] ?? '';
   return `${names.slice(0, -1).join(', ')} and ${names[names.length - 1]}`;

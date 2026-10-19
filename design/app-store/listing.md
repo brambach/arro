@@ -85,7 +85,7 @@ stay, close, little) are left out because Apple indexes those anyway.
 | --- | --- |
 | Bundle ID | com.arrofamily.arro |
 | SKU | arro-ios-1 (any unique string, never shown) |
-| Primary language | English (U.S.), or English (Australia) if you'd rather. Pick before the first submission; it's awkward to change |
+| Primary language | English (U.S.). Pick before the first submission; it's awkward to change |
 | Price | Free, no in-app purchases in v1 (`design/paid-plan.md`) |
 | Availability | All countries, or start with the countries your family is in |
 | Copyright | 2026 Bryce Rambach |

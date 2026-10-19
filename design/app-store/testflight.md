@@ -41,7 +41,7 @@ The EAS steps are at the end in case you'd rather.
    - Platform: iOS
    - Name: `Arro: Family Move Streak` (this is the moment the name is
      reserved; fallbacks are in `listing.md`)
-   - Primary language: English (U.S.) or English (Australia)
+   - Primary language: English (U.S.)
    - Bundle ID: `com.arrofamily.arro`
    - SKU: `arro-ios-1`
    - User access: Full access
@@ -100,7 +100,7 @@ library access at all.
 
 ## 3. Build and upload (You, on your Mac)
 
-From `/Users/bryce/claude-hub/personal-projects/arro`, with phase 4's and this
+From the repo root, with phase 4's and this
 thread's changes committed:
 
 1. Type-check: `npx tsc --noEmit`

@@ -1,6 +1,6 @@
 -- The evening "X still has today" push (migration 20261005000008). Rolled back, like arro.test.sql.
 -- Times are fixed with p_now, so the test doesn't depend on when it runs.
--- 2026-10-05 09:00 UTC is 19:00 in Brisbane (UTC+10, no DST) and 10:00 in London (BST).
+-- 2026-10-05 09:00 UTC is 19:00 on UTC+10 (Etc/GMT-10, no DST) and 10:00 in London (BST).
 
 begin;
 create extension if not exists pgtap with schema extensions;
@@ -19,13 +19,13 @@ insert into public.families (id, name) values ('e1000000-0000-0000-0000-00000000
 -- Joined in this order, a minute apart, so names come out in join order.
 insert into public.members (id, family_id, user_id, display_name, colour, timezone, joined_at) values
   ('e1110000-0000-0000-0000-000000000000', 'e1000000-0000-0000-0000-000000000000',
-   'e1100000-0000-0000-0000-000000000000', 'Mum', '#EF6C1A', 'Australia/Brisbane', now() - interval '4 minutes'),
+   'e1100000-0000-0000-0000-000000000000', 'Mum', '#EF6C1A', 'Etc/GMT-10', now() - interval '4 minutes'),
   ('e1220000-0000-0000-0000-000000000000', 'e1000000-0000-0000-0000-000000000000',
-   'e1200000-0000-0000-0000-000000000000', 'Dad', '#DF6B96', 'Australia/Brisbane', now() - interval '3 minutes'),
+   'e1200000-0000-0000-0000-000000000000', 'Dad', '#DF6B96', 'Etc/GMT-10', now() - interval '3 minutes'),
   ('e1330000-0000-0000-0000-000000000000', 'e1000000-0000-0000-0000-000000000000',
    'e1300000-0000-0000-0000-000000000000', 'Gran', '#4F97CF', 'Europe/London', now() - interval '2 minutes'),
   ('e1440000-0000-0000-0000-000000000000', 'e1000000-0000-0000-0000-000000000000',
-   'e1400000-0000-0000-0000-000000000000', 'Kid', '#4FA06B', 'Australia/Brisbane', now() - interval '1 minute');
+   'e1400000-0000-0000-0000-000000000000', 'Kid', '#4FA06B', 'Etc/GMT-10', now() - interval '1 minute');
 
 -- Join pushes aren't what this file tests.
 delete from private.push_outbox;
@@ -46,7 +46,7 @@ insert into public.workouts (member_id, local_date, type, source) values
 alter table public.workouts enable trigger user;
 
 -- Before the window ------------------------------------------------------------------
-select is(private.queue_evening_nudges('2026-10-05 08:59 UTC'), 0, 'Nothing at 18:59 Brisbane time');
+select is(private.queue_evening_nudges('2026-10-05 08:59 UTC'), 0, 'Nothing at 18:59 on UTC+10');
 
 -- In the window ----------------------------------------------------------------------
 select is(private.queue_evening_nudges('2026-10-05 09:00 UTC'), 1, 'At 19:00 one push is queued');

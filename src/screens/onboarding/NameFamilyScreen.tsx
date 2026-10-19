@@ -41,7 +41,7 @@ export function NameFamilyScreen({ navigation }: RootStackScreenProps<'NameFamil
         onChangeText={(familyName) => updateDraft({ familyName })}
         autoCapitalize="words"
         maxLength={32}
-        placeholder="The Rambachs"
+        placeholder="The Parkers"
         returnKeyType="done"
       />
       <Text style={styles.note}>A group chat name works. You can change it later.</Text>

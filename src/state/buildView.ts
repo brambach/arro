@@ -91,7 +91,7 @@ export interface AppView {
   today: {
     dateLabel: string;
     greeting: string;
-    /** The "Darcey's still got today" line under the summary card. */
+    /** The "Maya's still got today" line under the summary card. */
     pending: { id?: MemberId; prompt: string; cta?: string } | null;
   };
   feed: FeedItem[];
@@ -343,7 +343,7 @@ function founderView(session: SavedSession, now: Date): AppView {
 }
 
 /**
- * The preview family: Bryce, Darcey and Whit. With `preview` set, you are Bryce.
+ * The preview family: Sam, Maya and Jo. With `preview` set, you are Sam.
  * Without it, you're an invitee who joined them as the fourth member.
  */
 function previewFamilyView(session: SavedSession, preview: Preview | null, now: Date): AppView {
@@ -355,12 +355,12 @@ function previewFamilyView(session: SavedSession, preview: Preview | null, now: 
 
   // The moment being previewed.
   if (preview === 'afterBreak') {
-    byId.bryce.today = 'still';
-    byId.bryce.meta = 'Still has today · usually mornings';
+    byId.sam.today = 'still';
+    byId.sam.meta = 'Still has today · usually mornings';
   }
   if (preview === 'goalDone') {
-    byId.darcey.today = 'kept';
-    byId.darcey.meta = 'Walk · 30 min · 5:40 PM';
+    byId.maya.today = 'kept';
+    byId.maya.meta = 'Walk · 30 min · 5:40 PM';
   }
 
   // Who has a post in the demo feed is decided before anything you log.
@@ -370,12 +370,12 @@ function previewFamilyView(session: SavedSession, preview: Preview | null, now: 
   let me: Member;
   let members: Member[];
   if (preview) {
-    me = byId.bryce;
+    me = byId.sam;
     members = base;
   } else {
-    byId.bryce.relationship = undefined;
-    byId.darcey.relationship = undefined;
-    byId.whit.relationship = undefined;
+    byId.sam.relationship = undefined;
+    byId.maya.relationship = undefined;
+    byId.jo.relationship = undefined;
     me = meMember(session, logs, todayKey, personalStreaks(logs, todayKey).current);
     members = [...base, me];
   }
@@ -409,14 +409,14 @@ function previewFamilyView(session: SavedSession, preview: Preview | null, now: 
   // Pending line under the summary card.
   let pending: AppView['today']['pending'] = null;
   if (nudgeTarget && iKeptToday && preview !== 'afterBreak') {
-    pending = { id: nudgeTarget.id, prompt: `${nudgeTarget.name}’s still got today`, cta: nudgeTarget.id === 'darcey' ? 'cheer her on' : 'cheer them on' };
+    pending = { id: nudgeTarget.id, prompt: `${nudgeTarget.name}’s still got today`, cta: nudgeTarget.id === 'maya' ? 'cheer her on' : 'cheer them on' };
   }
 
   // Feed: the demo posts that still match, plus anything you logged.
   const feedItems = demoFeed.filter((f) => baseToday[f.memberId] === (f.kind === 'still' ? 'still' : 'kept'));
-  // In the preview you're Bryce, and his demo post already stands in for a workout you logged.
-  const bryceHasPost = !!preview && baseToday.bryce === 'kept';
-  const myItems = bryceHasPost
+  // In the preview you're Sam, and his demo post already stands in for a workout you logged.
+  const samHasPost = !!preview && baseToday.sam === 'kept';
+  const myItems = samHasPost
     ? []
     : newestFirst(logs)
         .filter((l) => l.localDate >= addDays(todayKey, -1))

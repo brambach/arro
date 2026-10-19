@@ -16,7 +16,7 @@ insert into public.families (id, name) values ('99999999-0000-0000-0000-00000000
 
 insert into public.members (id, family_id, user_id, display_name, colour, timezone) values
   ('91111111-0000-0000-0000-000000000000', '99999999-0000-0000-0000-000000000000',
-   '91000000-0000-0000-0000-000000000000', 'Mum', '#EF6C1A', 'Australia/Brisbane');
+   '91000000-0000-0000-0000-000000000000', 'Mum', '#EF6C1A', 'Etc/GMT-10');
 
 select is(
   (select count(*)::integer from private.push_outbox where user_id = '91000000-0000-0000-0000-000000000000'),
@@ -24,7 +24,7 @@ select is(
 
 insert into public.members (id, family_id, user_id, display_name, colour, timezone) values
   ('92222222-0000-0000-0000-000000000000', '99999999-0000-0000-0000-000000000000',
-   '92000000-0000-0000-0000-000000000000', 'Dad', '#DF6B96', 'Australia/Brisbane');
+   '92000000-0000-0000-0000-000000000000', 'Dad', '#DF6B96', 'Etc/GMT-10');
 
 select results_eq(
   $$ select user_id, kind, title from private.push_outbox order by id $$,

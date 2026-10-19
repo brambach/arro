@@ -134,7 +134,7 @@ The family-presence corner is full of products, but each one has a catch:
   you to have something to say. Most days nobody does, so they go quiet.
 - **Fitness apps with friends** give you a daily reason to show up, but the
   currency is stats and the format is competition. Mum walking 20 minutes
-  "loses" to Whit's 10k.
+  "loses" to Jo's 10k.
 
 **Arro's gap:** a daily reason to say hi that nobody has to think up. Moving is
 the excuse. The family streak makes everyone's day matter equally. Seeing
@@ -152,8 +152,8 @@ chat, there's something to share every day without having to come up with it.
   family".
 - **Who it's for:** adult kids (roughly 25-45) who live away from parents or
   siblings, and the parents (55-75) who'd like to hear from them more. Families
-  spread across time zones are the sharpest version of this: Brisbane and back
-  home is the founder's own case.
+  spread across time zones are the sharpest version of this: a city abroad and
+  back home is the founder's own case.
 - **Who it isn't for:** people chasing PBs, training plans or public kudos.
   Strava and Apple Fitness already serve them well. Arro shouldn't try.
 - **The founder buys, the family stays.** One motivated person (usually an
@@ -168,8 +168,8 @@ constraints for the refactor:
 
 1. **One moment a day, not a feed.** Today and This Week are bounded. There's
    nothing to scroll once you've seen your family.
-2. **Missing a day is never public shame.** Copy says "Darcey still has today",
-   never "Darcey broke the streak". The automatic freeze covers a sick day
+2. **Missing a day is never public shame.** Copy says "Maya still has today",
+   never "Maya broke the streak". The automatic freeze covers a sick day
    without anyone having to explain.
 3. **No leaderboards, no stats comparisons.** Duration and type are optional and
    never ranked. A walk and a marathon count the same.

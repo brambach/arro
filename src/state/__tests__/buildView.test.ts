@@ -12,7 +12,7 @@ const session: SavedSession = {
   role: 'founder',
   me: {
     id: 'me',
-    name: 'Bryce',
+    name: 'Sam',
     color: '#EF6C1A',
     photoUri: null,
     moveMethod: 'manual',
@@ -58,7 +58,7 @@ function family(overrides: Partial<RemoteFamily> = {}): RemoteFamily {
     id: 'fam',
     name: 'Home crew',
     joinCode: 'K7P4QX9M',
-    members: [member('me', 'Bryce'), member('mum', 'Darcey')],
+    members: [member('me', 'Sam'), member('mum', 'Maya')],
     // I moved Monday to Wednesday; Mum moved Monday and Wednesday.
     workouts: [
       workout('me-mon', 'me', '2026-10-19'),

@@ -21,7 +21,7 @@ insert into auth.users (id, email, aud, role) values
   ('e2000000-0000-0000-0000-000000000000', 'e2@arro.test', 'authenticated', 'authenticated'),
   ('f1000000-0000-0000-0000-000000000000', 'f1@arro.test', 'authenticated', 'authenticated');
 
--- Family A: both in Brisbane. A1 joins 1 June, A2 joins 3 June.
+-- Family A: both on UTC+10. A1 joins 1 June, A2 joins 3 June.
 insert into public.families (id, name) values
   ('aaaaaaaa-0000-0000-0000-000000000000', 'Family A'),
   ('bbbbbbbb-0000-0000-0000-000000000000', 'Family B'),
@@ -31,12 +31,12 @@ insert into public.families (id, name) values
 
 insert into public.members (id, family_id, user_id, display_name, colour, timezone, joined_at) values
   ('a1111111-0000-0000-0000-000000000000', 'aaaaaaaa-0000-0000-0000-000000000000',
-   'a1000000-0000-0000-0000-000000000000', 'A1', '#EF6C1A', 'Australia/Brisbane', '2026-06-01 09:00+10'),
+   'a1000000-0000-0000-0000-000000000000', 'A1', '#EF6C1A', 'Etc/GMT-10', '2026-06-01 09:00+10'),
   ('a2222222-0000-0000-0000-000000000000', 'aaaaaaaa-0000-0000-0000-000000000000',
-   'a2000000-0000-0000-0000-000000000000', 'A2', '#DF6B96', 'Australia/Brisbane', '2026-06-03 09:00+10'),
-  -- Family B: one in Brisbane, one in California.
+   'a2000000-0000-0000-0000-000000000000', 'A2', '#DF6B96', 'Etc/GMT-10', '2026-06-03 09:00+10'),
+  -- Family B: one on UTC+10, one in California.
   ('b1111111-0000-0000-0000-000000000000', 'bbbbbbbb-0000-0000-0000-000000000000',
-   'b1000000-0000-0000-0000-000000000000', 'B1', '#EF6C1A', 'Australia/Brisbane', '2026-06-01 09:00+10'),
+   'b1000000-0000-0000-0000-000000000000', 'B1', '#EF6C1A', 'Etc/GMT-10', '2026-06-01 09:00+10'),
   ('b2222222-0000-0000-0000-000000000000', 'bbbbbbbb-0000-0000-0000-000000000000',
    'b2000000-0000-0000-0000-000000000000', 'B2', '#DF6B96', 'America/Los_Angeles', '2026-06-01 10:00-07'),
   -- Family C: one member, so no family streak yet.
@@ -71,7 +71,7 @@ select 'a2222222-0000-0000-0000-000000000000', d::date, 'gym', 'manual'
   from generate_series('2026-06-03'::date, '2026-06-10', interval '1 day') d
  where d::date <> '2026-06-06';
 
--- B1 (Brisbane) moves 1-4 June. B2 (California) moves 1-3 June.
+-- B1 (UTC+10) moves 1-4 June. B2 (California) moves 1-3 June.
 insert into public.workouts (member_id, local_date, type, source)
 select 'b1111111-0000-0000-0000-000000000000', d::date, 'swim', 'manual'
   from generate_series('2026-06-01'::date, '2026-06-04', interval '1 day') d;
@@ -95,7 +95,7 @@ insert into public.workouts (member_id, local_date, type, source) values
 alter table public.workouts enable trigger workouts_check_date;
 
 -- Streaks: missed day and freeze ---------------------------------------------
--- As of 10 June, 8pm in Brisbane.
+-- As of 10 June, 8pm on UTC+10.
 -- A1: 5th frozen, 7th missed (freeze not back for 7 days). A2: 6th frozen.
 -- Family days 3-10 June: 3,4,5,6 count; 7 breaks; 8,9,10 count.
 select results_eq(
@@ -150,7 +150,7 @@ select results_eq(
 );
 
 -- Cross-timezone family --------------------------------------------------------
--- 5 June 01:00 UTC: 11am 5 June in Brisbane, 6pm 4 June in California.
+-- 5 June 01:00 UTC: 11am 5 June on UTC+10, 6pm 4 June in California.
 -- B2 hasn't moved on the 4th yet but it's still the 4th for them.
 select results_eq(
   $$ select family_streak, latest_day_state
