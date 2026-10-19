@@ -51,21 +51,30 @@ branch or pull request. Nothing in git history needs rewriting for secrets.
   rewriting history and force-pushing, so it was left. Recommended: leave it,
   since it's been public since the first push, and use the GitHub noreply
   address for any future commits (`git config user.email`).
-- **First names in the preview family** (`src/data/family.ts`): "Bryce",
-  "Darcey" and "Whit", in Brisbane. The same names are in the design sketches,
-  `design/Arro.dc.html`, the market research notes and some test fixtures. If
-  Darcey and Whit are real people who'd rather not be named, rename them in
-  `src/data/family.ts`, `src/data/types.ts`, `src/state/buildView.ts`,
-  `src/data/workouts.ts`, the Jest and pgTAP tests, and `design/`. The old
-  names stay in history either way.
-- **The preview route** in `src/data/family.ts` is a short loop of
-  coordinates in inner Brisbane, around New Farm. It looks like a
-  sample public route, not a home address, but if it's a real run that starts
-  at someone's door, change it.
+- **The preview family's names were replaced** on 19 Oct 2026. The sample
+  family in `src/data/family.ts` is now Sam, Maya and Jo, and the two extra
+  relatives in `design/Arro.dc.html` are Ruth and Tom. The same swap went
+  through `src/state/buildView.ts`, `src/data/types.ts`, the Jest tests,
+  `design/`, the market research notes and the README. The old names are
+  still in git history, since history wasn't rewritten.
+- **The preview route was replaced.** It's now a loop around the Central Park
+  reservoir in New York, and the sample places say New York. The pgTAP tests
+  use the `Etc/GMT-10` time zone, which has the same offset and no DST. The
+  old coordinates and place names are still in history.
+- **Old design screenshots were removed.** The eight JPGs in
+  `design/visual-direction/` had the old names drawn into them. The README
+  now uses two fresh shots of the demo family in `design/screenshots/`.
+- **Still in the tree:** three comments in migrations that are already applied
+  to production mention the old names or `Australia/Brisbane`
+  (`20261005000001_schema.sql`, `20261005000004_family_functions.sql`,
+  `20261017000004_workout_pushes.sql`). They were left alone because applied
+  migrations don't get edited. Changing a comment wouldn't change the schema,
+  so it's Bryce's call.
 - **Named on purpose:** the privacy policy (`design/app-store/privacy-policy.md`
   and `site/public/privacy/`) names Bryce Rambach as the developer with
-  `support@arrofamily.com`. `demo-mum@arrofamily.com` appears once as an
-  example address in `design/app-store/review-notes.md`.
+  `support@arrofamily.com`, and so do `LICENSE`, the site footers and the App
+  Store listing notes. `demo-mum@arrofamily.com` appears once as an example
+  address in `design/app-store/review-notes.md`.
 - **Not found:** phone numbers, street addresses, photos of people, device
   ids or push tokens. The only images are app icons, site art and design
   sketches that use initial avatars.
