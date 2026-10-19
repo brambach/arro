@@ -236,13 +236,13 @@ describe('syncHealthWorkouts', () => {
 
 describe('healthSourceLabel', () => {
   it('stores a fixed label, never the name Health gives a device', () => {
-    expect(healthSourceLabel({ sourceId: 'com.apple.health.81A2', sourceName: 'Bryce’s Apple Watch' })).toBe('Apple Watch');
-    expect(healthSourceLabel({ sourceId: 'com.apple.health.81A2', sourceName: 'Bryce’s iPhone' })).toBe('iPhone');
+    expect(healthSourceLabel({ sourceId: 'com.apple.health.81A2', sourceName: 'Sam’s Apple Watch' })).toBe('Apple Watch');
+    expect(healthSourceLabel({ sourceId: 'com.apple.health.81A2', sourceName: 'Sam’s iPhone' })).toBe('iPhone');
     expect(healthSourceLabel({ sourceId: 'com.apple.Fitness', sourceName: 'Fitness' })).toBe('Apple Health');
     expect(healthSourceLabel({ sourceId: 'com.whoop.iphone', sourceName: 'WHOOP' })).toBe('WHOOP');
     expect(healthSourceLabel({ sourceId: 'com.strava.stravaride', sourceName: 'Strava' })).toBe('Strava');
     expect(healthSourceLabel({ sourceId: 'com.garmin.connect.mobile', sourceName: 'Connect' })).toBe('Garmin');
-    expect(healthSourceLabel({ sourceId: 'com.example.tracker', sourceName: 'Bryce’s Tracker' })).toBe('Health');
+    expect(healthSourceLabel({ sourceId: 'com.example.tracker', sourceName: 'Sam’s Tracker' })).toBe('Health');
     expect(healthSourceLabel({})).toBe('Health');
   });
 });

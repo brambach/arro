@@ -44,7 +44,7 @@ export interface FeedItem {
   id: string;
   memberId: MemberId;
   kind: 'kept' | 'still';
-  title: string; // "Bryce kept Day 24" / "Darcey still has today"
+  title: string; // "Sam kept Day 24" / "Maya still has today"
   meta: string;
   time?: string; // "6:21 AM"
   cheer?: string; // a cheer line, or nudge prompt
@@ -74,8 +74,8 @@ export interface WeekRow {
 export interface MilestoneData {
   memberId: MemberId;
   day: number;
-  title: string; // "Bryce kept\n30 days"
-  subtitle: string; // "A month of showing up, from Brisbane."
+  title: string; // "Sam kept\n30 days"
+  subtitle: string; // "A month of showing up, from New York."
   motto: string; // "Every day forward, together."
   dateLine: string; // "June 30 · streak still alive"
   cheeredBy: MemberId[];
@@ -97,7 +97,7 @@ export interface RecentWorkout {
   when: string; // "Today · 6:21 AM"
   duration?: string; // "32 min" (optional: a check-in can skip it)
   distance?: string; // "5.4 km" (Health workouts that recorded one)
-  place?: string; // "Brisbane"
+  place?: string; // "New York"
 }
 
 export interface WorkoutComment {

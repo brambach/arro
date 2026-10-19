@@ -280,7 +280,7 @@ const SOURCE_LABELS: [RegExp, string][] = [
 
 /**
  * The fixed label stored with a Health workout ("From WHOOP"). Health names
- * devices after their owner ("Bryce’s Apple Watch"), so the name itself is never
+ * devices after their owner ("Sam’s Apple Watch"), so the name itself is never
  * stored: the bundle id picks the label, and the name only tells a watch from a phone.
  */
 export function healthSourceLabel(w: Pick<HealthWorkout, 'sourceId' | 'sourceName'>): string {

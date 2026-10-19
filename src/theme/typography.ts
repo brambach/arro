@@ -24,11 +24,11 @@ export const fonts = {
 } as const;
 
 export const type = {
-  /** Milestone hero — "Bryce kept 30 days" (color applied inline, usually white). */
+  /** Milestone hero — "Sam kept 30 days" (color applied inline, usually white). */
   display: { fontFamily: fonts.serif, fontSize: 42, lineHeight: 44, fontWeight: weights.regular, letterSpacing: -0.6 },
   /** Screen titles — "This Week", "Family feed", "Settings". */
   title: { fontFamily: fonts.serif, fontSize: 34, lineHeight: 37, fontWeight: weights.regular, letterSpacing: -0.4, color: colors.ink },
-  /** Home greeting — "Good morning, Bryce." */
+  /** Home greeting — "Good morning, Sam." */
   greeting: { fontFamily: fonts.serif, fontSize: 27, lineHeight: 31, fontWeight: weights.regular, letterSpacing: -0.3, color: colors.ink },
   /** Big count — "2 of 3", profile stat numbers use `stat`. */
   bigNumber: { fontFamily: fonts.serif, fontSize: 40, lineHeight: 42, fontWeight: weights.regular, letterSpacing: -0.5, color: colors.ink },
