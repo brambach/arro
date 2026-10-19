@@ -71,7 +71,7 @@ export interface RemoteWorkout {
   photoUrl?: string;
   /** Member ids of everyone who cheered it. */
   cheeredBy: string[];
-  /** Oldest first. */
+  /** Oldest first. Missing in a family cached by an older build; loadCachedFamily fills in []. */
   comments: RemoteComment[];
   /** HealthKit's UUID, for Health workouts. */
   healthWorkoutId?: string;
@@ -116,7 +116,10 @@ export interface RemotePause {
   endsOn: string;
 }
 
-/** One family as the server sees it right now. */
+/**
+ * One family as the server sees it right now. The copy cached on the phone
+ * (loadCachedFamily) may come from an older build and lack fields added since.
+ */
 export interface RemoteFamily {
   id: string;
   name: string;

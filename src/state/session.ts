@@ -6,6 +6,7 @@
  */
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { MoveMethod, ReminderSlot, WorkoutType } from '../data/types';
+import type { RemoteFamily, RemoteWorkout } from './backend';
 import type { LatLng } from './routes';
 
 const KEY = 'arro.session.v1';
@@ -61,11 +62,25 @@ export interface SavedSession {
 
 const FAMILY_KEY = 'arro.family.v1';
 
-/** The last family the server sent, so Today opens straight away and works offline. */
-export async function loadCachedFamily<T>(): Promise<T | null> {
+/**
+ * The last family the server sent, so Today opens straight away and works offline.
+ * An older build may have cached it before some fields existed (build 6 had no
+ * comments or pauses), so those get empty defaults here. Anything that isn't a
+ * family at all is dropped and the server refresh fills it in.
+ */
+export async function loadCachedFamily(): Promise<RemoteFamily | null> {
   try {
     const raw = await AsyncStorage.getItem(FAMILY_KEY);
-    return raw ? (JSON.parse(raw) as T) : null;
+    if (!raw) return null;
+    const family = JSON.parse(raw) as RemoteFamily;
+    if (!family || !Array.isArray(family.members) || !Array.isArray(family.workouts)) return null;
+    return {
+      ...family,
+      workouts: family.workouts.map(
+        (w): RemoteWorkout => ({ ...w, cheeredBy: w.cheeredBy ?? [], comments: w.comments ?? [] }),
+      ),
+      pauses: family.pauses ?? [],
+    };
   } catch {
     return null;
   }

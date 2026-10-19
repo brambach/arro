@@ -366,7 +366,7 @@ export function AppStateProvider({ children }: { children: React.ReactNode }) {
           await clearSession().catch(() => undefined);
           saved = null;
         } else {
-          const cached = await loadCachedFamily<RemoteFamily>();
+          const cached = await loadCachedFamily();
           if (alive && cached?.id === saved.remote.familyId) setFamily(cached);
         }
       }

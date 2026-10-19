@@ -165,3 +165,27 @@ describe('breaks on Today', () => {
     expect(view.myPauses).toEqual([{ startsOn: today, endsOn: '2026-10-23' }]);
   });
 });
+
+describe('a family cached by an older build', () => {
+  // Build 6 cached workouts with no comments, healthWorkoutId or sourceApp, and the family with no pauses.
+  // Build 7 rendered that before the server refresh and crashed on launch.
+  function build6Family() {
+    const f = family();
+    const old = {
+      ...f,
+      workouts: f.workouts.map(({ comments, healthWorkoutId, sourceApp, ...rest }) => rest),
+    } as Partial<RemoteFamily>;
+    delete old.pauses;
+    return old as RemoteFamily;
+  }
+
+  it('renders without throwing', () => {
+    expect(() => buildView(session, null, build6Family(), NOW)).not.toThrow();
+  });
+
+  it('shows its workouts with no comments', () => {
+    const view = buildView(session, null, build6Family(), NOW);
+    expect(view.keptCount).toBe(2);
+    expect(view.workouts['me-wed'].comments).toEqual([]);
+  });
+});

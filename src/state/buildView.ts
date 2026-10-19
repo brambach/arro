@@ -626,9 +626,9 @@ function familyView(session: SavedSession, family: RemoteFamily, now: Date): App
   const details: Record<string, WorkoutDetail> = {};
   for (const w of family.workouts) {
     details[w.id] = { ...toDetail(asLogged(w, session.photos), w.memberId, todayKey), source: w.source,
-      cheeredBy: w.cheeredBy,
+      cheeredBy: w.cheeredBy ?? [],
       sourceApp: w.sourceApp,
-      comments: w.comments.map((c) => ({ id: c.id, memberId: c.memberId, body: c.body })),
+      comments: (w.comments ?? []).map((c) => ({ id: c.id, memberId: c.memberId, body: c.body })),
     };
   }
 
@@ -668,8 +668,8 @@ function familyView(session: SavedSession, family: RemoteFamily, now: Date): App
         const who = joined.find((m) => m.id === w.memberId);
         return {
           ...feedItem(asLogged(w, session.photos), who ?? me, todayKey),
-          hearts: w.cheeredBy.length || undefined,
-          cheer: cheerLine(w.cheeredBy, myId, joined),
+          hearts: (w.cheeredBy ?? []).length || undefined,
+          cheer: cheerLine(w.cheeredBy ?? [], myId, joined),
         };
       }),
     week: solo
