@@ -46,7 +46,7 @@ design/               product docs; design/app-store/ has listing, privacy, test
 
 ## Checks (same as `.github/workflows/ci.yml`)
 
-Run from the repo root. CI runs the first four on every PR and push to main.
+Run from the repo root. CI runs all but `expo export` on every PR and push to main.
 
 ```bash
 npm ci
@@ -63,8 +63,6 @@ npx expo export --platform ios       # bundle sanity check, not in CI
   from scratch, then `supabase test db`. `supabase start` brings up the full
   local stack (Auth, Storage, functions) when you need more than the database.
   Edge functions locally: `supabase functions serve`.
-- `npm run typecheck`, `npm test`, Jest and CI arrive with PR #20 (release/build-7);
-  on main before it merges, use `npx tsc --noEmit`.
 
 ## Migrations
 
@@ -79,11 +77,9 @@ npx expo export --platform ios       # bundle sanity check, not in CI
 ## Edge functions
 
 - `supabase/functions/<name>/index.ts`, Deno, `Deno.serve`, npm imports as `npm:pkg@ver`.
-  Shared code in `supabase/functions/_shared/`.
-- Current: `send-push`, `delete-account`, `remove-member`.
-- Checked by `deno check` in CI. Deployed by hand with
-  `npx supabase functions deploy <name>`, only on Bryce's go.
-- Secrets come from `npx supabase secrets set`; `SUPABASE_*` keys are provided by the runtime.
+  Shared code in `_shared/`. Current: `send-push`, `delete-account`, `remove-member`.
+- Checked by `deno check` in CI. Deployed by hand with `npx supabase functions deploy <name>`
+  and `npx supabase secrets set`, only on Bryce's go. The runtime provides `SUPABASE_*` keys.
 
 ## Release process
 
@@ -100,7 +96,7 @@ Production rollout, every step only on Bryce's explicit go, in this order:
 4. Make the Auth or dashboard changes the PR lists.
 5. Make sure the EAS env vars are set, then `eas build` and `eas submit`.
 
-Current: PR #20 "Build 7: all open PRs" (`release/build-7`). It needs migrations
+Current: build 7, PR #20 (`release/build-7`, merged to main). Its rollout: migrations
 `20261017000001_join_security`, `20261017000003_pause`,
 `20261017000004_workout_pushes`, `20261018000001_build7_review`; functions
 `delete-account` and `remove-member`; secrets `APPLE_TEAM_ID`, `APPLE_CLIENT_ID`,
@@ -111,9 +107,12 @@ Xcode; build 7 is the first EAS build. Details: `design/app-store/testflight.md`
 
 ## Standing rules
 
+Merging: the overseer asks Bryce about each PR, and only after he says "ye" does
+the overseer merge it, with a merge commit. Agents never merge.
+
 Each of these needs Bryce's explicit go first:
 
-- Never merge PRs, close the original PRs, push to main, or rename the repo or app.
+- Never close the original PRs, push to main, or rename the repo or app.
 - Never run `eas build` or `eas submit`.
 - Never touch the production Supabase project or App Store Connect.
 
