@@ -55,6 +55,8 @@ export interface SavedSession {
    * uploaded copy loads, and the only copy when an upload failed.
    */
   photos?: Record<string, string>;
+  /** Health workout UUIDs this person took off in Arro, so a sync leaves them off. */
+  dismissedHealth?: string[];
 }
 
 const FAMILY_KEY = 'arro.family.v1';

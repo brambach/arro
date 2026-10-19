@@ -396,3 +396,13 @@ only, with the layout, colours, background and words unchanged:
   headings.
 
 Preview (before and after): https://claude.ai/artifact/CSW4ojyyULpoujaD7KY4RJ
+
+## Cheering finished workouts (17 Oct 2026, build 7)
+
+- A finished workout is cheered on its workout screen, with the Cheer button
+  ("Cheer Dad on"), which settles on "Cheered". A push or a tap on the feed post
+  opens that screen.
+- The feed card's line names who cheered, you first ("You and Dad cheered"),
+  with the heart count in ink beside it, not clay.
+- The workout screen lists the cheerers the same way, you first, under the button.
+- "Cheer" on a still-has-today post stays as it was: it sends a nudge.

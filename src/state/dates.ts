@@ -69,6 +69,12 @@ export function timeLabel(d: Date): string {
   return `${h % 12 === 0 ? 12 : h % 12}:${m} ${h < 12 ? 'AM' : 'PM'}`;
 }
 
+/** 07:00 to 21:00 on this phone, the same window the server keeps for pushes. */
+export function inWakingHours(d: Date = new Date()): boolean {
+  const h = d.getHours();
+  return h >= 7 && h < 21;
+}
+
 export function greetingFor(d: Date = new Date()): string {
   const h = d.getHours();
   if (h < 12) return 'Good morning';
@@ -83,3 +89,12 @@ export function weekdayIndex(key: string): number {
 
 export const WEEKDAY_SHORT = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
 export const WEEKDAY_LETTER = ['M', 'T', 'W', 'T', 'F', 'S', 'S'];
+
+/** When a break ends, from today: "today", "tomorrow", "Friday", or "Friday 31 Oct" further out. */
+export function untilLabel(endKey: string, todayKey: string = dayKey()): string {
+  const days = daysBetween(todayKey, endKey);
+  if (days <= 0) return 'today';
+  if (days === 1) return 'tomorrow';
+  const d = fromKey(endKey);
+  return d.toLocaleDateString(undefined, days < 7 ? { weekday: 'long' } : { weekday: 'long', day: 'numeric', month: 'short' });
+}

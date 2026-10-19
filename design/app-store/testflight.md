@@ -13,7 +13,7 @@ uploads by itself.
 | --- | --- | --- |
 | New accounts or tools | None. Xcode, CocoaPods and signing already work for your dev builds | Already set up by phase 4: `eas.json` in the project root, the project linked to `@brycerambach/arro`, `npx eas-cli` signed in on your Mac |
 | Signing | Xcode "Automatically manage signing" makes the distribution certificate and profile | EAS asks for your Apple ID once and makes and stores them |
-| Supabase URL and key | Read from `.env.local` at bundle time. Checked: a release bundle built here contains the hosted project's URL | `.env.local` is git-ignored, so EAS never uploads it. You'd have to add both values as EAS environment variables, or the build quietly runs on local fake data |
+| Supabase URL and key | Read from `.env.local` at bundle time. Checked: a release bundle built here contains the hosted project's URL | `.env.local` is git-ignored, so EAS never uploads it. You'd have to add both values as EAS environment variables. Without them a release build now opens on "This build can’t reach Arro" instead of quietly running on local data |
 | Speed | About 5-10 minutes on your Mac | Free plan: 15 iOS builds a month, low-priority queue (can wait a while), 45 minute timeout |
 | Build number | Bump `ios.buildNumber` in app.json yourself | Same as Xcode today (`appVersionSource: "local"`); can auto-increment if you switch it |
 | Upload | Xcode Organizer > Distribute App | `eas submit` (Apple ID or an App Store Connect API key) |
@@ -70,7 +70,7 @@ what each one is for:
       [
         "expo-image-picker",
         {
-          "photosPermission": "Arro uses a photo only when you pick one for your profile or a workout. Photos stay on your phone.",
+          "photosPermission": "Arro uses a photo only when you pick one for your profile or a workout. Your family sees it in Arro.",
           "cameraPermission": false,
           "microphonePermission": false
         }
@@ -181,6 +181,22 @@ uploads photos. Before archiving it, in this order:
 
 On the phone, people who already connected Health see Apple's Health sheet
 once more, asking for workout routes.
+
+## Account deletion function (before the build after 6)
+
+Deleting an account now goes through the `delete-account` edge function. It
+removes every photo the person uploaded, revokes their Sign in with Apple token
+and then deletes the user. Until it's deployed, the app falls back to the old way.
+
+1. **Deploy it**: `npx supabase functions deploy delete-account`.
+2. **Apple revoke settings** (optional, but App Review expects the token to be
+   revoked). In the Apple Developer site, Certificates, Identifiers & Profiles >
+   Keys, make a key with Sign in with Apple enabled for the app's App ID and
+   download the `.p8`. Then:
+   `npx supabase secrets set APPLE_TEAM_ID=PP5K3YUUX6 APPLE_CLIENT_ID=com.arrofamily.arro APPLE_KEY_ID=<key id> APPLE_PRIVATE_KEY="$(cat AuthKey_<key id>.p8)"`
+   Without them the account is still deleted; only the revoke is skipped.
+3. On the phone, Settings > Delete account now shows Apple's sheet once, to
+   confirm, before deleting.
 
 ## The EAS route, if you'd rather
 

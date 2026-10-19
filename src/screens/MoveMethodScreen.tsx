@@ -42,18 +42,18 @@ export function MoveMethodScreen({ navigation }: RootStackScreenProps<'MoveMetho
         <Text style={styles.sub}>How your days count toward the family streak.</Text>
         <View style={{ marginTop: 18 }}>
           <ChoiceRow
+            title="Apple Health"
+            body="Apple Watch, Strava, Garmin and other apps that save to Health count on their own. No tapping."
+            icon={<PulseIcon />}
+            selected={current === 'health'}
+            onPress={() => choose('health')}
+          />
+          <ChoiceRow
             title="I moved today"
             body="Tap once when you’ve moved. A walk, the gym, yoga, anything."
             icon={<TargetIcon />}
             selected={current === 'manual'}
             onPress={() => choose('manual')}
-          />
-          <ChoiceRow
-            title="Apple Health"
-            body="Counts your workouts for you, no tapping."
-            icon={<PulseIcon />}
-            selected={current === 'health'}
-            onPress={() => choose('health')}
           />
         </View>
         {busy ? (
@@ -61,7 +61,7 @@ export function MoveMethodScreen({ navigation }: RootStackScreenProps<'MoveMetho
         ) : current === 'health' ? (
           <Text style={styles.note}>
             {canUseHealth
-              ? 'Arro only reads your workouts and their routes, nothing else. Routes leave off the start and end. Workouts from today and yesterday count on their own. If none show up, allow Arro in the iPhone’s Settings under Health > Data Access & Devices.'
+              ? 'Arro only reads your workouts and their routes, nothing else. Routes leave off the start and end. Workouts from today and yesterday count on their own. Using Strava or Garmin? Turn on Apple Health in its settings. If none show up, allow Arro in the iPhone’s Settings under Health > Data Access & Devices.'
               : 'Apple Health isn’t available here. “I moved today” is always there instead.'}
           </Text>
         ) : (

@@ -112,7 +112,7 @@ export function NotificationsScreen({ navigation }: RootStackScreenProps<'Notifi
           </>
         ) : (
           <Text style={styles.note}>
-            Arro also lets you know when someone cheers you on or joins your family, and at most once an evening who
+            Arro also lets you know when someone in your family moves, cheers or comments on your workout, or joins, and at most once an evening who
             still has today. No red badges.
           </Text>
         )}

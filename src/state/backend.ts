@@ -6,6 +6,7 @@
  * mapping happens here and nowhere else.
  */
 import * as AppleAuthentication from 'expo-apple-authentication';
+import { FunctionsHttpError } from '@supabase/supabase-js';
 import { Platform } from 'react-native';
 import { ReminderSlot, WorkoutSource, WorkoutType } from '../data/types';
 import { addDays, dayKey } from './dates';
@@ -14,10 +15,27 @@ import { supabase } from './supabase';
 /** The server refused the workout's date (migration 20261005000006: today or yesterday, never before yesterday in UTC). */
 export class WorkoutDateError extends Error {}
 
-/** A join code that doesn't exist or has expired, or too many wrong codes (preview_invite's limits). */
+/** A join code that doesn't exist or has expired, too many wrong codes, or a family that's full (migration 20261017000001). */
 export class InviteError extends Error {
-  constructor(public kind: 'notFound' | 'tooMany') {
-    super(kind === 'tooMany' ? 'Too many tries. Wait a few minutes and try again.' : 'That code has expired or doesn’t exist.');
+  constructor(public kind: 'notFound' | 'tooMany' | 'full') {
+    super(
+      kind === 'tooMany'
+        ? 'Too many tries. Wait a few minutes and try again.'
+        : kind === 'full'
+          ? 'That family already has 12 people, which is as many as Arro allows.'
+          : 'That code has expired or doesn’t exist.',
+    );
+  }
+}
+
+/** pause_me refused the break (migration 20261018000001): longer than 14 days, or over 14 days in 30. */
+export class BreakError extends Error {
+  constructor(public kind: 'tooLong' | 'tooMany') {
+    super(
+      kind === 'tooLong'
+        ? 'A break can be up to two weeks long, counted from the day it started.'
+        : 'You can be on a break for up to 14 days in any 30.',
+    );
   }
 }
 
@@ -53,6 +71,28 @@ export interface RemoteWorkout {
   photoUrl?: string;
   /** Member ids of everyone who cheered it. */
   cheeredBy: string[];
+  /** Oldest first. */
+  comments: RemoteComment[];
+  /** HealthKit's UUID, for Health workouts. */
+  healthWorkoutId?: string;
+  /** The app or device that recorded a Health workout, such as "WHOOP". */
+  sourceApp?: string;
+}
+
+/** One of your Health workouts as saved, for a sync to compare with Health. */
+export interface SavedHealthWorkout {
+  id: string;
+  healthWorkoutId: string;
+  localDate: string;
+  startedAt?: string;
+  minutes?: number;
+}
+
+export interface RemoteComment {
+  id: string;
+  memberId: string;
+  body: string;
+  createdAt: string;
 }
 
 export interface FamilyStreak {
@@ -69,6 +109,13 @@ export interface MemberStreak {
   freezeBackOn: string | null;
 }
 
+/** A member's break ("Pause me"): their local dates, both inclusive. */
+export interface RemotePause {
+  memberId: string;
+  startsOn: string;
+  endsOn: string;
+}
+
 /** One family as the server sees it right now. */
 export interface RemoteFamily {
   id: string;
@@ -79,6 +126,8 @@ export interface RemoteFamily {
   workouts: RemoteWorkout[];
   streak: FamilyStreak;
   memberStreaks: Record<string, MemberStreak>;
+  /** Breaks that ended in the last two months, are on now or are coming up. Missing in a family cached by an older build. */
+  pauses?: RemotePause[];
 }
 
 export interface InvitePreview {
@@ -176,14 +225,40 @@ export async function signOut(): Promise<void> {
 }
 
 /**
- * Deletes the auth user on the server, which removes their member rows, workouts,
- * cheers and nudges, and any family they leave empty (delete_my_account).
+ * Deletes the account through the delete-account edge function: every photo, the
+ * Sign in with Apple token, then the auth user, which removes their member rows,
+ * workouts, cheers and nudges, and any family they leave empty.
+ *
+ * Apple's sheet comes up first for a fresh authorization code, which the function
+ * needs to revoke the token. 'cancelled' when the person closes it.
  */
-export async function deleteAccount(): Promise<void> {
-  const { error } = await client().rpc('delete_my_account');
-  if (error) throw error;
+export async function deleteAccount(me: { familyId: string; memberId: string }): Promise<'deleted' | 'cancelled'> {
+  const code = await appleCodeForDeletion();
+  if (code === 'cancelled') return 'cancelled';
+  const { error } = await client().functions.invoke('delete-account', { body: { appleAuthorizationCode: code } });
+  if (error) {
+    // Until the function is deployed: photos from the phone, then the delete_my_account RPC.
+    if (!(error instanceof FunctionsHttpError && error.context?.status === 404)) throw error;
+    await deleteMyPhotos(me.familyId, me.memberId).catch(() => undefined);
+    const { error: rpcError } = await client().rpc('delete_my_account');
+    if (rpcError) throw rpcError;
+  }
   // The user no longer exists, so a server-side sign-out would fail. Clear the local login only.
   await client().auth.signOut({ scope: 'local' }).catch(() => undefined);
+  return 'deleted';
+}
+
+/** A fresh Sign in with Apple authorization code; null where there's no Apple sign-in or it failed. */
+async function appleCodeForDeletion(): Promise<string | null | 'cancelled'> {
+  if (Platform.OS !== 'ios' || !(await AppleAuthentication.isAvailableAsync().catch(() => false))) return null;
+  try {
+    const credential = await AppleAuthentication.signInAsync({ requestedScopes: [] });
+    return credential.authorizationCode ?? null;
+  } catch (e) {
+    if ((e as { code?: string }).code === 'ERR_REQUEST_CANCELED') return 'cancelled';
+    // Deleting matters more than revoking: carry on without the code.
+    return null;
+  }
 }
 
 // ─── Families ────────────────────────────────────────────────────────────────
@@ -252,8 +327,8 @@ export async function previewInvite(code: string): Promise<InvitePreview> {
 }
 
 /**
- * Joins with a code. Not rate-limited yet: join_family has no throttle of its own,
- * so a signed-in person can try codes here without the limits preview_invite has.
+ * Joins with a code. Wrong codes count toward the same limit as previews. A wrong
+ * code comes back as no row rather than an error, so the server can log the attempt.
  */
 export async function joinFamily(
   code: string,
@@ -268,12 +343,31 @@ export async function joinFamily(
     p_reminder_time: SLOT_TIMES[reminder],
   });
   if (error) {
-    if (error.code === 'P0002') throw new InviteError('notFound');
     if (isTooMany(error, status)) throw new InviteError('tooMany');
+    if (error.code === 'AR409') throw new InviteError('full');
     throw error;
   }
-  const row = data as MemberRow;
+  // PostgREST sends a null row back as null or as an object of nulls.
+  const row = data as MemberRow | null;
+  if (!row?.id) throw new InviteError('notFound');
   return { memberId: row.id, familyId: row.family_id };
+}
+
+/**
+ * Removes someone from the family, with their workouts. Only the person who started
+ * the family can (remove_member). The family's codes are withdrawn, so the next
+ * refresh makes a new one.
+ */
+/**
+ * Removes someone through the remove-member edge function, which also deletes
+ * their photos. Until the function is deployed, the remove_member RPC alone.
+ */
+export async function removeMember(memberId: string): Promise<void> {
+  const { error } = await client().functions.invoke('remove-member', { body: { memberId } });
+  if (!error) return;
+  if (!(error instanceof FunctionsHttpError && error.context?.status === 404)) throw error;
+  const { error: rpcError } = await client().rpc('remove_member', { p_member_id: memberId });
+  if (rpcError) throw rpcError;
 }
 
 /** The newest unexpired code for the family, making one if there's none. Codes last 14 days. */
@@ -313,15 +407,22 @@ export async function fetchFamily(familyId: string, myMemberId: string): Promise
   const memberRows = (members.data as MemberRow[]).map(toMember);
   const memberIds = memberRows.map((m) => m.id);
 
+  const pausesQuery = db
+    .from('pauses')
+    .select('member_id, starts_on, ends_on')
+    .in('member_id', memberIds)
+    .gte('ends_on', since);
   const workouts = await db
     .from('workouts')
     .select(
-      'id, member_id, local_date, type, duration_minutes, source, note, created_at, started_at, distance_m, route, photo_path, cheers (member_id)',
+      'id, member_id, local_date, type, duration_minutes, source, note, created_at, started_at, distance_m, route, photo_path, health_workout_id, source_app, cheers (member_id), comments (id, member_id, body, created_at)',
     )
     .in('member_id', memberIds)
     .gte('local_date', since)
     .order('created_at', { ascending: false });
   if (workouts.error) throw workouts.error;
+  const pauses = await pausesQuery;
+  if (pauses.error) throw pauses.error;
 
   const workoutRows = workouts.data as {
     id: string;
@@ -336,7 +437,10 @@ export async function fetchFamily(familyId: string, myMemberId: string): Promise
     distance_m: number | null;
     route: string | null;
     photo_path: string | null;
+    health_workout_id: string | null;
+    source_app: string | null;
     cheers: { member_id: string }[];
+    comments: { id: string; member_id: string; body: string; created_at: string }[];
   }[];
   const urls = await signPhotos([
     ...memberRows.map((m) => m.photoPath),
@@ -370,7 +474,12 @@ export async function fetchFamily(familyId: string, myMemberId: string): Promise
       route: w.route ?? undefined,
       photoPath: w.photo_path ?? undefined,
       photoUrl: (w.photo_path && urls[w.photo_path]) || undefined,
+      healthWorkoutId: w.health_workout_id ?? undefined,
+      sourceApp: w.source_app ?? undefined,
       cheeredBy: w.cheers.map((c) => c.member_id),
+      comments: w.comments
+        .map((c) => ({ id: c.id, memberId: c.member_id, body: c.body, createdAt: c.created_at }))
+        .sort((a, b) => a.createdAt.localeCompare(b.createdAt)),
     })),
     streak: {
       current: s?.family_streak ?? 0,
@@ -395,7 +504,29 @@ export async function fetchFamily(familyId: string, myMemberId: string): Promise
         },
       ]),
     ),
+    pauses: (pauses.data as { member_id: string; starts_on: string; ends_on: string }[]).map((p) => ({
+      memberId: p.member_id,
+      startsOn: p.starts_on,
+      endsOn: p.ends_on,
+    })),
   };
+}
+
+// ─── Breaks ("Pause me") ─────────────────────────────────────────────────────
+
+/** Takes a break from today for `days` days counting today, or changes the current one. Returns its last day. */
+export async function pauseMe(memberId: string, days: number): Promise<string> {
+  const { data, error } = await client().rpc('pause_me', { p_member_id: memberId, p_days: days });
+  if (error?.code === 'ARB14') throw new BreakError('tooLong');
+  if (error?.code === 'ARB30') throw new BreakError('tooMany');
+  if (error) throw error;
+  return data as string;
+}
+
+/** Ends the current break; today counts as normal again. */
+export async function endMyPause(memberId: string): Promise<void> {
+  const { error } = await client().rpc('end_my_pause', { p_member_id: memberId });
+  if (error) throw error;
 }
 
 // ─── Your own row and workouts ───────────────────────────────────────────────
@@ -425,7 +556,7 @@ export async function forgetPushToken(token: string): Promise<void> {
   if (error) throw error;
 }
 
-/** Sends whatever pushes are queued (the send-push edge function). Called after a join or a nudge. */
+/** Sends whatever pushes are queued (the send-push edge function). Called after a join, a nudge, a workout, a cheer or a comment. */
 export async function sendQueuedPushes(): Promise<void> {
   const { error } = await client().functions.invoke('send-push');
   if (error) throw error;
@@ -444,6 +575,27 @@ export async function sendNudge(fromMemberId: string, toMemberId: string): Promi
     throw error;
   }
   return 'sent';
+}
+
+/**
+ * A heart on someone's finished workout, which pushes to its owner once
+ * (migration 20261017000004). Cheering twice is fine: unique (workout_id, member_id).
+ */
+export async function cheerWorkout(memberId: string, workoutId: string): Promise<void> {
+  const { error } = await client().from('cheers').insert({ workout_id: workoutId, member_id: memberId });
+  if (error && error.code !== '23505') throw error;
+}
+
+/** A short comment on a workout ("Proud of you"), which pushes to its owner. */
+export async function addComment(memberId: string, workoutId: string, body: string): Promise<void> {
+  const { error } = await client().from('comments').insert({ workout_id: workoutId, member_id: memberId, body });
+  if (error) throw error;
+}
+
+/** Deletes one of your own comments. */
+export async function deleteComment(commentId: string): Promise<void> {
+  const { error } = await client().from('comments').delete().eq('id', commentId);
+  if (error) throw error;
 }
 
 /** A manual "I moved today" check-in. A photo is uploaded separately (uploadPhoto, setWorkoutPhoto). */
@@ -472,9 +624,9 @@ export async function insertWorkout(
 }
 
 /**
- * A workout read from Apple Health, keyed by its HealthKit UUID. 'added' when it's
- * new; 'synced' when it was already saved (unique (member_id, health_workout_id)).
- * Throws WorkoutDateError for a date outside today or yesterday.
+ * A workout read from Apple Health, keyed by its HealthKit UUID. 'added' (with the
+ * new row's id) when it's new; 'synced' when it was already saved (unique
+ * (member_id, health_workout_id)). Throws WorkoutDateError for a date outside today or yesterday.
  */
 export async function insertHealthWorkout(
   memberId: string,
@@ -486,9 +638,10 @@ export async function insertHealthWorkout(
     startedAt?: string;
     distanceMeters?: number;
     route?: string;
+    sourceApp?: string;
   },
-): Promise<'added' | 'synced'> {
-  const { error } = await client()
+): Promise<{ outcome: 'added'; id: string } | { outcome: 'synced' }> {
+  const { data, error } = await client()
     .from('workouts')
     .insert({
       member_id: memberId,
@@ -500,14 +653,17 @@ export async function insertHealthWorkout(
       started_at: input.startedAt ?? null,
       distance_m: input.distanceMeters ?? null,
       route: input.route ?? null,
-    });
+      source_app: input.sourceApp ?? null,
+    })
+    .select('id')
+    .single();
   if (error) {
     // 23505: unique violation, so this Health workout is already on the server.
-    if (error.code === '23505') return 'synced';
+    if (error.code === '23505') return { outcome: 'synced' };
     if (error.code === '22023') throw new WorkoutDateError(error.message);
     throw error;
   }
-  return 'added';
+  return { outcome: 'added', id: data.id };
 }
 
 /**
@@ -533,6 +689,78 @@ export async function fillHealthWorkoutDetails(
     .select('id');
   if (error) throw error;
   return data.length > 0;
+}
+
+/** Your Health workouts from a day on, for a sync to compare with what Health has now. */
+export async function fetchMyHealthWorkouts(memberId: string, since: string): Promise<SavedHealthWorkout[]> {
+  const { data, error } = await client()
+    .from('workouts')
+    .select('id, health_workout_id, local_date, started_at, duration_minutes')
+    .eq('member_id', memberId)
+    .eq('source', 'health')
+    .gte('local_date', since);
+  if (error) throw error;
+  return (
+    data as {
+      id: string;
+      health_workout_id: string;
+      local_date: string;
+      started_at: string | null;
+      duration_minutes: number | null;
+    }[]
+  ).map((r) => ({
+    id: r.id,
+    healthWorkoutId: r.health_workout_id,
+    localDate: r.local_date,
+    startedAt: r.started_at ?? undefined,
+    minutes: r.duration_minutes ?? undefined,
+  }));
+}
+
+/**
+ * Points a saved Health workout at a better copy of the same workout (another app
+ * recorded it too), keeping its cheers, comments and photo.
+ */
+export async function replaceHealthWorkout(
+  rowId: string,
+  input: {
+    healthWorkoutId: string;
+    type: WorkoutType;
+    minutes?: number;
+    startedAt?: string;
+    distanceMeters?: number;
+    route?: string;
+    sourceApp?: string;
+  },
+): Promise<void> {
+  const { error } = await client()
+    .from('workouts')
+    .update({
+      health_workout_id: input.healthWorkoutId,
+      type: input.type,
+      duration_minutes: input.minutes ?? null,
+      started_at: input.startedAt ?? null,
+      distance_m: input.distanceMeters ?? null,
+      route: input.route ?? null,
+      source_app: input.sourceApp ?? null,
+    })
+    .eq('id', rowId);
+  if (error) {
+    if (error.code === '22023') throw new WorkoutDateError(error.message);
+    throw error;
+  }
+}
+
+/** Deletes one of your workouts, with its cheers and comments. */
+export async function deleteWorkout(workoutId: string): Promise<void> {
+  const { error } = await client().from('workouts').delete().eq('id', workoutId);
+  if (error) throw error;
+}
+
+/** Corrects the kind of one of your workouts ("it was a ride, not a run"). */
+export async function setWorkoutType(workoutId: string, type: WorkoutType): Promise<void> {
+  const { error } = await client().from('workouts').update({ type }).eq('id', workoutId);
+  if (error) throw error;
 }
 
 /** One member's routes since a day, newest first, for their map. */
@@ -610,13 +838,14 @@ export async function setWorkoutPhoto(workoutId: string, path: string | null): P
 }
 
 /**
- * Removes every photo this member uploaded. Called before deleting the account,
- * because Storage files aren't deleted with the database rows.
+ * Removes every photo this member uploaded in one family. Only the fallback in
+ * deleteAccount uses it now; the delete-account function does this on the server.
  */
-export async function deleteMyPhotos(familyId: string, memberId: string): Promise<void> {
+async function deleteMyPhotos(familyId: string, memberId: string): Promise<void> {
   const bucket = client().storage.from(PHOTO_BUCKET);
   const folder = `${familyId}/${memberId}`;
-  for (;;) {
+  // Capped, in case Storage keeps listing files it won't remove.
+  for (let round = 0; round < 50; round++) {
     const { data, error } = await bucket.list(folder, { limit: 100 });
     if (error || !data?.length) return;
     const { error: removeError } = await bucket.remove(data.map((f) => `${folder}/${f.name}`));

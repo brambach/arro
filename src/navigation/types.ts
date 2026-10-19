@@ -25,6 +25,8 @@ export type RootStackParamList = {
   Settings: undefined;
   StreakRules: undefined;
   MoveMethod: undefined;
+  /** Settings > Take a break ("Pause me"). */
+  TakeBreak: undefined;
   Notifications: undefined;
   WorkoutDetail: { workoutId: string };
   /** Every route one member has recorded, on one map. */
