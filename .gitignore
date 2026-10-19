@@ -30,8 +30,16 @@ yarn-error.*
 .DS_Store
 *.pem
 
-# local env files
-.env*.local
+# local env files (.env.example is the only one that belongs in git)
+.env
+.env*
+!.env.example
+
+# keys and credentials (App Store Connect, Sign in with Apple, EAS)
+*.cer
+AuthKey_*
+credentials.json
+credentials/
 
 # typescript
 *.tsbuildinfo
