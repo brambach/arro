@@ -61,7 +61,7 @@ pull request.
 - **expo-linear-gradient**: photo overlays
 - **expo-haptics**: cheer feedback
 - **Supabase**: Postgres with row-level security, Storage for photos, and edge
-  functions in `supabase/functions` (`send-push`, `delete-account`)
+  functions in `supabase/functions` (`send-push`, `delete-account`, `remove-member`)
 - **@appeeky/expo-healthkit**: reads workouts and routes from Apple Health
 - Instrument Serif for headings, the system font for everything else.
   Animations use React Native's built-in `Animated` API.
