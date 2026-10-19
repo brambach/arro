@@ -9,18 +9,18 @@ little, everyone sees it, and the family keeps one streak together. Any workout
 counts: a walk, the gym, yoga, a swim. A walk counts the same as a marathon.
 
 It's meant to be one moment of contact a day, not a feed to scroll. So there
-are no rankings, a missed day is never public ("Darcey still has today", never
-"Darcey broke the streak"), and nudges are capped. Workouts come from Apple
+are no rankings, a missed day is never public ("Maya still has today", never
+"Maya broke the streak"), and nudges are capped. Workouts come from Apple
 Health or a manual "I moved today" check-in. It's iPhone only.
 
 <p>
-  <img src="design/visual-direction/today-a.jpg" alt="Today: the family streak and who has moved" width="240">
-  <img src="design/visual-direction/feed-a.jpg" alt="Feed: family workouts and cheers" width="240">
+  <img src="design/screenshots/today.jpg" alt="Today: the family streak and who has moved" width="240">
+  <img src="design/screenshots/feed.jpg" alt="Feed: family workouts and cheers" width="240">
 </p>
 
-These two are design sketches from the web preview in October 2026 (direction A
-in `design/visual-direction.md`), not phone screenshots. The shipped app is
-close to them but not identical. The names are the built-in preview family.
+These two come from the web build's demo family, not from a phone. On iPhone
+the run shows on a real map instead of a sketch. The names are the built-in
+sample family.
 
 ## Stack
 

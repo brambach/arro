@@ -61,7 +61,7 @@ They don't relieve stress the app created.
    the strongest single reason to pay, and it gets more valuable the longer a
    family uses Arro.
 3. **Family goals.** Shared goals with their own milestone card: "100 days
-   together", "walk the distance between us" (Brisbane to home), a charity walk.
+   together", "walk the distance between us" (your city to home), a charity walk.
    Every new family gets one starter goal free, "Your first 30 days together",
    because shared goals fade without a finish line (see the market scan).
 4. **More than one circle.** A second family (in-laws, a sibling group) under the

@@ -26,7 +26,7 @@ Milestone.
    on everything, nothing is quiet, and that hue is the house colour of
    delivery and fitness apps.
 2. **The founder's avatar is the same orange.** `memberPalette[0]` is
-   `#EF6C1A`, almost the brand orange, so Bryce's face reads as a button.
+   `#EF6C1A`, almost the brand orange, so the founder's face reads as a button.
 3. **A glowing button.** `shadows.button` is an orange shadow at 32% opacity,
    10 px blur. It's the one "app template" detail that stands out most on
    Welcome and Log today.
@@ -106,11 +106,9 @@ app has.
 | shadow card / button | faint / orange glow | none / none |
 | spacing gutter / section | 22 / 18 | 20 / 28 |
 
-Today and Feed, before and A:
-
-![Today before](visual-direction/today-before.jpg) ![Today A](visual-direction/today-a.jpg)
-
-![Feed before](visual-direction/feed-before.jpg) ![Feed A](visual-direction/feed-a.jpg)
+The comparison screenshots showed the old sample family's real names, so
+they were taken out of the tree before the repo went public. They're still in
+git history under `design/visual-direction/`.
 
 ## Direction B - Pine and linen
 
@@ -147,11 +145,9 @@ linen background, deep pine green for action, all system sans.
 | shadow card / button | faint / orange glow | `0 1 3 / 0 4 14` at 4-6% black / none |
 | spacing gutter / section | 22 / 18 | 20 / 28 |
 
-Today and Feed, before and B:
-
-![Today before](visual-direction/today-before.jpg) ![Today B](visual-direction/today-b.jpg)
-
-![Feed before](visual-direction/feed-before.jpg) ![Feed B](visual-direction/feed-b.jpg)
+The comparison screenshots showed the old sample family's real names, so
+they were taken out of the tree before the repo went public. They're still in
+git history under `design/visual-direction/`.
 
 ## Recommendation
 

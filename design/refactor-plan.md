@@ -139,7 +139,7 @@ Founder path:
 7. Today in its waiting state.
 
 Invitee path:
-1. Link or code -> "Bryce invited you to join <family>" with member faces and
+1. Link or code -> "Sam invited you to join <family>" with member faces and
    the current family streak. Before sign-in the server only returns the family
    name and member count; names, faces and the streak come after sign-in
    (`preview_invite`).
