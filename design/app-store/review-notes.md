@@ -74,7 +74,13 @@ it behind, so the demo family stays tidy for the next version.
 > Apple Health is optional. Arro only reads workouts (read-only, never writes), and only today's and yesterday's, to count them toward the family streak. If the review device has no workouts in Health, "I moved today" covers everything. Health data is never used for advertising or marketing and isn't stored in iCloud. Privacy policy: https://arrofamily.com/privacy
 >
 > PHOTOS
-> Photos you add stay on the device. They are not uploaded.
+> Photos are optional. A photo you add to your profile or a workout is resized and uploaded to private storage that only signed-in members of your family can open. Deleting your account deletes your photos.
+>
+> COMMENTS
+> Members can leave short comments (up to 200 characters) on workouts in their own family, which is private and joined only by invite code. The person who wrote a comment can delete it, and the owner of a workout can delete any comment on it (touch and hold the comment). The person who started a family can remove a member (Settings > Family members, touch and hold a name), which deletes that member's workouts, comments and photos. Comment notifications are not sent between 9 p.m. and 7 a.m. in the recipient's time zone.
+>
+> ROUTES
+> If a Health workout has a route, Arro shares it with the family after cutting off the first and last 200 metres, so where you start and finish isn't shown. Arro never asks for or reads your current location.
 >
 > No in-app purchases. iPhone only.
 >

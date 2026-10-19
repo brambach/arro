@@ -30,7 +30,7 @@ export function NotificationsPromptScreen({ navigation, route }: RootStackScreen
   const [reminder, setReminder] = useState(true);
   const [busy, setBusy] = useState(false);
 
-  // Joining happens here for an invitee, so a code can expire on the way.
+  // An invitee has joined by now (Meet the family); this saves the reminder and opens the family.
   const finish = async (allow: boolean) => {
     if (busy) return;
     setBusy(true);
@@ -44,7 +44,11 @@ export function NotificationsPromptScreen({ navigation, route }: RootStackScreen
       setBusy(false);
       showError(
         'Couldn’t join yet',
-        e instanceof InviteError ? `${e.message} Ask your family for a new code.` : 'Check your connection and try again.',
+        e instanceof InviteError
+          ? e.kind === 'notFound'
+            ? `${e.message} Ask your family for a new code.`
+            : e.message
+          : 'Check your connection and try again.',
       );
     }
   };
@@ -52,7 +56,7 @@ export function NotificationsPromptScreen({ navigation, route }: RootStackScreen
   return (
     <OnboardingFrame
       title="Hear from your family?"
-      subtitle="Arro lets you know when someone cheers you on or joins, and at most once an evening who still has today."
+      subtitle="Arro lets you know when someone in your family moves, cheers you on or joins, and at most once an evening who still has today."
       step={returning ? undefined : stepOf(draft.role, 'NotificationsPrompt')}
       onBack={returning ? undefined : () => navigation.goBack()}
       primaryLabel="Turn on notifications"

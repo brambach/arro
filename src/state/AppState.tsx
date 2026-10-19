@@ -3,17 +3,20 @@ import { AppState as RNAppState } from 'react-native';
 import { MoveMethod, ReminderSlot, WorkoutType } from '../data/types';
 import { memberColor } from '../theme/tokens';
 import * as backend from './backend';
+import { showError } from './confirm';
 import { InvitePreview, RemoteFamily } from './backend';
 import { AppView, Preview, buildView } from './buildView';
-import { dayKey, addDays, deviceTimezone } from './dates';
+import { dayKey, addDays, deviceTimezone, inWakingHours, yesterdayOpen } from './dates';
 import { connectHealth, onHealthWorkoutsChanged, readRecentHealthWorkouts } from './health';
 import { syncHealthWorkouts } from './healthSync';
+import { makeJoinCode } from './joinCode';
 import { PhotoShape, photoForUpload } from './photos';
 import { LatLng, decodePolyline, routeLength } from './routes';
 import {
   NotificationPermission,
   expoPushToken,
   notificationPermission,
+  notifyWorkoutSaved,
   requestNotificationPermission,
   scheduleReminders,
   showNotificationsInForeground,
@@ -49,7 +52,10 @@ export interface Draft {
   invited: { id: string; name: string }[];
   /** Signed in with Apple (server mode only). */
   userId: string | null;
-  /** The founder's family, made on the server once it's named, so the invite has a real code. */
+  /**
+   * The family on the server: the founder's, made once it's named so the invite has
+   * a real code; the invitee's, joined when they tap "Join the family".
+   */
   remote: { memberId: string; familyId: string } | null;
   /** What the invitee's code opened (server mode only). */
   invite: InvitePreview | null;
@@ -83,14 +89,6 @@ function rangeStart(range: MapRange): string | null {
 /** The family people join with any code in the local preview. */
 export const DEMO_FAMILY_NAME = 'Home crew';
 const DEMO_MEMBER_COUNT = 3;
-
-const CODE_ALPHABET = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789'; // no 0/O/1/I
-
-export function makeJoinCode(): string {
-  let code = '';
-  for (let i = 0; i < 6; i++) code += CODE_ALPHABET[Math.floor(Math.random() * CODE_ALPHABET.length)];
-  return code;
-}
 
 const emptyDraft = (role: Draft['role']): Draft => ({
   role,
@@ -129,11 +127,24 @@ interface AppContextValue {
   saveFamilyName: () => Promise<void>;
   /** Invitee: look up the code on the server. Throws backend.InviteError. */
   lookUpInvite: () => Promise<void>;
+  /** Invitee, server mode: join the family now, at "Join the family". Throws backend.InviteError. */
+  joinInvitedFamily: () => Promise<void>;
   completeOnboarding: (remindersWanted: boolean) => Promise<void>;
   /** Throws backend.WorkoutDateError when the server refuses the date. */
   logWorkout: (input: LogInput) => Promise<void>;
   /** "Send a cheer" for someone who hasn't moved yet. 'already' if they've been nudged today. */
   nudge: (memberId: string) => Promise<'sent' | 'already'>;
+  /** A heart on someone's finished workout. */
+  cheer: (workoutId: string) => Promise<void>;
+  /** A short comment on a workout. Throws when it couldn't be saved. */
+  comment: (workoutId: string, body: string) => Promise<void>;
+  deleteComment: (commentId: string) => Promise<void>;
+  /** Takes one of your workouts off. A Health workout stays off, even though Health still has it. */
+  removeWorkout: (workoutId: string) => Promise<void>;
+  /** Corrects the kind of one of your workouts. */
+  changeWorkoutType: (workoutId: string, type: WorkoutType) => Promise<void>;
+  /** Pull to refresh: Apple Health first, then the family. */
+  syncNow: () => Promise<void>;
   updateProfile: (patch: { name?: string; photoUri?: string | null }) => Promise<void>;
   /** Adds, replaces (a local uri) or removes (null) the photo on one of your workouts. */
   setWorkoutPhoto: (workoutId: string, photoUri: string | null) => Promise<void>;
@@ -149,11 +160,29 @@ interface AppContextValue {
   addInvite: (name: string) => Promise<void>;
   refresh: () => Promise<void>;
   signOut: () => Promise<void>;
-  /** Deletes the account on the server (or the local family) and signs out. */
-  deleteAccount: () => Promise<void>;
+  /** "Pause me": a break of `days` days from today (or a new length for the current one). */
+  takeBreak: (days: number) => Promise<void>;
+  /** Ends the current break; today counts as normal again. */
+  endBreak: () => Promise<void>;
+  /** Deletes the account on the server (or the local family) and signs out. 'cancelled' if Apple's sheet was closed. */
+  deleteAccount: () => Promise<'deleted' | 'cancelled'>;
+  /** For the person who started the family: removes someone, with their workouts. */
+  removeMember: (memberId: string) => Promise<void>;
   preview: Preview | null;
   setPreview: (preview: Preview | null) => void;
 }
+
+/** "Your run is in Arro", "Your gym session is in Arro". */
+const SAVED_NOUN: Record<WorkoutType, string> = {
+  walk: 'walk',
+  run: 'run',
+  gym: 'gym session',
+  yoga: 'yoga',
+  swim: 'swim',
+  ride: 'ride',
+  other: 'workout',
+};
+const SAVED_BODY = 'Your family can see it now. Tap to add a photo.';
 
 const AppContext = createContext<AppContextValue | null>(null);
 
@@ -163,6 +192,8 @@ export function AppStateProvider({ children }: { children: React.ReactNode }) {
   const [family, setFamily] = useState<RemoteFamily | null>(null);
   const [draft, setDraft] = useState<Draft>(emptyDraft('founder'));
   const [preview, setPreview] = useState<Preview | null>(null);
+  /** The family's name, once the server says this person has been removed from it. */
+  const [removedFrom, setRemovedFrom] = useState<string | null>(null);
   const draftRef = useRef(draft);
   draftRef.current = draft;
   const sessionRef = useRef(session);
@@ -171,6 +202,7 @@ export function AppStateProvider({ children }: { children: React.ReactNode }) {
   familyRef.current = family;
   /** The push token registered for whoever is signed in, so signing out can remove it. */
   const pushTokenRef = useRef<string | null>(null);
+  const healthSyncQueue = useRef<Promise<void>>(Promise.resolve());
 
   const persist = useCallback(async (next: SavedSession) => {
     setSession(next);
@@ -209,7 +241,10 @@ export function AppStateProvider({ children }: { children: React.ReactNode }) {
         await backend.updateMember(remote.memberId, { timezone: tz });
       }
     } catch {
-      // Offline or the server is down: the cached family stays on screen.
+      // Offline or the server is down: the cached family stays on screen. If the
+      // server answers but has no membership for this person, they were removed.
+      const membership = await backend.myMembership(remote.userId).catch(() => undefined);
+      if (membership === null) setRemovedFrom(familyRef.current?.name ?? 'your family');
     }
   }, []);
 
@@ -218,16 +253,50 @@ export function AppStateProvider({ children }: { children: React.ReactNode }) {
    * who chose Apple Health. Reads the session from storage when it hasn't loaded
    * yet, because iOS can wake Arro in the background for a new workout.
    */
-  const syncHealth = useCallback(async () => {
-    const current = sessionRef.current ?? (await loadSession());
-    if (!current?.remote || current.me.moveMethod !== 'health') return;
-    try {
-      const workouts = await readRecentHealthWorkouts();
-      const result = await syncHealthWorkouts(current.remote.memberId, workouts);
-      if (result.added > 0 || result.updated > 0) await refresh();
-    } catch {
-      // Offline or Health unavailable: the next launch or Health update tries again.
-    }
+  const syncHealth = useCallback(() => {
+    // One at a time: launch, coming back, pull to refresh and Health's own wake-ups
+    // can all ask at once, and two syncs could both swap or remove the same row.
+    const run = healthSyncQueue.current.then(async () => {
+      const current = sessionRef.current ?? (await loadSession());
+      if (!current?.remote || current.me.moveMethod !== 'health') return;
+      try {
+        const now = new Date();
+        const today = dayKey(now);
+        const since = yesterdayOpen(now) ? addDays(today, -1) : today;
+        const [workouts, saved] = await Promise.all([
+          readRecentHealthWorkouts(now),
+          backend.fetchMyHealthWorkouts(current.remote.memberId, since),
+        ]);
+        const active = RNAppState.currentState === 'active';
+        const result = await syncHealthWorkouts(current.remote.memberId, workouts, saved, now, {
+          dismissed: new Set(current.dismissedHealth ?? []),
+          // Open on screen means unlocked, so Health read in full: a workout missing
+          // from it was deleted (or fixed) in the app that recorded it.
+          canRemove: active,
+        });
+        if (result.added > 0) {
+          // The family hears "Dad went for a run" (migration 20261017000004).
+          await backend.sendQueuedPushes().catch(() => undefined);
+        }
+        if (result.added > 0 && inWakingHours(now)) {
+          // Say it's in, so it never feels like a workout went missing: from the
+          // background it brings them into Arro, in the foreground it's the moment it arrives.
+          // Not overnight: a strap can save a workout at any hour.
+          const newest = result.addedWorkouts[result.addedWorkouts.length - 1];
+          await notifyWorkoutSaved(
+            newest.id,
+            `Your ${SAVED_NOUN[newest.type]} is in Arro`,
+            newest.sourceName ? `From ${newest.sourceName}. ${SAVED_BODY}` : SAVED_BODY,
+          );
+        }
+        if (result.added + result.updated + result.replaced + result.removed > 0) await refresh();
+      } catch {
+        // Offline, or the phone is locked so Health can't be read: the next launch,
+        // Health update or pull to refresh tries again.
+      }
+    });
+    healthSyncQueue.current = run;
+    return run;
   }, [refresh]);
 
   // Register early: on a background relaunch, iOS's queued Health update waits for this listener.
@@ -431,6 +500,18 @@ export function AppStateProvider({ children }: { children: React.ReactNode }) {
     setDraft((cur) => ({ ...cur, invite, familyName: invite.familyName }));
   }, []);
 
+  // Joining at "Join the family" rather than on the last step means someone who
+  // stops partway is still in the family; signing in again takes them to it.
+  const joinInvitedFamily = useCallback(async () => {
+    const d = draftRef.current;
+    if (!backend.backendEnabled || !d.userId || d.remote) return;
+    const remote = await backend.joinFamily(d.joinCode, d.name.trim() || 'Me', deviceTimezone(), d.reminder);
+    draftRef.current = { ...draftRef.current, remote };
+    setDraft((cur) => ({ ...cur, remote }));
+    // Joining queued "<name> joined" for everyone already in the family.
+    backend.sendQueuedPushes().catch(() => undefined);
+  }, []);
+
   const completeOnboarding = useCallback(
     async (remindersWanted: boolean) => {
       const d = draftRef.current;
@@ -438,11 +519,12 @@ export function AppStateProvider({ children }: { children: React.ReactNode }) {
 
       if (backend.backendEnabled && d.userId) {
         let remote = d.remote;
-        if (founder && remote) {
+        if (remote) {
+          // Made or joined earlier in onboarding, before the reminder time was picked.
           await backend.updateMember(remote.memberId, { reminder: d.reminder });
         } else if (!founder) {
+          // Not joined yet (an older path into this screen): join now.
           remote = await backend.joinFamily(d.joinCode, d.name.trim() || 'Me', deviceTimezone(), d.reminder);
-          // Joining queued "<name> joined" for everyone already in the family.
           backend.sendQueuedPushes().catch(() => undefined);
         }
         if (!remote) throw new Error('No family yet');
@@ -503,6 +585,7 @@ export function AppStateProvider({ children }: { children: React.ReactNode }) {
           minutes: input.minutes,
           note: input.note?.trim() || undefined,
         });
+        backend.sendQueuedPushes().catch(() => undefined);
         if (input.photoUri) {
           try {
             const path = await uploadMine(current.remote, input.photoUri, 'landscape', `workout-${id}`);
@@ -538,6 +621,96 @@ export function AppStateProvider({ children }: { children: React.ReactNode }) {
     if (result === 'sent') backend.sendQueuedPushes().catch(() => undefined);
     return result;
   }, []);
+
+  const takeBreak = useCallback(
+    async (days: number) => {
+      const remote = sessionRef.current?.remote;
+      if (!remote) return;
+      await backend.pauseMe(remote.memberId, days);
+      await refresh();
+    },
+    [refresh],
+  );
+
+  const endBreak = useCallback(async () => {
+    const remote = sessionRef.current?.remote;
+    if (!remote) return;
+    await backend.endMyPause(remote.memberId);
+    await refresh();
+  }, [refresh]);
+
+  const cheer = useCallback(
+    async (workoutId: string) => {
+      const current = sessionRef.current;
+      if (!current?.remote) return;
+      await backend.cheerWorkout(current.remote.memberId, workoutId);
+      backend.sendQueuedPushes().catch(() => undefined);
+      await refresh();
+    },
+    [refresh],
+  );
+
+  const comment = useCallback(
+    async (workoutId: string, body: string) => {
+      const current = sessionRef.current;
+      const text = body.trim();
+      if (!current?.remote || !text) return;
+      await backend.addComment(current.remote.memberId, workoutId, text);
+      backend.sendQueuedPushes().catch(() => undefined);
+      await refresh();
+    },
+    [refresh],
+  );
+
+  const deleteComment = useCallback(
+    async (commentId: string) => {
+      if (!sessionRef.current?.remote) return;
+      await backend.deleteComment(commentId);
+      await refresh();
+    },
+    [refresh],
+  );
+
+  const removeWorkout = useCallback(
+    async (workoutId: string) => {
+      const current = sessionRef.current;
+      if (!current) return;
+      if (!current.remote) {
+        await persist({ ...current, workouts: current.workouts.filter((w) => w.id !== workoutId) });
+        return;
+      }
+      const healthId = familyRef.current?.workouts.find((w) => w.id === workoutId)?.healthWorkoutId;
+      if (healthId) {
+        // Remembered on this phone so the next sync doesn't bring it straight back.
+        const dismissed = [...(current.dismissedHealth ?? []), healthId].slice(-200);
+        const next = { ...current, dismissedHealth: dismissed };
+        sessionRef.current = next;
+        await persist(next);
+      }
+      await backend.deleteWorkout(workoutId);
+      await refresh();
+    },
+    [persist, refresh],
+  );
+
+  const changeWorkoutType = useCallback(
+    async (workoutId: string, type: WorkoutType) => {
+      const current = sessionRef.current;
+      if (!current) return;
+      if (!current.remote) {
+        await persist({ ...current, workouts: current.workouts.map((w) => (w.id === workoutId ? { ...w, type } : w)) });
+        return;
+      }
+      await backend.setWorkoutType(workoutId, type);
+      await refresh();
+    },
+    [persist, refresh],
+  );
+
+  const syncNow = useCallback(async () => {
+    await syncHealth();
+    await refresh();
+  }, [refresh, syncHealth]);
 
   const updateProfile = useCallback(
     async (patch: { name?: string; photoUri?: string | null }) => {
@@ -666,16 +839,31 @@ export function AppStateProvider({ children }: { children: React.ReactNode }) {
     await clearAll();
   }, [clearAll]);
 
+  useEffect(() => {
+    if (!removedFrom) return;
+    setRemovedFrom(null);
+    showError(`You’re no longer in ${removedFrom}`, 'To join again, ask someone in the family for a new code.');
+    signOut();
+  }, [removedFrom, signOut]);
+
+  const removeMember = useCallback(
+    async (memberId: string) => {
+      if (!sessionRef.current?.remote) return;
+      await backend.removeMember(memberId);
+      await refresh();
+    },
+    [refresh],
+  );
+
   const deleteAccount = useCallback(async () => {
     const remote = sessionRef.current?.remote;
-    // Storage files aren't deleted with the account's rows, so remove the photos first.
-    if (remote) await backend.deleteMyPhotos(remote.familyId, remote.memberId).catch(() => undefined);
-    // Deleting the account removes its push tokens on the server too.
-    if (remote) await backend.deleteAccount();
+    // Deleting the account removes its photos and push tokens on the server too.
+    if (remote && (await backend.deleteAccount(remote)) === 'cancelled') return 'cancelled';
     pushTokenRef.current = null;
     await scheduleReminders(null, false);
     await clearMoveMethod().catch(() => undefined);
     await clearAll();
+    return 'deleted';
   }, [clearAll]);
 
   const builtView = useMemo(() => (session ? buildView(session, preview, family) : null), [session, preview, family]);
@@ -722,9 +910,16 @@ export function AppStateProvider({ children }: { children: React.ReactNode }) {
       finishSignIn,
       saveFamilyName,
       lookUpInvite,
+      joinInvitedFamily,
       completeOnboarding,
       logWorkout,
       nudge,
+      cheer,
+      comment,
+      deleteComment,
+      removeWorkout,
+      changeWorkoutType,
+      syncNow,
       updateProfile,
       setWorkoutPhoto,
       loadRoutes,
@@ -734,7 +929,10 @@ export function AppStateProvider({ children }: { children: React.ReactNode }) {
       addInvite,
       refresh,
       signOut,
+      takeBreak,
+      endBreak,
       deleteAccount,
+      removeMember,
       preview,
       setPreview,
     }),
@@ -749,9 +947,16 @@ export function AppStateProvider({ children }: { children: React.ReactNode }) {
       finishSignIn,
       saveFamilyName,
       lookUpInvite,
+      joinInvitedFamily,
       completeOnboarding,
       logWorkout,
       nudge,
+      cheer,
+      comment,
+      deleteComment,
+      removeWorkout,
+      changeWorkoutType,
+      syncNow,
       updateProfile,
       setWorkoutPhoto,
       loadRoutes,
@@ -761,7 +966,10 @@ export function AppStateProvider({ children }: { children: React.ReactNode }) {
       addInvite,
       refresh,
       signOut,
+      takeBreak,
+      endBreak,
       deleteAccount,
+      removeMember,
       preview,
     ],
   );

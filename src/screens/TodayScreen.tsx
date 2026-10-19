@@ -17,14 +17,14 @@ import { StreakRing } from '../components/StreakRing';
 import { TextButton } from '../components/TextButton';
 import { joinNames } from '../data/workouts';
 import { Member } from '../data/types';
-import { AppView, GoalView, StreakView } from '../state/buildView';
+import { AppView, GoalView, StreakView, keptSummary } from '../state/buildView';
 import { useApp, useView } from '../state/AppState';
 import { useYesterdayOpen } from '../state/useYesterdayOpen';
 import { MainTabScreenProps } from '../navigation/types';
 
 export function TodayScreen({ navigation }: MainTabScreenProps<'Today'>) {
   const view = useView();
-  const { nudge } = useApp();
+  const { nudge, syncNow } = useApp();
   const { streak, goal } = view;
   const afterBreak = streak.restartDay;
   let delay = 0;
@@ -42,7 +42,7 @@ export function TodayScreen({ navigation }: MainTabScreenProps<'Today'>) {
   const streakCard = <StreakCard streak={streak} />;
 
   return (
-    <Screen>
+    <Screen onRefresh={syncNow}>
       <FadeInView delay={0} style={styles.header}>
         <View style={{ flex: 1 }}>
           <Text style={styles.date}>{view.today.dateLabel}</Text>
@@ -175,20 +175,21 @@ function SummaryCard({
   onInvite: () => void;
   onCheer: (memberId: string) => Promise<unknown>;
 }) {
-  const { joinedCount, keptCount, invitedList, today } = view;
+  const { joinedCount, keptCount, awayCount, invitedList, today } = view;
   const solo = joinedCount === 1;
-  const everyone = joinedCount > 1 && keptCount === joinedCount;
+  const summary = keptSummary(keptCount, joinedCount, awayCount);
+  const everyone = joinedCount > 1 && summary.expected > 0 && keptCount === summary.expected;
   const pendingId = today.pending?.id;
 
   return (
     <Card radius={radii.cardLg} padding={18} glass>
       <View style={styles.summaryRow}>
         <View>
-          <RollingText value={`${keptCount} of ${joinedCount}`} style={type.bigNumber} />
-          <Text style={styles.keptLabel}>kept it today</Text>
-          <AvatarStack members={view.familyList} size={28} overlap={8} style={{ marginTop: 14 }} />
+          <RollingText value={summary.value} style={type.bigNumber} />
+          <Text style={styles.keptLabel}>{summary.label}</Text>
+          <AvatarStack members={view.familyList.filter((m) => m.today !== 'away')} size={28} overlap={8} style={{ marginTop: 14 }} />
         </View>
-        <StreakRing value={keptCount} goal={joinedCount} size={84} strokeWidth={9} />
+        <StreakRing value={keptCount} goal={Math.max(1, summary.expected)} size={84} strokeWidth={9} />
       </View>
 
       {solo ? (
@@ -324,6 +325,8 @@ function MemberRow({
   onPress?: () => void;
 }) {
   const kept = member.today === 'kept';
+  // Invited and on a break share the quiet grey pill.
+  const quiet = member.invited || member.today === 'away';
   const Wrapper: any = onPress ? Pressable : View;
   return (
     <Wrapper
@@ -353,16 +356,16 @@ function MemberRow({
           delay={260}
           style={[
             styles.pill,
-            { backgroundColor: member.invited ? colors.divider : kept ? colors.keptBg : colors.todayPillBg },
+            { backgroundColor: quiet ? colors.divider : kept ? colors.keptBg : colors.todayPillBg },
           ]}
         >
           <Text
             style={[
               styles.pillText,
-              { color: member.invited ? colors.muted : kept ? colors.kept : colors.todayPillText },
+              { color: quiet ? colors.muted : kept ? colors.kept : colors.todayPillText },
             ]}
           >
-            {member.invited ? 'Invited' : kept ? 'Kept' : 'Today'}
+            {member.invited ? 'Invited' : kept ? 'Kept' : member.today === 'away' ? 'Away' : 'Today'}
           </Text>
         </CheckInPop>
         <Text style={styles.streak}>{member.streak > 0 ? member.streak : ''}</Text>

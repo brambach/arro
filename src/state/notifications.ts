@@ -1,7 +1,8 @@
 /**
  * Notifications through expo-notifications: the permission, the daily reminder
  * (local, scheduled from reminders.ts) and this phone's Expo push token, which
- * the server uses for cheers, joins and the evening nudge (send-push).
+ * the server uses for cheers, comments, family workouts, joins and the evening
+ * nudge (send-push), plus the "your run is in Arro" note after a Health sync.
  *
  * Like health.ts, the module is loaded only when its native side is present: a
  * dev build made before expo-notifications was added, and the web preview, don't
@@ -110,6 +111,26 @@ export function scheduleReminders(slot: ReminderSlot | null, movedToday: boolean
 }
 
 /**
+ * "Your run is in Arro": shown straight away when a Health sync in the background
+ * saved a workout, so the person knows their family can see it and can add a
+ * photo or open their map. Tapping it opens the workout.
+ */
+export async function notifyWorkoutSaved(workoutId: string, title: string, body: string): Promise<void> {
+  const n = notifications();
+  if (!n) return;
+  try {
+    if ((await n.getPermissionsAsync()).status !== 'granted') return;
+    await n.scheduleNotificationAsync({
+      identifier: `arro-saved-${workoutId}`,
+      content: { title, body, data: { kind: 'saved', workoutId } },
+      trigger: null,
+    });
+  } catch {
+    // Not shown this time; the workout is saved either way.
+  }
+}
+
+/**
  * This phone's Expo push token, or null without permission, without an EAS
  * project id in app.json (extra.eas.projectId), or offline.
  */
@@ -128,7 +149,7 @@ export async function expoPushToken(): Promise<string | null> {
 
 /** What a tapped notification carries in `data` (push_outbox.data on the server, or the reminder's). */
 export type NotificationTap =
-  | { kind: 'cheer'; workoutId: string }
+  | { kind: 'cheer' | 'comment' | 'moved' | 'saved'; workoutId: string }
   | { kind: 'joined'; memberId: string }
   | { kind: 'evening'; memberId: string }
   | { kind: 'nudge'; memberId: string }
@@ -136,7 +157,9 @@ export type NotificationTap =
 
 function asTap(data: unknown): NotificationTap | null {
   const d = (data ?? {}) as Record<string, unknown>;
-  if (d.kind === 'cheer' && typeof d.workoutId === 'string') return { kind: 'cheer', workoutId: d.workoutId };
+  if ((d.kind === 'cheer' || d.kind === 'comment' || d.kind === 'moved' || d.kind === 'saved') && typeof d.workoutId === 'string') {
+    return { kind: d.kind, workoutId: d.workoutId };
+  }
   if ((d.kind === 'joined' || d.kind === 'evening' || d.kind === 'nudge') && typeof d.memberId === 'string') {
     return { kind: d.kind, memberId: d.memberId };
   }

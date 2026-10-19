@@ -9,7 +9,11 @@ import { connectHealth, healthAvailable } from '../../state/health';
 import { RootStackScreenProps } from '../../navigation/types';
 import { nextAfter, stepOf } from './steps';
 
-/** "I moved today" leads. Apple Health asks for read access to workouts when they continue with it. */
+/**
+ * Apple Health leads, because it brings workouts in without anyone opening Arro:
+ * whatever records them (Apple Watch, Strava, Garmin) saves to Health first.
+ * Apple Health asks for read access to workouts when they continue with it.
+ */
 export function HowYouMoveScreen({ navigation }: RootStackScreenProps<'HowYouMove'>) {
   const { draft, updateDraft } = useApp();
   const next = nextAfter(draft.role, 'HowYouMove');
@@ -41,6 +45,14 @@ export function HowYouMoveScreen({ navigation }: RootStackScreenProps<'HowYouMov
       onPrimary={onContinue}
     >
       <ChoiceRow
+        title="Apple Health"
+        tag="Automatic"
+        body="Apple Watch, Strava, Garmin and other apps that save to Health count on their own. No tapping."
+        icon={<PulseIcon />}
+        selected={draft.moveMethod === 'health'}
+        onPress={() => updateDraft({ moveMethod: 'health' })}
+      />
+      <ChoiceRow
         title="I moved today"
         tag="Easiest"
         body="Tap once when you’ve moved. A walk, the gym, yoga, anything."
@@ -48,17 +60,10 @@ export function HowYouMoveScreen({ navigation }: RootStackScreenProps<'HowYouMov
         selected={draft.moveMethod === 'manual'}
         onPress={() => updateDraft({ moveMethod: 'manual' })}
       />
-      <ChoiceRow
-        title="Apple Health"
-        body="Counts your workouts for you, no tapping."
-        icon={<PulseIcon />}
-        selected={draft.moveMethod === 'health'}
-        onPress={() => updateDraft({ moveMethod: 'health' })}
-      />
       {draft.moveMethod === 'health' ? (
         <Text style={styles.note}>
           {canUseHealth
-            ? 'Arro only reads your workouts and their routes, nothing else. “I moved today” is always there too.'
+            ? 'Using Strava or Garmin? Turn on Apple Health in its settings so your workouts come through. Arro only reads your workouts and their routes, nothing else. “I moved today” is always there too.'
             : 'Apple Health isn’t available here. “I moved today” is always there instead.'}
         </Text>
       ) : null}

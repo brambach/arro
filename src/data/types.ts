@@ -15,7 +15,8 @@ export type WorkoutSource = 'health' | 'manual';
  */
 export type PhotoSource = string | number | null;
 
-export type DayStatus = 'kept' | 'still';
+/** kept it today, still has today, or away: on a break ("Pause me"), so not expected today. */
+export type DayStatus = 'kept' | 'still' | 'away';
 
 /** How a person logs: Apple Health (automatic) or the manual "I moved today" check-in. */
 export type MoveMethod = 'manual' | 'health';
@@ -28,7 +29,7 @@ export interface Member {
   name: string;
   color: string;
   streak: number;
-  today: DayStatus; // kept it today, or still has today
+  today: DayStatus;
   meta: string; // one-line status for the Today list
   location?: string;
   relationship?: string; // "You", "Sister", "Brother"
@@ -99,10 +100,20 @@ export interface RecentWorkout {
   place?: string; // "Brisbane"
 }
 
+export interface WorkoutComment {
+  id: string;
+  memberId: MemberId;
+  body: string;
+}
+
 export interface WorkoutDetail extends RecentWorkout {
   note?: string;
   photoUri?: PhotoSource;
   cheeredBy: MemberId[];
+  /** Oldest first. */
+  comments: WorkoutComment[];
+  /** The app or device that recorded a Health workout, such as "WHOOP". */
+  sourceApp?: string;
   /** Only for Health workouts that recorded one, already trimmed at both ends. */
   route?: LatLng[];
   /** The photo's path on the server, so its owner can replace or remove it. */

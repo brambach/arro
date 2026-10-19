@@ -15,7 +15,7 @@ const COUNT_WORDS = ['zero', 'one', 'two', 'three', 'four', 'five', 'six', 'seve
 
 export function FeedScreen({ navigation }: MainTabScreenProps<'Feed'>) {
   const view = useView();
-  const { nudge } = useApp();
+  const { nudge, syncNow } = useApp();
   const joined = view.joinedCount;
   const count = COUNT_WORDS[joined] ?? joined;
   const subtitle =
@@ -27,7 +27,7 @@ export function FeedScreen({ navigation }: MainTabScreenProps<'Feed'>) {
   const waiting = joined === 1;
 
   return (
-    <Screen>
+    <Screen onRefresh={syncNow}>
       <FadeInView style={styles.header}>
         <View style={{ flex: 1 }}>
           <Text style={type.title}>Family feed</Text>

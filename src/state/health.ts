@@ -68,8 +68,13 @@ export async function watchHealthWorkouts(): Promise<void> {
 export async function connectHealth(): Promise<boolean> {
   const hk = healthKit();
   if (!hk) return false;
-  await hk.requestAuthorization({ toRead: [hk.WorkoutType.workout, hk.SeriesType.workoutRoute] });
-  await watchHealthWorkouts();
+  try {
+    await hk.requestAuthorization({ toRead: [hk.WorkoutType.workout, hk.SeriesType.workoutRoute] });
+  } finally {
+    // Watch even if the sheet failed this time: access given earlier still lets
+    // iOS wake Arro for new workouts, which is how they reach the family unopened.
+    await watchHealthWorkouts();
+  }
   return true;
 }
 
@@ -85,7 +90,10 @@ export async function readRecentHealthWorkouts(now: Date = new Date()): Promise<
       uuid: s.uuid,
       activityType: activityName(hk, s.workoutActivityType),
       start: s.startDate,
+      end: s.endDate,
       durationSeconds: s.duration,
+      sourceId: s.sourceId,
+      sourceName: s.sourceName,
       // The module always reports distance in metres.
       distanceMeters: s.totalDistance && s.totalDistance > 0 ? s.totalDistance : undefined,
       route: await readRoute(hk, s.uuid),

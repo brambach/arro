@@ -26,6 +26,8 @@ type Props = {
   variant?: 'outline' | 'link';
   label?: string;
   cheeredLabel?: string;
+  /** Starts in the "Cheered" state, for a workout you've already cheered. */
+  initiallyCheered?: boolean;
   /** Shows "Cheered" straight away; if the promise rejects, the button goes back. */
   onCheer?: () => unknown;
   style?: StyleProp<ViewStyle>;
@@ -35,10 +37,11 @@ export function CheerButton({
   variant = 'outline',
   label = 'Cheer',
   cheeredLabel = 'Cheered',
+  initiallyCheered = false,
   onCheer,
   style,
 }: Props) {
-  const [cheered, setCheered] = useState(false);
+  const [cheered, setCheered] = useState(initiallyCheered);
   const scale = useRef(new Animated.Value(1)).current;
   const pulse = useRef(new Animated.Value(0)).current;
   const reduceMotion = useRef(false);

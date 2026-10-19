@@ -388,8 +388,8 @@ select results_eq(
 -- Invites: codes, expiry and guessing ------------------------------------------------
 select is(
   (select count(*)::integer from generate_series(1, 100) g
-    where private.new_join_code() ~ '^[A-HJKMNP-Z2-9]{6}$'),
-  100, '100 new join codes are all six characters from the code alphabet');
+    where private.new_join_code() ~ '^[A-HJKMNP-Z2-9]{8}$'),
+  100, '100 new join codes are all eight characters from the code alphabet');
 select is(
   (select prosrc !~ 'random\(\)' and prosrc ~ 'gen_random_bytes'
      from pg_proc where oid = 'private.new_join_code()'::regprocedure),
@@ -404,7 +404,7 @@ with made as (
   returning code, expires_at
 )
 select is(
-  (select code ~ '^[A-HJKMNP-Z2-9]{6}$' and expires_at = now() + interval '14 days' from made),
+  (select code ~ '^[A-HJKMNP-Z2-9]{8}$' and expires_at = now() + interval '14 days' from made),
   true, 'an invite made by a member gets a code and the 14-day expiry');
 select throws_ok(
   $$ insert into public.invites (family_id, invited_by, expires_at)

@@ -51,7 +51,7 @@ Can be changed any time without a new build.
 > Today and This Week fit on one screen. There's no endless feed, no leaderboard and no red badges. Check in, see your family, get on with your day.
 >
 > PRIVATE BY DESIGN
-> Families join by invite code only. There are no public profiles, no strangers and no location. Your workouts are shown to your family and nobody else, and Health data is never used for advertising.
+> Families join by invite code only. There are no public profiles and no strangers. No live location: routes come only from workouts you record, with the start and end left off. Your workouts are shown to your family and nobody else, and Health data is never used for advertising.
 >
 > Arro reads workouts from Apple Health only if you choose to connect it. It reads workouts and nothing else, only today's and yesterday's, and never writes to Health.
 
