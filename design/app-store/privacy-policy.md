@@ -1,156 +1,125 @@
-# Arro privacy policy
+# Saunafam privacy policy
 
-Last updated: October 18, 2026
+Last updated: October 20, 2026
 
-Arro is a daily ritual for families: each person moves a little, the family
-sees it, and you keep one streak together. This policy says what Arro collects,
-why, who sees it and how to delete it.
+Saunafam is a weekly sauna streak for your family or your sauna crew. Everyone
+goes when they can, and you keep one streak together. This policy says what
+Saunafam collects, why, who sees it and how to delete it.
 
-Arro is made by Bryce Rambach, an individual developer ("we", "us"). Questions:
-support@arrofamily.com.
+The same text is on the site at https://saunafam.com/privacy
+(`site/public/privacy/index.html`). Change both together.
+
+## Who we are
+
+Saunafam is made by Bryce Rambach, an individual developer ("we", "us").
+Questions: support@saunafam.com.
 
 ## The short version
 
-- Arro collects what it needs to run your family's streak and nothing else.
-- Your workouts, comments and breaks are shown to the members of your family and nobody else.
-- Apple Health is optional, read-only, and limited to today's and yesterday's
-  workouts. Routes leave off where you start and finish.
-- We don't sell your data, show ads, or use tracking or analytics tools.
+- Saunafam collects what it needs to run your family's streak and nothing else.
+- Your sessions, cheers and comments are shown to your family and nobody else.
+- Apple Health is optional and write only. Saunafam never reads from Health.
+- No location, no contacts, no ads, no analytics and no tracking.
 - You can delete your account and everything in it from Settings in the app.
 
-## What Arro collects
+## What we collect
 
-**Account.** You sign in with Apple. Apple gives us an account identifier and
-the email address you chose to share (which can be Apple's private relay
-address). The first time you sign in, Apple may also share your first name,
-which Arro offers as your display name. You can change it.
+**Sign in with Apple.** Your name, the email you chose to share (your real
+email or Apple's private relay address) and your Apple user id.
 
-**Your family.** The family name, your display name, the color Arro gives you,
-your time zone and the reminder time you pick. Your time zone is used to work
-out what "today" is for you. It isn't your location.
+**Your family.** The family name, your member name, your photo if you add one,
+the color Saunafam gives you, your time zone and your reminder settings. Your
+time zone is used to work out your week. It isn't your location.
 
-**Workouts.** For each workout: the date, the kind (walk, run, gym, yoga, swim,
-ride or other), the duration if you give one, and a short note if you write
-one. Also the cheers and nudges family members send each other.
+**Sessions.** For each sauna session: the time, the minutes, the rounds, the
+sauna type, and, if you add them, the temperature, the humidity, a cold plunge
+and its minutes, a place you type (such as "Home" or "The Y"), a note and a
+photo. When you log a session for people who sat with you, it's saved for each
+of them too.
 
-**Comments, only if you write one.** You can leave a short comment, up to 200
-characters, on a workout in your family, by typing it or tapping a ready-made
-one such as "Proud of you". Arro saves the comment, who wrote it and when. Your
-family sees it on the workout. You can delete your own comments, and you can
-delete any comment on your own workouts.
+**Cheers, comments, nudges and breaks.** What you send, who you sent it to and
+when. For a break, the day it starts and the day it ends. Saunafam never asks
+why.
 
-**Breaks, only if you take one.** When you take a break in Settings, Arro saves
-the day it starts and the day it ends. Your family sees that you're on a break
-and when you're back. Arro never asks why.
+**A push token, if you allow notifications.** An address Apple gives Saunafam
+for sending notifications to your phone. Saunafam uses it to tell you when
+someone in your family has a sauna, logs one with you, cheers or comments on
+yours, nudges you or joins, and to send a weekend check-in. These aren't sent
+between 9 p.m. and 7 a.m. in your time zone. Each notification's text is kept
+for up to 7 days, then deleted. Reminders and the timer's notifications are set
+up on your phone and never leave it.
 
-**Apple Health, only if you connect it.** Arro asks Apple Health for permission
-to read workouts and workout routes. It reads nothing else: no heart rate,
-calories, steps or other health data. It only reads workouts from yesterday and
-today, and never writes anything to Health. From each Health workout Arro saves
-the date, the time it started, the kind of workout, the duration in minutes, the
-distance, the route if one was recorded, and Health's identifier for it (so it
-isn't counted twice). Workouts recorded by other apps that save to Health, such
-as Strava or Apple Watch, are read the same way.
+## What we don't collect
 
-**Which app recorded a Health workout.** Arro also saves a short label for the
-app or device that recorded it, such as "Apple Watch", "WHOOP" or "Strava", and
-shows it on the workout. It is one of a fixed list of labels. The name you gave
-your device, such as "Sam's Apple Watch", is never saved.
+- No location. A place is only ever text you type. Saunafam never asks for
+  location permission.
+- No reading from Apple Health.
+- No contacts.
+- No ads, no analytics tools, no crash reporting and no tracking of any kind.
 
-**Routes.** Before a route leaves your phone, Arro cuts off its first and last
-200 meters (about 650 feet), so where you start and finish, such as your home,
-isn't on the map, and keeps only enough points to draw it. Your family sees the
-route on the workout and on your map in Arro. Arro never reads your current
-location.
+## Apple Health
 
-**Photos, only if you add one.** If you add a profile photo or a photo to a
-workout, Arro shrinks it and uploads it, and the members of your family can see
-it. Photos are stored privately: only people signed in to your family can open
-them. You can change or remove a photo at any time, and deleting your account
-deletes your photos.
+If you turn it on, Saunafam saves each session to Apple Health as mindful
+minutes. It's off until you choose it, and you can turn it off in Settings.
+Saunafam never reads from Health, and Health data is never used for ads or
+marketing, sold or shared.
 
-**Notifications, only if you allow them.** Arro reminds you once a day at the
-time you pick. That reminder is set up on your phone, and so is the note that
-tells you a workout from Apple Health is in Arro. If you allow notifications,
-Arro also saves a push token for your phone, an address Apple gives Arro for
-sending notifications to it. Arro uses it to tell you when:
+If you used Saunafam when it was called Arro, iOS may still list the read
+permission Arro asked for, and the app can't remove it. To turn it off, open
+the Settings app, then Health, then Data Access & Devices, choose Saunafam and
+turn everything off.
 
-- someone in your family has moved today, such as "Dad went for a run";
-- someone cheers your workout;
-- someone comments on your workout. The notification includes the comment's text;
-- someone cheers you on before you've moved;
-- someone joins your family;
-- someone still hasn't moved that evening.
+## Saunafam Plus
 
-Notifications about workouts, cheers and comments aren't sent between 9 p.m.
-and 7 a.m. in your time zone.
-Each notification's text is kept for up to 7 days, then deleted.
+If you buy Saunafam Plus, Apple handles the payment. RevenueCat, our purchase
+processor, tells us which Apple purchases you've made so your family gets Plus.
+We never see your card details.
 
-**What we don't collect.** No current location, contacts, advertising identifier,
-analytics, crash reporting or tracking of any kind.
+## Who sees your data
 
-## Why we use it
+- **Your family.** Only the people in your family see your name, color, photo,
+  sessions, cheers, comments and breaks. Families are joined by invite code
+  only. Photos are stored privately and shared with your family through links
+  that expire.
+- **The services that run Saunafam**, each on our behalf and for nothing else:
+  - **Supabase** stores Saunafam's data, on servers in the United States.
+  - **Expo** delivers push notifications. It receives your push token and the
+    notification's text, and passes them to Apple.
+  - **Apple** handles Sign in with Apple, Apple Health and notifications, under
+    Apple's own privacy policy.
+  - **RevenueCat** processes Saunafam Plus purchases. It receives your
+    Saunafam user id and your Apple purchase history for Saunafam.
+- Nobody else, unless the law requires it. We don't sell your data.
 
-Only to run Arro: to sign you in, show your family who's moved, work out the
-family streak and freeze days, let you cheer, comment on and nudge each other,
-and leave you out of the day while you're on a break.
+## If you used Arro
 
-## Health data
+Saunafam used to be Arro. Your account, family, members, colors and profile
+photo carried over. Arro's workouts, cheers, comments and workout photos are
+hidden in Saunafam and will be deleted in a coming update.
 
-Data from Apple Health is used only to count your workouts toward your family's
-streak and to show them to your family. It is never used for advertising or
-marketing, never sold, never shared with data brokers, and never used for any
-purpose other than running Arro. It isn't stored in iCloud.
+## Deleting your account
 
-## Who sees it
+Open **Settings, Delete account** in Saunafam. That removes your account, your
+place in your family, your sessions, photos, cheers, comments, nudges, breaks
+and push tokens, and the link to your Apple ID. If you were the last person in
+your family, the family is deleted too. Data can stay in our hosting provider's
+backups for a short time before it's overwritten.
 
-- **Your family.** Members of your family see your display name and color, your
-  workouts (date, kind, duration, distance, route, photo, note and the app that
-  recorded it), your profile photo, cheers, nudges and comments, and the dates of
-  your breaks. Nobody outside your family can see them. Families are joined only
-  with an invite code.
-- **Our hosting provider.** Arro's data is stored with Supabase, a database
-  provider, on servers in the United States (California). Supabase processes it
-  on our behalf and may not use it for anything else.
-- **Expo**, which delivers Arro's push notifications. It receives your phone's
-  push token and the notification's text, including the text of a comment when
-  the notification is about one, passes them to Apple, and processes them on our
-  behalf only.
-- **Apple** handles Sign in with Apple and Apple Health, and draws the maps
-  behind routes with Apple Maps, under Apple's own privacy policy.
-- Nobody else, unless the law requires it.
-
-## How long it's kept and how to delete it
-
-Your data is kept while you have an account. To delete everything, open
-**Settings > Delete account** in Arro. That removes your account, your place in
-the family, your workouts and their routes, your photos, cheers, comments,
-nudges, breaks and push tokens. If you were the last person in a family, the
-family is deleted too. Data can remain in the hosting provider's backups for a
-short time before it's overwritten.
-
-The person who started your family can remove someone from it. When they do,
-that person's workouts, photos, cheers, comments, nudges and breaks in that
-family are deleted. Their account stays, so they can join a family again.
-
-Signing out keeps your account. Deleting the app keeps your account too; sign
-in again to get back to your family.
-
-You can also disconnect Apple Health at any time in the iPhone's Settings app,
-under Health > Data Access & Devices > Arro, or switch to "I moved today" in
-Arro's Settings. Workouts already counted stay until you delete them with your
-account.
+The person who started your family can remove someone from it. That deletes
+the person's sessions, photos, cheers, comments, nudges and breaks in that
+family. Their account stays, so they can join another family.
 
 ## Children
 
-Arro isn't directed at children under 13, and we don't knowingly collect data
-from them. If you think a child has given us data, contact us and we'll delete it.
+Saunafam isn't directed at children under 13, and we don't knowingly collect
+data from them. If you think a child has given us data, email us and we'll
+delete it.
 
 ## Your rights
 
 Depending on where you live, you may have the right to see, correct, export or
-delete your data. Most of it you can see and change in the app. For anything
-else, email support@arrofamily.com and we'll answer within 30 days.
+delete your data. You can see and change most of it in the app. For anything
+else, email support@saunafam.com and we'll answer within 30 days.
 
 ## Changes
 
@@ -159,4 +128,4 @@ the change is significant.
 
 ## Contact
 
-Bryce Rambach, support@arrofamily.com
+Bryce Rambach, support@saunafam.com

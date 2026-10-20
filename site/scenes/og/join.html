@@ -1,0 +1,31 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><link rel="stylesheet" href="og.css">
+<style>
+.head { top: 176px; width: 640px; font-size: 76px; line-height: 80px; }
+.room { right: 80px; top: 80px; width: 360px; height: 470px; overflow: hidden; background: #221F1C url("../../public/art/wall-dark.svg"); background-size: 560px 8px; }
+.room .glow { position: absolute; left: -160px; right: -160px; bottom: -330px; height: 620px; border-radius: 50%; background: radial-gradient(closest-side, rgba(232,112,56,1), rgba(214,92,44,.75) 30%, rgba(190,74,34,.32) 60%, rgba(160,60,28,0)); opacity: .7; }
+.room svg { position: absolute; left: 0; top: 0; }
+.room p { position: absolute; left: 0; right: 0; top: 52px; text-align: center; font: 600 15px/20px -apple-system, system-ui, sans-serif; letter-spacing: 1.6px; text-transform: uppercase; color: rgba(248,244,238,.66); }
+</style></head>
+<body>
+  <p class="mark disp">saunafam</p>
+  <h1 class="head disp">You’re invited to a family on Saunafam.</h1>
+  <p class="sub">They saved you a spot on the bench. Get the app, tap I have an invite, and enter your code.</p>
+  <div class="card room">
+    <div class="glow"></div>
+    <p>A spot on the bench</p>
+    <svg width="360" height="470" viewBox="0 0 360 470">
+      <defs>
+        <radialGradient id="g" cx=".5" cy=".5" r=".5"><stop offset="0" stop-color="#FFC284" stop-opacity=".95"/><stop offset=".4" stop-color="#E0703A" stop-opacity=".55"/><stop offset="1" stop-color="#C9542A" stop-opacity="0"/></radialGradient>
+        <radialGradient id="s" cx="150" cy="250" r="130" gradientUnits="userSpaceOnUse"><stop offset="0" stop-color="#4B4540"/><stop offset=".55" stop-color="#2B2723"/><stop offset="1" stop-color="#1D1A17"/></radialGradient>
+        <filter id="b" x="-100%" y="-100%" width="300%" height="300%"><feGaussianBlur stdDeviation="8"/></filter>
+      </defs>
+      <ellipse cx="180" cy="320" rx="150" ry="52" fill="url(#g)"/>
+      <path d="M72 286c0-40 48-62 108-62s108 22 108 62c0 34-46 50-108 50S72 320 72 286z" fill="url(#s)"/>
+      <path d="M100 262c22-18 52-24 84-24" stroke="#fff" stroke-opacity=".12" stroke-width="10" stroke-linecap="round" fill="none" filter="url(#b)"/>
+      <g fill="none" stroke="#F8F4EE" stroke-opacity=".22" stroke-width="9" stroke-linecap="round" filter="url(#b)">
+        <path d="M152 200c-12-16 12-26 2-44s-2-28 6-38"/><path d="M210 200c-12-15 12-24 2-41s-2-26 6-34"/>
+      </g>
+    </svg>
+  </div>
+</body></html>
