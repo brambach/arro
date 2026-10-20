@@ -27,7 +27,7 @@ function Sparks({ seed }: { seed: number }) {
       // Mostly upward, like sparks off a coal.
       const angle = -Math.PI / 2 + (i / (count - 1) - 0.5) * Math.PI * 1.1 + (r() - 0.5) * 0.3;
       const dist = distance[0] + r() * (distance[1] - distance[0]);
-      return { dx: Math.cos(angle) * dist, dy: Math.sin(angle) * dist, size: 3 + Math.round(r() * 2), hot: r() > 0.5 };
+      return { dx: Math.cos(angle) * dist, dy: Math.sin(angle) * dist, size: 4 + Math.round(r() * 3), hot: r() > 0.5 };
     });
   }, [seed, count, distance]);
   return (

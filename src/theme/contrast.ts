@@ -34,6 +34,7 @@ export const textPairs: TextPair[] = [
   { fg: p.smoke, bg: p.birch, use: 'secondary text on the screen', size: 13, weight: 400 },
   { fg: p.stone, bg: p.birch, use: 'small caps labels, meta, tab labels', size: 12, weight: 400 },
   { fg: p.coal, bg: p.birch, use: 'ember-colored text', size: 13, weight: 400 },
+  { fg: p.moss, bg: p.birch, use: '"Kept" in a sheet on birch (a past week)', size: 15, weight: 600, rule: 'moss text only at 15 pt and up, weight 600' },
   { fg: p.coal, bg: p.birch, use: 'active tab label (its icon is ember: 3.6:1, fine for a graphic)', size: 12, weight: 600, rule: 'ember is never text on light backgrounds; ember-colored text is coal' },
   // Cards: steam.
   { fg: p.char, bg: p.steam, use: 'card text, row names', size: 12, weight: 400 },

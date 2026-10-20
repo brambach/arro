@@ -1,7 +1,9 @@
-import React, { useState } from 'react';
-import { RefreshControl, ScrollView, StyleProp, StyleSheet, View, ViewStyle } from 'react-native';
+import React, { useEffect, useState } from 'react';
+import { DeviceEventEmitter, RefreshControl, StyleProp, StyleSheet, View, ViewStyle } from 'react-native';
+import Animated, { useAnimatedRef, useAnimatedScrollHandler, useAnimatedStyle, useSharedValue } from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { palette, space } from '../theme/tokens';
+import { LinearGradient } from 'expo-linear-gradient';
+import { alpha, palette, space } from '../theme/tokens';
 import { Backdrop } from './Backdrop';
 
 /**
@@ -30,6 +32,18 @@ export function Screen({
 }: Props) {
   const insets = useSafeAreaInsets();
   const [refreshing, setRefreshing] = useState(false);
+  const scrollRef = useAnimatedRef<Animated.ScrollView>();
+  const scrollY = useSharedValue(0);
+  const onScroll = useAnimatedScrollHandler((e) => {
+    scrollY.set(e.contentOffset.y);
+  });
+  const fade = useAnimatedStyle(() => ({ opacity: Math.max(0, Math.min(1, scrollY.value / space.s24)) }));
+  // Dev builds with the capture driver (src/dev/DevDriver.tsx) can scroll the screen in front.
+  useEffect(() => {
+    if (!__DEV__ || process.env.EXPO_PUBLIC_DEV_DRIVER !== '1') return;
+    const sub = DeviceEventEmitter.addListener('devScroll', (y: number) => scrollRef.current?.scrollTo({ y, animated: false }));
+    return () => sub.remove();
+  }, [scrollRef]);
   const pull = onRefresh
     ? () => {
         setRefreshing(true);
@@ -51,7 +65,10 @@ export function Screen({
   return (
     <View style={[styles.root, { backgroundColor: background }, style]}>
       {background === palette.birch ? <Backdrop /> : null}
-      <ScrollView
+      <Animated.ScrollView
+        ref={scrollRef}
+        onScroll={onScroll}
+        scrollEventThrottle={16}
         showsVerticalScrollIndicator={false}
         refreshControl={
           pull ? (
@@ -61,9 +78,19 @@ export function Screen({
         contentContainerStyle={[{ paddingTop: insets.top + space.s8, paddingBottom: space.s24 }, contentStyle]}
       >
         {children}
-      </ScrollView>
+      </Animated.ScrollView>
+      {background === palette.birch ? (
+        // Content scrolling up fades out under the status bar instead of running into the clock.
+        // Only once scrolled: at rest the haze's warm corner shows through.
+        <Animated.View style={[styles.statusFade, { height: insets.top + space.s16 }, fade]} pointerEvents="none">
+          <LinearGradient colors={[palette.birch, palette.birch, alpha.birchClear]} locations={[0, 0.55, 1]} style={StyleSheet.absoluteFill} />
+        </Animated.View>
+      ) : null}
     </View>
   );
 }
 
-const styles = StyleSheet.create({ root: { flex: 1 } });
+const styles = StyleSheet.create({
+  root: { flex: 1 },
+  statusFade: { position: 'absolute', top: 0, left: 0, right: 0 },
+});

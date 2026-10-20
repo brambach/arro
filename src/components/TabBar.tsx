@@ -44,7 +44,14 @@ export function TabBar({ state, navigation }: BottomTabBarProps) {
             style={styles.tab}
           >
             <Icon name={tab.icon} size={28} color={color} />
-            <Text style={[type.tab, { color: labelColor, fontWeight: focused ? weights.semibold : weights.medium }]}>{tab.label}</Text>
+            {/* Like the system tab bar, labels grow only a little at the largest text sizes. */}
+            <Text
+              style={[type.tab, { color: labelColor, fontWeight: focused ? weights.semibold : weights.medium }]}
+              maxFontSizeMultiplier={1.3}
+              numberOfLines={1}
+            >
+              {tab.label}
+            </Text>
           </Pressable>
         );
       })}

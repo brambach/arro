@@ -180,22 +180,31 @@ family, photo, how it works, reminders, notifications.
 
 ## Today
 
-Section 3, "Today".
+Section 3, "Today". Most of these lines are built in `src/state/buildView.ts` (`COPY`, `view.today`), so they're tested there.
 
-- Header: the date, a time-of-day greeting. _to write: greetings_
-- This week card: "2 of 3 this week"
+- Header: the date in small caps ("THURSDAY, OCTOBER 22") and "Good morning, Sam" (before noon), "Good afternoon, Sam" (to 6 PM), "Good evening, Sam". No period.
+- This week card: "2 of 3 this week", or "Kept this week" once you've kept it
+- Small caps on your slat: "Week 9" (the week the family streak is building)
 - Family line (names progress only): "Maya and Jo have kept this week. Sam's on 1."
-- Family streak: "**8** weeks together"
+- Family streak: "**8** weeks together", "**1** week together"
+- A family in its first week, in place of a big 0: "Your first week together"
 - **Start a session**
 - Plain text under it: **Log one I already did**
-- "Log yesterday's"
-- Monday, last week not kept: "Did you sauna on Sunday? Log it"
+- Forgot one: "Log yesterday's", with "Forgot one? It still counts" under it
+- Monday, last week not kept: "Did you sauna on Sunday? Log it", with "It still counts toward last week" under it
+- A refused draft: "Couldn't save this one", with "Tap to fix it" under it
 - Family list statuses: "Kept", "2 of 3", "On a break until Friday", "Invited"
-- Solo founder: "Your family streak starts when someone joins"
-- After a broken streak: "Weeks together this year", and the card "Back at it, together"
+- Family list second line, their latest session this week: "Tonight · 20 min · 85°C", "Yesterday · 18 min with Jo", "Tuesday · 15 min · The Y"; someone invited: "Hasn't joined yet"
+- Solo founder: "Your family streak starts when someone joins", with **Invite someone**
+- After a broken streak: "**7** weeks together this year", and the card "Back at it, together" / "A new streak starts this week. Every session counts toward it."
 - Timer running bar: "In the heat · 12:04"
 - After saving, when the family's week is complete: "Week kept, together" (section 2, "Saving a session")
-- Apple Health card, once, after the first saved session: "Save sessions to Apple Health?" with **Turn on** and **Not now** (section 3, "Apple Health")
+- Apple Health card, once, after the first saved session: "Save sessions to Apple Health?" / "Your heat minutes go into Health as Mindful Minutes. Saunafam never reads anything from Health." with **Turn on** and **Not now** (section 3, "Apple Health")
+- Offline: "You're offline. Anything you log is saved here and sends when you're back." With sessions waiting: "You're offline. One session is saved here and will send when you're back." / "2 sessions are saved here and will send when you're back."
+- Back online with sessions still going out: "One session is waiting to send." / "2 sessions are waiting to send."
+- Loading (nothing cached yet): placeholders only, no words. VoiceOver: "Loading your family"
+- Couldn't load (nothing cached): "Couldn't load your family" / "Check your connection and try again. Anything you log now is saved on this phone and sends later." with **Try again**
+- VoiceOver on your avatar: "You, 2 of 3 this week", hint "Opens Me". On a row: "Cheer Maya on", "Opens Maya's latest session", "Opens your latest session", "Opens the invite"
 
 ## Timer
 
@@ -228,43 +237,73 @@ Section 3, "Log session form".
 
 Section 3, "Shared sessions" and "Feed".
 
-- Shared title: "Maya and Jo had a sauna together"
-- Details line: "20 min · Traditional · 85°C"
-- **Remove me from this session**
-- Cheer: "Cheer Maya on"
+- Shared title: "Maya, Jo and you had a sauna together" (you go last when someone else logged it); your own: "You had a sauna"
+- Under the title: "Today · 6:21 PM · Lake cabin"
+- Details line: "20 min · Traditional · 85°C · 3 rounds"; a plunge: "Cold plunge · 2 min"
+- Cheer: **Cheer Maya on**, then "Cheered"; who cheered: "You and Jo cheered"; on your own with none yet: "No cheers yet"
+- Comments, small caps: "Comments". None yet: "No comments yet. Say something nice."
 - Quick replies on someone else's session: "Nice heat", "Jealous", "Save me a spot", "Cold plunge hero" (only with a plunge)
 - Quick replies on your own: "Felt great", "Needed that"
-- _to write: edit, delete and their confirms, the comment field, removed-session state_
+- Comment field: "Add a comment", **Send**, a count of what's left from 40 characters out (200 in all)
+- Delete a comment (long press): "Delete this comment?" with the comment quoted, **Delete**, **Cancel**
+- Waiting to send: "Waiting to send. It goes as soon as you're back online."
+- Logger: **Edit** (top right), **Delete session**; confirm "Delete this session?" / "It goes for everyone in it, with its cheers and comments." **Delete**, **Cancel**
+- Someone else in it: **Remove me from this session**; confirm "Take yourself off this session?" / "It comes off your week. Everyone else keeps it." **Remove me**, **Cancel**
+- Removed or deleted: "This session isn't here anymore" / "Whoever logged it may have deleted it, or you were taken off it. Your week is up to date." **Back**
+
+### Edit session
+
+- Title "Edit session", **Cancel**
+- Under it: "Mon, Oct 19 · 7:00 AM. Changes show for everyone in it."
+- Small caps: "Minutes", "Type", "Photo"; fields "Place" (example "Home"), "Note"; toggle "Cold plunge"
+- VoiceOver on the stepper: "Fewer minutes", "More minutes"
+- **Change photo** / **Add a photo**, **Remove photo**
+- **Save changes** (while saving: "Saving")
+- Refused: "Couldn't save that: " and the server's reason, or "Couldn't save that. Try again."
+- Gone while editing: "This session isn't here anymore" with **Close**
 
 ## Feed
 
 Section 3, "Feed".
 
+- Title "Feed"; small caps "This week", "Last week"
 - Card title: "Maya had a sauna", or "Maya and Jo had a sauna together"
 - Details: "20 min · Traditional · 85°C"
-- Shared card: "Maya, Jo and Sam had a sauna together"
-- **Cheer Maya on**
-- _to write: empty state_
+- Shared card: "Maya, Jo and you had a sauna together"
+- **Cheer Maya on** / "Cheered", **Reply**
+- More comments than shown: "1 more comment", "3 more comments"
+- Empty: "Quiet so far" / "Sessions from this week and last show here, yours and everyone's. Log one and it's the first." with **Log a session**
+- Offline: "You're offline. Cheers and comments wait until you're back."
+- Couldn't load: "Couldn't load the feed" / "Check your connection and try again." with **Try again**
+- Rolled back (from AppState): "Couldn't send that cheer. Try again." and the like, shown for a few seconds at the top
 
 ## Week
 
 Section 3, "Week".
 
-- Three numbers: the family streak in weeks, the longest streak, weeks together this year. _to write: labels_
-- Past weeks: "Week of Oct 5: kept", "Week of Sep 28: kept, a freeze was used"
-- **See every week** and **Print the wall** (Plus, only when `plus_enabled`)
+- Title: the family's name ("Sunday sauna")
+- Beside the wall: "**8** weeks together", then "Longest" and "This year" under their numbers
+- A family in its first week: "Your first week together"
+- Small caps over the rows: "This week · 2 of 3 for you", "This week · kept"
+- Past weeks, small caps "Past weeks"; each row "Week of Oct 5" with "Kept", "Kept, a freeze was used", "Kept, your freeze was used", "Not kept", "Everyone was on a break"
+- No past weeks yet: "Your first week is on the wall. Once it closes, it shows here with everyone's days."
+- A past week (sheet): the outcome in small caps, "Week of Sep 14", each person "Kept", "Not kept", "Your freeze covered it", "On a break", "First week", with their days ("Tue, Fri and Sun") or "No sessions that week"; gone from the 12: "This week isn't in the last 12 anymore."
+- **See every week** and **Print the wall** (Plus, only when `plus_enabled`), each marked "Plus"
 - **Streak rules** (plain text link)
+- Offline: "You're offline. This is the wall as it was last time."
+- Couldn't load: "Couldn't load the wall" / "Check your connection and try again." with **Try again**
 - The Plus quiet card is below under "Saunafam Plus".
 
 ## Me
 
 Section 3, "Me".
 
-- **Edit profile**
-- Stat grid: weeks in a row, longest streak, sessions this month, hours in the heat this year. _to write: labels_
-- Favorite type and place. _to write_
-- Badges at 4, 8, 12, 26 and 52 weeks. _to write_
-- Plus rows (only when `plus_enabled`): **Heat log**, **Timer face**, **App icon**
+- Your name, your family's name, **Edit profile**, the gear (VoiceOver "Settings")
+- Stat grid: "Weeks in a row", "Longest streak" ("8 weeks"), "Sessions this month", "Hours in the heat this year"
+- Favorites: the type ("Traditional") over "Favorite type", the place ("Home") over "Favorite place"
+- Small caps "Your last sessions"; none yet: "Your sessions show here once you've logged one."; loading: "Loading your sessions"; a row still going out: "Waiting to send"
+- Small caps "Badges": 4, 8, 12, 26 and 52, each over "weeks". VoiceOver: "8 weeks, earned", "12 weeks, not yet"
+- Plus rows (only when `plus_enabled`): **Heat log**, **Timer face**, **App icon**, each marked "Plus"
 
 ## Edit profile
 
@@ -404,15 +443,27 @@ Settings, each with a short name above it:
 
 ## Nudge
 
-- _to write. The push it sends is in `notifications.md`_
+The push it sends is in `notifications.md`.
+
+- Title: "Cheer Jo on"
+- Line: "Jo's on 1 of 3 this week. A nudge says you're thinking of them."
+- **Send a nudge** (while sending: "Sending"; after: "Sent"), **Not now** (after: **Done**)
+- Sent: "Sent. Jo will see it soon."
+- Already nudged today: "Jo has already had a nudge today. Try again tomorrow."
+- Failed: "Couldn't send it just now. Try again in a moment."
+- Gone: "They're not in the family anymore."
 
 ## Milestone
 
 Section 2, "Streak milestone". Milestones at 4, 8, 12, 26 and 52 weeks.
 
 - Screenshot caption example: "12 weeks in the heat."
-- **Share**
-- _to write: the card text_
+- Small caps: "Together" (family) or "Your streak" (personal)
+- Family: "**8**", "weeks together", "Sunday sauna has kept 8 weeks in a row."
+- Personal: "**26**", "weeks in a row", "Your own streak, week after week."
+- **Share** (while the image renders: "Getting it ready"), **Done**
+- The share image (1080 x 1350): the number, "weeks together", the family's name, "saunafam"
+- Nothing due: "Nothing to celebrate just now" with **Close**
 
 ## Invite
 
@@ -454,7 +505,7 @@ only screen:
 - Shared session duplicate: "Jo already logged this one"
 - Solo family: "Your family streak starts when someone joins"
 - Expired or wrong invite code: "That code has expired or doesn't exist." (Join code); after sign-in, with "Ask them for a new code." (Meet the family)
-- _to write: offline, server error, removed session, and every empty state (spec, Definition of done, "Every screen, in every state")_
+- Main screens (M9): each screen's offline, couldn't-load and empty lines are under Today, Week, Feed, Session detail and Me above. Loading never shows words, only placeholders the size of what's coming.
 
 ## Permissions
 

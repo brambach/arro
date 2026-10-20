@@ -44,6 +44,7 @@ export type PreviewScenarioId =
   | 'onBreak'
   | 'mondayOpen'
   | 'milestone'
+  | 'lastOne'
   | 'timerRunning'
   | 'timerStale'
   | 'offline'
@@ -64,6 +65,7 @@ export const PREVIEW_SCENARIOS: { id: PreviewScenarioId; label: string }[] = [
   { id: 'onBreak', label: 'Jo on a break' },
   { id: 'mondayOpen', label: 'Monday, last week not kept' },
   { id: 'milestone', label: '8-week milestone due' },
+  { id: 'lastOne', label: 'Your next session keeps the week' },
   { id: 'timerRunning', label: 'Timer running' },
   { id: 'timerStale', label: 'Timer 3 hours old' },
   { id: 'offline', label: 'Offline, one session waiting' },
@@ -419,6 +421,9 @@ export function buildPreviewScenario(id: PreviewScenarioId, realNow: Date = new 
       };
     case 'milestone':
       return { ...base, family: previewFamily(now), milestonesShown: false };
+    case 'lastOne':
+      // Maya and Jo have kept this week; Sam is on 2 of 3, so his next session keeps it for everyone.
+      return { ...base, family: previewFamily(now, { days: (m, w) => (m === 'jo' && w === 0 ? [0, 2, 3] : defaultDays(m, w)) }) };
     case 'timerRunning':
       return {
         ...base,

@@ -37,7 +37,7 @@ export type RootStackParamList = {
    * The Plus sheet. M15 builds it; until then a placeholder screen stands in
    * (src/screens/PlusSeamScreen.tsx). `focus` opens it at a section.
    */
-  Plus: { focus?: 'woods' | 'tips' | 'everyWeek' | 'poster' } | undefined;
+  Plus: { focus?: PlusFocus } | undefined;
   /** app_config().min_ios_build is above this build: the only screen. */
   UpdateRequired: undefined;
   /** Dev builds only: the release-only "can't reach Saunafam" screen, for captures. */
@@ -46,8 +46,12 @@ export type RootStackParamList = {
   /** Settings > Take a break ("Pause me"). */
   TakeBreak: undefined;
   Notifications: undefined;
-  /** A session by its anchor id (any row id works too). */
-  SessionDetail: { sessionId: string };
+  /** A session by its anchor id (any row id works too). `reply` opens with the comment field ready. */
+  SessionDetail: { sessionId: string; reply?: boolean };
+  /** The logger changes a session's details (M9). */
+  EditSession: { sessionId: string };
+  /** A past week from Week: who went, and on which days (M9). */
+  PastWeek: { weekStart: string };
   Nudge: { memberId?: string } | undefined;
   FamilyMembers: undefined;
   Invite: undefined;
@@ -85,3 +89,6 @@ declare global {
     interface RootParamList extends RootStackParamList {}
   }
 }
+
+/** Where the Plus sheet opens from, so it can start at that feature. */
+export type PlusFocus = 'woods' | 'tips' | 'everyWeek' | 'poster' | 'heatLog' | 'timerFace' | 'appIcon' | 'card';
