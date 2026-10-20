@@ -1,9 +1,11 @@
 #!/usr/bin/env node
 /**
- * The timer room's three slow steam paths, blurred, as a transparent PNG
- * (assets/timer/room-steam.png). They're the mockup's paths
- * (spec/mockups/src/A/timer.html), drawn here once: a full-screen SVG blur on
- * the phone took about 600 ms to draw the first time, which held up the door.
+ * The timer room's steam, blurred, as transparent PNGs:
+ * - assets/timer/room-steam.png: the mockup's three slow paths over the floor;
+ * - assets/timer/loyly-wisp.png: one soft wisp that Throw löyly sends up.
+ * The room's paths are the mockup's (spec/mockups/src/A/timer.html). They're
+ * drawn here once: a full-screen SVG blur on the phone took about 600 ms to
+ * draw the first time, which held up the door.
  *
  *   node scripts/render-room-steam.mjs
  */
@@ -27,3 +29,19 @@ const dir = join(repoRoot, 'assets/timer');
 mkdirSync(dir, { recursive: true });
 writeFileSync(join(dir, 'room-steam.png'), png);
 console.log('assets/timer/room-steam.png', png.length, 'bytes');
+
+// One wisp: an S curve rising from a broad base, fading to nothing at the top.
+const wisp = `<svg xmlns="http://www.w3.org/2000/svg" width="160" height="560" viewBox="0 0 160 560" fill="none">
+ <defs>
+  <linearGradient id="fade" x1="0" y1="560" x2="0" y2="0" gradientUnits="userSpaceOnUse">
+   <stop offset="0" stop-color="${STEAM}" stop-opacity="0.55"/>
+   <stop offset="0.45" stop-color="${STEAM}" stop-opacity="0.35"/>
+   <stop offset="1" stop-color="${STEAM}" stop-opacity="0"/>
+  </linearGradient>
+  <filter id="soft" x="-60%" y="-10%" width="220%" height="120%"><feGaussianBlur stdDeviation="9"/></filter>
+ </defs>
+ <path d="M80 540c-34-70 34-120 2-200s-36-120 -4-200 30-80 6-120" stroke="url(#fade)" stroke-width="30" stroke-linecap="round" filter="url(#soft)"/>
+</svg>`;
+const wispPng = new Resvg(wisp, { fitTo: { mode: 'width', value: 240 } }).render().asPng();
+writeFileSync(join(dir, 'loyly-wisp.png'), wispPng);
+console.log('assets/timer/loyly-wisp.png', wispPng.length, 'bytes');

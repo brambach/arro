@@ -42,7 +42,7 @@ import { maxFontScale, type } from '../theme/typography';
 import { haptics } from '../theme/haptics';
 import { Backdrop } from '../components/Backdrop';
 import { HeatGlow } from '../components/HeatGlow';
-import { SteamWisps } from '../components/SteamWisps';
+import { LoylyBurst } from '../components/LoylyBurst';
 import { FixedDigits } from '../components/FixedDigits';
 import { TimerArc } from '../components/TimerArc';
 import { SolidButton } from '../components/SolidButton';
@@ -99,9 +99,10 @@ export function TimerScreen({ navigation, route }: RootStackScreenProps<'Timer'>
 
   const [stage, setStage] = useState<Stage>('open');
   const [landed, setLanded] = useState(false);
-  // The status bar turns light once the door has covered the top of the screen.
-  const [dark, setDark] = useState(false);
-  const [lightened, setLightened] = useState(false);
+  // The status bar turns light once the door has covered the top of the screen,
+  // and dark again as the room lightens. Set directly, so the change never
+  // redraws the room in the middle of the door's move.
+  useEffect(() => () => StatusBar.setStyle('dark', true), []);
   const [frozen, setFrozen] = useState<{ timer: TimerState; at: Date } | null>(null);
   const [result, setResult] = useState<{ prefill: TimerResult; askTime: boolean } | null>(null);
   const [dialog, setDialog] = useState<Dialog>(null);
@@ -185,7 +186,7 @@ export function TimerScreen({ navigation, route }: RootStackScreenProps<'Timer'>
       room.set(withTiming(1, timing.utility));
       face.set(withTiming(1, timing.utility));
       const t = setTimeout(() => {
-        setDark(true);
+        StatusBar.setStyle('light', true);
         land();
       }, timing.utility.duration);
       return () => clearTimeout(t);
@@ -201,12 +202,13 @@ export function TimerScreen({ navigation, route }: RootStackScreenProps<'Timer'>
     doorY.set(withSpring(0, spring, exact(doorY, 0)));
     doorW.set(withSpring(W, spring, exact(doorW, W)));
     doorH.set(withSpring(H, spring, exact(doorH, H)));
-    doorR.set(withSpring(0, spring, exact(doorR, 0)));
+    // The corners square off early: a rounded clip over the whole room is costly to draw every frame.
+    doorR.set(withTiming(0, timing.utility));
     ember.set(withTiming(0, moments.doorCloses.room));
     // The room's contents settle in once the door has closed behind you.
     face.set(withDelay(springTouchdownMs(spring), withTiming(1, timing.settle)));
     const t = setTimeout(land, springTouchdownMs(spring));
-    const bar = setTimeout(() => setDark(true), springTouchdownMs(spring) / 2);
+    const bar = setTimeout(() => StatusBar.setStyle('light', true), springTouchdownMs(spring) / 2);
     return () => {
       clearTimeout(t);
       clearTimeout(bar);
@@ -241,7 +243,7 @@ export function TimerScreen({ navigation, route }: RootStackScreenProps<'Timer'>
   /** Fade the room away and go back to Today. The timer keeps running unless it was ended. */
   const leave = useCallback(() => {
     setStage('leaving');
-    setLightened(true);
+    setTimeout(() => StatusBar.setStyle('dark', true), moments.finishCool.room.duration / 3);
     room.set(
       withTiming(0, reduceMotion === false ? moments.finishCool.room : timing.utility, (done) => {
         if (done) scheduleOnRN(close);
@@ -277,7 +279,7 @@ export function TimerScreen({ navigation, route }: RootStackScreenProps<'Timer'>
         haptics.finish();
         setStage('sheet');
         room.set(withTiming(0, reduceMotion === false ? moments.finishCool.room : timing.utility));
-        setTimeout(() => setLightened(true), moments.finishCool.room.duration / 3);
+        setTimeout(() => StatusBar.setStyle('dark', true), moments.finishCool.room.duration / 3);
       }, cool.duration);
     },
     [app, live, reduceMotion, room, settle, stage],
@@ -419,7 +421,6 @@ export function TimerScreen({ navigation, route }: RootStackScreenProps<'Timer'>
 
   return (
     <View style={StyleSheet.absoluteFill}>
-      <StatusBar style={dark && !lightened ? 'light' : 'dark'} animated />
 
       <Animated.View style={[styles.door, doorStyle]} pointerEvents="none">
         <Animated.View style={[{ width: W, height: H }, insideStyle]}>
@@ -434,7 +435,7 @@ export function TimerScreen({ navigation, route }: RootStackScreenProps<'Timer'>
             height={H}
           />
           <RoomSteam width={W} height={H} />
-          <SteamWisps width={W} height={H} tone="dark" columns={[]} burstKey={burst} />
+          <LoylyBurst burstKey={burst} width={W} height={H} />
         </Animated.View>
         {origin && fromEmber && started ? (
           <Animated.View style={[StyleSheet.absoluteFill, emberStyle]}>
