@@ -5,7 +5,7 @@ import { scheduleOnRN } from 'react-native-worklets';
 import * as SplashScreen from 'expo-splash-screen';
 import Svg from 'react-native-svg';
 import { SoftEllipse } from './SoftEllipse';
-import { palette, space, stoneArt } from '../theme/tokens';
+import { palette, space, stoneGlow } from '../theme/tokens';
 import { moments, probeReduceMotion } from '../theme/motion';
 import { StoneMark } from './brand/StoneMark';
 import { Wordmark } from './brand/Wordmark';
@@ -182,7 +182,7 @@ export function AnimatedSplash({ ready, returning, onDone }: Props) {
 function FloorGlow({ width, height }: { width: number; height: number }) {
   return (
     <Svg width={width} height={height}>
-      <SoftEllipse cx={width / 2} cy={height} rx={width * 0.9} ry={height * 0.42} falloff={{ color: palette.glow, opacity: stoneArt.spill[0].opacity ?? 0 }} />
+      <SoftEllipse cx={width / 2} cy={height} rx={width * 0.9} ry={height * 0.42} falloff={stoneGlow.spill} />
     </Svg>
   );
 }

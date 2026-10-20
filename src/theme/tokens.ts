@@ -322,45 +322,29 @@ export const frost = '#FFFFFF';
 export const stoneArt = {
   /** The body, lit from the upper left. */
   body: [
-    { offset: 0, color: '#77726C' },
-    { offset: 0.42, color: '#46423E' },
-    { offset: 0.78, color: '#2B2826' },
+    { offset: 0, color: '#7B756F' },
+    { offset: 0.42, color: '#48433F' },
+    { offset: 0.8, color: '#2C2926' },
     { offset: 1, color: '#1C1A18' },
   ],
-  /** Heat lighting the stone from beneath. */
+  /** Heat lighting the underside, brightest where it meets the heat. */
   under: [
-    { offset: 0, color: '#E06A35', opacity: 0 },
-    { offset: 0.3, color: '#E06A35', opacity: 0.06 },
+    { offset: 0, color: '#D9612F', opacity: 0 },
     { offset: 0.55, color: '#E06A35', opacity: 0.22 },
-    { offset: 0.75, color: '#EE7C3E', opacity: 0.55 },
-    { offset: 0.9, color: '#F8994F', opacity: 0.85 },
-    { offset: 1, color: '#FFB878', opacity: 1 },
-  ],
-  /** The glow on the floor. */
-  glow: [
-    { offset: 0, color: '#FFB46C', opacity: 1 },
-    { offset: 0.3, color: '#F08848', opacity: 0.8 },
-    { offset: 0.6, color: '#D9612F', opacity: 0.34 },
-    { offset: 1, color: palette.ember, opacity: 0 },
-  ],
-  /** The hot core right under the seat. */
-  core: [
-    { offset: 0, color: '#FFF0D8', opacity: 1 },
-    { offset: 0.35, color: '#FFC07E', opacity: 0.9 },
-    { offset: 1, color: '#F59A58', opacity: 0 },
-  ],
-  /** The halo rising behind the stone's sides. */
-  spill: [
-    { offset: 0, color: palette.glow, opacity: 0.42 },
-    { offset: 0.55, color: '#E8763C', opacity: 0.16 },
-    { offset: 1, color: '#E0703A', opacity: 0 },
-  ],
-  /** The sheen on the dome. */
-  sheen: [
-    { offset: 0, color: '#FFFFFF', opacity: 0.14 },
-    { offset: 1, color: '#FFFFFF', opacity: 0 },
+    { offset: 0.85, color: '#F08848', opacity: 0.7 },
+    { offset: 1, color: '#FFC284', opacity: 1 },
   ],
 } satisfies Record<string, Stop[]>;
+
+/** Single colors and peak opacities for the stone mark's smooth glows (SoftEllipse falloff). */
+export const stoneGlow = {
+  spill: { color: palette.glow, opacity: 0.48 },
+  floor: { color: '#F08848', opacity: 1 },
+  core: { color: '#FFE2BC', opacity: 1 },
+  rim: { color: '#FFD7A6', opacity: 0.9 },
+  sheen: { color: '#FFFFFF', opacity: 0.16 },
+} as const;
+
 
 /**
  * Spacing: a 4 pt grid, and only these values. Padding, margin and gap take one

@@ -86,10 +86,19 @@ Decisions:
   PNGs (`assets/brand/out/icon-*-1024.png`); there's no Icon Composer here to
   make a `.icon`. Light and dark are opaque RGB, tinted is grayscale on
   transparent.
-- D10. Icon direction D, a domed river stone with heat beneath and two wisps,
-  chosen from four in `design/brand/icon-explorations.png` (A is the mockup's
-  puck). 40 px and under use `icon-small.svg` (no texture, bolder wisps); the
-  favicon drops the wisps and enlarges the stone.
+- D10. Icon direction E (`scripts/brand/stone-icon.mjs`), after the
+  coordinator's review of D. A river stone resting on a bench: irregular
+  silhouette, one shoulder lower, a curved underside, a soft specular top
+  left, speckle only over 60 px, the ember brightest in a thin rim under the
+  stone and spilling onto the bench. Steam is two tapered warm-white wisps
+  (wide at the base, fading to nothing), softly blurred over 60 px. Three
+  masters by size: over 60 px `icon.svg` (stone about 59% of the tile),
+  21 to 60 px `icon-small.svg` (about 74%, two short bold wisps), 20 px and
+  under and the favicon `icon-tiny.svg` (about 77%, no wisps). The tinted
+  master is one solid tone with lighter steps for the rim and steam, no
+  outline ring. A to D stay in `design/brand/icon-explorations.png` for
+  comparison. The splash's `StoneMark` reads the same outline and glow
+  geometry (`src/components/brand/stonePath.ts`, generated).
 - D11. The native splash is plain birch with a transparent image. The JS splash
   opens on plain birch and draws the mark in, so a native mark would vanish and
   reappear. expo-splash-screen needs an image to use the background color
@@ -109,6 +118,8 @@ Decisions:
 - D16. Brand sheets render as HTML in headless Chrome (`scripts/render-brand.mjs`,
   Chrome for Testing from the Playwright cache, or `CHROME_PATH`), so body
   text is the real SF Pro without committing SF files.
+- D18. `site/public` pages link `favicon.ico` and `favicon.svg` ahead of the
+  48 px PNG (index, 404, privacy, join, support).
 - D17. The splash recordings are from a Release build with a placeholder
   `EXPO_PUBLIC_SUPABASE_URL` (local) and anon key, so the release gate lets it
   start. No network call happens before sign-in. The dev client can't show the

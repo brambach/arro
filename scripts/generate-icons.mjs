@@ -7,7 +7,7 @@
  * Writes:
  * - assets/brand/out/icon-1024.png, icon-dark-1024.png, icon-tinted-1024.png
  * - assets/brand/out/ios/icon-<size>.png for every legacy iOS size
- *   (40 px and under from icon-small.svg: no texture, bolder wisps)
+ *   (21 to 60 px from icon-small.svg, 20 px and under from icon-tiny.svg)
  * - assets/brand/out/web/: favicon.ico (16, 32, 48), favicon.svg, favicon.png
  *   (48), apple-touch-icon.png (180), icon-96.png, icon-512.png; copied to
  *   site/public/ too, over the old Arro files
@@ -35,7 +35,8 @@ const out = join(brand, 'out');
 const master = (name) => readFileSync(join(brand, name), 'utf8');
 
 const IOS_SIZES = [180, 167, 152, 120, 87, 80, 76, 60, 58, 40, 29, 20];
-const SMALL = 40;
+const SMALL = 60;
+const TINY = 20;
 
 function render(svg, size) {
   return new Resvg(svg, { fitTo: { mode: 'width', value: size } }).render();
@@ -103,6 +104,7 @@ function write(path, data) {
 
 const icon = master('icon.svg');
 const iconSmall = master('icon-small.svg');
+const iconTiny = master('icon-tiny.svg');
 const iconDark = master('icon-dark.svg');
 const iconTinted = master('icon-tinted.svg');
 const favicon = master('favicon.svg');
@@ -113,7 +115,7 @@ write(join(out, 'icon-dark-1024.png'), rgb(iconDark, 1024));
 write(join(out, 'icon-tinted-1024.png'), rgba(iconTinted, 1024));
 
 // Every legacy iOS size.
-for (const s of IOS_SIZES) write(join(out, 'ios', `icon-${s}.png`), rgb(s <= SMALL ? iconSmall : icon, s));
+for (const s of IOS_SIZES) write(join(out, 'ios', `icon-${s}.png`), rgb(s <= TINY ? iconTiny : s <= SMALL ? iconSmall : icon, s));
 
 // Web.
 const web = join(out, 'web');

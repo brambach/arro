@@ -232,9 +232,10 @@ The week card:
 
 ## Assets
 
-- Icon masters: `assets/brand/icon.svg`, `icon-dark.svg`, `icon-tinted.svg`,
-  `icon-small.svg`, `favicon.svg`, the Android layers. Written by
-  `scripts/brand/build-icon-masters.mjs` from `scripts/brand/icon-art.mjs`.
+- Icon masters: `assets/brand/icon.svg` (over 60 px), `icon-small.svg` (21 to
+  60), `icon-tiny.svg` (20 and under), `favicon.svg`, `icon-dark.svg`,
+  `icon-tinted.svg`, the Android layers. Written by
+  `scripts/brand/build-icon-masters.mjs` from `scripts/brand/stone-icon.mjs`.
 - Every PNG: `node scripts/generate-icons.mjs` (into `assets/brand/out/`, the
   `assets/*.png` paths in `app.json`, and `site/public/`).
 - Wordmark: `assets/brand/wordmark.svg`, from `scripts/brand/build-fonts.py`.

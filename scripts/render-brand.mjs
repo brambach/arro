@@ -22,6 +22,7 @@ import { homedir, tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { Resvg } from '@resvg/resvg-js';
 import { loadTheme, repoRoot } from './lib/load-theme.mjs';
+import { stoneIcon } from './brand/stone-icon.mjs';
 
 const { tokens, motionTokens, material } = await loadTheme(['tokens', 'motionTokens', 'src/components/material']);
 const {
@@ -103,16 +104,25 @@ body { font-family: system-ui, -apple-system, sans-serif; -webkit-font-smoothing
 
 // ---------------------------------------------------------------- icon sizes
 {
-  const small = readFileSync(join(repoRoot, 'assets/brand/icon-small.svg'), 'utf8');
-  const full = readFileSync(join(repoRoot, 'assets/brand/icon.svg'), 'utf8');
-  const dark = readFileSync(join(repoRoot, 'assets/brand/icon-dark.svg'), 'utf8');
-  const tinted = readFileSync(join(repoRoot, 'assets/brand/icon-tinted.svg'), 'utf8');
-  const sizes = [16, 29, 40, 60, 180];
-  const art = (svg, s) => dataPng(s <= 40 ? svg.replace(/"url\(#grain\)"/, '"none"') : svg, s);
-  const tile = (svg, s, extra = '') =>
-    `<div class="cell"><img src="${s <= 40 && svg === full ? art(small, s) : art(svg, s)}" width="${s}" height="${s}" style="border-radius:${(s * 0.2237).toFixed(2)}px;${extra}"><span>${s}</span></div>`;
-  const row = (label, wall, svg, extra = '') =>
-    `<div class="row ${wall}"><div class="label">${label}</div>${sizes.map((s) => tile(svg, s, extra)).join('')}</div>`;
+  // Each size draws from the master generate-icons.mjs uses for it: over 60 px
+  // the full art, 21 to 60 the small master, 20 and under the tiny one. The
+  // 16@2x column is the tiny master at 32, for a retina tab or home screen.
+  const detailFor = (s) => (s > 60 ? 'full' : s > 20 ? 'small' : 'tiny');
+  const sizes = [
+    [16, 16],
+    [32, '16@2x'],
+    [29, 29],
+    [40, 40],
+    [60, 60],
+    [180, 180],
+  ];
+  const tile = (tone, px, label, extra = '') => {
+    const detail = label === '16@2x' ? 'tiny' : detailFor(px);
+    const svg = stoneIcon({ tone, detail, background: tone !== 'tinted' });
+    return `<div class="cell"><img src="${dataPng(svg, px)}" width="${px}" height="${px}" style="border-radius:${(px * 0.2237).toFixed(2)}px;${extra}"><span>${label}</span></div>`;
+  };
+  const row = (label, wall, tone, extra = '') =>
+    `<div class="row ${wall}"><div class="label">${label}</div>${sizes.map(([px, l]) => tile(tone, px, l, extra)).join('')}</div>`;
   const html = `<!doctype html><html><head><meta charset="utf-8"><style>${fontFaces}
     body { background: #E9E3DA; width: 2480px; padding: 56px; }
     h1 { font: 600 44px/48px 'Fraunces Soft'; }
@@ -132,14 +142,14 @@ body { font-family: system-ui, -apple-system, sans-serif; -webkit-font-smoothing
     .tinted { background: linear-gradient(160deg, #2B2B30, #121215); display:inline-block; }
   </style></head><body>
     <h1>Saunafam app icon at every size</h1>
-    <p class="lede">Actual pixels. 40 px and under use the small master (no texture, bolder wisps). The tinted master is grayscale on transparent, shown here on a dark tile; iOS applies the tint the person picks.</p>
+    <p class="lede">Actual pixels. Over 60 px: the full art. 21 to 60 px: the small master (bigger stone, two short bold wisps). 20 px and under, and the favicon: the tiny master (biggest stone, no wisps). The tinted master is grayscale on transparent, shown here on a dark tile; iOS applies the tint the person picks.</p>
     <div class="wrap">
       <div class="big"><img src="${file('assets/brand/out/icon-1024.png')}" width="1024" height="1024"><span>1024 px, light</span></div>
       <div class="rows">
-        ${row('Light, light wallpaper', 'light', full)}
-        ${row('Light, dark wallpaper', 'dark', full)}
-        ${row('Dark variant', 'dark', dark)}
-        ${row('Tinted master (iOS tints it)', 'dark', tinted, 'background:#202024;')}
+        ${row('Light, light wallpaper', 'light', 'light')}
+        ${row('Light, dark wallpaper', 'dark', 'light')}
+        ${row('Dark variant', 'dark', 'dark')}
+        ${row('Tinted master (iOS tints it)', 'dark', 'tinted', 'background:#202024;')}
         <div class="row light"><div class="label">Favicon</div>
           ${[16, 32, 48, 180].map((s) => `<div class="cell"><img src="${dataPng(readFileSync(join(repoRoot, 'assets/brand/favicon.svg'), 'utf8'), s)}" width="${s}" height="${s}" style="border-radius:${s * 0.2}px"><span>${s}</span></div>`).join('')}
         </div>

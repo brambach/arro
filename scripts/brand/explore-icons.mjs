@@ -8,11 +8,23 @@
 import { mkdirSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { Resvg } from '@resvg/resvg-js';
-import { candidates, chosen, icon } from './icon-art.mjs';
+import { candidates as earlier, icon } from './icon-art.mjs';
+import { stoneIcon } from './stone-icon.mjs';
 import { repoRoot } from '../lib/load-theme.mjs';
 import { fontFiles, png, rounded } from './render-lib.mjs';
 
 const SIZES = [180, 60, 29, 16];
+
+// A to D are the first round (icon-art.mjs; D was the first pick). E is the
+// refinement after review (stone-icon.mjs), now the pick.
+const candidates = [
+  ...earlier.map((c) => ({ ...c, svg: (s) => icon({ ...c.opts, detail: s && s <= 40 ? 'small' : 'full' }) })),
+  {
+    id: 'E',
+    label: 'E. River stone on a bench (pick)',
+    svg: (s) => stoneIcon({ detail: !s || s > 60 ? 'full' : s > 20 ? 'small' : 'tiny' }),
+  },
+];
 const COL = 360;
 const ROW_H = 300;
 const width = 260 + COL * candidates.length;
@@ -33,22 +45,22 @@ candidates.forEach((c, i) => {
     parts.push(`<rect x="${x0 - 20}" y="${y0 - 10}" width="${COL - 20}" height="${ROW_H - 30}" rx="18" fill="${darkWall ? '#2B2B30' : '#F2F1EE'}"/>`);
     let x = x0;
     for (const s of SIZES) {
-      const img = png(icon({ ...c.opts, detail: s <= 40 ? 'small' : 'full' }), s);
+      const img = png(c.svg(s), s);
       parts.push(rounded(img, x, y0 + 200 - s, s));
       x += s + 14;
     }
   });
-  const big = png(icon(c.opts), 240);
+  const big = png(c.svg(), 240);
   parts.push(rounded(big, x0 + 30, 190 + ROW_H * 2 + 6, 240));
 });
 // The favicon variant of the pick: no wisps, a bigger stone, bolder heat.
 const fy = 190 + ROW_H * 2 + 300;
-parts.push(`<text x="40" y="${fy + 30}" font-family="Helvetica Neue" font-weight="bold" font-size="20" fill="#221F1C">Favicon (from D): no wisps, bigger stone, bolder heat</text>`);
+parts.push(`<text x="40" y="${fy + 30}" font-family="Helvetica Neue" font-weight="bold" font-size="20" fill="#221F1C">Favicon (from E): no wisps, the stone at 77% of the tile</text>`);
 let fx = 260;
 for (const s of [16, 32, 48, 180]) {
   for (const darkWall of [false, true]) {
     parts.push(`<rect x="${fx - 10}" y="${fy + 50}" width="${s + 20}" height="${Math.max(s, 48) + 20}" rx="8" fill="${darkWall ? '#2B2B30' : '#FFFFFF'}"/>`);
-    parts.push(rounded(png(icon({ ...chosen, detail: 'favicon' }), s), fx, fy + 60, s, 0.2));
+    parts.push(rounded(png(stoneIcon({ detail: 'tiny' }), s), fx, fy + 60, s, 0.2));
     fx += s + 40;
   }
 }
