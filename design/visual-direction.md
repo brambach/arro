@@ -1,3 +1,5 @@
+Written for Arro, before it became Saunafam.
+
 # Arro visual direction
 
 October 2026. An audit of how Arro looks after phase 1, and two directions for
