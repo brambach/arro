@@ -29,7 +29,7 @@ import {
   WeekStartsOn,
 } from '../data/types';
 import { paletteColor } from '../data/palette';
-import { joinNames, plural, saunaTypeLabels, sessionDetails } from '../data/saunas';
+import { joinNames, plural, saunaTypeLabels, sessionDetails, temperatureLabel } from '../data/saunas';
 import {
   WEEKDAY_LETTER,
   WEEKDAY_SHORT,
@@ -63,6 +63,7 @@ export const COPY = {
   inviteSomeone: 'Invite someone',
   backAtItTitle: 'Back at it, together',
   backAtItBody: 'A new streak starts this week. Every session counts toward it.',
+  weekKept: 'Week kept, together',
   streakRules: 'Streak rules',
   seeEveryWeek: 'See every week',
   printWall: 'Print the wall',
@@ -103,6 +104,8 @@ export interface FamilyRow {
   status: string;
   state: 'kept' | 'progress' | 'break' | 'invited';
   tap: PersonTap;
+  /** Their latest session this week: "Tonight · 20 min · 85°C", "Yesterday · 18 min with Jo". Null if none. */
+  latest: string | null;
 }
 
 export interface TodayView {
@@ -130,6 +133,8 @@ export interface TodayView {
   drafts: { clientId: string; label: string }[];
   /** Sessions still in the outbox. */
   waiting: number;
+  /** Everyone joined has kept this week (or is on a break), with two or more people: "Week kept, together". */
+  weekKept: boolean;
 }
 
 export interface Slat {
@@ -379,6 +384,34 @@ export function whenLabel(localDate: string, startedAt: string, today: string): 
   if (localDate === today) return `Today · ${time}`;
   if (localDate === addDays(today, -1)) return `Yesterday · ${time}`;
   return `${WEEKDAY_SHORT[weekdayIndex(localDate)]}, ${shortDate(localDate)} · ${time}`;
+}
+
+/**
+ * A person's latest session this week, for their row: the day ("Tonight" after
+ * 5 PM today, "Today", "Yesterday", then the weekday), the minutes, then who they
+ * went with, or the place, or the heat. "Tonight · 20 min · 85°C",
+ * "Yesterday · 18 min with Jo", "Tuesday · 15 min · The Y".
+ */
+export function latestLine(
+  s: Pick<Session, 'localDate' | 'startedAt' | 'durationMinutes' | 'place' | 'tempC'>,
+  today: string,
+  withNames: string[],
+  unit: TemperatureUnit,
+): string {
+  const started = new Date(s.startedAt);
+  const day =
+    s.localDate === today
+      ? started.getHours() >= 17
+        ? 'Tonight'
+        : 'Today'
+      : s.localDate === addDays(today, -1)
+        ? 'Yesterday'
+        : weekdayName(s.localDate);
+  const head = `${day} · ${s.durationMinutes} min`;
+  if (withNames.length) return `${head} with ${joinNames(withNames)}`;
+  if (s.place) return `${head} · ${s.place}`;
+  if (s.tempC != null) return `${head} · ${temperatureLabel(s.tempC, unit)}`;
+  return head;
 }
 
 /** The letters for a week starting on `weekStartsOn`: M T W T F S S, or S M T W T F S. */
@@ -650,11 +683,23 @@ export function buildView(input: ViewInput): AppView {
     allSessions
       .filter((s) => s.memberId === id && s.localDate >= weekOf(id).weekStart)
       .sort((a, b) => b.startedAt.localeCompare(a.startedAt))[0];
+  const latestOf = (s: Session | undefined): string | null => {
+    if (!s) return null;
+    const groupId = s.sharedId ?? s.id;
+    const others = s.sharedId
+      ? allSessions
+          .filter((x) => (x.sharedId ?? x.id) === groupId && x.memberId !== s.memberId)
+          .map((x) => (x.memberId === myId ? 'you' : nameOf(x.memberId)))
+          .sort((a, b) => Number(a === 'you') - Number(b === 'you'))
+      : [];
+    return latestLine(s, today, [...new Set(others)], unit);
+  };
   const rowFor = (m: MemberView): FamilyRow => {
     const w = weekOf(m.id);
-    const latest = latestThisWeek(m.id);
-    const sessionTap: PersonTap = latest ? { kind: 'session', sessionId: latest.sharedId ?? latest.id } : { kind: 'none' };
-    if (w.keptThisWeek) return { member: m, dots: weekDots(w.countedDays, w.goal), status: COPY.kept, state: 'kept', tap: sessionTap };
+    const latestSession = latestThisWeek(m.id);
+    const latest = latestOf(latestSession);
+    const sessionTap: PersonTap = latestSession ? { kind: 'session', sessionId: latestSession.sharedId ?? latestSession.id } : { kind: 'none' };
+    if (w.keptThisWeek) return { member: m, dots: weekDots(w.countedDays, w.goal), status: COPY.kept, state: 'kept', tap: sessionTap, latest };
     if (w.pausedUntil) {
       return {
         member: m,
@@ -662,6 +707,7 @@ export function buildView(input: ViewInput): AppView {
         status: `On a break until ${untilLabel(w.pausedUntil, today)}`,
         state: 'break',
         tap: m.isMe ? sessionTap : { kind: 'none' },
+        latest,
       };
     }
     return {
@@ -670,10 +716,11 @@ export function buildView(input: ViewInput): AppView {
       status: `${w.countedDays} of ${w.goal}`,
       state: 'progress',
       tap: m.isMe ? sessionTap : { kind: 'nudge', memberId: m.id },
+      latest,
     };
   };
   const joinedRows = byJoin.map((m) => rowFor(members[m.id]));
-  const invitedRows: FamilyRow[] = invited.map((m) => ({ member: m, dots: [], status: COPY.invited, state: 'invited', tap: { kind: 'invite' } }));
+  const invitedRows: FamilyRow[] = invited.map((m) => ({ member: m, dots: [], status: COPY.invited, state: 'invited', tap: { kind: 'invite' }, latest: null }));
 
   // Today.
   const s = family.week;
@@ -687,7 +734,7 @@ export function buildView(input: ViewInput): AppView {
       : { kind: 'yesterday', label: COPY.logYesterday, date: lastDay };
   const todayView: TodayView = {
     dateLabel: dateLabel(now),
-    greeting: `${greetingFor(now)}, ${me.name}.`,
+    greeting: `${greetingFor(now)}, ${me.name}`,
     you: {
       dots: weekDots(myWeek.countedDays, myWeek.goal),
       countedDays: myWeek.countedDays,
@@ -728,6 +775,7 @@ export function buildView(input: ViewInput): AppView {
     family: [...joinedRows, ...invitedRows],
     drafts: (input.drafts ?? []).map((d) => ({ clientId: d.input.clientId, label: DRAFT_NOTICE })),
     waiting: pendingEntries.length,
+    weekKept: !solo && joinedRows.some((r) => r.state === 'kept') && joinedRows.every((r) => r.state === 'kept' || r.state === 'break'),
   };
 
   // Week.

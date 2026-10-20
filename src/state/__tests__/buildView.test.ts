@@ -9,6 +9,7 @@ import {
   buildView,
   familyLine,
   hoursLabel,
+  latestLine,
   pastStatusLabel,
   pastWeekOutcome,
   placeholderFamily,
@@ -48,7 +49,7 @@ describe('every preview scenario', () => {
   it.each(PREVIEW_SCENARIOS.map((s) => s.id))('%s builds a view', (id) => {
     const v = viewFor(id);
     expect(v.me.id).toBe('sam');
-    expect(v.today.greeting).toMatch(/^Good (morning|afternoon|evening), Sam\.$/);
+    expect(v.today.greeting).toMatch(/^Good (morning|afternoon|evening), Sam$/);
   });
 });
 
@@ -57,7 +58,7 @@ describe('Today', () => {
 
   it('greets with the date and time of day', () => {
     expect(v.today.dateLabel).toBe('Thursday, October 22');
-    expect(v.today.greeting).toBe('Good afternoon, Sam.');
+    expect(v.today.greeting).toBe('Good afternoon, Sam');
   });
 
   it('shows your slat: dots and "2 of 3 this week"', () => {
@@ -96,6 +97,33 @@ describe('Today', () => {
     // Kept opens their latest session.
     const maya = v.today.family[1].tap;
     expect(maya.kind === 'session' && v.sessions[maya.sessionId].title).toBe('Maya had a sauna');
+  });
+
+  it('each row says their latest session this week: the day, minutes, then who with, the place or the heat', () => {
+    const rows = Object.fromEntries(v.today.family.map((r) => [r.member.name, r.latest]));
+    // Wednesday's shared session at the lake cabin, from Thursday.
+    expect(rows.Sam).toBe('Yesterday · 25 min with Maya and Jo');
+    expect(rows.Jo).toBe('Yesterday · 25 min with Maya and you');
+    expect(rows.Maya).toMatch(/^Today · \d+ min · /);
+    expect(viewFor('newFamily').today.family.every((r) => r.latest === null)).toBe(true);
+  });
+
+  it('latestLine: Tonight after 5 PM, the weekday further back, and a fallback to the heat', () => {
+    const base = { durationMinutes: 20, place: null, tempC: 85 };
+    expect(latestLine({ ...base, localDate: '2026-10-22', startedAt: new Date(2026, 9, 22, 18).toISOString() }, '2026-10-22', [], 'C')).toBe('Tonight · 20 min · 85°C');
+    expect(latestLine({ ...base, localDate: '2026-10-22', startedAt: new Date(2026, 9, 22, 9).toISOString() }, '2026-10-22', [], 'C')).toBe('Today · 20 min · 85°C');
+    expect(latestLine({ ...base, place: 'The Y', localDate: '2026-10-20', startedAt: new Date(2026, 9, 20, 9).toISOString() }, '2026-10-22', [], 'C')).toBe('Tuesday · 20 min · The Y');
+    expect(latestLine({ ...base, tempC: null, localDate: '2026-10-19', startedAt: new Date(2026, 9, 19, 9).toISOString() }, '2026-10-22', [], 'C')).toBe('Monday · 20 min');
+  });
+
+  it('weekKept only once everyone joined has kept (or is on a break)', () => {
+    expect(v.today.weekKept).toBe(false);
+    expect(viewFor('lastOne').today.weekKept).toBe(false);
+    expect(viewFor('solo').today.weekKept).toBe(false);
+    const sc = buildPreviewScenario('lastOne', REAL);
+    const kept = viewFor('lastOne', { previewSent: [logged(sc.now)] });
+    expect(kept.today.you.kept).toBe(true);
+    expect(kept.today.weekKept).toBe(true);
   });
 
   it('a break reads "On a break until Saturday", and isn’t a nudge', () => {
@@ -425,7 +453,7 @@ describe('optimistic changes', () => {
   it('Edit profile shows the new name everywhere', () => {
     const v = buildView({ ...base(), optimistic: { ...NO_OPTIMISTIC, profile: { name: 'Sammy' } } });
     expect(v.me.name).toBe('Sammy');
-    expect(v.today.greeting).toBe('Good afternoon, Sammy.');
+    expect(v.today.greeting).toBe('Good afternoon, Sammy');
   });
 
   function base(): ViewInput {
@@ -452,3 +480,32 @@ describe('the preview family', () => {
     expect(v.today.you.kept).toBe(true);
   });
 });
+
+/** A session Sam logged in the preview, half an hour before the preview clock. */
+function logged(now: Date): OutboxEntry {
+  const startedAt = new Date(now.getTime() - 30 * 60_000).toISOString();
+  return {
+    input: {
+      familyId: 'preview-family',
+      clientId: '00000000-0000-4000-8000-00000000f00d',
+      startedAt,
+      durationMinutes: 20,
+      saunaType: 'traditional',
+      rounds: 1,
+      tempC: 85,
+      humidityPct: null,
+      coldPlunge: false,
+      coldMinutes: null,
+      place: null,
+      note: null,
+      source: 'timer',
+      withIds: [],
+    },
+    memberId: 'sam',
+    photoUri: null,
+    createdAt: startedAt,
+    attempts: 0,
+    nextAttemptAt: 0,
+    lastError: null,
+  };
+}
