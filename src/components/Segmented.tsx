@@ -57,7 +57,12 @@ export function Segmented<T extends string>({ options, value, onChange, accessib
             accessibilityLabel={o.label}
             accessibilityState={{ selected: on, disabled: !!o.disabled }}
           >
-            <Text style={[type.bodySmallStrong, { color: on ? palette.char : palette.smoke }, o.disabled && styles.disabled]}>
+            <Text
+              style={[type.bodySmallStrong, { color: on ? palette.char : palette.smoke }, o.disabled && styles.disabled]}
+              numberOfLines={1}
+              adjustsFontSizeToFit
+              minimumFontScale={0.6}
+            >
               {o.label}
             </Text>
           </Pressable>

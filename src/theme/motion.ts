@@ -112,8 +112,8 @@ export const moments = {
   finishCool: {
     /** The glow cools toward lake. */
     glow: { duration: 700, easing: easing.leave },
-    /** The room lightens back to birch as the log sheet comes up. */
-    room: { duration: 800, easing: easing.settle },
+    /** The room lightens back to birch as the log sheet comes up: an even ease, so it keeps pace with the sheet. */
+    room: { duration: 800, easing: easing.leave },
   },
   /** 5. Saving a session: the next ember dot ignites. */
   checkInIgnite: { ...timing.ember, fromScale: 0.2 },

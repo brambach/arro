@@ -54,6 +54,14 @@ export const textPairs: TextPair[] = [
   { fg: alpha.steam72, bg: p.char, over: p.char, use: '"Time to cool off at 7:27 PM"', size: 15, weight: 400 },
   { fg: alpha.steam62, bg: p.char, over: p.char, use: 'small caps in the room', size: 12, weight: 600 },
   { fg: alpha.steam60, bg: p.char, over: p.char, use: '"Cancel" in the room', size: 17, weight: 500 },
+  // The room's panels and dialogs (M8): char lifted a little.
+  { fg: p.steam, bg: alpha.roomPanel, use: 'dialog titles and buttons in the room', size: 15, weight: 600 },
+  { fg: alpha.steam72, bg: alpha.roomPanel, over: alpha.roomPanel, use: 'dialog body in the room', size: 15, weight: 400 },
+  { fg: alpha.steam62, bg: alpha.roomPanel, over: alpha.roomPanel, use: '"Target", "Sauna" small caps on the room panel', size: 12, weight: 600 },
+  { fg: alpha.steam60, bg: alpha.roomPanel, over: alpha.roomPanel, use: '"Cancel session", "Discard" in a room dialog', size: 17, weight: 600 },
+  { fg: alpha.steam72, bg: p.char, over: p.char, use: 'an unpicked chip in the room', size: 15, weight: 600 },
+  // The log sheet (M8), birch.
+  { fg: p.char, bg: p.aspen, use: 'sauna tile names on aspen', size: 15, weight: 600 },
   // Avatars: initials on every member color.
   ...memberPalette.map(
     (color, i): TextPair => ({

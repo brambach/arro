@@ -1,5 +1,5 @@
 import React, { memo, useCallback, useEffect, useRef, useState } from 'react';
-import { AccessibilityInfo, AppState as RNAppState, Image, Pressable, StyleSheet, Text, useWindowDimensions, View } from 'react-native';
+import { AccessibilityInfo, AppState as RNAppState, Image, Pressable, ScrollView, StyleSheet, Text, useWindowDimensions, View } from 'react-native';
 import Animated, {
   useAnimatedStyle,
   useSharedValue,
@@ -77,6 +77,9 @@ import { LogSessionSheet } from './LogSessionScreen';
  * Reduce Motion: no morph or rise; the room crossfades in and out.
  */
 
+/** How bright the numerals stay while the clock is paused. */
+const PAUSED_NUMERALS = 0.72;
+
 type Stage = 'open' | 'finishing' | 'sheet' | 'leaving';
 type Dialog = null | 'cancel' | 'stale';
 
@@ -96,6 +99,8 @@ export function TimerScreen({ navigation, route }: RootStackScreenProps<'Timer'>
 
   const [stage, setStage] = useState<Stage>('open');
   const [landed, setLanded] = useState(false);
+  // The status bar turns light once the door has covered the top of the screen.
+  const [dark, setDark] = useState(false);
   const [lightened, setLightened] = useState(false);
   const [frozen, setFrozen] = useState<{ timer: TimerState; at: Date } | null>(null);
   const [result, setResult] = useState<{ prefill: TimerResult; askTime: boolean } | null>(null);
@@ -143,6 +148,8 @@ export function TimerScreen({ navigation, route }: RootStackScreenProps<'Timer'>
   const room = useSharedValue(origin ? 1 : 0);
   const face = useSharedValue(0);
   const settle = useSharedValue(0);
+  // The numerals dim a little while the heat clock is paused (cooling off).
+  const paused = useSharedValue(1);
 
   // The door moves once the room is on screen (the stack's transitionEnd): a
   // first frame that took long to draw would otherwise eat the start of the move.
@@ -177,7 +184,10 @@ export function TimerScreen({ navigation, route }: RootStackScreenProps<'Timer'>
       room.set(0);
       room.set(withTiming(1, timing.utility));
       face.set(withTiming(1, timing.utility));
-      const t = setTimeout(land, timing.utility.duration);
+      const t = setTimeout(() => {
+        setDark(true);
+        land();
+      }, timing.utility.duration);
       return () => clearTimeout(t);
     }
     const spring = moments.doorCloses.morph;
@@ -196,7 +206,11 @@ export function TimerScreen({ navigation, route }: RootStackScreenProps<'Timer'>
     // The room's contents settle in once the door has closed behind you.
     face.set(withDelay(springTouchdownMs(spring), withTiming(1, timing.settle)));
     const t = setTimeout(land, springTouchdownMs(spring));
-    return () => clearTimeout(t);
+    const bar = setTimeout(() => setDark(true), springTouchdownMs(spring) / 2);
+    return () => {
+      clearTimeout(t);
+      clearTimeout(bar);
+    };
     // Opens once.
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [reduceMotion, onScreen]);
@@ -216,7 +230,7 @@ export function TimerScreen({ navigation, route }: RootStackScreenProps<'Timer'>
   const faceStyle = useAnimatedStyle(() => ({ opacity: face.value * room.value }));
   const settleStyle = useAnimatedStyle(() => ({ opacity: 1 - settle.value }));
   const numeralStyle = useAnimatedStyle(() => ({
-    opacity: room.value,
+    opacity: room.value * paused.value,
     transform: [{ scale: 1 - 0.03 * settle.value }],
   }));
 
@@ -256,10 +270,11 @@ export function TimerScreen({ navigation, route }: RootStackScreenProps<'Timer'>
       if (!prefill) return;
       const cool = reduceMotion === false ? moments.finishCool.glow : timing.utility;
       settle.set(withTiming(1, cool));
+      // The sheet mounts now, parked below the screen, while the glow cools.
+      setResult({ prefill, askTime });
       // The success haptic lands with the cooled glow, then the room lightens as the sheet rises.
       setTimeout(() => {
         haptics.finish();
-        setResult({ prefill, askTime });
         setStage('sheet');
         room.set(withTiming(0, reduceMotion === false ? moments.finishCool.room : timing.utility));
         setTimeout(() => setLightened(true), moments.finishCool.room.duration / 3);
@@ -293,6 +308,9 @@ export function TimerScreen({ navigation, route }: RootStackScreenProps<'Timer'>
   // ─── Actions ───────────────────────────────────────────────────────────────
 
   const cooling = !!timer && phase(timer) === 'cooling';
+  useEffect(() => {
+    paused.set(withTiming(cooling ? PAUSED_NUMERALS : 1, moments.finishCool.glow));
+  }, [cooling, paused]);
   const throwLoyly = () => {
     setBurst((b) => b + 1);
     // The water hits the stones on the tap: the burst starts on the same frame.
@@ -326,9 +344,82 @@ export function TimerScreen({ navigation, route }: RootStackScreenProps<'Timer'>
   const big = fontScale > 1.35;
   const roundsLeft = !!timer && timer.rounds.length < LIMITS.rounds.max;
 
+  const roomFace = timer ? (
+    <>
+          <Animated.View style={[styles.top, settleStyle]}>
+        <Pressable
+          onPress={leave}
+          hitSlop={space.s8}
+          style={styles.hide}
+          accessibilityRole="button"
+          accessibilityLabel="Back to Today"
+          accessibilityHint="The timer keeps running"
+        >
+          <HideMark />
+        </Pressable>
+        <Text style={[type.caption, styles.caps]} maxFontSizeMultiplier={maxFontScale.caption} accessibilityRole="header">
+          {roomHeading(timer)}
+        </Text>
+        <View style={styles.hide} />
+      </Animated.View>
+
+      <ClockFace
+        timer={timer}
+        at={at}
+        clock={clock}
+        cooling={cooling}
+        settleStyle={settleStyle}
+        numeralStyle={numeralStyle}
+        onTarget={() => setPanel(true)}
+        width={W}
+        compact={big}
+      />
+
+      <Animated.View style={settleStyle}>
+        <Text style={[type.bodySmall, styles.line]}>{roomLine(timer, at)}</Text>
+        <View style={styles.loylyWrap}>
+          <View style={big ? styles.loylyBig : styles.loyly}>
+            <SolidButton
+              tone="ash"
+              title="Throw löyly"
+              accessibilityHint="A burst of steam. Nothing is saved."
+              icon={<Icon name="ladle" size={24} color={palette.steam} />}
+              onPress={throwLoyly}
+            />
+          </View>
+        </View>
+      </Animated.View>
+
+      <View style={big ? styles.gapBig : [styles.gap, { height: H * 0.145 }]} />
+
+      <Animated.View style={[big ? styles.actionsStacked : styles.actions, settleStyle]}>
+        {big ? (
+          <>
+            <TextAction label="Done" tone="steam" onPress={() => finish(false)} />
+            <TextAction label={cooling ? 'Back in the heat' : 'Add a round'} tone="steam" onPress={round} disabled={!cooling && !roundsLeft} />
+            <TextAction label="Cancel" tone="steamDim" onPress={() => setDialog('cancel')} />
+          </>
+        ) : (
+          <>
+            <TextAction label="Cancel" tone="steamDim" onPress={() => setDialog('cancel')} style={styles.actionLeft} />
+            <TextAction
+              label={cooling ? 'Back in the heat' : 'Add a round'}
+              tone="steam"
+              onPress={round}
+              disabled={!cooling && !roundsLeft}
+              accessibilityHint={cooling ? 'Starts the next round' : 'Pauses the heat clock while you cool off'}
+              style={styles.actionMid}
+            />
+            <TextAction label="Done" tone="steam" onPress={() => finish(false)} accessibilityHint="Opens the log form, filled in" style={styles.actionRight} />
+          </>
+        )}
+      </Animated.View>
+    </>
+  ) : null;
+
   return (
     <View style={StyleSheet.absoluteFill}>
-      <StatusBar style={landed && !lightened ? 'light' : 'dark'} animated />
+      <StatusBar style={dark && !lightened ? 'light' : 'dark'} animated />
 
       <Animated.View style={[styles.door, doorStyle]} pointerEvents="none">
         <Animated.View style={[{ width: W, height: H }, insideStyle]}>
@@ -365,73 +456,14 @@ export function TimerScreen({ navigation, route }: RootStackScreenProps<'Timer'>
           style={[styles.face, { paddingTop: insets.top - space.s8, paddingBottom: insets.bottom + space.s8 }, faceStyle]}
           pointerEvents={stage === 'open' && landed ? 'box-none' : 'none'}
         >
-          <Animated.View style={[styles.top, settleStyle]}>
-            <Pressable
-              onPress={leave}
-              hitSlop={space.s8}
-              style={styles.hide}
-              accessibilityRole="button"
-              accessibilityLabel="Back to Today"
-              accessibilityHint="The timer keeps running"
-            >
-              <HideMark />
-            </Pressable>
-            <Text style={[type.caption, styles.caps]} maxFontSizeMultiplier={maxFontScale.caption} accessibilityRole="header">
-              {roomHeading(timer)}
-            </Text>
-            <View style={styles.hide} />
-          </Animated.View>
-
-          <ClockFace
-            timer={timer}
-            at={at}
-            clock={clock}
-            cooling={cooling}
-            settleStyle={settleStyle}
-            numeralStyle={numeralStyle}
-            onTarget={() => setPanel(true)}
-            width={W}
-          />
-
-          <Animated.View style={settleStyle}>
-            <Text style={[type.bodySmall, styles.line]}>{roomLine(timer, at)}</Text>
-            <View style={styles.loylyWrap}>
-              <View style={styles.loyly}>
-                <SolidButton
-                  tone="ash"
-                  title="Throw löyly"
-                  accessibilityHint="A burst of steam. Nothing is saved."
-                  icon={<Icon name="ladle" size={24} color={palette.steam} />}
-                  onPress={throwLoyly}
-                />
-              </View>
-            </View>
-          </Animated.View>
-
-          <View style={[styles.gap, { height: H * 0.145 }]} />
-
-          <Animated.View style={[big ? styles.actionsStacked : styles.actions, settleStyle]}>
-            {big ? (
-              <>
-                <TextAction label="Done" tone="steam" onPress={() => finish(false)} />
-                <TextAction label={cooling ? 'Back in the heat' : 'Add a round'} tone="steam" onPress={round} disabled={!cooling && !roundsLeft} />
-                <TextAction label="Cancel" tone="steamDim" onPress={() => setDialog('cancel')} />
-              </>
-            ) : (
-              <>
-                <TextAction label="Cancel" tone="steamDim" onPress={() => setDialog('cancel')} style={styles.actionLeft} />
-                <TextAction
-                  label={cooling ? 'Back in the heat' : 'Add a round'}
-                  tone="steam"
-                  onPress={round}
-                  disabled={!cooling && !roundsLeft}
-                  accessibilityHint={cooling ? 'Starts the next round' : 'Pauses the heat clock while you cool off'}
-                  style={styles.actionMid}
-                />
-                <TextAction label="Done" tone="steam" onPress={() => finish(false)} accessibilityHint="Opens the log form, filled in" style={styles.actionRight} />
-              </>
-            )}
-          </Animated.View>
+          {big ? (
+            // Large text: the room scrolls, the arc steps aside, nothing overlaps.
+            <ScrollView contentContainerStyle={styles.bigScroll} showsVerticalScrollIndicator={false}>
+              {roomFace}
+            </ScrollView>
+          ) : (
+            roomFace
+          )}
         </Animated.View>
       ) : null}
 
@@ -480,6 +512,7 @@ export function TimerScreen({ navigation, route }: RootStackScreenProps<'Timer'>
         <LogSessionSheet
           params={{ fromTimer: true, prefill: result.prefill, askTime: result.askTime }}
           onClosed={close}
+          hold={stage !== 'sheet'}
         />
       ) : null}
     </View>
@@ -496,6 +529,7 @@ function ClockFace({
   numeralStyle,
   onTarget,
   width,
+  compact,
 }: {
   timer: TimerState;
   at: Date;
@@ -505,21 +539,23 @@ function ClockFace({
   numeralStyle: ReturnType<typeof useAnimatedStyle>;
   onTarget: () => void;
   width: number;
+  /** Large text: no arc, just the numerals and the line under them. */
+  compact: boolean;
 }) {
   const [box, setBox] = useState({ w: width, h: 0 });
   // The mockup's ring is 0.4 of the screen's width; it shrinks only when the space does (large text).
   const radius = Math.min(width * 0.4, box.h / 2 - space.s16);
-  const showArc = radius >= width * 0.3;
+  const showArc = !compact && radius >= width * 0.3;
   const heat = heatMs(timer, at);
   return (
-    <View style={styles.clockFace} onLayout={(e) => setBox({ w: e.nativeEvent.layout.width, h: e.nativeEvent.layout.height })}>
+    <View style={compact ? styles.clockCompact : styles.clockFace} onLayout={(e) => setBox({ w: e.nativeEvent.layout.width, h: e.nativeEvent.layout.height })}>
       {box.h > 0 && showArc ? (
         <Animated.View style={[styles.arc, settleStyle]}>
           <TimerArc radius={radius} lit={litDots(arcProgress(timer, at))} dim={cooling} />
         </Animated.View>
       ) : null}
       {/* The ring centers on the figures, not on the figures and the line under them (the mockup). */}
-      <Animated.View style={[styles.numerals, numeralStyle, cooling && styles.numeralsCooling]}>
+      <Animated.View style={[styles.numerals, numeralStyle]}>
         <FixedDigits
           value={clock}
           accessibilityLabel={`${spokenClock(heat)} in the heat${cooling ? ', paused while you cool off' : ''}`}
@@ -609,7 +645,7 @@ function TargetPanel({
         <Pressable style={StyleSheet.absoluteFill} onPress={onClose} importantForAccessibility="no" accessibilityElementsHidden />
       </Animated.View>
       <Animated.View style={[styles.panel, { paddingBottom: bottomInset + space.s16 }, card]} accessibilityViewIsModal>
-        <Text style={[type.caption, styles.caps]} maxFontSizeMultiplier={maxFontScale.caption} accessibilityRole="header">
+        <Text style={[type.caption, styles.panelCaps]} maxFontSizeMultiplier={maxFontScale.caption} accessibilityRole="header">
           Target
         </Text>
         <View style={styles.chips}>
@@ -624,7 +660,7 @@ function TargetPanel({
             />
           ))}
         </View>
-        <Text style={[type.caption, styles.caps, styles.panelGap]} maxFontSizeMultiplier={maxFontScale.caption} accessibilityRole="header">
+        <Text style={[type.caption, styles.panelCaps, styles.panelGap]} maxFontSizeMultiplier={maxFontScale.caption} accessibilityRole="header">
           Sauna
         </Text>
         <View style={styles.chips}>
@@ -661,18 +697,22 @@ const styles = StyleSheet.create({
   clockFace: { flex: 1, alignItems: 'center', justifyContent: 'center', paddingTop: space.s16 },
   arc: { position: 'absolute' },
   numerals: { alignItems: 'center', marginTop: space.s40 },
-  numeralsCooling: { opacity: 0.72 },
   sub: { flexDirection: 'row', alignItems: 'center', gap: space.s8, paddingVertical: space.s4 },
   subText: { color: alpha.steam62 },
   line: { color: alpha.steam72, textAlign: 'center', paddingHorizontal: layout.inset },
   loylyWrap: { alignItems: 'center', marginTop: space.s32 },
   loyly: { width: '47%' },
   gap: { flexShrink: 1, minHeight: space.s24 },
+  gapBig: { height: space.s32 },
+  bigScroll: { paddingBottom: space.s24 },
+  clockCompact: { alignItems: 'center', paddingVertical: space.s24 },
+  loylyBig: { alignSelf: 'stretch', marginHorizontal: layout.inset },
   actions: { flexDirection: 'row', alignItems: 'center', paddingHorizontal: layout.inset },
   actionLeft: { flex: 1, alignItems: 'flex-start' },
   actionMid: { flex: 1.4, alignItems: 'center' },
   actionRight: { flex: 1, alignItems: 'flex-end' },
   actionsStacked: { alignItems: 'center', gap: space.s4 },
+  panelCaps: { color: alpha.steam62 },
   panelScrim: { backgroundColor: alpha.roomScrim },
   panel: {
     position: 'absolute',

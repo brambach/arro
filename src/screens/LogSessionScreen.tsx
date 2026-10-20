@@ -81,7 +81,20 @@ export function LogSessionScreen({ navigation, route }: RootStackScreenProps<'Lo
  * in coal, and only after the first Save. Saving is optimistic: the session goes
  * into the outbox, the sheet closes with the save haptic, and Today has it at once.
  */
-export function LogSessionSheet({ params, onClosed }: { params: Params; onClosed: () => void }) {
+export function LogSessionSheet({
+  params,
+  onClosed,
+  hold = false,
+}: {
+  params: Params;
+  onClosed: () => void;
+  /**
+   * Mounted but parked below the screen until this turns false. The timer
+   * mounts the sheet as its glow starts to cool, so drawing it never stalls
+   * the moment the room lightens.
+   */
+  hold?: boolean;
+}) {
   const app = useApp();
   const view = useView();
   const insets = useSafeAreaInsets();
@@ -118,21 +131,26 @@ export function LogSessionSheet({ params, onClosed }: { params: Params; onClosed
   const y = useSharedValue(sheetH);
   const scrim = useSharedValue(0);
   const fade = useSharedValue(1);
+  // The fields below the first screenful are drawn once the sheet is up, so
+  // mounting it is light and its rise never stalls.
+  const [rest, setRest] = useState(false);
   const shown = useRef(false);
   useEffect(() => {
-    if (reduceMotion === null || shown.current) return;
+    if (reduceMotion === null || hold || shown.current) return;
     shown.current = true;
+    // A beat after it lands, so the room has finished lightening first.
+    const later = () => setTimeout(() => setRest(true), moments.roomPanel.duration);
     if (reduceMotion) {
       y.set(0);
       fade.set(0);
-      fade.set(withTiming(1, timing.utility));
+      fade.set(withTiming(1, timing.utility, (f) => f && scheduleOnRN(later)));
     } else {
-      y.set(withSpring(0, moments.sheet.open));
+      y.set(withSpring(0, moments.sheet.open, (f) => f && scheduleOnRN(later)));
     }
     scrim.set(withTiming(1, moments.sheet.scrim));
     // Opens once.
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [reduceMotion]);
+  }, [reduceMotion, hold]);
 
   const closed = useRef(false);
   const slideAway = useCallback(
@@ -247,12 +265,18 @@ export function LogSessionSheet({ params, onClosed }: { params: Params; onClosed
         else if (cmd === 'form-scroll') scroll.current?.scrollTo({ y: Number(args.y ?? 0), animated: false });
         else if (cmd === 'form-fill') setForm((f) => ({ ...f, temp: args.temp ?? f.temp, humidity: args.hum ?? f.humidity, place: args.place ?? f.place, note: args.note ?? f.note, coldPlunge: args.cold === '1' || f.coldPlunge }));
         else if (cmd === 'form-close') askClose();
+        else if (cmd === 'form-discard') slideAway();
       }),
     // Dev captures only; the latest handlers each time.
   );
 
   const title = params.fromTimer ? 'Log this session' : draft ? 'Fix this session' : 'Log a session';
   const wide = fontScale <= 1.3;
+  const saveButton = (
+    <View style={wide ? undefined : [styles.section, { paddingBottom: insets.bottom }]}>
+      <SolidButton size="large" title={draft ? 'Save again' : 'Save session'} onPress={save} disabled={saving} />
+    </View>
+  );
 
   return (
     <View style={StyleSheet.absoluteFill}>
@@ -291,7 +315,6 @@ export function LogSessionSheet({ params, onClosed }: { params: Params; onClosed
         >
           {refusal ? (
             <View style={styles.refusal} accessibilityRole="alert">
-              <Icon name="pencil" size={20} color={palette.coal} />
               <View style={styles.flex}>
                 <Text style={[type.bodyStrong, styles.coal]}>Couldn’t save this one</Text>
                 <Text style={type.bodySmall}>{refusal} Fix it here and save again.</Text>
@@ -367,6 +390,8 @@ export function LogSessionSheet({ params, onClosed }: { params: Params; onClosed
             </View>
           </View>
 
+          {rest ? (
+          <>
           {/* Temperature and humidity */}
           <View onLayout={spot('temp')} style={[styles.section, wide && styles.row]}>
             <Field
@@ -516,11 +541,15 @@ export function LogSessionSheet({ params, onClosed }: { params: Params; onClosed
               <TextAction label="Throw this one away" tone="coal" onPress={discardDraft} />
             </View>
           ) : null}
+          </>
+          ) : (
+            <View style={styles.restSpace} />
+          )}
+          {wide ? null : saveButton}
         </ScrollView>
 
-        <View style={[styles.foot, { paddingBottom: insets.bottom + space.s12 }]}>
-          <SolidButton size="large" title={draft ? 'Save again' : 'Save session'} onPress={save} disabled={saving} />
-        </View>
+        {/* With large text the button scrolls with the form, so the fields keep the room. */}
+        {wide ? <View style={[styles.foot, { paddingBottom: insets.bottom + space.s12 }]}>{saveButton}</View> : null}
       </Animated.View>
 
       <ConfirmDialog
@@ -764,5 +793,7 @@ const styles = StyleSheet.create({
   photoButton: { flex: 1, alignItems: 'center', justifyContent: 'center', gap: space.s8, padding: space.s16 },
   photoDivider: { width: StyleSheet.hairlineWidth, marginVertical: space.s24, backgroundColor: palette.grain },
   photoActions: { flexDirection: 'row', justifyContent: 'space-between', marginTop: space.s8 },
+  /** Holds the scroll height the later fields take, so nothing jumps when they arrive. */
+  restSpace: { height: 1200 },
   foot: { paddingTop: space.s12, paddingHorizontal: layout.inset, backgroundColor: palette.birch, boxShadow: depth.tabBar },
 });
