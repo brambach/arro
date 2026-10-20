@@ -1,5 +1,5 @@
 import React, { useEffect, useRef, useState } from 'react';
-import { Share, StyleSheet, Text, View, useWindowDimensions } from 'react-native';
+import { DeviceEventEmitter, Share, StyleSheet, Text, View, useWindowDimensions } from 'react-native';
 import Animated, { useAnimatedStyle, useSharedValue, withTiming } from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { RootStackScreenProps } from '../navigation/types';
@@ -18,6 +18,7 @@ import { SolidButton } from '../components/SolidButton';
 import { SteamWisps } from '../components/SteamWisps';
 import { TextAction } from '../components/TextAction';
 import { milestoneColumns, milestoneSlatHeight } from '../components/milestoneLayout';
+import { devDriverOn } from '../dev/DevDriver';
 
 /**
  * A streak milestone, 4, 8, 12, 26 or 52 weeks, family or personal (Key
@@ -70,6 +71,27 @@ export function MilestoneScreen({ navigation, route }: RootStackScreenProps<'Mil
     return () => clearTimeout(t);
   }, [arrived, reduceMotion, weeksForWall]);
 
+  // Dev captures only: the driver can press Share, or pull the rendered image onto the Mac.
+  useEffect(() => {
+    if (!devDriverOn || !m) return;
+    const a = DeviceEventEmitter.addListener('devShare', () => {
+      share.current
+        ?.toPng()
+        .then((b64) => Share.share({ url: `data:image/png;base64,${b64}` }))
+        .catch(() => undefined);
+    });
+    const b = DeviceEventEmitter.addListener('devShareImage', () => {
+      share.current
+        ?.toPng()
+        .then((b64) => fetch('http://localhost:8099/upload', { method: 'POST', body: b64 }))
+        .catch(() => undefined);
+    });
+    return () => {
+      a.remove();
+      b.remove();
+    };
+  }, [m]);
+
   const numberStyle = useAnimatedStyle(() => ({
     opacity: Math.min(1, n.value * 2),
     transform: [{ scale: reduceMotion === true ? 1 : 0.6 + 0.4 * n.value }],
@@ -95,7 +117,8 @@ export function MilestoneScreen({ navigation, route }: RootStackScreenProps<'Mil
     setSharing(true);
     try {
       const b64 = await share.current?.toPng();
-      if (b64) await Share.share({ url: `data:image/png;base64,${b64}`, message: `${m.title}. ${m.subtitle}` });
+      // The image alone: with a message too, iOS leads the sheet with the text instead of the picture.
+      if (b64) await Share.share({ url: `data:image/png;base64,${b64}` });
     } catch {
       haptics.error();
     } finally {

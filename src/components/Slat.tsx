@@ -108,7 +108,10 @@ export function Slat({
       ) : null}
       {label && big ? (
         <View style={[styles.inside, styles.labelWrap]} pointerEvents="none">
-          <Text style={[type.caption, styles.label]}>{label}</Text>
+          {/* Inside a fixed-height slat: the label may grow a little, never past the wood. */}
+          <Text style={[type.caption, styles.label]} maxFontSizeMultiplier={1.3} numberOfLines={1}>
+            {label}
+          </Text>
         </View>
       ) : null}
     </View>

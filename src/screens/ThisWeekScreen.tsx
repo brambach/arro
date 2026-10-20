@@ -72,7 +72,7 @@ export function ThisWeekScreen({ navigation }: MainTabScreenProps<'ThisWeek'>) {
         ) : (
           <>
             <Arrive index={1} style={styles.wall}>
-              <WallCard wall={w.wall} numbers={w.numbers} myDots={{ filled: you.countedDays, count: you.goal }} rollIn />
+              <WallCard wall={w.wall} numbers={w.numbers} headline={w.headline} myDots={{ filled: you.countedDays, count: you.goal }} rollIn />
             </Arrive>
 
             <Arrive index={2}>

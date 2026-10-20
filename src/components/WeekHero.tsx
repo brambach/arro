@@ -79,9 +79,9 @@ export function WeekHero({ today, wood, arrive, onInvite }: Props) {
   return (
     <Card padding={space.s24}>
       <Arrive index={0} play={arrive}>
-        {solo ? (
-          <Text style={type.heading} maxFontSizeMultiplier={maxFontScale.heading}>
-            {today.soloInvite?.title}
+        {solo || today.streak.headline ? (
+          <Text style={type.heading} maxFontSizeMultiplier={maxFontScale.heading} accessibilityRole="header">
+            {solo ? today.soloInvite?.title : today.streak.headline}
           </Text>
         ) : (
           <View style={styles.streak} accessible accessibilityRole="header" accessibilityLabel={`${today.streak.value} ${label}`}>

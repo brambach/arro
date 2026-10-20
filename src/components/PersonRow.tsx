@@ -1,5 +1,5 @@
 import React from 'react';
-import { Pressable, StyleSheet, Text, View } from 'react-native';
+import { Pressable, StyleSheet, Text, View, useWindowDimensions } from 'react-native';
 import Animated, { useAnimatedStyle, useSharedValue, withTiming } from 'react-native-reanimated';
 import { alpha, layout, palette, space } from '../theme/tokens';
 import { timing } from '../theme/motion';
@@ -34,21 +34,11 @@ export function PersonRow({ row, onPress, compact = false, hint }: Props) {
   const invited = row.state === 'invited';
   const subtitle = compact ? null : onBreak ? row.status : invited ? 'Hasn’t joined yet' : row.latest;
   const status = onBreak ? null : row.status;
-
-  const content = (
-    <View style={[styles.row, { minHeight: compact ? layout.rowCompact + space.s8 : layout.row }]}>
-      <Animated.View style={[StyleSheet.absoluteFill, styles.wash, wash]} pointerEvents="none" />
-      <Avatar name={row.member.name} color={row.member.color} photoUri={typeof row.member.photoUri === 'string' ? row.member.photoUri : null} size={38} />
-      <View style={styles.text}>
-        <Text style={type.bodyStrong} numberOfLines={1}>
-          {name}
-        </Text>
-        {subtitle ? (
-          <Text style={type.label} numberOfLines={1}>
-            {subtitle}
-          </Text>
-        ) : null}
-      </View>
+  // At the accessibility text sizes the dots and status move under the name, so nothing truncates.
+  const stacked = useWindowDimensions().fontScale > 1.5;
+  const lines = stacked ? undefined : 1;
+  const marks = (
+    <>
       {onBreak ? (
         <Icon name="pause" size={20} color={palette.pebble} />
       ) : row.dots.length ? (
@@ -56,12 +46,31 @@ export function PersonRow({ row, onPress, compact = false, hint }: Props) {
       ) : null}
       {status ? (
         <Text
-          style={[type.bodySmall, styles.status, row.state === 'kept' ? styles.kept : invited ? styles.quiet : null]}
-          numberOfLines={1}
+          style={[type.bodySmall, styles.status, stacked && styles.statusStacked, row.state === 'kept' ? styles.kept : invited ? styles.quiet : null]}
+          numberOfLines={lines}
         >
           {status}
         </Text>
       ) : null}
+    </>
+  );
+
+  const content = (
+    <View style={[styles.row, { minHeight: compact ? layout.rowCompact + space.s8 : layout.row }]}>
+      <Animated.View style={[StyleSheet.absoluteFill, styles.wash, wash]} pointerEvents="none" />
+      <Avatar name={row.member.name} color={row.member.color} photoUri={typeof row.member.photoUri === 'string' ? row.member.photoUri : null} size={38} />
+      <View style={styles.text}>
+        <Text style={type.bodyStrong} numberOfLines={lines}>
+          {name}
+        </Text>
+        {subtitle ? (
+          <Text style={type.label} numberOfLines={lines}>
+            {subtitle}
+          </Text>
+        ) : null}
+        {stacked ? <View style={styles.marksStacked}>{marks}</View> : null}
+      </View>
+      {stacked ? null : marks}
     </View>
   );
 
@@ -117,6 +126,8 @@ const styles = StyleSheet.create({
   text: { flex: 1, minWidth: 0 },
   // A fixed column, right-aligned, so the dots line up down the list.
   status: { minWidth: 52, textAlign: 'right', color: palette.smoke, fontWeight: '500' },
+  statusStacked: { minWidth: 0, textAlign: 'left' },
+  marksStacked: { flexDirection: 'row', alignItems: 'center', gap: space.s12, marginTop: space.s4 },
   kept: { color: palette.moss, fontWeight: '600' },
   quiet: { color: palette.stone },
 });

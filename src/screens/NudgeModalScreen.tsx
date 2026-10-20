@@ -1,5 +1,5 @@
 import React, { useEffect, useRef, useState } from 'react';
-import { StyleSheet, Text, View } from 'react-native';
+import { DeviceEventEmitter, StyleSheet, Text, View } from 'react-native';
 import { RootStackScreenProps } from '../navigation/types';
 import { useApp, useView } from '../state/AppState';
 import { palette, space } from '../theme/tokens';
@@ -10,6 +10,7 @@ import { EmberDots } from '../components/EmberDots';
 import { Sheet, SheetHandle } from '../components/Sheet';
 import { SolidButton } from '../components/SolidButton';
 import { TextAction } from '../components/TextAction';
+import { devDriverOn } from '../dev/DevDriver';
 
 /**
  * Cheering someone on who hasn't kept this week yet: a sheet with their face,
@@ -47,6 +48,17 @@ export function NudgeModalScreen({ navigation, route }: RootStackScreenProps<'Nu
       });
   };
 
+  // Dev captures only: the driver can press Send a nudge (no taps in the Simulator here).
+  const sendRef = useRef(send);
+  useEffect(() => {
+    sendRef.current = send;
+  });
+  useEffect(() => {
+    if (!devDriverOn) return;
+    const sub = DeviceEventEmitter.addListener('devNudge', () => sendRef.current());
+    return () => sub.remove();
+  }, []);
+
   const name = member?.name ?? 'them';
   const line =
     state === 'sent'
@@ -71,14 +83,14 @@ export function NudgeModalScreen({ navigation, route }: RootStackScreenProps<'Nu
           <Text style={[type.bodySmall, styles.line]} accessibilityLiveRegion="polite">
             {line}
           </Text>
-          {state === 'sent' || state === 'already' ? (
-            <TextAction label="Done" onPress={() => sheet.current?.close()} size="bodySmall" style={styles.done} />
-          ) : (
-            <>
-              <SolidButton title={state === 'sending' ? 'Sending' : 'Send a nudge'} onPress={send} disabled={state === 'sending'} style={styles.button} />
-              <TextAction label="Not now" onPress={() => sheet.current?.close()} size="bodySmall" style={styles.done} />
-            </>
-          )}
+          {/* The same two controls in every state, so the sheet never changes height. */}
+          <SolidButton
+            title={state === 'sending' ? 'Sending' : state === 'sent' ? 'Sent' : 'Send a nudge'}
+            onPress={send}
+            disabled={state !== 'idle' && state !== 'failed'}
+            style={styles.button}
+          />
+          <TextAction label={state === 'sent' || state === 'already' ? 'Done' : 'Not now'} onPress={() => sheet.current?.close()} size="bodySmall" style={styles.done} />
         </View>
       ) : (
         <Text style={type.body}>They’re not in the family anymore.</Text>

@@ -99,7 +99,8 @@ export function SolidButton({
         )}
         <View style={styles.content}>
           {icon ? <View importantForAccessibility="no">{icon}</View> : null}
-          <Text style={[type.bodyStrong, styles.label]} numberOfLines={1}>
+          {/* The button has a fixed height: its label grows with Dynamic Type up to a point, then stops, instead of truncating. */}
+          <Text style={[type.bodyStrong, styles.label]} numberOfLines={1} maxFontSizeMultiplier={1.6}>
             {title}
           </Text>
         </View>

@@ -23,7 +23,9 @@ type Command =
   | { op: 'reset' }
   | { op: 'scroll'; y: number }
   | { op: 'back' }
-  | { op: 'openCard'; index: number; reply?: boolean }
+  | { op: 'emit'; event: string }
+  | { op: 'openCard'; index: number; reply?: boolean; route?: 'SessionDetail' | 'EditSession' }
+  | { op: 'cheerCard'; index: number }
   | { op: 'log'; minutes?: number; minutesAgo?: number }
   | { op: 'cheer'; id: string }
   | { op: 'comment'; id: string; body: string };
@@ -68,9 +70,17 @@ export function DevDriver({ navigation }: { navigation: NavigationContainerRefWi
         case 'openCard': {
           const cards = a.view?.feed.sections.flatMap((x) => x.cards) ?? [];
           const card = cards[c.index];
-          if (card) (navigation.navigate as (name: string, params?: object) => void)('SessionDetail', { sessionId: card.id, reply: c.reply });
+          if (card) (navigation.navigate as (name: string, params?: object) => void)(c.route ?? 'SessionDetail', { sessionId: card.id, reply: c.reply });
           return;
         }
+        case 'cheerCard': {
+          const card = (a.view?.feed.sections.flatMap((x) => x.cards) ?? [])[c.index];
+          if (card) await a.cheer(card.id);
+          return;
+        }
+        case 'emit':
+          DeviceEventEmitter.emit(c.event);
+          return;
         case 'back':
           if (navigation.canGoBack()) navigation.goBack();
           return;

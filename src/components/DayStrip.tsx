@@ -52,7 +52,8 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     gap: space.s4,
   },
-  on: { boxShadow: depth.button },
+  // Flat like the mockup: a lifted shadow made the lit days look puffy next to the trays.
+  on: { boxShadow: 'none' },
   today: { backgroundColor: palette.birch },
   letter: { color: palette.smoke, lineHeight: 18 },
   letterOn: { color: palette.steam },

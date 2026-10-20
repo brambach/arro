@@ -62,6 +62,7 @@ export const COPY = {
   soloStreak: 'Your family streak starts when someone joins',
   inviteSomeone: 'Invite someone',
   backAtItTitle: 'Back at it, together',
+  firstWeek: 'Your first week together',
   backAtItBody: 'A new streak starts this week. Every session counts toward it.',
   weekKept: 'Week kept, together',
   streakRules: 'Streak rules',
@@ -121,6 +122,8 @@ export interface TodayView {
     label: string;
     familyStreak: number;
     weeksTogetherThisYear: number;
+    /** In place of a big 0 for a family in its first week: "Your first week together". */
+    headline: string | null;
   };
   /** Solo founder: "Your family streak starts when someone joins", plus an invite. */
   soloInvite: { title: string; action: string } | null;
@@ -181,6 +184,8 @@ export interface WeekView {
   printWall: boolean;
   /** The quiet Plus card at the bottom. 'new' means show it and record the showing. */
   nag: 'hidden' | 'showing' | 'new';
+  /** In place of a big 0 on the wall card for a family in its first week. */
+  headline: string | null;
 }
 
 export interface CommentView {
@@ -760,7 +765,7 @@ export function buildView(input: ViewInput): AppView {
             }),
         ),
     streak: solo
-      ? { kind: 'solo', value: 0, label: 'weeks together', familyStreak: 0, weeksTogetherThisYear: 0 }
+      ? { kind: 'solo', value: 0, label: 'weeks together', familyStreak: 0, weeksTogetherThisYear: 0, headline: null }
       : broken
         ? {
             kind: 'broken',
@@ -768,6 +773,7 @@ export function buildView(input: ViewInput): AppView {
             label: s.weeksTogetherThisYear === 1 ? 'week together this year' : 'weeks together this year',
             familyStreak: 0,
             weeksTogetherThisYear: s.weeksTogetherThisYear,
+            headline: null,
           }
         : {
             kind: 'building',
@@ -775,6 +781,7 @@ export function buildView(input: ViewInput): AppView {
             label: s.familyStreak === 1 ? 'week together' : 'weeks together',
             familyStreak: s.familyStreak,
             weeksTogetherThisYear: s.weeksTogetherThisYear,
+            headline: s.familyStreak === 0 ? COPY.firstWeek : null,
           },
     soloInvite: solo ? { title: COPY.soloStreak, action: COPY.inviteSomeone } : null,
     backAtIt: broken ? { title: COPY.backAtItTitle, body: COPY.backAtItBody } : null,
@@ -859,6 +866,7 @@ export function buildView(input: ViewInput): AppView {
     seeEveryWeek: plusOn,
     printWall: plusOn,
     nag,
+    headline: !solo && !broken && s.familyStreak === 0 ? COPY.firstWeek : null,
   };
 
   // Feed: this week and last week, newest first.

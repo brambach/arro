@@ -116,6 +116,15 @@ describe('Today', () => {
     expect(latestLine({ ...base, tempC: null, localDate: '2026-10-19', startedAt: new Date(2026, 9, 19, 9).toISOString() }, '2026-10-22', [], 'C')).toBe('Monday · 20 min');
   });
 
+  it('a family in its first week reads "Your first week together", not a big 0', () => {
+    const v0 = viewFor('newFamily');
+    expect(v0.today.streak.headline).toBe('Your first week together');
+    expect(v0.week.headline).toBe('Your first week together');
+    expect(v.today.streak.headline).toBeNull();
+    expect(viewFor('brokenStreak').week.headline).toBeNull();
+    expect(viewFor('solo').today.streak.headline).toBeNull();
+  });
+
   it('the slat says which week the streak is building: "Week 9" after 8 together', () => {
     expect(v.today.slatLabel).toBe(`Week ${v.today.streak.familyStreak + 1}`);
     expect(viewFor('brokenStreak').today.slatLabel).toBe('Week 1');

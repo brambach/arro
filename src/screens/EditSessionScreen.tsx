@@ -182,9 +182,9 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   types: { flexDirection: 'row', flexWrap: 'wrap', gap: space.s8 },
+  // Three to a row; the seventh sits on its own at the same size, not stretched.
   tile: {
-    width: '31%',
-    flexGrow: 1,
+    width: '31.5%',
     height: 72,
     borderRadius: radii.tile,
     backgroundColor: palette.steam,

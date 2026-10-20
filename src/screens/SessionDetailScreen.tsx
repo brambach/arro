@@ -1,11 +1,11 @@
 import React, { useEffect, useRef, useState } from 'react';
-import { KeyboardAvoidingView, Platform, Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
+import { Keyboard, KeyboardAvoidingView, Platform, Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { RootStackScreenProps } from '../navigation/types';
 import { useApp, useView } from '../state/AppState';
 import type { FeedCard } from '../state/buildView';
 import { confirmAction } from '../state/confirm';
-import { layout, palette, space } from '../theme/tokens';
+import { alpha, layout, palette, space } from '../theme/tokens';
 import { type } from '../theme/typography';
 import { Backdrop } from '../components/Backdrop';
 import { Card } from '../components/Card';
@@ -33,6 +33,16 @@ export function SessionDetailScreen({ navigation, route }: RootStackScreenProps<
   // session it had, instead of flashing the "isn't here anymore" state.
   const [leaving, setLeaving] = useState<FeedCard | null>(null);
   const card = view.sessions[route.params.sessionId] ?? leaving;
+  // With the keyboard up, the dock sits right on it (no home indicator gap).
+  const [keyboard, setKeyboard] = useState(false);
+  useEffect(() => {
+    const show = Keyboard.addListener('keyboardWillShow', () => setKeyboard(true));
+    const hide = Keyboard.addListener('keyboardWillHide', () => setKeyboard(false));
+    return () => {
+      show.remove();
+      hide.remove();
+    };
+  }, []);
   const reply = route.params.reply;
 
   useEffect(() => {
@@ -90,7 +100,7 @@ export function SessionDetailScreen({ navigation, route }: RootStackScreenProps<
         ) : null}
       </View>
       <KeyboardAvoidingView style={styles.flex} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
-        <ScrollView contentContainerStyle={[styles.content, { paddingBottom: insets.bottom + space.s24 }]} keyboardShouldPersistTaps="handled" showsVerticalScrollIndicator={false}>
+        <ScrollView contentContainerStyle={[styles.content, { paddingBottom: space.s24 }]} keyboardShouldPersistTaps="handled" showsVerticalScrollIndicator={false}>
           <Card>
             <SessionHeader card={card} large />
             <SessionFacts card={card} />
@@ -123,7 +133,6 @@ export function SessionDetailScreen({ navigation, route }: RootStackScreenProps<
           {!card.pending ? (
             <View style={styles.composeArea}>
               <QuickReplies replies={card.quickReplies} onPick={(r) => void comment(card.id, r)} />
-              <Composer ref={input} onSend={(body) => void comment(card.id, body)} />
             </View>
           ) : null}
 
@@ -134,6 +143,12 @@ export function SessionDetailScreen({ navigation, route }: RootStackScreenProps<
             </View>
           ) : null}
         </ScrollView>
+        {/* Docked under the thread, so the keyboard lifts it instead of covering it. */}
+        {!card.pending ? (
+          <View style={[styles.dock, { paddingBottom: keyboard ? space.s8 : Math.max(insets.bottom, space.s12) }]}>
+            <Composer ref={input} onSend={(body) => void comment(card.id, body)} />
+          </View>
+        ) : null}
       </KeyboardAvoidingView>
       <NoticeToast />
     </View>
@@ -152,7 +167,14 @@ const styles = StyleSheet.create({
   gap12: { marginTop: space.s12 },
   cheers: { flexDirection: 'row', alignItems: 'center', gap: space.s16, marginTop: space.s12, flexWrap: 'wrap' },
   label: { marginTop: space.s24, marginBottom: space.s8, paddingHorizontal: space.s8 },
-  composeArea: { marginTop: space.s16, gap: space.s12 },
+  composeArea: { marginTop: space.s16 },
+  dock: {
+    paddingHorizontal: layout.gutter,
+    paddingTop: space.s8,
+    backgroundColor: palette.birch,
+    borderTopWidth: StyleSheet.hairlineWidth,
+    borderTopColor: alpha.hairline,
+  },
   actions: { marginTop: space.s32, gap: space.s8, alignItems: 'center' },
   gone: { paddingHorizontal: layout.inset, paddingTop: space.s40 },
   left: { alignSelf: 'flex-start', marginTop: space.s16 },
