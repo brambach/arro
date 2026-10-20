@@ -1,0 +1,908 @@
+
+/private/tmp/luna-arro/repo/src/components/AnimatedSplash.tsx
+   2:59  warning  'Text' is defined but never used                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                         @typescript-eslint/no-unused-vars
+   2:65  warning  'View' is defined but never used                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                         @typescript-eslint/no-unused-vars
+  21:18  error    Error: Cannot access refs during render
+
+React refs are values that are not needed for rendering. Refs should only be accessed outside of render, such as in event handlers or effects. Accessing a ref value (the `current` property) during render can cause your component not to update as expected (https://react.dev/reference/react/useRef).
+
+/private/tmp/luna-arro/repo/src/components/AnimatedSplash.tsx:21:18
+  19 |  */
+  20 | export function AnimatedSplash({ onDone }: { onDone: () => void }) {
+> 21 |   const circle = useRef(new Animated.Value(CIRC)).current;
+     |                  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ Cannot access ref value during render
+  22 |   const stem = useRef(new Animated.Value(STEM)).current;
+  23 |   const word = useRef(new Animated.Value(0)).current;
+  24 |   const cover = useRef(new Animated.Value(1)).current;                                                                      react-hooks/refs
+  21:18  error    Error: Cannot access refs during render
+
+React refs are values that are not needed for rendering. Refs should only be accessed outside of render, such as in event handlers or effects. Accessing a ref value (the `current` property) during render can cause your component not to update as expected (https://react.dev/reference/react/useRef).
+
+/private/tmp/luna-arro/repo/src/components/AnimatedSplash.tsx:21:18
+  19 |  */
+  20 | export function AnimatedSplash({ onDone }: { onDone: () => void }) {
+> 21 |   const circle = useRef(new Animated.Value(CIRC)).current;
+     |                  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ Cannot access ref value during render
+  22 |   const stem = useRef(new Animated.Value(STEM)).current;
+  23 |   const word = useRef(new Animated.Value(0)).current;
+  24 |   const cover = useRef(new Animated.Value(1)).current;                                                                      react-hooks/refs
+  22:16  error    Error: Cannot access refs during render
+
+React refs are values that are not needed for rendering. Refs should only be accessed outside of render, such as in event handlers or effects. Accessing a ref value (the `current` property) during render can cause your component not to update as expected (https://react.dev/reference/react/useRef).
+
+/private/tmp/luna-arro/repo/src/components/AnimatedSplash.tsx:22:16
+  20 | export function AnimatedSplash({ onDone }: { onDone: () => void }) {
+  21 |   const circle = useRef(new Animated.Value(CIRC)).current;
+> 22 |   const stem = useRef(new Animated.Value(STEM)).current;
+     |                ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ Cannot access ref value during render
+  23 |   const word = useRef(new Animated.Value(0)).current;
+  24 |   const cover = useRef(new Animated.Value(1)).current;
+  25 |   const [reduceMotion, setReduceMotion] = useState<boolean | null>(null);  react-hooks/refs
+  22:16  error    Error: Cannot access refs during render
+
+React refs are values that are not needed for rendering. Refs should only be accessed outside of render, such as in event handlers or effects. Accessing a ref value (the `current` property) during render can cause your component not to update as expected (https://react.dev/reference/react/useRef).
+
+/private/tmp/luna-arro/repo/src/components/AnimatedSplash.tsx:22:16
+  20 | export function AnimatedSplash({ onDone }: { onDone: () => void }) {
+  21 |   const circle = useRef(new Animated.Value(CIRC)).current;
+> 22 |   const stem = useRef(new Animated.Value(STEM)).current;
+     |                ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ Cannot access ref value during render
+  23 |   const word = useRef(new Animated.Value(0)).current;
+  24 |   const cover = useRef(new Animated.Value(1)).current;
+  25 |   const [reduceMotion, setReduceMotion] = useState<boolean | null>(null);  react-hooks/refs
+  23:16  error    Error: Cannot access refs during render
+
+React refs are values that are not needed for rendering. Refs should only be accessed outside of render, such as in event handlers or effects. Accessing a ref value (the `current` property) during render can cause your component not to update as expected (https://react.dev/reference/react/useRef).
+
+/private/tmp/luna-arro/repo/src/components/AnimatedSplash.tsx:23:16
+  21 |   const circle = useRef(new Animated.Value(CIRC)).current;
+  22 |   const stem = useRef(new Animated.Value(STEM)).current;
+> 23 |   const word = useRef(new Animated.Value(0)).current;
+     |                ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ Cannot access ref value during render
+  24 |   const cover = useRef(new Animated.Value(1)).current;
+  25 |   const [reduceMotion, setReduceMotion] = useState<boolean | null>(null);
+  26 |                                                                          react-hooks/refs
+  23:16  error    Error: Cannot access refs during render
+
+React refs are values that are not needed for rendering. Refs should only be accessed outside of render, such as in event handlers or effects. Accessing a ref value (the `current` property) during render can cause your component not to update as expected (https://react.dev/reference/react/useRef).
+
+/private/tmp/luna-arro/repo/src/components/AnimatedSplash.tsx:23:16
+  21 |   const circle = useRef(new Animated.Value(CIRC)).current;
+  22 |   const stem = useRef(new Animated.Value(STEM)).current;
+> 23 |   const word = useRef(new Animated.Value(0)).current;
+     |                ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ Cannot access ref value during render
+  24 |   const cover = useRef(new Animated.Value(1)).current;
+  25 |   const [reduceMotion, setReduceMotion] = useState<boolean | null>(null);
+  26 |                                                                          react-hooks/refs
+  23:16  error    Error: Cannot access refs during render
+
+React refs are values that are not needed for rendering. Refs should only be accessed outside of render, such as in event handlers or effects. Accessing a ref value (the `current` property) during render can cause your component not to update as expected (https://react.dev/reference/react/useRef).
+
+/private/tmp/luna-arro/repo/src/components/AnimatedSplash.tsx:23:16
+  21 |   const circle = useRef(new Animated.Value(CIRC)).current;
+  22 |   const stem = useRef(new Animated.Value(STEM)).current;
+> 23 |   const word = useRef(new Animated.Value(0)).current;
+     |                ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ Cannot access ref value during render
+  24 |   const cover = useRef(new Animated.Value(1)).current;
+  25 |   const [reduceMotion, setReduceMotion] = useState<boolean | null>(null);
+  26 |                                                                          react-hooks/refs
+  23:16  error    Error: Cannot access refs during render
+
+React refs are values that are not needed for rendering. Refs should only be accessed outside of render, such as in event handlers or effects. Accessing a ref value (the `current` property) during render can cause your component not to update as expected (https://react.dev/reference/react/useRef).
+
+/private/tmp/luna-arro/repo/src/components/AnimatedSplash.tsx:23:16
+  21 |   const circle = useRef(new Animated.Value(CIRC)).current;
+  22 |   const stem = useRef(new Animated.Value(STEM)).current;
+> 23 |   const word = useRef(new Animated.Value(0)).current;
+     |                ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ Cannot access ref value during render
+  24 |   const cover = useRef(new Animated.Value(1)).current;
+  25 |   const [reduceMotion, setReduceMotion] = useState<boolean | null>(null);
+  26 |                                                                          react-hooks/refs
+  24:17  error    Error: Cannot access refs during render
+
+React refs are values that are not needed for rendering. Refs should only be accessed outside of render, such as in event handlers or effects. Accessing a ref value (the `current` property) during render can cause your component not to update as expected (https://react.dev/reference/react/useRef).
+
+/private/tmp/luna-arro/repo/src/components/AnimatedSplash.tsx:24:17
+  22 |   const stem = useRef(new Animated.Value(STEM)).current;
+  23 |   const word = useRef(new Animated.Value(0)).current;
+> 24 |   const cover = useRef(new Animated.Value(1)).current;
+     |                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ Cannot access ref value during render
+  25 |   const [reduceMotion, setReduceMotion] = useState<boolean | null>(null);
+  26 |
+  27 |   // Keep the latest onDone without making it an animation-effect dependency                                                       react-hooks/refs
+  24:17  error    Error: Cannot access refs during render
+
+React refs are values that are not needed for rendering. Refs should only be accessed outside of render, such as in event handlers or effects. Accessing a ref value (the `current` property) during render can cause your component not to update as expected (https://react.dev/reference/react/useRef).
+
+/private/tmp/luna-arro/repo/src/components/AnimatedSplash.tsx:24:17
+  22 |   const stem = useRef(new Animated.Value(STEM)).current;
+  23 |   const word = useRef(new Animated.Value(0)).current;
+> 24 |   const cover = useRef(new Animated.Value(1)).current;
+     |                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ Cannot access ref value during render
+  25 |   const [reduceMotion, setReduceMotion] = useState<boolean | null>(null);
+  26 |
+  27 |   // Keep the latest onDone without making it an animation-effect dependency                                                       react-hooks/refs
+  24:17  error    Error: Cannot access refs during render
+
+React refs are values that are not needed for rendering. Refs should only be accessed outside of render, such as in event handlers or effects. Accessing a ref value (the `current` property) during render can cause your component not to update as expected (https://react.dev/reference/react/useRef).
+
+/private/tmp/luna-arro/repo/src/components/AnimatedSplash.tsx:24:17
+  22 |   const stem = useRef(new Animated.Value(STEM)).current;
+  23 |   const word = useRef(new Animated.Value(0)).current;
+> 24 |   const cover = useRef(new Animated.Value(1)).current;
+     |                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ Cannot access ref value during render
+  25 |   const [reduceMotion, setReduceMotion] = useState<boolean | null>(null);
+  26 |
+  27 |   // Keep the latest onDone without making it an animation-effect dependency                                                       react-hooks/refs
+  24:17  error    Error: Cannot access refs during render
+
+React refs are values that are not needed for rendering. Refs should only be accessed outside of render, such as in event handlers or effects. Accessing a ref value (the `current` property) during render can cause your component not to update as expected (https://react.dev/reference/react/useRef).
+
+/private/tmp/luna-arro/repo/src/components/AnimatedSplash.tsx:24:17
+  22 |   const stem = useRef(new Animated.Value(STEM)).current;
+  23 |   const word = useRef(new Animated.Value(0)).current;
+> 24 |   const cover = useRef(new Animated.Value(1)).current;
+     |                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ Cannot access ref value during render
+  25 |   const [reduceMotion, setReduceMotion] = useState<boolean | null>(null);
+  26 |
+  27 |   // Keep the latest onDone without making it an animation-effect dependency                                                       react-hooks/refs
+  66:6   error    Error: Cannot access refs during render
+
+React refs are values that are not needed for rendering. Refs should only be accessed outside of render, such as in event handlers or effects. Accessing a ref value (the `current` property) during render can cause your component not to update as expected (https://react.dev/reference/react/useRef).
+
+/private/tmp/luna-arro/repo/src/components/AnimatedSplash.tsx:66:6
+  64 |     seq.start(({ finished }) => finished && onDoneRef.current());
+  65 |     return () => seq.stop();
+> 66 |   }, [reduceMotion, circle, stem, word, cover]);
+     |      ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ Cannot access ref value during render
+  67 |
+  68 |   return (
+  69 |     <Animated.View style={[styles.root, { opacity: cover }]}>                                                                                                                                                                   react-hooks/refs
+
+/private/tmp/luna-arro/repo/src/components/CheckInPop.tsx
+  22:13  error  Error: Cannot access refs during render
+
+React refs are values that are not needed for rendering. Refs should only be accessed outside of render, such as in event handlers or effects. Accessing a ref value (the `current` property) during render can cause your component not to update as expected (https://react.dev/reference/react/useRef).
+
+/private/tmp/luna-arro/repo/src/components/CheckInPop.tsx:22:13
+  20 | }) {
+  21 |   const reduceMotion = useReduceMotion();
+> 22 |   const p = useRef(new Animated.Value(1)).current;
+     |             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ Cannot access ref value during render
+  23 |
+  24 |   useEffect(() => {
+  25 |     if (!play || reduceMotion !== false) {                                                                                                    react-hooks/refs
+  22:13  error  Error: Cannot access refs during render
+
+React refs are values that are not needed for rendering. Refs should only be accessed outside of render, such as in event handlers or effects. Accessing a ref value (the `current` property) during render can cause your component not to update as expected (https://react.dev/reference/react/useRef).
+
+/private/tmp/luna-arro/repo/src/components/CheckInPop.tsx:22:13
+  20 | }) {
+  21 |   const reduceMotion = useReduceMotion();
+> 22 |   const p = useRef(new Animated.Value(1)).current;
+     |             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ Cannot access ref value during render
+  23 |
+  24 |   useEffect(() => {
+  25 |     if (!play || reduceMotion !== false) {                                                                                                    react-hooks/refs
+  44:20  error  Error: Cannot access refs during render
+
+React refs are values that are not needed for rendering. Refs should only be accessed outside of render, such as in event handlers or effects. Accessing a ref value (the `current` property) during render can cause your component not to update as expected (https://react.dev/reference/react/useRef).
+
+/private/tmp/luna-arro/repo/src/components/CheckInPop.tsx:44:20
+  42 |         style,
+  43 |         {
+> 44 |           opacity: p.interpolate({ inputRange: [0, 0.3, 1], outputRange: [0, 1, 1], extrapolate: 'clamp' }),
+     |                    ^ Passing a ref to a function may read its value during render
+  45 |           transform: [{ scale: p.interpolate({ inputRange: [0, 1], outputRange: [0.4, 1] }) }],
+  46 |         },
+  47 |       ]}                 react-hooks/refs
+  44:20  error  Error: Cannot access refs during render
+
+React refs are values that are not needed for rendering. Refs should only be accessed outside of render, such as in event handlers or effects. Accessing a ref value (the `current` property) during render can cause your component not to update as expected (https://react.dev/reference/react/useRef).
+
+/private/tmp/luna-arro/repo/src/components/CheckInPop.tsx:44:20
+  42 |         style,
+  43 |         {
+> 44 |           opacity: p.interpolate({ inputRange: [0, 0.3, 1], outputRange: [0, 1, 1], extrapolate: 'clamp' }),
+     |                    ^^^^^^^^^^^^^ Passing a ref to a function may read its value during render
+  45 |           transform: [{ scale: p.interpolate({ inputRange: [0, 1], outputRange: [0.4, 1] }) }],
+  46 |         },
+  47 |       ]}     react-hooks/refs
+  45:32  error  Error: Cannot access refs during render
+
+React refs are values that are not needed for rendering. Refs should only be accessed outside of render, such as in event handlers or effects. Accessing a ref value (the `current` property) during render can cause your component not to update as expected (https://react.dev/reference/react/useRef).
+
+/private/tmp/luna-arro/repo/src/components/CheckInPop.tsx:45:32
+  43 |         {
+  44 |           opacity: p.interpolate({ inputRange: [0, 0.3, 1], outputRange: [0, 1, 1], extrapolate: 'clamp' }),
+> 45 |           transform: [{ scale: p.interpolate({ inputRange: [0, 1], outputRange: [0.4, 1] }) }],
+     |                                ^ Passing a ref to a function may read its value during render
+  46 |         },
+  47 |       ]}
+  48 |     >              react-hooks/refs
+  45:32  error  Error: Cannot access refs during render
+
+React refs are values that are not needed for rendering. Refs should only be accessed outside of render, such as in event handlers or effects. Accessing a ref value (the `current` property) during render can cause your component not to update as expected (https://react.dev/reference/react/useRef).
+
+/private/tmp/luna-arro/repo/src/components/CheckInPop.tsx:45:32
+  43 |         {
+  44 |           opacity: p.interpolate({ inputRange: [0, 0.3, 1], outputRange: [0, 1, 1], extrapolate: 'clamp' }),
+> 45 |           transform: [{ scale: p.interpolate({ inputRange: [0, 1], outputRange: [0.4, 1] }) }],
+     |                                ^^^^^^^^^^^^^ Passing a ref to a function may read its value during render
+  46 |         },
+  47 |       ]}
+  48 |     >  react-hooks/refs
+
+/private/tmp/luna-arro/repo/src/components/CheerButton.tsx
+   11:3   warning  'View' is defined but never used                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                    @typescript-eslint/no-unused-vars
+   45:17  error    Error: Cannot access refs during render
+
+React refs are values that are not needed for rendering. Refs should only be accessed outside of render, such as in event handlers or effects. Accessing a ref value (the `current` property) during render can cause your component not to update as expected (https://react.dev/reference/react/useRef).
+
+/private/tmp/luna-arro/repo/src/components/CheerButton.tsx:45:17
+  43 | }: Props) {
+  44 |   const [cheered, setCheered] = useState(initiallyCheered);
+> 45 |   const scale = useRef(new Animated.Value(1)).current;
+     |                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ Cannot access ref value during render
+  46 |   const pulse = useRef(new Animated.Value(0)).current;
+  47 |   const reduceMotion = useRef(false);
+  48 |                                                                      react-hooks/refs
+   45:17  error    Error: Cannot access refs during render
+
+React refs are values that are not needed for rendering. Refs should only be accessed outside of render, such as in event handlers or effects. Accessing a ref value (the `current` property) during render can cause your component not to update as expected (https://react.dev/reference/react/useRef).
+
+/private/tmp/luna-arro/repo/src/components/CheerButton.tsx:45:17
+  43 | }: Props) {
+  44 |   const [cheered, setCheered] = useState(initiallyCheered);
+> 45 |   const scale = useRef(new Animated.Value(1)).current;
+     |                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ Cannot access ref value during render
+  46 |   const pulse = useRef(new Animated.Value(0)).current;
+  47 |   const reduceMotion = useRef(false);
+  48 |                                                                      react-hooks/refs
+   45:17  error    Error: Cannot access refs during render
+
+React refs are values that are not needed for rendering. Refs should only be accessed outside of render, such as in event handlers or effects. Accessing a ref value (the `current` property) during render can cause your component not to update as expected (https://react.dev/reference/react/useRef).
+
+/private/tmp/luna-arro/repo/src/components/CheerButton.tsx:45:17
+  43 | }: Props) {
+  44 |   const [cheered, setCheered] = useState(initiallyCheered);
+> 45 |   const scale = useRef(new Animated.Value(1)).current;
+     |                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ Cannot access ref value during render
+  46 |   const pulse = useRef(new Animated.Value(0)).current;
+  47 |   const reduceMotion = useRef(false);
+  48 |                                                                      react-hooks/refs
+   45:17  error    Error: Cannot access refs during render
+
+React refs are values that are not needed for rendering. Refs should only be accessed outside of render, such as in event handlers or effects. Accessing a ref value (the `current` property) during render can cause your component not to update as expected (https://react.dev/reference/react/useRef).
+
+/private/tmp/luna-arro/repo/src/components/CheerButton.tsx:45:17
+  43 | }: Props) {
+  44 |   const [cheered, setCheered] = useState(initiallyCheered);
+> 45 |   const scale = useRef(new Animated.Value(1)).current;
+     |                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ Cannot access ref value during render
+  46 |   const pulse = useRef(new Animated.Value(0)).current;
+  47 |   const reduceMotion = useRef(false);
+  48 |                                                                      react-hooks/refs
+   45:17  error    Error: Cannot access refs during render
+
+React refs are values that are not needed for rendering. Refs should only be accessed outside of render, such as in event handlers or effects. Accessing a ref value (the `current` property) during render can cause your component not to update as expected (https://react.dev/reference/react/useRef).
+
+/private/tmp/luna-arro/repo/src/components/CheerButton.tsx:45:17
+  43 | }: Props) {
+  44 |   const [cheered, setCheered] = useState(initiallyCheered);
+> 45 |   const scale = useRef(new Animated.Value(1)).current;
+     |                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ Cannot access ref value during render
+  46 |   const pulse = useRef(new Animated.Value(0)).current;
+  47 |   const reduceMotion = useRef(false);
+  48 |                                                                      react-hooks/refs
+  101:24  error    Error: Cannot access refs during render
+
+React refs are values that are not needed for rendering. Refs should only be accessed outside of render, such as in event handlers or effects. Accessing a ref value (the `current` property) during render can cause your component not to update as expected (https://react.dev/reference/react/useRef).
+
+/private/tmp/luna-arro/repo/src/components/CheerButton.tsx:101:24
+   99 |             styles.pulse,
+  100 |             {
+> 101 |               opacity: pulse.interpolate({ inputRange: [0, 0.15, 1], outputRange: [0, 0.9, 0] }),
+      |                        ^^^^^ Passing a ref to a function may read its value during render
+  102 |               transform: [{ scale: pulse.interpolate({ inputRange: [0, 1], outputRange: [0.6, 1] }) }],
+  103 |             },
+  104 |           ]}              react-hooks/refs
+  101:24  error    Error: Cannot access refs during render
+
+React refs are values that are not needed for rendering. Refs should only be accessed outside of render, such as in event handlers or effects. Accessing a ref value (the `current` property) during render can cause your component not to update as expected (https://react.dev/reference/react/useRef).
+
+/private/tmp/luna-arro/repo/src/components/CheerButton.tsx:101:24
+   99 |             styles.pulse,
+  100 |             {
+> 101 |               opacity: pulse.interpolate({ inputRange: [0, 0.15, 1], outputRange: [0, 0.9, 0] }),
+      |                        ^^^^^^^^^^^^^^^^^ Passing a ref to a function may read its value during render
+  102 |               transform: [{ scale: pulse.interpolate({ inputRange: [0, 1], outputRange: [0.6, 1] }) }],
+  103 |             },
+  104 |           ]}  react-hooks/refs
+  102:36  error    Error: Cannot access refs during render
+
+React refs are values that are not needed for rendering. Refs should only be accessed outside of render, such as in event handlers or effects. Accessing a ref value (the `current` property) during render can cause your component not to update as expected (https://react.dev/reference/react/useRef).
+
+/private/tmp/luna-arro/repo/src/components/CheerButton.tsx:102:36
+  100 |             {
+  101 |               opacity: pulse.interpolate({ inputRange: [0, 0.15, 1], outputRange: [0, 0.9, 0] }),
+> 102 |               transform: [{ scale: pulse.interpolate({ inputRange: [0, 1], outputRange: [0.6, 1] }) }],
+      |                                    ^^^^^ Passing a ref to a function may read its value during render
+  103 |             },
+  104 |           ]}
+  105 |         >                  react-hooks/refs
+  102:36  error    Error: Cannot access refs during render
+
+React refs are values that are not needed for rendering. Refs should only be accessed outside of render, such as in event handlers or effects. Accessing a ref value (the `current` property) during render can cause your component not to update as expected (https://react.dev/reference/react/useRef).
+
+/private/tmp/luna-arro/repo/src/components/CheerButton.tsx:102:36
+  100 |             {
+  101 |               opacity: pulse.interpolate({ inputRange: [0, 0.15, 1], outputRange: [0, 0.9, 0] }),
+> 102 |               transform: [{ scale: pulse.interpolate({ inputRange: [0, 1], outputRange: [0.6, 1] }) }],
+      |                                    ^^^^^^^^^^^^^^^^^ Passing a ref to a function may read its value during render
+  103 |             },
+  104 |           ]}
+  105 |         >      react-hooks/refs
+
+/private/tmp/luna-arro/repo/src/components/FadeInView.tsx
+  18:20  error  Error: Cannot access refs during render
+
+React refs are values that are not needed for rendering. Refs should only be accessed outside of render, such as in event handlers or effects. Accessing a ref value (the `current` property) during render can cause your component not to update as expected (https://react.dev/reference/react/useRef).
+
+/private/tmp/luna-arro/repo/src/components/FadeInView.tsx:18:20
+  16 |
+  17 | export function FadeInView({ delay = 0, rise = 8, duration = 280, easing = Easing.out(Easing.cubic), style, children, ...rest }: Props) {
+> 18 |   const progress = useRef(new Animated.Value(0)).current;
+     |                    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ Cannot access ref value during render
+  19 |   const [reduceMotion, setReduceMotion] = useState<boolean | null>(null);
+  20 |
+  21 |   useEffect(() => {  react-hooks/refs
+  18:20  error  Error: Cannot access refs during render
+
+React refs are values that are not needed for rendering. Refs should only be accessed outside of render, such as in event handlers or effects. Accessing a ref value (the `current` property) during render can cause your component not to update as expected (https://react.dev/reference/react/useRef).
+
+/private/tmp/luna-arro/repo/src/components/FadeInView.tsx:18:20
+  16 |
+  17 | export function FadeInView({ delay = 0, rise = 8, duration = 280, easing = Easing.out(Easing.cubic), style, children, ...rest }: Props) {
+> 18 |   const progress = useRef(new Animated.Value(0)).current;
+     |                    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ Cannot access ref value during render
+  19 |   const [reduceMotion, setReduceMotion] = useState<boolean | null>(null);
+  20 |
+  21 |   useEffect(() => {  react-hooks/refs
+  47:7   error  Error: Cannot access refs during render
+
+React refs are values that are not needed for rendering. Refs should only be accessed outside of render, such as in event handlers or effects. Accessing a ref value (the `current` property) during render can cause your component not to update as expected (https://react.dev/reference/react/useRef).
+
+/private/tmp/luna-arro/repo/src/components/FadeInView.tsx:47:7
+  45 |   const translateY = reduceMotion
+  46 |     ? 0
+> 47 |     : progress.interpolate({ inputRange: [0, 1], outputRange: [rise, 0] });
+     |       ^^^^^^^^ Passing a ref to a function may read its value during render
+  48 |
+  49 |   return (
+  50 |     <Animated.View style={[{ opacity: progress, transform: [{ translateY }] }, style]} {...rest}>                                                                                     react-hooks/refs
+  47:7   error  Error: Cannot access refs during render
+
+React refs are values that are not needed for rendering. Refs should only be accessed outside of render, such as in event handlers or effects. Accessing a ref value (the `current` property) during render can cause your component not to update as expected (https://react.dev/reference/react/useRef).
+
+/private/tmp/luna-arro/repo/src/components/FadeInView.tsx:47:7
+  45 |   const translateY = reduceMotion
+  46 |     ? 0
+> 47 |     : progress.interpolate({ inputRange: [0, 1], outputRange: [rise, 0] });
+     |       ^^^^^^^^^^^^^^^^^^^^ Passing a ref to a function may read its value during render
+  48 |
+  49 |   return (
+  50 |     <Animated.View style={[{ opacity: progress, transform: [{ translateY }] }, style]} {...rest}>                                                                         react-hooks/refs
+  50:27  error  Error: Cannot access refs during render
+
+React refs are values that are not needed for rendering. Refs should only be accessed outside of render, such as in event handlers or effects. Accessing a ref value (the `current` property) during render can cause your component not to update as expected (https://react.dev/reference/react/useRef).
+
+/private/tmp/luna-arro/repo/src/components/FadeInView.tsx:50:27
+  48 |
+  49 |   return (
+> 50 |     <Animated.View style={[{ opacity: progress, transform: [{ translateY }] }, style]} {...rest}>
+     |                           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ Cannot access ref value during render
+  51 |       {children}
+  52 |     </Animated.View>
+  53 |   );                                                                                                               react-hooks/refs
+  50:28  error  Error: Cannot access refs during render
+
+React refs are values that are not needed for rendering. Refs should only be accessed outside of render, such as in event handlers or effects. Accessing a ref value (the `current` property) during render can cause your component not to update as expected (https://react.dev/reference/react/useRef).
+
+/private/tmp/luna-arro/repo/src/components/FadeInView.tsx:50:28
+  48 |
+  49 |   return (
+> 50 |     <Animated.View style={[{ opacity: progress, transform: [{ translateY }] }, style]} {...rest}>
+     |                            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ Cannot access ref value during render
+  51 |       {children}
+  52 |     </Animated.View>
+  53 |   );                                                                                                                       react-hooks/refs
+  50:39  error  Error: Cannot access refs during render
+
+React refs are values that are not needed for rendering. Refs should only be accessed outside of render, such as in event handlers or effects. Accessing a ref value (the `current` property) during render can cause your component not to update as expected (https://react.dev/reference/react/useRef).
+
+/private/tmp/luna-arro/repo/src/components/FadeInView.tsx:50:39
+  48 |
+  49 |   return (
+> 50 |     <Animated.View style={[{ opacity: progress, transform: [{ translateY }] }, style]} {...rest}>
+     |                                       ^^^^^^^^ Cannot access ref value during render
+  51 |       {children}
+  52 |     </Animated.View>
+  53 |   );                                                                                                                                                      react-hooks/refs
+
+/private/tmp/luna-arro/repo/src/components/PrimaryButton.tsx
+  22:17  error  Error: Cannot access refs during render
+
+React refs are values that are not needed for rendering. Refs should only be accessed outside of render, such as in event handlers or effects. Accessing a ref value (the `current` property) during render can cause your component not to update as expected (https://react.dev/reference/react/useRef).
+
+/private/tmp/luna-arro/repo/src/components/PrimaryButton.tsx:22:17
+  20 |
+  21 | export function PrimaryButton({ title, onPress, icon, disabled, size = 'default', style }: Props) {
+> 22 |   const scale = useRef(new Animated.Value(1)).current;
+     |                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ Cannot access ref value during render
+  23 |
+  24 |   const press = (to: number, duration: number) =>
+  25 |     Animated.timing(scale, { toValue: to, duration, useNativeDriver: true }).start();  react-hooks/refs
+  22:17  error  Error: Cannot access refs during render
+
+React refs are values that are not needed for rendering. Refs should only be accessed outside of render, such as in event handlers or effects. Accessing a ref value (the `current` property) during render can cause your component not to update as expected (https://react.dev/reference/react/useRef).
+
+/private/tmp/luna-arro/repo/src/components/PrimaryButton.tsx:22:17
+  20 |
+  21 | export function PrimaryButton({ title, onPress, icon, disabled, size = 'default', style }: Props) {
+> 22 |   const scale = useRef(new Animated.Value(1)).current;
+     |                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ Cannot access ref value during render
+  23 |
+  24 |   const press = (to: number, duration: number) =>
+  25 |     Animated.timing(scale, { toValue: to, duration, useNativeDriver: true }).start();  react-hooks/refs
+  22:17  error  Error: Cannot access refs during render
+
+React refs are values that are not needed for rendering. Refs should only be accessed outside of render, such as in event handlers or effects. Accessing a ref value (the `current` property) during render can cause your component not to update as expected (https://react.dev/reference/react/useRef).
+
+/private/tmp/luna-arro/repo/src/components/PrimaryButton.tsx:22:17
+  20 |
+  21 | export function PrimaryButton({ title, onPress, icon, disabled, size = 'default', style }: Props) {
+> 22 |   const scale = useRef(new Animated.Value(1)).current;
+     |                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ Cannot access ref value during render
+  23 |
+  24 |   const press = (to: number, duration: number) =>
+  25 |     Animated.timing(scale, { toValue: to, duration, useNativeDriver: true }).start();  react-hooks/refs
+  22:17  error  Error: Cannot access refs during render
+
+React refs are values that are not needed for rendering. Refs should only be accessed outside of render, such as in event handlers or effects. Accessing a ref value (the `current` property) during render can cause your component not to update as expected (https://react.dev/reference/react/useRef).
+
+/private/tmp/luna-arro/repo/src/components/PrimaryButton.tsx:22:17
+  20 |
+  21 | export function PrimaryButton({ title, onPress, icon, disabled, size = 'default', style }: Props) {
+> 22 |   const scale = useRef(new Animated.Value(1)).current;
+     |                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ Cannot access ref value during render
+  23 |
+  24 |   const press = (to: number, duration: number) =>
+  25 |     Animated.timing(scale, { toValue: to, duration, useNativeDriver: true }).start();  react-hooks/refs
+  22:17  error  Error: Cannot access refs during render
+
+React refs are values that are not needed for rendering. Refs should only be accessed outside of render, such as in event handlers or effects. Accessing a ref value (the `current` property) during render can cause your component not to update as expected (https://react.dev/reference/react/useRef).
+
+/private/tmp/luna-arro/repo/src/components/PrimaryButton.tsx:22:17
+  20 |
+  21 | export function PrimaryButton({ title, onPress, icon, disabled, size = 'default', style }: Props) {
+> 22 |   const scale = useRef(new Animated.Value(1)).current;
+     |                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ Cannot access ref value during render
+  23 |
+  24 |   const press = (to: number, duration: number) =>
+  25 |     Animated.timing(scale, { toValue: to, duration, useNativeDriver: true }).start();  react-hooks/refs
+
+/private/tmp/luna-arro/repo/src/components/RollingText.tsx
+  20:7   error  Error: Calling setState synchronously within an effect can trigger cascading renders
+
+Effects are intended to synchronize state between React and external systems such as manually updating the DOM, state management libraries, or other platform APIs. In general, the body of an effect should do one or both of the following:
+* Update external systems with the latest state from React.
+* Subscribe for updates from some external system, calling setState in a callback function when external state changes.
+
+Calling setState synchronously within an effect body causes cascading renders that can hurt performance, and is not recommended. (https://react.dev/learn/you-might-not-need-an-effect).
+
+/private/tmp/luna-arro/repo/src/components/RollingText.tsx:20:7
+  18 |     if (reduceMotion !== false) {
+  19 |       p.setValue(1);
+> 20 |       setLeaving(null);
+     |       ^^^^^^^^^^ Avoid calling setState() directly within an effect
+  21 |       setShown(value);
+  22 |       return;
+  23 |     }  react-hooks/set-state-in-effect
+  37:16  error  Error: Cannot access refs during render
+
+React refs are values that are not needed for rendering. Refs should only be accessed outside of render, such as in event handlers or effects. Accessing a ref value (the `current` property) during render can cause your component not to update as expected (https://react.dev/reference/react/useRef).
+
+/private/tmp/luna-arro/repo/src/components/RollingText.tsx:37:16
+  35 |   }, [value, reduceMotion]);
+  36 |
+> 37 |   const lift = p.interpolate({ inputRange: [0, 1], outputRange: [0, -1] });
+     |                ^ Passing a ref to a function may read its value during render
+  38 |   return (
+  39 |     <View style={styles.clip}>
+  40 |       <Animated.Text                                                                                                                                                                                                                                                                                                       react-hooks/refs
+  37:16  error  Error: Cannot access refs during render
+
+React refs are values that are not needed for rendering. Refs should only be accessed outside of render, such as in event handlers or effects. Accessing a ref value (the `current` property) during render can cause your component not to update as expected (https://react.dev/reference/react/useRef).
+
+/private/tmp/luna-arro/repo/src/components/RollingText.tsx:37:16
+  35 |   }, [value, reduceMotion]);
+  36 |
+> 37 |   const lift = p.interpolate({ inputRange: [0, 1], outputRange: [0, -1] });
+     |                ^^^^^^^^^^^^^ Passing a ref to a function may read its value during render
+  38 |   return (
+  39 |     <View style={styles.clip}>
+  40 |       <Animated.Text                                                                                                                                                                                                                                                                                           react-hooks/refs
+  41:16  error  Error: Cannot access refs during render
+
+React refs are values that are not needed for rendering. Refs should only be accessed outside of render, such as in event handlers or effects. Accessing a ref value (the `current` property) during render can cause your component not to update as expected (https://react.dev/reference/react/useRef).
+
+/private/tmp/luna-arro/repo/src/components/RollingText.tsx:41:16
+  39 |     <View style={styles.clip}>
+  40 |       <Animated.Text
+> 41 |         style={[
+     |                ^
+> 42 |           style,
+     | ^^^^^^^^^^^^^^^^
+> 43 |           { opacity: p, transform: [{ translateY: p.interpolate({ inputRange: [0, 1], outputRange: [18, 0] }) }] },
+     | ^^^^^^^^^^^^^^^^
+> 44 |         ]}
+     | ^^^^^^^^^^ Cannot access ref value during render
+  45 |       >
+  46 |         {shown}
+  47 |       </Animated.Text>                                                                                                                                           react-hooks/refs
+  43:11  error  Error: Cannot access refs during render
+
+React refs are values that are not needed for rendering. Refs should only be accessed outside of render, such as in event handlers or effects. Accessing a ref value (the `current` property) during render can cause your component not to update as expected (https://react.dev/reference/react/useRef).
+
+/private/tmp/luna-arro/repo/src/components/RollingText.tsx:43:11
+  41 |         style={[
+  42 |           style,
+> 43 |           { opacity: p, transform: [{ translateY: p.interpolate({ inputRange: [0, 1], outputRange: [18, 0] }) }] },
+     |           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ Cannot access ref value during render
+  44 |         ]}
+  45 |       >
+  46 |         {shown}                                                                                                                                                                                                           react-hooks/refs
+  43:22  error  Error: Cannot access refs during render
+
+React refs are values that are not needed for rendering. Refs should only be accessed outside of render, such as in event handlers or effects. Accessing a ref value (the `current` property) during render can cause your component not to update as expected (https://react.dev/reference/react/useRef).
+
+/private/tmp/luna-arro/repo/src/components/RollingText.tsx:43:22
+  41 |         style={[
+  42 |           style,
+> 43 |           { opacity: p, transform: [{ translateY: p.interpolate({ inputRange: [0, 1], outputRange: [18, 0] }) }] },
+     |                      ^ Cannot access ref value during render
+  44 |         ]}
+  45 |       >
+  46 |         {shown}                                                                                                                                                                                                                                                                                                       react-hooks/refs
+  43:51  error  Error: Cannot access refs during render
+
+React refs are values that are not needed for rendering. Refs should only be accessed outside of render, such as in event handlers or effects. Accessing a ref value (the `current` property) during render can cause your component not to update as expected (https://react.dev/reference/react/useRef).
+
+/private/tmp/luna-arro/repo/src/components/RollingText.tsx:43:51
+  41 |         style={[
+  42 |           style,
+> 43 |           { opacity: p, transform: [{ translateY: p.interpolate({ inputRange: [0, 1], outputRange: [18, 0] }) }] },
+     |                                                   ^ Passing a ref to a function may read its value during render
+  44 |         ]}
+  45 |       >
+  46 |         {shown}                                                                                                                                                                                                                                                   react-hooks/refs
+  43:51  error  Error: Cannot access refs during render
+
+React refs are values that are not needed for rendering. Refs should only be accessed outside of render, such as in event handlers or effects. Accessing a ref value (the `current` property) during render can cause your component not to update as expected (https://react.dev/reference/react/useRef).
+
+/private/tmp/luna-arro/repo/src/components/RollingText.tsx:43:51
+  41 |         style={[
+  42 |           style,
+> 43 |           { opacity: p, transform: [{ translateY: p.interpolate({ inputRange: [0, 1], outputRange: [18, 0] }) }] },
+     |                                                   ^^^^^^^^^^^^^ Passing a ref to a function may read its value during render
+  44 |         ]}
+  45 |       >
+  46 |         {shown}                                                                                                                                                                                                                                       react-hooks/refs
+  54:24  error  Error: Cannot access refs during render
+
+React refs are values that are not needed for rendering. Refs should only be accessed outside of render, such as in event handlers or effects. Accessing a ref value (the `current` property) during render can cause your component not to update as expected (https://react.dev/reference/react/useRef).
+
+/private/tmp/luna-arro/repo/src/components/RollingText.tsx:54:24
+  52 |             StyleSheet.absoluteFill,
+  53 |             {
+> 54 |               opacity: p.interpolate({ inputRange: [0, 0.5], outputRange: [1, 0], extrapolate: 'clamp' }),
+     |                        ^ Passing a ref to a function may read its value during render
+  55 |               transform: [{ translateY: Animated.multiply(lift, 18) }],
+  56 |             },
+  57 |           ]}                                                                                                                                                                                                     react-hooks/refs
+  54:24  error  Error: Cannot access refs during render
+
+React refs are values that are not needed for rendering. Refs should only be accessed outside of render, such as in event handlers or effects. Accessing a ref value (the `current` property) during render can cause your component not to update as expected (https://react.dev/reference/react/useRef).
+
+/private/tmp/luna-arro/repo/src/components/RollingText.tsx:54:24
+  52 |             StyleSheet.absoluteFill,
+  53 |             {
+> 54 |               opacity: p.interpolate({ inputRange: [0, 0.5], outputRange: [1, 0], extrapolate: 'clamp' }),
+     |                        ^^^^^^^^^^^^^ Passing a ref to a function may read its value during render
+  55 |               transform: [{ translateY: Animated.multiply(lift, 18) }],
+  56 |             },
+  57 |           ]}                                                                                                                                                                                         react-hooks/refs
+
+/private/tmp/luna-arro/repo/src/components/StreakRing.tsx
+  41:18  error  Error: Cannot access refs during render
+
+React refs are values that are not needed for rendering. Refs should only be accessed outside of render, such as in event handlers or effects. Accessing a ref value (the `current` property) during render can cause your component not to update as expected (https://react.dev/reference/react/useRef).
+
+/private/tmp/luna-arro/repo/src/components/StreakRing.tsx:41:18
+  39 |   const target = circumference * (1 - progress);
+  40 |
+> 41 |   const offset = useRef(new Animated.Value(circumference)).current;
+     |                  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ Cannot access ref value during render
+  42 |   const [reduceMotion, setReduceMotion] = useState<boolean | null>(null);
+  43 |
+  44 |   useEffect(() => {  react-hooks/refs
+  41:18  error  Error: Cannot access refs during render
+
+React refs are values that are not needed for rendering. Refs should only be accessed outside of render, such as in event handlers or effects. Accessing a ref value (the `current` property) during render can cause your component not to update as expected (https://react.dev/reference/react/useRef).
+
+/private/tmp/luna-arro/repo/src/components/StreakRing.tsx:41:18
+  39 |   const target = circumference * (1 - progress);
+  40 |
+> 41 |   const offset = useRef(new Animated.Value(circumference)).current;
+     |                  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ Cannot access ref value during render
+  42 |   const [reduceMotion, setReduceMotion] = useState<boolean | null>(null);
+  43 |
+  44 |   useEffect(() => {  react-hooks/refs
+  41:18  error  Error: Cannot access refs during render
+
+React refs are values that are not needed for rendering. Refs should only be accessed outside of render, such as in event handlers or effects. Accessing a ref value (the `current` property) during render can cause your component not to update as expected (https://react.dev/reference/react/useRef).
+
+/private/tmp/luna-arro/repo/src/components/StreakRing.tsx:41:18
+  39 |   const target = circumference * (1 - progress);
+  40 |
+> 41 |   const offset = useRef(new Animated.Value(circumference)).current;
+     |                  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ Cannot access ref value during render
+  42 |   const [reduceMotion, setReduceMotion] = useState<boolean | null>(null);
+  43 |
+  44 |   useEffect(() => {  react-hooks/refs
+
+/private/tmp/luna-arro/repo/src/navigation/NotificationTaps.tsx
+  19:16  error  Error: Cannot access refs during render
+
+React refs are values that are not needed for rendering. Refs should only be accessed outside of render, such as in event handlers or effects. Accessing a ref value (the `current` property) during render can cause your component not to update as expected (https://react.dev/reference/react/useRef).
+
+/private/tmp/luna-arro/repo/src/navigation/NotificationTaps.tsx:19:16
+  17 |   const signedIn = ready && !!session;
+  18 |
+> 19 |   const open = useRef((tap: NotificationTap) => {
+     |                ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+> 20 |     if (tap.kind === 'cheer' || tap.kind === 'comment' || tap.kind === 'moved' || tap.kind === 'saved') navigation.navigate('WorkoutDetail', { workoutId: tap.workoutId });
+     | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+> 21 |     else if (tap.kind === 'joined') navigation.navigate('FamilyMembers');
+     | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+> 22 |     else if (tap.kind === 'evening') navigation.navigate('Nudge', { memberId: tap.memberId });
+     | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+> 23 |     // Someone cheered you on before you'd moved: Today, where "I moved today" is.
+     | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+> 24 |     else if (tap.kind === 'nudge') navigation.navigate('Main', { screen: 'Today' });
+     | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+> 25 |   }).current;
+     | ^^^^^^^^^^^^^ Cannot access ref value during render
+  26 |
+  27 |   useEffect(
+  28 |     () =>  react-hooks/refs
+  19:16  error  Error: Cannot access refs during render
+
+React refs are values that are not needed for rendering. Refs should only be accessed outside of render, such as in event handlers or effects. Accessing a ref value (the `current` property) during render can cause your component not to update as expected (https://react.dev/reference/react/useRef).
+
+/private/tmp/luna-arro/repo/src/navigation/NotificationTaps.tsx:19:16
+  17 |   const signedIn = ready && !!session;
+  18 |
+> 19 |   const open = useRef((tap: NotificationTap) => {
+     |                ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+> 20 |     if (tap.kind === 'cheer' || tap.kind === 'comment' || tap.kind === 'moved' || tap.kind === 'saved') navigation.navigate('WorkoutDetail', { workoutId: tap.workoutId });
+     | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+> 21 |     else if (tap.kind === 'joined') navigation.navigate('FamilyMembers');
+     | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+> 22 |     else if (tap.kind === 'evening') navigation.navigate('Nudge', { memberId: tap.memberId });
+     | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+> 23 |     // Someone cheered you on before you'd moved: Today, where "I moved today" is.
+     | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+> 24 |     else if (tap.kind === 'nudge') navigation.navigate('Main', { screen: 'Today' });
+     | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+> 25 |   }).current;
+     | ^^^^^^^^^^^^^ Cannot access ref value during render
+  26 |
+  27 |   useEffect(
+  28 |     () =>  react-hooks/refs
+  19:16  error  Error: Cannot access refs during render
+
+React refs are values that are not needed for rendering. Refs should only be accessed outside of render, such as in event handlers or effects. Accessing a ref value (the `current` property) during render can cause your component not to update as expected (https://react.dev/reference/react/useRef).
+
+/private/tmp/luna-arro/repo/src/navigation/NotificationTaps.tsx:19:16
+  17 |   const signedIn = ready && !!session;
+  18 |
+> 19 |   const open = useRef((tap: NotificationTap) => {
+     |                ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+> 20 |     if (tap.kind === 'cheer' || tap.kind === 'comment' || tap.kind === 'moved' || tap.kind === 'saved') navigation.navigate('WorkoutDetail', { workoutId: tap.workoutId });
+     | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+> 21 |     else if (tap.kind === 'joined') navigation.navigate('FamilyMembers');
+     | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+> 22 |     else if (tap.kind === 'evening') navigation.navigate('Nudge', { memberId: tap.memberId });
+     | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+> 23 |     // Someone cheered you on before you'd moved: Today, where "I moved today" is.
+     | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+> 24 |     else if (tap.kind === 'nudge') navigation.navigate('Main', { screen: 'Today' });
+     | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+> 25 |   }).current;
+     | ^^^^^^^^^^^^^ Cannot access ref value during render
+  26 |
+  27 |   useEffect(
+  28 |     () =>  react-hooks/refs
+  19:16  error  Error: Cannot access refs during render
+
+React refs are values that are not needed for rendering. Refs should only be accessed outside of render, such as in event handlers or effects. Accessing a ref value (the `current` property) during render can cause your component not to update as expected (https://react.dev/reference/react/useRef).
+
+/private/tmp/luna-arro/repo/src/navigation/NotificationTaps.tsx:19:16
+  17 |   const signedIn = ready && !!session;
+  18 |
+> 19 |   const open = useRef((tap: NotificationTap) => {
+     |                ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+> 20 |     if (tap.kind === 'cheer' || tap.kind === 'comment' || tap.kind === 'moved' || tap.kind === 'saved') navigation.navigate('WorkoutDetail', { workoutId: tap.workoutId });
+     | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+> 21 |     else if (tap.kind === 'joined') navigation.navigate('FamilyMembers');
+     | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+> 22 |     else if (tap.kind === 'evening') navigation.navigate('Nudge', { memberId: tap.memberId });
+     | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+> 23 |     // Someone cheered you on before you'd moved: Today, where "I moved today" is.
+     | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+> 24 |     else if (tap.kind === 'nudge') navigation.navigate('Main', { screen: 'Today' });
+     | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+> 25 |   }).current;
+     | ^^^^^^^^^^^^^ Cannot access ref value during render
+  26 |
+  27 |   useEffect(
+  28 |     () =>  react-hooks/refs
+
+/private/tmp/luna-arro/repo/src/navigation/types.ts
+  59:3   warning  Unused eslint-disable directive (no problems were reported from '@typescript-eslint/no-namespace')
+  61:15  warning  An interface declaring no members is equivalent to its supertype                                    @typescript-eslint/no-empty-object-type
+
+/private/tmp/luna-arro/repo/src/screens/MapScreen.tsx
+  38:5  error  Error: Calling setState synchronously within an effect can trigger cascading renders
+
+Effects are intended to synchronize state between React and external systems such as manually updating the DOM, state management libraries, or other platform APIs. In general, the body of an effect should do one or both of the following:
+* Update external systems with the latest state from React.
+* Subscribe for updates from some external system, calling setState in a callback function when external state changes.
+
+Calling setState synchronously within an effect body causes cascading renders that can hurt performance, and is not recommended. (https://react.dev/learn/you-might-not-need-an-effect).
+
+/private/tmp/luna-arro/repo/src/screens/MapScreen.tsx:38:5
+  36 |   useEffect(() => {
+  37 |     let alive = true;
+> 38 |     setFailed(false);
+     |     ^^^^^^^^^ Avoid calling setState() directly within an effect
+  39 |     loadRoutes(memberId, range)
+  40 |       .then((d) => alive && setData(d))
+  41 |       .catch(() => alive && setFailed(true));  react-hooks/set-state-in-effect
+
+/private/tmp/luna-arro/repo/src/screens/TodayScreen.tsx
+  31:23  error  Error: Cannot reassign variable after render completes
+
+Reassigning `delay` after render has completed can cause inconsistent behavior on subsequent renders. Consider using state instead.
+
+/private/tmp/luna-arro/repo/src/screens/TodayScreen.tsx:31:23
+  29 |   const afterBreak = streak.restartDay;
+  30 |   let delay = 0;
+> 31 |   const next = () => (delay += 60);
+     |                       ^^^^^ Cannot reassign `delay` after render completes
+  32 |
+  33 |   // The moment you come back from logging: your tick, your row and the count
+  34 |   // all land together. Only for the change itself, never on a normal visit  react-hooks/immutability
+
+/private/tmp/luna-arro/repo/src/screens/WorkoutDetailScreen.tsx
+  27:31  warning  '/private/tmp/luna-arro/repo/src/data/types.ts' imported multiple times  import/no-duplicates
+  32:29  warning  '/private/tmp/luna-arro/repo/src/data/types.ts' imported multiple times  import/no-duplicates
+
+/private/tmp/luna-arro/repo/src/screens/onboarding/OnboardingPhotoScreen.tsx
+  3:24  warning  '/private/tmp/luna-arro/repo/src/theme/tokens.ts' imported multiple times  import/no-duplicates
+  5:29  warning  '/private/tmp/luna-arro/repo/src/theme/tokens.ts' imported multiple times  import/no-duplicates
+
+/private/tmp/luna-arro/repo/src/state/AppState.tsx
+  198:3   error  Error: Cannot access refs during render
+
+React refs are values that are not needed for rendering. Refs should only be accessed outside of render, such as in event handlers or effects. Accessing a ref value (the `current` property) during render can cause your component not to update as expected (https://react.dev/reference/react/useRef).
+
+/private/tmp/luna-arro/repo/src/state/AppState.tsx:198:3
+  196 |   const [removedFrom, setRemovedFrom] = useState<string | null>(null);
+  197 |   const draftRef = useRef(draft);
+> 198 |   draftRef.current = draft;
+      |   ^^^^^^^^^^^^^^^^ Cannot update ref during render
+  199 |   const sessionRef = useRef(session);
+  200 |   sessionRef.current = session;
+  201 |   const familyRef = useRef(family);                                                                                                                                                                                                                                                                                                                                                                              react-hooks/refs
+  200:3   error  Error: Cannot access refs during render
+
+React refs are values that are not needed for rendering. Refs should only be accessed outside of render, such as in event handlers or effects. Accessing a ref value (the `current` property) during render can cause your component not to update as expected (https://react.dev/reference/react/useRef).
+
+/private/tmp/luna-arro/repo/src/state/AppState.tsx:200:3
+  198 |   draftRef.current = draft;
+  199 |   const sessionRef = useRef(session);
+> 200 |   sessionRef.current = session;
+      |   ^^^^^^^^^^^^^^^^^^ Cannot update ref during render
+  201 |   const familyRef = useRef(family);
+  202 |   familyRef.current = family;
+  203 |   /** The push token registered for whoever is signed in, so signing out can remove it. */                                                                                                                                                                                                                                                                                                                                                            react-hooks/refs
+  202:3   error  Error: Cannot access refs during render
+
+React refs are values that are not needed for rendering. Refs should only be accessed outside of render, such as in event handlers or effects. Accessing a ref value (the `current` property) during render can cause your component not to update as expected (https://react.dev/reference/react/useRef).
+
+/private/tmp/luna-arro/repo/src/state/AppState.tsx:202:3
+  200 |   sessionRef.current = session;
+  201 |   const familyRef = useRef(family);
+> 202 |   familyRef.current = family;
+      |   ^^^^^^^^^^^^^^^^^ Cannot update ref during render
+  203 |   /** The push token registered for whoever is signed in, so signing out can remove it. */
+  204 |   const pushTokenRef = useRef<string | null>(null);
+  205 |   const healthSyncQueue = useRef<Promise<void>>(Promise.resolve());                                                                                                                                                                                                                                                                                                       react-hooks/refs
+  844:5   error  Error: Calling setState synchronously within an effect can trigger cascading renders
+
+Effects are intended to synchronize state between React and external systems such as manually updating the DOM, state management libraries, or other platform APIs. In general, the body of an effect should do one or both of the following:
+* Update external systems with the latest state from React.
+* Subscribe for updates from some external system, calling setState in a callback function when external state changes.
+
+Calling setState synchronously within an effect body causes cascading renders that can hurt performance, and is not recommended. (https://react.dev/learn/you-might-not-need-an-effect).
+
+/private/tmp/luna-arro/repo/src/state/AppState.tsx:844:5
+  842 |   useEffect(() => {
+  843 |     if (!removedFrom) return;
+> 844 |     setRemovedFrom(null);
+      |     ^^^^^^^^^^^^^^ Avoid calling setState() directly within an effect
+  845 |     showError(`You’re no longer in ${removedFrom}`, 'To join again, ask someone in the family for a new code.');
+  846 |     signOut();
+  847 |   }, [removedFrom, signOut]);  react-hooks/set-state-in-effect
+  872:18  error  Error: Cannot access refs during render
+
+React refs are values that are not needed for rendering. Refs should only be accessed outside of render, such as in event handlers or effects. Accessing a ref value (the `current` property) during render can cause your component not to update as expected (https://react.dev/reference/react/useRef).
+
+/private/tmp/luna-arro/repo/src/state/AppState.tsx:872:18
+  870 |   // Keep the last view while signed out so screens that are animating away don't read null.
+  871 |   const lastView = useRef<AppView | null>(null);
+> 872 |   if (builtView) lastView.current = builtView;
+      |                  ^^^^^^^^^^^^^^^^ Cannot update ref during render
+  873 |   const view = builtView ?? lastView.current;
+  874 |
+  875 |   const loadRoutes = useCallback(                                                                                                                                                                                                                                                                                                                                react-hooks/refs
+  873:29  error  Error: Cannot access refs during render
+
+React refs are values that are not needed for rendering. Refs should only be accessed outside of render, such as in event handlers or effects. Accessing a ref value (the `current` property) during render can cause your component not to update as expected (https://react.dev/reference/react/useRef).
+
+/private/tmp/luna-arro/repo/src/state/AppState.tsx:873:29
+  871 |   const lastView = useRef<AppView | null>(null);
+  872 |   if (builtView) lastView.current = builtView;
+> 873 |   const view = builtView ?? lastView.current;
+      |                             ^^^^^^^^^^^^^^^^ Cannot access ref value during render
+  874 |
+  875 |   const loadRoutes = useCallback(
+  876 |     async (memberId: string, range: MapRange): Promise<MemberRoutes> => {                                                                                                                                                                                                                                                                                                                                  react-hooks/refs
+  977:38  error  Error: Cannot access refs during render
+
+React refs are values that are not needed for rendering. Refs should only be accessed outside of render, such as in event handlers or effects. Accessing a ref value (the `current` property) during render can cause your component not to update as expected (https://react.dev/reference/react/useRef).
+
+/private/tmp/luna-arro/repo/src/state/AppState.tsx:977:38
+  975 |   );
+  976 |
+> 977 |   return <AppContext.Provider value={value}>{children}</AppContext.Provider>;
+      |                                      ^^^^^ Cannot access ref value during render
+  978 | }
+  979 |
+  980 | export function useApp(): AppContextValue {                                                                                                                                                                                                                                                                                                                                                                                                                                                             react-hooks/refs
+
+/private/tmp/luna-arro/repo/src/state/__tests__/session.test.ts
+  6:3  warning  A `require()` style import is forbidden  @typescript-eslint/no-require-imports
+
+/private/tmp/luna-arro/repo/src/state/health.ts
+  26:16  warning  A `require()` style import is forbidden  @typescript-eslint/no-require-imports
+
+/private/tmp/luna-arro/repo/src/state/notifications.ts
+  26:16  warning  A `require()` style import is forbidden  @typescript-eslint/no-require-imports
+
+✖ 78 problems (66 errors, 12 warnings)
+  0 errors and 3 warnings potentially fixable with the `--fix` option.
+

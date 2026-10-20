@@ -1,0 +1,311 @@
+app.json:3:    "name": "Arro",
+app.json:41:          "healthSharePermission": "Arro reads your workouts from Apple Health, including distance and route, so moving counts toward your family streak and your family can see what you did. Routes are shared only with your family, with the start and end left off. Arro only reads today's and yesterday's workouts.",
+app.json:42:          "healthUpdatePermission": "Arro never writes to Apple Health. It only reads your workouts so moving counts toward your family streak.",
+app.json:49:          "photosPermission": "Arro uses a photo only when you pick one for your profile or a workout. Your family sees it in Arro.",
+App.tsx:56:      <Text style={type.title}>This build can’t reach Arro</Text>
+AGENTS.md:6:# Arro: shared context for agents
+AGENTS.md:8:## What Arro is
+AGENTS.md:28:  family; a release build refuses to start ("This build can't reach Arro").
+README.md:1:# Arro
+README.md:3:**Status: parked.** Arro isn't maintained anymore. It got as far as
+README.md:7:Arro is a daily movement streak for families who live apart. Everyone moves a
+README.md:50:start ("This build can't reach Arro").
+README.md:69:   as the client id, and turn off email and phone sign-up. Arro only uses
+README.md:154:- `AGENTS.md` holds the working notes for the coding agents that built Arro.
+AUDIT.md:56:  relatives in `design/Arro.dc.html` are Ruth and Tom. The same swap went
+design/visual-direction.md:1:# Arro visual direction
+design/visual-direction.md:3:October 2026. An audit of how Arro looks after phase 1, and two directions for
+design/visual-direction.md:154:**A, Paper and clay.** It keeps Arro's warmth, which suits a family app better
+design/visual-direction.md:196:- **Headings set by hand.** Welcome's "Arro", Today's "Day 24" and a few other
+design/visual-direction.md:218:- Hand-set headings are serif: Welcome's "Arro", Today's "Day 24" and "Back at
+design/visual-direction.md:244:What we took from Dervo, adapted to Arro's warm paper rather than Dervo's cool
+design/visual-direction.md:251:  the light. Dervo's `--lift`, in Arro's warm brown instead of green-grey.
+design/visual-direction.md:258:- **A light to sit in.** Dervo puts its windows on a blurred meadow photo. Arro
+design/visual-direction.md:312:It belongs to Arro (the route maps, "your map") rather than to any calm app,
+design/visual-direction.md:350:- **Background: a soft colour mesh**, the way trydervo.com draws its own. Arro's
+design/market-research.md:1:# Arro market scan
+design/market-research.md:4:the evidence says, and where Arro fits. Read with `design/refactor-plan.md`.
+design/market-research.md:13:- **The way in is the one you named: staying in touch in a healthy way.** Arro is
+design/market-research.md:20:  faster than competition, and people pull back after a broken streak. Arro has to
+design/market-research.md:27:  Supabase and RevenueCat are free at Arro's size.
+design/market-research.md:36:| Product | What it does | Price | What Arro takes from it |
+design/market-research.md:38:| Apple Fitness sharing | Activity rings shared with up to 40 friends, 7-day 1-on-1 competitions | Free, Apple Watch-centred | Health as the automatic source. Arro is the family layer Apple doesn't have |
+design/market-research.md:39:| MoveShare | Private friends feed from Apple Health, kudos, streaks, group goals, no leaderboards | Unknown | The closest app in spirit. It's friends and Health-only. Arro is family-first and takes a manual check-in |
+design/market-research.md:42:| Pacer, StepUp | Step leaderboards and groups | Pacer Premium $9.99/mo or $49.99/yr (unconfirmed) | Steps only, ranked. The opposite of Arro |
+design/market-research.md:49:| Product | What it does | Price | What Arro takes from it |
+design/market-research.md:53:| FamilyAlbum, Tinybeans | Private family photo sharing | Around $59-75/yr premium (unconfirmed) | People pay to keep family memories, which is what Arro's paid plan sells |
+design/market-research.md:68:  ones Arro needs.
+design/market-research.md:81:  on 53% of days against 32%. That's the closest study to Arro.
+design/market-research.md:96:**Against, and what Arro should do about it:**
+design/market-research.md:99:  adult children living away are in daily contact. Arro can't replace the phone
+design/market-research.md:105:  nothing measurable. Arro's shared streak is the collaboration arm. Arro is
+design/market-research.md:107:  evidence says that bet costs some motivation, so Arro needs other ways to stay
+design/market-research.md:117:## Where Arro fits
+design/market-research.md:139:**Arro's gap:** a daily reason to say hi that nobody has to think up. Moving is
+design/market-research.md:145:**For families who live apart, Arro is a daily ritual that keeps you close:
+design/market-research.md:158:  Strava and Apple Fitness already serve them well. Arro shouldn't try.
+design/market-research.md:163:## Healthy contact: the rules Arro keeps
+design/market-research.md:202:6. **The App Store name needs more than "Arro".** "Arro" is already used by a
+design/market-research.md:203:   travel-buddy app ("Arro: Explore Together"), a taxi app, a credit card app and
+design/market-research.md:205:   "Arro: Family Move Streak", and settle it before buying a domain.
+design/market-research.md:210:  already knows who your family is. If Apple joins the two, Arro's edge is what
+design/market-research.md:224:- **Arro becomes another obligation.** Nearly half of parents with adult kids
+design/market-research.md:225:  away are already in daily contact. If Arro feels like homework, it gets muted.
+design/market-research.md:240:Supabase Pro, and only if Arro outgrows the free plan.
+design/market-research.md:265:- App Store listings named Arro: [Explore Together](https://apps.apple.com/us/app/arro-explore-together/id6779081474), [Taxi](https://apps.apple.com/us/app/arro-taxi-app/id979943889), [Build & Grow Credit](https://apps.apple.com/us/app/arro-build-grow-credit/id6449683788), [Human Care Solutions](https://apps.apple.com/us/app/arro-human-care-solutions/id1451464358)
+design/paid-plan.md:1:# Arro paid plan
+design/paid-plan.md:3:October 2026. How Arro charges without breaking the family loop. Read with
+design/paid-plan.md:11:- **One paid plan, Arro Family.** One person pays and the whole family gets it:
+design/paid-plan.md:16:  is how Snapchat and Duolingo do it, and it breaks Arro's promise.
+design/paid-plan.md:21:- **Timing: launch v1 free, add Arro Family in the first update**, ideally in
+design/paid-plan.md:52:## What Arro Family adds
+design/paid-plan.md:62:   family uses Arro.
+design/paid-plan.md:74:## What Arro never sells
+design/paid-plan.md:78:  It works for them. For Arro, selling relief from streak anxiety breaks
+design/paid-plan.md:108:- It sits under the big family plans ($120-160) because Arro is new, has no
+design/paid-plan.md:123:That's a big gap. For Arro, a paywall on joining is out, because the free loop is
+design/paid-plan.md:135:| End of each month | "Your October recap is ready", first two cards free, the rest in Arro Family | Everyone sees the teaser |
+design/paid-plan.md:136:| Opening a day before this month | "Your history is kept. Arro Family opens it." | Whoever taps |
+design/paid-plan.md:149:family a year of Arro." Families get together in December and make resolutions in
+design/paid-plan.md:160:- One subscription group, "Arro Family", with an annual and a monthly product and
+design/paid-plan.md:193:  Apple handles refunds, not Arro.
+design/paid-plan.md:214:  server-side family plan already covers everyone in the Arro family.
+design/paid-plan.md:221:in-app purchase handles refunds and family billing, and at Arro's size the saving
+design/paid-plan.md:226:**Recommendation: launch v1 free, add Arro Family in the first update.**
+design/paid-plan.md:238:  "give your family a year of Arro" pitch line up with New Year.
+design/paid-plan.md:255:  by day 35. For Arro, only founders count, since invitees don't pay.
+design/refactor-plan.md:1:# Arro refactor plan
+design/refactor-plan.md:7:`design/paid-plan.md` (how Arro charges).
+design/refactor-plan.md:11:- **Arro is a family workouts streak app, not a running app.** It's a small,
+design/refactor-plan.md:19:  `src/theme/typography.ts`). `Arro-Spec.html` and `Arro.dc.html` describe an
+design/refactor-plan.md:27:  each family private, edge functions to send pushes). Arro gets its own project
+design/refactor-plan.md:54:- **The paid plan stays as is.** v1 free, then Arro Family ($39.99 a year per
+design/refactor-plan.md:56:- **App Store name: "Arro: Family Move Streak".** Agreed, not yet reserved or
+design/refactor-plan.md:71:   Arro Family ($39.99 a year per family) in the first update
+design/refactor-plan.md:73:4. ~~**The App Store name.**~~ **Decided (Oct 2026): "Arro: Family Move Streak".**
+design/refactor-plan.md:74:   "Arro" on its own is taken (a travel app, a taxi app, a credit card app), so it
+design/refactor-plan.md:86:  domain Arro controls).
+design/refactor-plan.md:199:  opening Arro.
+design/refactor-plan.md:230:- Reserve the App Store name "Arro: Family Move Streak" (open decision 4). Not
+design/refactor-plan.md:242:## Phase 7 - Arro Family (first update after launch)
+design/Arro-Spec.html:2:<title>Arro — Implementation Spec</title>
+design/Arro-Spec.html:32:  <div class="head"><div class="logo"><svg viewBox="0 0 48 48" width="30" height="30" fill="none"><path d="M11.5 38.5 L24 10.5 L36.5 38.5" stroke="#fff" stroke-width="4.6" stroke-linejoin="round" stroke-linecap="round"/><circle cx="17.6" cy="28.5" r="3" fill="#fff"/><circle cx="24" cy="28.5" r="3" fill="#fff"/><circle cx="30.4" cy="28.5" r="3" fill="#fff"/></svg></div><div><h1>Arro — Implementation Spec</h1><div class="sub">A warm family running ritual · production tokens & components for Expo / React Native</div></div></div>
+design/Arro-Spec.html:89:    <section><h2>9 · Final screens</h2><p class="desc">Locked directions in <code>Arro.dc.html</code> — build these; no new experimental screens.</p>
+design/app-store/testflight.md:3:Goal: your family installs Arro from TestFlight, signed in to the hosted `arro`
+design/app-store/testflight.md:16:| Supabase URL and key | Read from `.env.local` at bundle time. Checked: a release bundle built here contains the hosted project's URL | `.env.local` is git-ignored, so EAS never uploads it. You'd have to add both values as EAS environment variables. Without them a release build now opens on "This build can’t reach Arro" instead of quietly running on local data |
+design/app-store/testflight.md:23:setup that already builds Arro for your phone, uses no EAS build minutes, and
+design/app-store/testflight.md:42:   - Name: `Arro: Family Move Streak` (this is the moment the name is
+design/app-store/testflight.md:73:          "photosPermission": "Arro uses a photo only when you pick one for your profile or a workout. Your family sees it in Arro.",
+design/app-store/testflight.md:86:- `usesNonExemptEncryption: false`: Arro only uses HTTPS, which is exempt. This
+design/app-store/testflight.md:89:  adding camera and microphone text for features Arro doesn't have. Add it to
+design/app-store/testflight.md:92:  `healthUpdatePermission: false` is right, since Arro never writes to Health.
+design/app-store/testflight.md:115:3. Check `ios/Arro/Info.plist` now has your photo text, no camera or
+design/app-store/testflight.md:119:4. Open the workspace: `open ios/Arro.xcworkspace`
+design/app-store/testflight.md:120:5. Arro target > Signing & Capabilities: "Automatically manage signing" on,
+design/app-store/testflight.md:133:1. **Yourself first (internal testing, no review).** App Store Connect > Arro >
+design/app-store/testflight.md:135:   Install the TestFlight app on your iPhone, accept, install Arro. Delete the
+design/app-store/testflight.md:153:   opens the invite, then installs Arro and joins with your family's code.
+design/app-store/testflight.md:158:reach Arro through Health.
+design/app-store/screenshots.md:5:- Arro is iPhone-only, so one set is enough: **6.9-inch display, 1320 x 2868
+design/app-store/review-notes.md:9:Arro's only sign-in is Sign in with Apple (`signInWithApple()` in
+design/app-store/review-notes.md:49:   reviewer looks. Either accept that (Arro handles a broken streak gently,
+design/app-store/review-notes.md:59:> Arro is a daily ritual for families who live apart: each person logs that they moved today, and the family keeps one shared streak. Families are private and invite-only.
+design/app-store/review-notes.md:74:> Apple Health is optional. Arro only reads workouts (read-only, never writes), and only today's and yesterday's, to count them toward the family streak. If the review device has no workouts in Health, "I moved today" covers everything. Health data is never used for advertising or marketing and isn't stored in iCloud. Privacy policy: https://arrofamily.com/privacy
+design/app-store/review-notes.md:83:> If a Health workout has a route, Arro shares it with the family after cutting off the first and last 200 metres, so where you start and finish isn't shown. Arro never asks for or reads your current location.
+design/app-store/README.md:1:# Arro on the App Store: phase 6 prep
+design/app-store/app-privacy.md:26:| Apple's type | What Arro stores | Where in the code |
+design/app-store/app-privacy.md:48:| Device ID | Arro stores an Expo push token per phone once phase 4 is live (see "Push notifications" below). Apple's Device ID type is about identifiers like the IDFA or a device ID used to recognise the device; a push token used only to deliver the app's own notifications isn't commonly declared there |
+design/app-store/app-privacy.md:58:  the text says Arro never writes to Health.
+design/app-store/app-privacy.md:71:  and matches: "Arro reads your workouts from Apple Health, including distance
+design/app-store/app-privacy.md:74:  and end left off. Arro only reads today's and yesterday's workouts."
+design/app-store/app-privacy.md:103:and message to Apple's APNs. Expo processes them on Arro's behalf.
+design/app-store/app-privacy.md:107:only to deliver Arro's own notifications, not to recognise the device or for
+design/app-store/app-privacy.md:119:sets a specific photo text (build 3: "Arro uses a photo only when you pick one
+design/app-store/app-privacy.md:120:for your profile or a workout. Your family sees it in Arro.") and turns the camera and
+design/app-store/app-privacy.md:121:microphone texts off, so the build no longer asks for things Arro doesn't do
+design/app-store/app-privacy.md:122:(Guideline 5.1.1(ii)). Check the generated `ios/Arro/Info.plist` after
+design/Arro.dc.html:42:      <span style="font-family:'Literata',serif; font-weight:600; font-size:40px; color:#40312A; letter-spacing:-.5px;">Arro</span>
+design/Arro.dc.html:80:          <span style="font-weight:700; font-size:13px; color:#5B4636;">Arro</span>
+design/Arro.dc.html:112:          <span style="font-family:'Literata',serif; font-weight:600; font-size:42px; color:#3A2B22; letter-spacing:-.6px; line-height:1;">Arro</span>
+design/Arro.dc.html:724:  <div style="position:absolute; top:60px; left:24px; right:24px; display:flex; align-items:center; justify-content:space-between; z-index:6;"><div style="display:flex;align-items:center;gap:7px;"><svg viewBox="0 0 48 48" width="20" height="20" fill="none"><path d="M11.5 38.5 L24 10.5 L36.5 38.5" stroke="#fff" stroke-width="5" stroke-linejoin="round" stroke-linecap="round"/><circle cx="17.6" cy="28.5" r="3.1" fill="#fff"/><circle cx="24" cy="28.5" r="3.1" fill="#fff"/><circle cx="30.4" cy="28.5" r="3.1" fill="#fff"/></svg><span style="font-family:'Literata',serif;font-weight:600;font-size:17px;color:#fff;">Arro</span></div><span style="font-weight:800;font-size:11px;letter-spacing:1px;color:#fff;opacity:.85;text-transform:uppercase;">30-day streak</span></div>
+design/Arro.dc.html:748:  <div style="position:absolute; bottom:20px; left:0; right:0; text-align:center; display:flex; align-items:center; justify-content:center; gap:6px; opacity:.5;"><svg viewBox="0 0 48 48" width="20" height="20" fill="none"><path d="M11.5 38.5 L24 10.5 L36.5 38.5" stroke="#B0997F" stroke-width="5" stroke-linejoin="round" stroke-linecap="round"/><circle cx="17.6" cy="28.5" r="3.1" fill="#B0997F"/><circle cx="24" cy="28.5" r="3.1" fill="#B0997F"/><circle cx="30.4" cy="28.5" r="3.1" fill="#B0997F"/></svg><span style="font-family:'Literata',serif;font-weight:600;font-size:13px;color:#8B7867;">Arro</span></div><div style="position:absolute; bottom:9px; left:50%; transform:translateX(-50%); width:132px; height:5px; border-radius:99px; background:rgba(64,49,42,.22); z-index:9;"></div></div>
+design/Arro.dc.html:754:  <div style="position:absolute; top:60px; left:24px; z-index:6; display:flex;align-items:center;gap:7px;"><svg viewBox="0 0 48 48" width="20" height="20" fill="none"><path d="M11.5 38.5 L24 10.5 L36.5 38.5" stroke="#fff" stroke-width="5" stroke-linejoin="round" stroke-linecap="round"/><circle cx="17.6" cy="28.5" r="3.1" fill="#fff"/><circle cx="24" cy="28.5" r="3.1" fill="#fff"/><circle cx="30.4" cy="28.5" r="3.1" fill="#fff"/></svg><span style="font-family:'Literata',serif;font-weight:600;font-size:17px;color:#fff;">Arro</span></div>
+design/Arro.dc.html:768:        <div style="display:flex; align-items:center; gap:12px; margin-bottom:8px;"><div style="width:52px;height:52px;border-radius:15px;background:linear-gradient(155deg,#FF9E52,#EE7B3A);display:flex;align-items:center;justify-content:center;"><svg viewBox="0 0 48 48" width="38" height="38" fill="none"><path d="M11.5 38.5 L24 10.5 L36.5 38.5" stroke="#fff" stroke-width="4.6" stroke-linejoin="round" stroke-linecap="round"/><circle cx="17.6" cy="28.5" r="3" fill="#EE7B3A"/><circle cx="24" cy="28.5" r="3" fill="#6FB98A"/><circle cx="30.4" cy="28.5" r="3" fill="#6FA6CE"/></svg></div><div><div style="font-family:'Literata',serif;font-weight:600;font-size:30px;">Arro</div><div style="font-weight:600;font-size:13px;color:#9A8676;">A warm family running ritual · design system</div></div></div>
+design/app-store/listing.md:11:**Arro: Family Move Streak** (24)
+design/app-store/listing.md:16:1. Arro - Family Move Streak (25)
+design/app-store/listing.md:17:2. Arro: Move Together (19)
+design/app-store/listing.md:18:3. Arro Family Streak (18)
+design/app-store/listing.md:37:> Arro is a daily ritual for families who live apart.
+design/app-store/listing.md:42:> The family streak grows each day everyone moves. Each person also has a free freeze that covers a missed day automatically, so a sick day or a busy day doesn't cost anyone, and it comes back a week later. Missing a day is never called out. Arro says "Mum still has today", never who broke it.
+design/app-store/listing.md:56:> Arro reads workouts from Apple Health only if you choose to connect it. It reads workouts and nothing else, only today's and yesterday's, and never writes to Health.
+design/app-store/listing.md:61:same build, add to "A reason to say hello": "Arro reminds you once a day, at the
+design/app-store/listing.md:80:  and Arro is invite-only family, not a social network.
+design/app-store/privacy-policy.md:1:# Arro privacy policy
+design/app-store/privacy-policy.md:5:Arro is a daily ritual for families: each person moves a little, the family
+design/app-store/privacy-policy.md:6:sees it, and you keep one streak together. This policy says what Arro collects,
+design/app-store/privacy-policy.md:9:Arro is made by Bryce Rambach, an individual developer ("we", "us"). Questions:
+design/app-store/privacy-policy.md:14:- Arro collects what it needs to run your family's streak and nothing else.
+design/app-store/privacy-policy.md:21:## What Arro collects
+design/app-store/privacy-policy.md:26:which Arro offers as your display name. You can change it.
+design/app-store/privacy-policy.md:28:**Your family.** The family name, your display name, the color Arro gives you,
+design/app-store/privacy-policy.md:38:one such as "Proud of you". Arro saves the comment, who wrote it and when. Your
+design/app-store/privacy-policy.md:42:**Breaks, only if you take one.** When you take a break in Settings, Arro saves
+design/app-store/privacy-policy.md:44:and when you're back. Arro never asks why.
+design/app-store/privacy-policy.md:46:**Apple Health, only if you connect it.** Arro asks Apple Health for permission
+design/app-store/privacy-policy.md:49:today, and never writes anything to Health. From each Health workout Arro saves
+design/app-store/privacy-policy.md:55:**Which app recorded a Health workout.** Arro also saves a short label for the
+design/app-store/privacy-policy.md:60:**Routes.** Before a route leaves your phone, Arro cuts off its first and last
+design/app-store/privacy-policy.md:63:route on the workout and on your map in Arro. Arro never reads your current
+design/app-store/privacy-policy.md:67:workout, Arro shrinks it and uploads it, and the members of your family can see
+design/app-store/privacy-policy.md:72:**Notifications, only if you allow them.** Arro reminds you once a day at the
+design/app-store/privacy-policy.md:74:tells you a workout from Apple Health is in Arro. If you allow notifications,
+design/app-store/privacy-policy.md:75:Arro also saves a push token for your phone, an address Apple gives Arro for
+design/app-store/privacy-policy.md:76:sending notifications to it. Arro uses it to tell you when:
+design/app-store/privacy-policy.md:94:Only to run Arro: to sign you in, show your family who's moved, work out the
+design/app-store/privacy-policy.md:103:purpose other than running Arro. It isn't stored in iCloud.
+design/app-store/privacy-policy.md:112:- **Our hosting provider.** Arro's data is stored with Supabase, a database
+design/app-store/privacy-policy.md:115:- **Expo**, which delivers Arro's push notifications. It receives your phone's
+design/app-store/privacy-policy.md:126:**Settings > Delete account** in Arro. That removes your account, your place in
+design/app-store/privacy-policy.md:140:under Health > Data Access & Devices > Arro, or switch to "I moved today" in
+design/app-store/privacy-policy.md:141:Arro's Settings. Workouts already counted stay until you delete them with your
+design/app-store/privacy-policy.md:146:Arro isn't directed at children under 13, and we don't knowingly collect data
+design/app-store/support.md:1:# Arro support
+design/app-store/support.md:3:Arro is a daily ritual for families: everyone moves a little, everyone sees it,
+design/app-store/support.md:10:**How do I start a family?** Open Arro, sign in with Apple, name your family,
+design/app-store/support.md:13:**How do I join my family?** Ask whoever started it for the invite. Open Arro,
+design/app-store/support.md:17:**Does everyone need an iPhone?** For now, yes. Arro is iPhone-only.
+design/app-store/support.md:37:**How do I connect Apple Health?** In Arro, open Settings > How you move and
+design/app-store/support.md:38:choose Apple Health, then allow Arro to read workouts.
+design/app-store/support.md:40:**My workouts aren't showing up.** Check that Arro is allowed to read workouts
+design/app-store/support.md:41:in the iPhone's Settings app, under Health > Data Access & Devices > Arro. Only
+design/app-store/support.md:42:workouts from today and yesterday count. Opening Arro makes it check again.
+design/app-store/support.md:45:Apple Health, Arro picks them up from there. Strava can do this: turn on its
+design/app-store/support.md:48:**What does Arro read from Health?** Only workouts, only today's and
+design/app-store/support.md:56:**I got a new phone.** Install Arro and sign in with the same Apple ID. You'll be
+design/app-store/icon-options.md:6:Before that, `assets/icon.png` was the white lowercase-"a" route mark on Arro
+design/app-store/hosting.md:40:Invites the app sends today carry only the code: "Open Arro, tap “I have an
+supabase/migrations/20261005000001_schema.sql:1:-- Arro schema: families, members, invites, workouts, cheers, nudges, family_plans.
+supabase/migrations/20261005000001_schema.sql:189:-- Arro Family subscription state, written only by the RevenueCat webhook (service
+supabase/migrations/20261005000005_hardening.sql:11:-- phone offline for more than a day loses those workouts, and Arro can't import
+site/README.md:3:Arro's website. Plain HTML, CSS and a little JS, served by a Cloudflare Worker
+site/README.md:12:| `/` | `public/index.html` | Landing page. Copy comes from `design/app-store/listing.md` so the site and the App Store say the same thing. No download button until Arro is on the App Store |
+site/public/index.html:6:  <title>Arro: Family Move Streak</title>
+site/public/index.html:12:  <meta property="og:title" content="Arro: Move a little. Stay close.">
+site/public/index.html:28:      <a class="brand" href="./" aria-label="Arro home"><img src="icon-96.png" alt="" width="36" height="36">Arro</a>
+site/public/index.html:56:          <div class="day" role="img" aria-label="An example family's day in Arro: a 24-day streak. You, Dad and Nan have moved. Mum still has today.">
+site/public/index.html:85:          <figcaption class="day-caption">Arro says “Mum still has today”, never who broke it.</figcaption>
+site/public/index.html:165:              <p>Open Arro, sign in with Apple, name your family, then send the invite to your family from the app.</p>
+site/public/index.html:171:              <p>Open Arro, tap “I have an invite”, sign in and enter the code from the invite.</p>
+site/public/index.html:189:          <ul class="nots" aria-label="What Arro doesn't have">
+site/public/index.html:195:          <p>Arro reads workouts from Apple Health only if you choose to connect it. It reads workouts and nothing else, only today’s and yesterday’s, and never writes to Health.</p>
+site/public/index.html:212:      <a class="brand" href="./" aria-label="Arro home"><img src="icon-96.png" alt="" width="28" height="28">Arro</a>
+site/wrangler.jsonc:1:// Arro's website: a Worker with static assets, on arrofamily.com.
+scripts/generate-icons.mjs:2: * Generates the Arro app icons from the final production mark (lowercase-"a"
+scripts/generate-icons.mjs:3: * route mark, Arro Brand & Logo handoff): a paper mark on a flat clay tile
+site/public/backdrop.js:2:   Arro's paper colours (warm cream, a little apricot, sage, a pale evening
+site/public/styles.css:1:/* Arro website. Paper and clay, from src/theme/tokens.ts and
+site/public/styles.css:531:   Arro's paper colours on one fixed canvas behind everything, drifting very
+site/public/styles.css:825:/* --- Landing: invite ticket and the things Arro leaves out ------------- */
+site/public/404.html:6:  <title>Page not found · Arro</title>
+site/public/404.html:18:      <a class="brand" href="/" aria-label="Arro home"><img src="/icon-96.png" alt="" width="36" height="36">Arro</a>
+site/public/404.html:27:        <p class="lede">The link may be old or mistyped. <a href="/">Go to the Arro home page</a>.</p>
+site/public/privacy/index.html:6:  <title>Privacy policy · Arro</title>
+site/public/privacy/index.html:7:  <meta name="description" content="What Arro collects, why, who sees it and how to delete it.">
+site/public/privacy/index.html:22:      <a class="brand" href="../" aria-label="Arro home"><img src="../icon-96.png" alt="" width="36" height="36">Arro</a>
+site/public/privacy/index.html:34:        <h1>Arro privacy policy</h1>
+site/public/privacy/index.html:39:        <p>Arro is a daily ritual for families: each person moves a little, the family sees it, and you keep one streak together. This policy says what Arro collects, why, who sees it and how to delete it.</p>
+site/public/privacy/index.html:40:        <p>Arro is made by Bryce Rambach, an individual developer (“we”, “us”). Questions: <a href="mailto:support@arrofamily.com">support@arrofamily.com</a>.</p>
+site/public/privacy/index.html:44:          <li>Arro collects what it needs to run your family’s streak and nothing else.</li>
+site/public/privacy/index.html:51:        <h2>What Arro collects</h2>
+site/public/privacy/index.html:52:        <p><strong>Account.</strong> You sign in with Apple. Apple gives us an account identifier and the email address you chose to share (which can be Apple’s private relay address). The first time you sign in, Apple may also share your first name, which Arro offers as your display name. You can change it.</p>
+site/public/privacy/index.html:53:        <p><strong>Your family.</strong> The family name, your display name, the color Arro gives you, your time zone and the reminder time you pick. Your time zone is used to work out what “today” is for you. It isn’t your location.</p>
+site/public/privacy/index.html:55:        <p><strong>Comments, only if you write one.</strong> You can leave a short comment, up to 200 characters, on a workout in your family, by typing it or tapping a ready-made one such as “Proud of you”. Arro saves the comment, who wrote it and when. Your family sees it on the workout. You can delete your own comments, and you can delete any comment on your own workouts.</p>
+site/public/privacy/index.html:56:        <p><strong>Breaks, only if you take one.</strong> When you take a break in Settings, Arro saves the day it starts and the day it ends. Your family sees that you’re on a break and when you’re back. Arro never asks why.</p>
+site/public/privacy/index.html:57:        <p><strong>Apple Health, only if you connect it.</strong> Arro asks Apple Health for permission to read workouts and workout routes. It reads nothing else: no heart rate, calories, steps or other health data. It only reads workouts from yesterday and today, and never writes anything to Health. From each Health workout Arro saves the date, the time it started, the kind of workout, the duration in minutes, the distance, the route if one was recorded, and Health’s identifier for it (so it isn’t counted twice). Workouts recorded by other apps that save to Health, such as Strava or Apple Watch, are read the same way.</p>
+site/public/privacy/index.html:58:        <p><strong>Which app recorded a Health workout.</strong> Arro also saves a short label for the app or device that recorded it, such as “Apple Watch”, “WHOOP” or “Strava”, and shows it on the workout. It is one of a fixed list of labels. The name you gave your device, such as “Sam’s Apple Watch”, is never saved.</p>
+site/public/privacy/index.html:59:        <p><strong>Routes.</strong> Before a route leaves your phone, Arro cuts off its first and last 200 meters (about 650 feet), so where you start and finish, such as your home, isn’t on the map, and keeps only enough points to draw it. Your family sees the route on the workout and on your map in Arro. Arro never reads your current location.</p>
+site/public/privacy/index.html:60:        <p><strong>Photos, only if you add one.</strong> If you add a profile photo or a photo to a workout, Arro shrinks it and uploads it, and the members of your family can see it. Photos are stored privately: only people signed in to your family can open them. You can change or remove a photo at any time, and deleting your account deletes your photos.</p>
+site/public/privacy/index.html:61:        <p><strong>Notifications, only if you allow them.</strong> Arro reminds you once a day at the time you pick. That reminder is set up on your phone, and so is the note that tells you a workout from Apple Health is in Arro. If you allow notifications, Arro also saves a push token for your phone, an address Apple gives Arro for sending notifications to it. Arro uses it to tell you when:</p>
+site/public/privacy/index.html:74:        <p>Only to run Arro: to sign you in, show your family who’s moved, work out the family streak and freeze days, let you cheer, comment on and nudge each other, and leave you out of the day while you’re on a break.</p>
+site/public/privacy/index.html:77:        <p>Data from Apple Health is used only to count your workouts toward your family’s streak and to show them to your family. It is never used for advertising or marketing, never sold, never shared with data brokers, and never used for any purpose other than running Arro. It isn’t stored in iCloud.</p>
+site/public/privacy/index.html:82:          <li><strong>Our hosting provider.</strong> Arro’s data is stored with Supabase, a database provider, on servers in the United States (California). Supabase processes it on our behalf and may not use it for anything else.</li>
+site/public/privacy/index.html:83:          <li><strong>Expo</strong>, which delivers Arro’s push notifications. It receives your phone’s push token and the notification’s text, including the text of a comment when the notification is about one, passes them to Apple, and processes them on our behalf only.</li>
+site/public/privacy/index.html:89:        <p>Your data is kept while you have an account. To delete everything, open <strong>Settings &gt; Delete account</strong> in Arro. That removes your account, your place in the family, your workouts and their routes, your photos, cheers, comments, nudges, breaks and push tokens. If you were the last person in a family, the family is deleted too. Data can remain in the hosting provider’s backups for a short time before it’s overwritten.</p>
+site/public/privacy/index.html:92:        <p>You can also disconnect Apple Health at any time in the iPhone’s Settings app, under Health &gt; Data Access &amp; Devices &gt; Arro, or switch to “I moved today” in Arro’s Settings. Workouts already counted stay until you delete them with your account.</p>
+site/public/privacy/index.html:95:        <p>Arro isn’t directed at children under 13, and we don’t knowingly collect data from them. If you think a child has given us data, contact us and we’ll delete it.</p>
+site/public/privacy/index.html:111:      <a class="brand" href="../" aria-label="Arro home"><img src="../icon-96.png" alt="" width="28" height="28">Arro</a>
+site/public/site.js:64:    card.setAttribute('aria-label', "An example family's day in Arro: everyone has moved, and the family streak is now 25 days.");
+site/public/join/index.html:6:  <title>Join your family · Arro</title>
+site/public/join/index.html:7:  <meta name="description" content="You've been invited to a family on Arro. Here's how to join.">
+site/public/join/index.html:22:      <a class="brand" href="../" aria-label="Arro home"><img src="../icon-96.png" alt="" width="36" height="36">Arro</a>
+site/public/join/index.html:33:        <h1>Join your family on Arro</h1>
+site/public/join/index.html:45:            <h3>Get Arro on your iPhone</h3>
+site/public/join/index.html:46:            <p>Arro is coming soon to the App Store. Until then, ask whoever invited you how to install it.</p>
+site/public/join/index.html:52:            <p>Open Arro, tap “I have an invite” and sign in with Apple.</p>
+site/public/join/index.html:69:      <a class="brand" href="../" aria-label="Arro home"><img src="../icon-96.png" alt="" width="28" height="28">Arro</a>
+site/public/support/index.html:6:  <title>Support · Arro</title>
+site/public/support/index.html:7:  <meta name="description" content="Help with Arro: starting or joining a family, the streak, Apple Health and your account.">
+site/public/support/index.html:22:      <a class="brand" href="../" aria-label="Arro home"><img src="../icon-96.png" alt="" width="36" height="36">Arro</a>
+site/public/support/index.html:34:        <h1>Arro support</h1>
+site/public/support/index.html:35:        <p class="lede">Arro is a daily ritual for families: everyone moves a little, everyone sees it, and you keep one streak together.</p>
+site/public/support/index.html:42:        <p>Open Arro, sign in with Apple, name your family, then send the invite to your family from the app.</p>
+site/public/support/index.html:44:        <p>Ask whoever started it for the invite. Open Arro, sign in and enter the code from the invite. Codes last 14 days; ask for a new one if yours has run out.</p>
+site/public/support/index.html:46:        <p>For now, yes. Arro is iPhone-only.</p>
+site/public/support/index.html:60:        <p>In Arro, open Settings &gt; How you move and choose Apple Health, then allow Arro to read workouts.</p>
+site/public/support/index.html:62:        <p>Check that Arro is allowed to read workouts in the iPhone’s Settings app, under Health &gt; Data Access &amp; Devices &gt; Arro. Only workouts from today and yesterday count. Opening Arro makes it check again.</p>
+site/public/support/index.html:64:        <p>If that app saves workouts to Apple Health, Arro picks them up from there. Strava can do this: turn on its Health connection in Strava’s settings.</p>
+site/public/support/index.html:65:        <h3>What does Arro read from Health?</h3>
+site/public/support/index.html:72:        <p>Install Arro and sign in with the same Apple ID. You’ll be back in your family.</p>
+site/public/support/index.html:82:      <a class="brand" href="../" aria-label="Arro home"><img src="../icon-96.png" alt="" width="28" height="28">Arro</a>
+src/state/photos.ts:24:      Alert.alert('Photos are off for Arro', 'You can turn them on in Settings.', [
+src/state/invite.ts:13:    `${senderName} invited you to ${familyName} on Arro. We keep one daily streak by moving a little, any way we like. ` +
+src/state/invite.ts:14:    `Open Arro, tap “I have an invite” and enter the code ${code}.`
+src/state/backend.ts:2: * Every call Arro makes to the hosted Supabase project. Screens never import this;
+src/state/backend.ts:25:          ? 'That family already has 12 people, which is as many as Arro allows.'
+src/state/backend.ts:195: * sends the name the first time someone signs in to Arro, so givenName is often null.
+src/state/reminders.ts:2: * When the daily reminder fires. iOS can't ask Arro "moved today?" at the moment
+src/state/reminders.ts:19: * doesn't open Arro for longer than that stops getting reminders, which is fine.
+src/state/__tests__/healthSync.test.ts:62:  it('maps HealthKit activity names to Arro types', () => {
+src/state/__tests__/healthSync.test.ts:170:  it('skips a workout its owner removed from Arro', () => {
+src/state/AppState.tsx:175:/** "Your run is in Arro", "Your gym session is in Arro". */
+src/state/AppState.tsx:254:   * yet, because iOS can wake Arro in the background for a new workout.
+src/state/AppState.tsx:283:          // background it brings them into Arro, in the foreground it's the moment it arrives.
+src/state/AppState.tsx:288:            `Your ${SAVED_NOUN[newest.type]} is in Arro`,
+src/screens/LogTodayScreen.tsx:55:        setError(`Yesterday closed at ${yesterdayClosedAt()}, so Arro couldn’t save it. Today still counts.`);
+src/screens/WorkoutDetailScreen.tsx:130:        ? 'It comes off Arro for your family, with its cheers and comments. Apple Health keeps it.'
+src/screens/WorkoutDetailScreen.tsx:131:        : 'It comes off Arro for your family, with its cheers and comments.',
+src/navigation/NotificationTaps.tsx:12: * loaded (Arro opened from closed) waits for it.
+src/screens/SettingsScreen.tsx:166:            // About Arro only shows the version, so it has no arrow.
+src/screens/TakeBreakScreen.tsx:75:              {`You’ve been on a break for 14 of the last 30 days, which is as much as Arro allows.${
+src/screens/onboarding/SignInScreen.tsx:48:        showError('No Arro account yet', 'This Apple ID isn’t in a family. Go back to start a family or use an invite.');
+src/screens/onboarding/SignInScreen.tsx:57:          ? 'Arro couldn’t reach the server. Check your connection and try again.'
+src/screens/onboarding/SignInScreen.tsx:111:            : 'Arro only uses your Apple ID to sign you in. Your email isn’t shared with your family.'
+src/screens/onboarding/SignInScreen.tsx:150:          <Text style={styles.line}>Sign in with the Apple ID you use for Arro and you’ll go straight to your family.</Text>
+src/state/notifications.ts:5: * nudge (send-push), plus the "your run is in Arro" note after a Health sync.
+src/state/notifications.ts:65:/** Notifications that arrive while Arro is open show as a banner too, without a badge. */
+src/state/notifications.ts:114: * "Your run is in Arro": shown straight away when a Health sync in the background
+src/state/notifications.ts:172: * opened Arro from closed. Returns a function that stops listening.
+src/state/session.ts:59:  /** Health workout UUIDs this person took off in Arro, so a sync leaves them off. */
+src/screens/onboarding/NotificationsPromptScreen.tsx:59:      subtitle="Arro lets you know when someone in your family moves, cheers you on or joins, and at most once an evening who still has today."
+src/state/routes.ts:2: * Workout routes: what Arro keeps of the GPS track Apple Health recorded, and the
+src/components/AnimatedSplash.tsx:91:      <Animated.Text style={[styles.word, { opacity: word }]}>Arro</Animated.Text>
+src/state/healthSync.ts:52:  /** The workouts this sync added, so Arro can say so. */
+src/state/healthSync.ts:125: * when `canRemove` (Arro is open, so Health could be read in full: a locked phone
+src/state/healthSync.ts:321:    // Saved before its route arrived, or before Arro read routes: fill in what's new.
+src/state/health.ts:2: * Apple Health through @appeeky/expo-healthkit. Read-only: Arro asks for
+src/state/health.ts:51: * Starts watching Health for new workouts, so iOS wakes Arro when one is saved,
+src/state/health.ts:75:    // iOS wake Arro for new workouts, which is how they reach the family unopened.
+src/state/health.ts:120: * Calls back when Health has new workouts, including when iOS relaunches Arro in
+src/screens/onboarding/HowYouMoveScreen.tsx:13: * Apple Health leads, because it brings workouts in without anyone opening Arro:
+src/screens/onboarding/HowYouMoveScreen.tsx:66:            ? 'Using Strava or Garmin? Turn on Apple Health in its settings so your workouts come through. Arro only reads your workouts and their routes, nothing else. “I moved today” is always there too.'
+src/theme/tokens.ts:2: * Arro design tokens — "Paper and clay" (design/visual-direction.md, direction A),
+src/components/InvitePanel.tsx:27:        <Text style={styles.codeNote}>It’s in the message. They tap “I have an invite” in Arro and type it in.</Text>
+src/screens/NotificationsScreen.tsx:93:          <Text style={styles.note}>Notifications aren’t available in this version of Arro.</Text>
+src/screens/NotificationsScreen.tsx:106:              Notifications for Arro are off in the iPhone’s Settings, so cheers, nudges and reminders don’t arrive yet. Turn
+src/screens/NotificationsScreen.tsx:115:            Arro also lets you know when someone in your family moves, cheers or comments on your workout, or joins, and at most once an evening who
+src/screens/MoveMethodScreen.tsx:64:              ? 'Arro only reads your workouts and their routes, nothing else. Routes leave off the start and end. Workouts from today and yesterday count on their own. Using Strava or Garmin? Turn on Apple Health in its settings. If none show up, allow Arro in the iPhone’s Settings under Health > Data Access & Devices.'
+src/data/family.ts:2: * ALL fake data for the Arro prototype. No backend, Apple Health, auth, or maps.
+src/data/family.ts:244:    { key: 'about', label: 'About Arro', value: 'Version 1.0.0', glyph: 'i' },
+src/screens/onboarding/WelcomeScreen.tsx:25:        <Text style={styles.wordmark}>Arro</Text>
+src/components/Backdrop.tsx:10: * colours: Arro's paper with pools of warm cream, apricot, sage and a pale
+src/components/Icons.tsx:8: * Arro brand mark — final production logo (Arro Logo No.12 · variant "v5"):
