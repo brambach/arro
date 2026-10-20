@@ -1,40 +1,31 @@
 import React from 'react';
-import { Pressable, ScrollView, StyleSheet, Text, View, KeyboardAvoidingView, Platform } from 'react-native';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { colors, spacing } from '../theme/tokens';
-import { type, weights } from '../theme/typography';
 import { InvitePanel } from '../components/InvitePanel';
-import { PrimaryButton } from '../components/PrimaryButton';
+import { SolidButton } from '../components/SolidButton';
+import { SubScreen } from '../components/SubScreen';
 import { useSendInvite } from '../state/useSendInvite';
+import { useView } from '../state/AppState';
 import { RootStackScreenProps } from '../navigation/types';
-import { Backdrop } from '../components/Backdrop';
 
-/** Invite from inside the app: the "+" and "Invite a family member" on Family members, and Today's invite links. */
+export const INVITE_COPY = {
+  title: 'Invite someone',
+  lead: (family: string) => `Send them the message, or read them the code. Joining ${family} takes about a minute.`,
+  send: 'Send invite',
+  done: 'Done',
+};
+
+/** Invite from inside the app (Family members, Today's invite line): the share sheet with the message, code and link. */
 export function InviteScreen({ navigation }: RootStackScreenProps<'Invite'>) {
-  const insets = useSafeAreaInsets();
   const invite = useSendInvite();
-
+  const { familyName } = useView();
   return (
-    <KeyboardAvoidingView
-      style={[styles.root, { paddingTop: Platform.OS === 'ios' ? 12 : insets.top }]}
-      behavior={Platform.OS === 'ios' ? 'padding' : undefined}
-    >
-      <Backdrop />
-      <View style={styles.topBar}>
-        <Pressable onPress={() => navigation.goBack()} hitSlop={10} accessibilityLabel="Close">
-          <Text style={styles.close}>Close</Text>
-        </Pressable>
-      </View>
-      <ScrollView keyboardShouldPersistTaps="handled" showsVerticalScrollIndicator={false} contentContainerStyle={styles.body}>
-        <Text style={type.title}>Invite a family member</Text>
-        <Text style={styles.sub}>Send the message, or read them the code. It takes them about a minute to join.</Text>
-        <View style={{ marginTop: 20 }}>
-          <InvitePanel code={invite.code} name={invite.name} onName={invite.setName} fallback={invite.fallback} />
-        </View>
-      </ScrollView>
-      <View style={[styles.footer, { paddingBottom: insets.bottom + 14 }]}>
-        <PrimaryButton
-          title={invite.fallback ? 'Done' : 'Send invite'}
+    <SubScreen
+      modal
+      title={INVITE_COPY.title}
+      lead={INVITE_COPY.lead(familyName)}
+      onBack={() => navigation.goBack()}
+      footer={
+        <SolidButton
+          title={invite.fallback ? INVITE_COPY.done : INVITE_COPY.send}
           onPress={async () => {
             if (invite.fallback) {
               await invite.commit();
@@ -44,16 +35,9 @@ export function InviteScreen({ navigation }: RootStackScreenProps<'Invite'>) {
             }
           }}
         />
-      </View>
-    </KeyboardAvoidingView>
+      }
+    >
+      <InvitePanel code={invite.code} link={invite.link} name={invite.name} onName={invite.setName} fallback={invite.fallback} />
+    </SubScreen>
   );
 }
-
-const styles = StyleSheet.create({
-  root: { flex: 1, backgroundColor: colors.screen },
-  topBar: { height: 40, paddingHorizontal: spacing.gutter, justifyContent: 'center' },
-  close: { fontSize: 16, color: colors.muted, fontWeight: weights.medium },
-  body: { paddingHorizontal: spacing.gutter, paddingTop: 14, paddingBottom: 24 },
-  sub: { ...type.body, marginTop: 6 },
-  footer: { paddingHorizontal: spacing.gutter, paddingTop: 10 },
-});

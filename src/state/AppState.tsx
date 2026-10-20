@@ -10,7 +10,7 @@ import { InvitePreview, LogSessionInput, SessionChanges } from './backend';
 import { APP_BUILD } from './appBuild';
 import { AppView, NO_OPTIMISTIC, Optimistic, buildView, placeholderFamily, startingLabel } from './buildView';
 import { showError } from './confirm';
-import { dayKey, deviceTimezone, yesterdayOpen } from './dates';
+import { addDays, dayKey, deviceTimezone, weekStart, yesterdayOpen } from './dates';
 import { saveMindfulMinutes } from './health';
 import { makeJoinCode } from './joinCode';
 import { MilestoneMemory, loadMilestones, markShown, saveMilestones } from './milestones';
@@ -68,6 +68,8 @@ export interface Draft {
   weekStartsOn: WeekStartsOn;
   reminderDays: number[];
   reminderTime: string;
+  /** "Remind me if I'm behind", or "No reminders" (the Reminders step). */
+  remindersWanted: boolean;
   joinCode: string;
   invited: { id: string; name: string }[];
   /** Signed in with Apple (server mode only). */
@@ -113,6 +115,7 @@ const emptyDraft = (role: Draft['role']): Draft => ({
   weekStartsOn: 1,
   reminderDays: [...DEFAULT_REMINDER_DAYS],
   reminderTime: DEFAULT_REMINDER_TIME,
+  remindersWanted: true,
   joinCode: role === 'founder' ? makeJoinCode() : '',
   invited: [],
   userId: null,
@@ -142,6 +145,12 @@ interface AppContextValue {
   signIn: () => Promise<'cancelled' | 'continue' | 'done' | 'ask'>;
   finishSignIn: () => Promise<void>;
   saveFamilyName: () => Promise<void>;
+  /**
+   * Founder onboarding, Your rhythm: makes the family on the server with its
+   * name and rhythm (the week start is fixed from then on). Going back and
+   * changing the goal or minimum afterwards saves it as the family's rules.
+   */
+  saveRhythm: () => Promise<void>;
   lookUpInvite: () => Promise<void>;
   joinInvitedFamily: () => Promise<void>;
   completeOnboarding: (remindersWanted: boolean) => Promise<void>;
@@ -609,16 +618,22 @@ export function AppStateProvider({ children }: { children: React.ReactNode }) {
     await openExisting(next);
   }, [openExisting]);
 
+  /** Name your family: only a rename once the family exists. It's made at Your rhythm (saveRhythm). */
   const saveFamilyName = useCallback(async () => {
     const d = draftRef.current;
+    if (!backend.backendEnabled || !d.userId || !d.remote) return;
+    await backend.renameFamily(d.remote.familyId, d.familyName.trim());
+  }, []);
+
+  const saveRhythm = useCallback(async () => {
+    const d = draftRef.current;
     if (!backend.backendEnabled || !d.userId) return;
-    const name = d.familyName.trim();
     if (d.remote) {
-      await backend.renameFamily(d.remote.familyId, name);
+      await backend.setFamilyRules(d.remote.familyId, d.goal, d.minMinutes);
       return;
     }
     const remote = await backend.createFamily({
-      familyName: name,
+      familyName: d.familyName.trim(),
       displayName: d.name.trim() || 'Me',
       timezone: deviceTimezone(),
       reminderTime: d.reminderTime,
@@ -1022,32 +1037,67 @@ export function AppStateProvider({ children }: { children: React.ReactNode }) {
     [commitSession, inPreview, refresh, rollBack, uploadMine],
   );
 
+  /** Prototype preview: Settings' writes change the scenario's family in memory. */
+  const changePreviewFamily = useCallback(
+    (update: (f: FamilySnapshot, today: string) => FamilySnapshot) =>
+      commitScenario((s) => (s.family ? { ...s, family: update(s.family, dayKey(s.now)) } : s)),
+    [commitScenario],
+  );
+
   const takeBreak = useCallback(
     async (days: number) => {
       const remote = sessionRef.current?.remote;
-      if (!remote || previewRef.current) return;
+      if (previewRef.current) {
+        changePreviewFamily((f, today) => {
+          const current = f.pauses.find((p) => p.memberId === PREVIEW_ME && p.startsOn <= today && today <= p.endsOn);
+          const others = f.pauses.filter((p) => p !== current);
+          return { ...f, pauses: [...others, { memberId: PREVIEW_ME, startsOn: current?.startsOn ?? today, endsOn: addDays(today, days - 1) }] };
+        });
+        return;
+      }
+      if (!remote) return;
       await backend.pauseMe(remote.memberId, days);
       await refresh();
     },
-    [refresh],
+    [changePreviewFamily, refresh],
   );
 
   const endBreak = useCallback(async () => {
     const remote = sessionRef.current?.remote;
-    if (!remote || previewRef.current) return;
+    if (previewRef.current) {
+      changePreviewFamily((f, today) => ({
+        ...f,
+        pauses: f.pauses
+          .filter((p) => !(p.memberId === PREVIEW_ME && p.startsOn >= today))
+          .map((p) => (p.memberId === PREVIEW_ME && p.startsOn < today && today <= p.endsOn ? { ...p, endsOn: addDays(today, -1) } : p)),
+      }));
+      return;
+    }
+    if (!remote) return;
     await backend.endMyPause(remote.memberId);
     await refresh();
-  }, [refresh]);
+  }, [changePreviewFamily, refresh]);
 
   const setRules = useCallback(
     async (goal: number, minMinutes: number) => {
       const remote = sessionRef.current?.remote;
-      if (!remote || previewRef.current) return startingLabel(dayKey());
+      if (previewRef.current) {
+        const today = dayKey(scenarioRef.current?.now ?? new Date());
+        const next = addDays(weekStart(today, scenarioRef.current?.family?.weekStartsOn ?? 1), 7);
+        changePreviewFamily((f) => ({
+          ...f,
+          goalPerWeek: goal,
+          minMinutes,
+          rules: [...f.rules.filter((r) => r.effectiveFrom < next), { effectiveFrom: next, goalPerWeek: goal, minMinutes }],
+        }));
+        return startingLabel(next);
+      }
+      if (!remote) return startingLabel(dayKey());
       const from = await backend.setFamilyRules(remote.familyId, goal, minMinutes);
       await refresh();
       return startingLabel(from);
     },
-    [refresh],
+    [changePreviewFamily, refresh],
   );
 
   const setReminders = useCallback(
@@ -1070,11 +1120,15 @@ export function AppStateProvider({ children }: { children: React.ReactNode }) {
   const setWeekendCheckin = useCallback(
     async (on: boolean) => {
       const remote = sessionRef.current?.remote;
-      if (!remote || previewRef.current) return;
+      if (previewRef.current) {
+        changePreviewFamily((f) => ({ ...f, members: f.members.map((m) => (m.id === PREVIEW_ME ? { ...m, weekendCheckin: on } : m)) }));
+        return;
+      }
+      if (!remote) return;
       await backend.updateMember(remote.memberId, { weekendCheckin: on });
       await refresh();
     },
-    [refresh],
+    [changePreviewFamily, refresh],
   );
 
   const turnOnNotifications = useCallback(async () => {
@@ -1310,6 +1364,7 @@ export function AppStateProvider({ children }: { children: React.ReactNode }) {
       signIn,
       finishSignIn,
       saveFamilyName,
+      saveRhythm,
       lookUpInvite,
       joinInvitedFamily,
       completeOnboarding,
@@ -1360,7 +1415,7 @@ export function AppStateProvider({ children }: { children: React.ReactNode }) {
     }),
     [
       ready, session, view, notice, clearNotice, welcomeDue, dismissWelcome, draft, startFlow, updateDraft, signIn, finishSignIn,
-      saveFamilyName, lookUpInvite, joinInvitedFamily, completeOnboarding, signOut, checkBeforeDelete, deleteAccount, refresh,
+      saveFamilyName, saveRhythm, lookUpInvite, joinInvitedFamily, completeOnboarding, signOut, checkBeforeDelete, deleteAccount, refresh,
       logSession, resendDraft, discardDraft, draftFor, editSession, setSessionPhoto, deleteSession, removeMe, cheer, uncheer,
       comment, deleteComment, nudge, startTimer, coolOff, resumeTimer, setTimerTarget, setTimerSaunaType, finishTimer,
       discardTimer, lastSaunaType, updateProfile, takeBreak, endBreak, setRules, setReminders, setWeekendCheckin,

@@ -1,54 +1,67 @@
 import React from 'react';
 import { StyleSheet, Text, View } from 'react-native';
-import { colors } from '../../theme/tokens';
-import { weights } from '../../theme/typography';
-import { memberColor } from '../../theme/tokens';
-import { AvatarRing } from '../../components/AvatarRing';
-import { OnboardingFrame } from '../../components/OnboardingFrame';
-import { TextButton } from '../../components/TextButton';
+import { memberColor, radii, space } from '../../theme/tokens';
+import { type } from '../../theme/typography';
+import { Avatar } from '../../components/Avatar';
+import { StepScreen } from '../../components/StepScreen';
+import { TextAction } from '../../components/TextAction';
 import { useApp } from '../../state/AppState';
 import { PREVIEW_MEMBERS } from '../../data/preview';
 import { pickPhoto } from '../../state/photos';
 import { RootStackScreenProps } from '../../navigation/types';
-import { stepOf } from './steps';
+import { nextAfter, stepOf } from './steps';
 
-/** Optional photo. The colour is automatic: the next one in the palette after the people already in. */
+export const PHOTO_COPY = {
+  title: 'Add a photo',
+  subtitle: 'So your family sees your face, not only a letter. You can skip this.',
+  choose: 'Choose a photo',
+  change: 'Choose a different photo',
+  color: 'Your color is picked for you, so nobody in the family shares one.',
+  continue: 'Continue',
+  skip: 'Skip for now',
+};
+
+/** Invitee: an optional photo. The color is the next one in the palette after the people already in. */
 export function OnboardingPhotoScreen({ navigation }: RootStackScreenProps<'OnboardingPhoto'>) {
   const { draft, updateDraft } = useApp();
-  const color = memberColor(PREVIEW_MEMBERS.length);
+  const color = memberColor(draft.invite?.memberCount ?? PREVIEW_MEMBERS.length);
+  const goNext = () => {
+    const next = nextAfter('invitee', 'OnboardingPhoto');
+    if (next) navigation.navigate(next as 'HowItWorks');
+  };
 
   return (
-    <OnboardingFrame
-      title="Add a photo"
-      subtitle="So your family sees a face, not a letter. You can skip this."
+    <StepScreen
+      title={PHOTO_COPY.title}
+      subtitle={PHOTO_COPY.subtitle}
       step={stepOf('invitee', 'OnboardingPhoto')}
       onBack={() => navigation.goBack()}
-      primaryLabel={draft.photoUri ? 'Continue' : 'Skip for now'}
-      onPrimary={() => navigation.navigate('HowItWorks')}
+      primaryLabel={draft.photoUri ? PHOTO_COPY.continue : PHOTO_COPY.skip}
+      onPrimary={goNext}
     >
       <View style={styles.center}>
-        <AvatarRing name={draft.name || '?'} color={color} photoUri={draft.photoUri} size={120} />
-        <TextButton
-          label={draft.photoUri ? 'Choose a different photo' : 'Choose a photo'}
+        <Avatar name={draft.name || '?'} color={color} photoUri={draft.photoUri} size={128} accessible />
+        <TextAction
+          label={draft.photoUri ? PHOTO_COPY.change : PHOTO_COPY.choose}
           onPress={async () => {
-            const uri = await pickPhoto();
+            const uri = await pickPhoto('square');
             if (uri) updateDraft({ photoUri: uri });
           }}
           style={styles.choose}
         />
         <View style={styles.colorRow}>
           <View style={[styles.dot, { backgroundColor: color }]} />
-          <Text style={styles.colorText}>Your colour is picked for you</Text>
+          <Text style={[type.label, styles.colorText]}>{PHOTO_COPY.color}</Text>
         </View>
       </View>
-    </OnboardingFrame>
+    </StepScreen>
   );
 }
 
 const styles = StyleSheet.create({
-  center: { alignItems: 'center', paddingTop: 12 },
-  choose: { fontSize: 16, marginTop: 18 },
-  colorRow: { flexDirection: 'row', alignItems: 'center', gap: 8, marginTop: 22 },
-  dot: { width: 10, height: 10, borderRadius: 5 },
-  colorText: { fontSize: 13, fontWeight: weights.medium, color: colors.muted },
+  center: { alignItems: 'center', paddingTop: space.s8 },
+  choose: { marginTop: space.s16 },
+  colorRow: { flexDirection: 'row', alignItems: 'center', gap: space.s8, marginTop: space.s24, paddingHorizontal: space.s16 },
+  dot: { width: 12, height: 12, borderRadius: radii.round },
+  colorText: { flexShrink: 1 },
 });

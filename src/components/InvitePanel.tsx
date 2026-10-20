@@ -1,44 +1,58 @@
 import React from 'react';
 import { StyleSheet, Text, View } from 'react-native';
-import { colors } from '../theme/tokens';
-import { weights } from '../theme/typography';
+import { palette, space } from '../theme/tokens';
+import { maxFontScale, type } from '../theme/typography';
 import { Card } from './Card';
-import { TextField } from './TextField';
+import { Field } from './Field';
 
-/** The join code, the optional "who is it for", and (where there's no share sheet) the message to send by hand. */
-export function InvitePanel({
-  code,
-  name,
-  onName,
-  fallback,
-}: {
+/**
+ * The invite, shared by onboarding's Invite step and the Invite screen: the
+ * family's join code large in Fraunces on a steam card, the join link under
+ * it, the optional "Who's it for?" name, and, where there's no share sheet
+ * (the web preview), the message to send by hand.
+ */
+type Props = {
   code: string;
+  link: string;
   name: string;
   onName: (name: string) => void;
   fallback: string | null;
-}) {
+};
+
+export function InvitePanel({ code, link, name, onName, fallback }: Props) {
   return (
     <View>
-      <Card padding={20} style={styles.codeCard}>
-        <Text style={styles.codeLabel}>Your family’s join code</Text>
-        <Text style={styles.code} numberOfLines={1} adjustsFontSizeToFit accessibilityLabel={`Join code ${code.split('').join(' ')}`}>
+      <Card padding={24} style={styles.codeCard}>
+        <Text style={type.caption}>Your family’s code</Text>
+        <Text
+          style={[type.title, styles.code]}
+          selectable
+          maxFontSizeMultiplier={maxFontScale.title}
+          accessibilityLabel={`Join code ${code.split('').join(' ')}`}
+        >
           {code}
         </Text>
-        <Text style={styles.codeNote}>It’s in the message. They tap “I have an invite” in Arro and type it in.</Text>
+        <Text style={[type.bodySmall, styles.link]} selectable>
+          {link.replace('https://', '')}
+        </Text>
+        <Text style={[type.label, styles.note]}>
+          It goes in the message with a link. They tap “I have an invite” in Saunafam and type the code in. Codes last 14 days.
+        </Text>
       </Card>
-      <TextField
+      <Field
         label="Who’s it for? (optional)"
         value={name}
         onChangeText={onName}
         autoCapitalize="words"
         maxLength={24}
-        placeholder="Mum"
-        wrapStyle={{ marginTop: 20 }}
+        placeholder="Maya"
+        hint="They’ll show as invited until they join."
+        wrapStyle={styles.field}
       />
       {fallback ? (
-        <Card padding={16} background={colors.cardAlt} style={{ marginTop: 16 }}>
-          <Text style={styles.fallbackLabel}>No share sheet here. Send this yourself:</Text>
-          <Text style={styles.fallback} selectable>
+        <Card padding={20} background={palette.aspen} style={styles.fallback}>
+          <Text style={[type.labelStrong, styles.onAspen]}>There’s no share sheet here. Send this yourself:</Text>
+          <Text style={[type.bodySmall, styles.fallbackText]} selectable>
             {fallback}
           </Text>
         </Card>
@@ -49,9 +63,11 @@ export function InvitePanel({
 
 const styles = StyleSheet.create({
   codeCard: { alignItems: 'center' },
-  codeLabel: { fontSize: 14, color: colors.muted },
-  code: { fontSize: 36, fontWeight: weights.bold, letterSpacing: 6, color: colors.ink, marginTop: 8 },
-  codeNote: { fontSize: 13.5, lineHeight: 19, color: colors.faint, textAlign: 'center', marginTop: 10 },
-  fallbackLabel: { fontSize: 13.5, fontWeight: weights.semibold, color: colors.muted },
-  fallback: { fontSize: 14.5, lineHeight: 20, color: colors.inkSoft, marginTop: 6 },
+  code: { letterSpacing: 4, marginTop: space.s12, textAlign: 'center' },
+  link: { marginTop: space.s4, textAlign: 'center' },
+  note: { marginTop: space.s16, textAlign: 'center' },
+  field: { marginTop: space.s24 },
+  fallback: { marginTop: space.s16 },
+  onAspen: { color: palette.smoke },
+  fallbackText: { marginTop: space.s8, color: palette.smoke },
 });

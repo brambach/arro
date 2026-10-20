@@ -373,7 +373,7 @@ describe('everything else', () => {
   });
 
   it('Plus row: "Plus, from Maya" only when switched on', () => {
-    expect(viewFor('plusActive').plus).toEqual({ visible: true, active: true, rowLabel: 'Plus, from Maya', wood: 'cedar', payerIsMe: false });
+    expect(viewFor('plusActive').plus).toMatchObject({ visible: true, active: true, rowLabel: 'Plus, from Maya', wood: 'cedar', payerIsMe: false, payerName: 'Maya', status: 'active' });
     expect(viewFor('family').plus.visible).toBe(false);
   });
 

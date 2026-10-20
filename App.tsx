@@ -1,15 +1,18 @@
 import React, { useCallback, useEffect, useState } from 'react';
-import { StyleSheet, Text, View } from 'react-native';
 import { StatusBar } from 'expo-status-bar';
 import { useFonts } from 'expo-font';
 import * as SplashScreen from 'expo-splash-screen';
 import { NavigationContainer, DefaultTheme, Theme, createNavigationContainerRef } from '@react-navigation/native';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { ReducedMotionConfig, ReduceMotion } from 'react-native-reanimated';
-import { palette, space } from './src/theme/tokens';
-import { fontFiles, type } from './src/theme/typography';
+import { palette } from './src/theme/tokens';
+import { fontFiles } from './src/theme/typography';
 import { RootNavigator } from './src/navigation/RootNavigator';
 import { NotificationTaps } from './src/navigation/NotificationTaps';
+import { AppOverlays } from './src/navigation/AppOverlays';
+import { DevLinks } from './src/navigation/DevLinks';
+import { CantReachScreen } from './src/screens/CantReachScreen';
+import { markSplashLeaving } from './src/components/splashSignal';
 import { RootStackParamList } from './src/navigation/types';
 import { AnimatedSplash } from './src/components/AnimatedSplash';
 import { AppStateProvider, useApp } from './src/state/AppState';
@@ -45,6 +48,8 @@ export default function App() {
           <StatusBar style="dark" />
           <RootNavigator />
           <NotificationTaps navigation={navigationRef} />
+          <AppOverlays navigation={navigationRef} />
+          {__DEV__ ? <DevLinks navigation={navigationRef} /> : null}
           <Splash fontsReady={fontsLoaded || !!fontError} />
         </NavigationContainer>
       </AppStateProvider>
@@ -56,9 +61,13 @@ export default function App() {
 function Splash({ fontsReady }: { fontsReady: boolean }) {
   const { ready, session } = useApp();
   const [done, setDone] = useState(false);
-  const onDone = useCallback(() => setDone(true), []);
+  const onDone = useCallback(() => {
+    // In case the exit signal was missed, the end of the splash counts too.
+    markSplashLeaving();
+    setDone(true);
+  }, []);
   if (done) return null;
-  return <AnimatedSplash ready={ready && fontsReady} returning={!!session} onDone={onDone} />;
+  return <AnimatedSplash ready={ready && fontsReady} returning={!!session} onDone={onDone} onExit={markSplashLeaving} />;
 }
 
 /**
@@ -70,16 +79,8 @@ function MissingServerSettings() {
     SplashScreen.hide();
   }, []);
   return (
-    <View style={styles.missing}>
-      <Text style={type.title}>This build can’t reach Arro</Text>
-      <Text style={[type.body, styles.missingBody]}>
-        It was made without the server settings. Please delete it and install the latest version from TestFlight.
-      </Text>
-    </View>
+    <SafeAreaProvider>
+      <CantReachScreen />
+    </SafeAreaProvider>
   );
 }
-
-const styles = StyleSheet.create({
-  missing: { flex: 1, justifyContent: 'center', padding: space.s32, backgroundColor: palette.birch },
-  missingBody: { marginTop: space.s12 },
-});

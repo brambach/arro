@@ -1,51 +1,62 @@
 import React from 'react';
 import { StyleSheet, Text, View } from 'react-native';
-import { colors } from '../../theme/tokens';
-import { type, weights } from '../../theme/typography';
+import { alpha, space } from '../../theme/tokens';
+import { maxFontScale, type } from '../../theme/typography';
 import { Card } from '../../components/Card';
-import { ArroMark } from '../../components/Icons';
-import { OnboardingFrame } from '../../components/OnboardingFrame';
+import { StoneMark } from '../../components/brand/StoneMark';
+import { StepScreen } from '../../components/StepScreen';
 import { useApp } from '../../state/AppState';
 import { PREVIEW_FAMILY_NAME, PREVIEW_MEMBERS } from '../../data/preview';
 import { RootStackScreenProps } from '../../navigation/types';
-import { stepOf } from './steps';
+import { nextAfter, stepOf } from './steps';
 
-/** Before sign-in the server only says the family's name and how many people are in it. */
+export const INVITE_PREVIEW_COPY = {
+  title: 'You’re invited',
+  subtitle: 'Sign in next to see who’s in and join them.',
+  count: (n: number) => (n === 1 ? '1 person is in' : `${n} people are in`),
+  code: 'Code',
+  continue: 'Continue',
+};
+
+/** Invitee, step 2: what the code opened. Before sign-in that's only the family's name and size. */
 export function InvitePreviewScreen({ navigation }: RootStackScreenProps<'InvitePreview'>) {
   const { draft } = useApp();
-  // The server's answer, or the preview family when there's no server.
   const familyName = draft.invite?.familyName ?? PREVIEW_FAMILY_NAME;
   const count = draft.invite?.memberCount ?? PREVIEW_MEMBERS.length;
 
   return (
-    <OnboardingFrame
-      title="You’re invited"
-      subtitle="Sign in to see who’s in and join them."
+    <StepScreen
+      title={INVITE_PREVIEW_COPY.title}
+      subtitle={INVITE_PREVIEW_COPY.subtitle}
       step={stepOf('invitee', 'InvitePreview')}
       onBack={() => navigation.goBack()}
-      primaryLabel="Continue"
-      onPrimary={() => navigation.navigate('SignIn')}
+      primaryLabel={INVITE_PREVIEW_COPY.continue}
+      onPrimary={() => {
+        const next = nextAfter('invitee', 'InvitePreview');
+        if (next) navigation.navigate(next as 'SignIn');
+      }}
     >
       <Card padding={24} style={styles.card}>
-        <ArroMark size={44} />
-        <Text style={styles.family}>{familyName}</Text>
-        <Text style={styles.count}>
-          {count} {count === 1 ? 'person is' : 'people are'} in
+        <StoneMark width={72} />
+        <Text style={[type.title, styles.center, styles.family]} maxFontSizeMultiplier={maxFontScale.title}>
+          {familyName}
         </Text>
-        <View style={styles.codeRow}>
-          <Text style={styles.codeLabel}>Code</Text>
-          <Text style={styles.code}>{draft.joinCode}</Text>
+        <Text style={[type.bodySmall, styles.center]}>{INVITE_PREVIEW_COPY.count(count)}</Text>
+        <View style={styles.hairline} />
+        <View style={styles.codeRow} accessible accessibilityLabel={`${INVITE_PREVIEW_COPY.code} ${draft.joinCode.split('').join(' ')}`}>
+          <Text style={type.caption}>{INVITE_PREVIEW_COPY.code}</Text>
+          <Text style={[type.bodyStrong, styles.code]}>{draft.joinCode}</Text>
         </View>
       </Card>
-    </OnboardingFrame>
+    </StepScreen>
   );
 }
 
 const styles = StyleSheet.create({
   card: { alignItems: 'center' },
-  family: { ...type.title, textAlign: 'center', marginTop: 14 },
-  count: { ...type.body, marginTop: 4 },
-  codeRow: { flexDirection: 'row', alignItems: 'center', gap: 8, marginTop: 18 },
-  codeLabel: { ...type.meta },
-  code: { fontSize: 15, fontWeight: weights.semibold, letterSpacing: 2, color: colors.inkSoft },
+  center: { textAlign: 'center' },
+  family: { marginTop: space.s16, marginBottom: space.s4 },
+  hairline: { alignSelf: 'stretch', height: StyleSheet.hairlineWidth, backgroundColor: alpha.hairline, marginVertical: space.s20 },
+  codeRow: { flexDirection: 'row', alignItems: 'baseline', gap: space.s12 },
+  code: { letterSpacing: 2 },
 });

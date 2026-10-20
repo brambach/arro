@@ -1,5 +1,5 @@
 import React, { Children, Fragment, isValidElement } from 'react';
-import { Pressable, StyleProp, StyleSheet, Text, View, ViewStyle } from 'react-native';
+import { Pressable, StyleProp, StyleSheet, Text, useWindowDimensions, View, ViewStyle } from 'react-native';
 import Animated, { useAnimatedStyle, useSharedValue, withTiming } from 'react-native-reanimated';
 import { alpha, layout, palette, radii, space } from '../theme/tokens';
 import { timing } from '../theme/motion';
@@ -44,17 +44,20 @@ export function ListRow({
 }: RowProps) {
   const press = useSharedValue(0);
   const wash = useAnimatedStyle(() => ({ opacity: press.value }));
+  // At the large Dynamic Type sizes, text wraps instead of being cut off with "...".
+  const { fontScale } = useWindowDimensions();
+  const lines = fontScale >= 1.3 ? undefined : 1;
 
   const content = (
     <View style={[styles.row, { minHeight: subtitle ? layout.row : layout.rowCompact }, style]}>
       <Animated.View style={[StyleSheet.absoluteFill, styles.wash, wash]} pointerEvents="none" />
       {leading ? <View>{leading}</View> : null}
       <View style={styles.text}>
-        <Text style={type.bodyStrong} numberOfLines={1}>
+        <Text style={type.bodyStrong} numberOfLines={lines}>
           {title}
         </Text>
         {subtitle ? (
-          <Text style={type.label} numberOfLines={1}>
+          <Text style={type.label} numberOfLines={lines}>
             {subtitle}
           </Text>
         ) : null}
@@ -67,8 +70,9 @@ export function ListRow({
             valueTone === 'kept' && styles.kept,
             valueTone === 'quiet' && styles.quiet,
             valueTone === 'default' && styles.value,
+            lines === undefined && styles.valueWrap,
           ]}
-          numberOfLines={1}
+          numberOfLines={lines}
         >
           {value}
         </Text>
@@ -142,6 +146,7 @@ const styles = StyleSheet.create({
   wash: { backgroundColor: alpha.press },
   text: { flex: 1, minWidth: 0 },
   value: { color: palette.smoke },
+  valueWrap: { flexShrink: 1, maxWidth: '45%', textAlign: 'right' },
   quiet: { color: palette.stone },
   kept: { color: palette.moss, fontWeight: '600' },
   clip: { borderRadius: radii.card, overflow: 'hidden', paddingVertical: space.s4 },

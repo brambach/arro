@@ -1,115 +1,123 @@
 import React, { useState } from 'react';
-import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { colors, spacing } from '../theme/tokens';
+import { StyleSheet, Text, View } from 'react-native';
+import { palette, space } from '../theme/tokens';
 import { type } from '../theme/typography';
-import { ChoiceRow } from '../components/ChoiceRow';
-import { PrimaryButton } from '../components/PrimaryButton';
-import { TextButton } from '../components/TextButton';
-import { ChevronLeft } from '../components/Icons';
-import { useApp, useView } from '../state/AppState';
-import { showError } from '../state/confirm';
-import { daysBetween, dayKey, untilLabel } from '../state/dates';
-import { BreakError } from '../state/backend';
-import { breakProblem, nextBreakDay } from '../state/breaks';
+import { ChoiceList } from '../components/ChoiceList';
+import { ConfirmSheet } from '../components/ConfirmSheet';
+import { SolidButton } from '../components/SolidButton';
+import { GroupNote, SubScreen } from '../components/SubScreen';
+import { TextAction } from '../components/TextAction';
 import { RootStackScreenProps } from '../navigation/types';
-import { Backdrop } from '../components/Backdrop';
+import { useApp, useView } from '../state/AppState';
+import { BreakError } from '../state/backend';
+import { nextBreakDay } from '../state/breaks';
+import { dayKey, untilLabel } from '../state/dates';
+import { BreakKey, breakOptions } from '../state/settingsCopy';
 
-const LENGTHS = [
-  { days: 1, label: 'Just today' },
-  { days: 3, label: 'Three days' },
-  { days: 7, label: 'A week' },
-  { days: 14, label: 'Two weeks' },
-];
+export const TAKE_BREAK_COPY = {
+  title: 'Take a break',
+  onBreakTitle: (until: string) => `On a break until ${until}`,
+  lead: 'Away, unwell, or just need some time? While you’re on a break the family streak carries on without you, and yours waits.',
+  family: 'Your family sees that you’re on a break and when you’re back, never why. A session while you’re away still counts.',
+  limit: 'A break can be up to two weeks, and up to 14 days in any 30.',
+  full: (from: string | null) =>
+    `You’ve had 14 days of breaks in the last 30, which is the most there can be.${from ? ` You can take another from ${from}.` : ''}`,
+  doesntFit: 'Over the limit right now',
+  start: 'Start my break',
+  change: 'Change my break',
+  end: 'I’m back, end it now',
+  endTitle: 'End your break?',
+  endBody: 'You’re back in this week from today. Sessions from today count toward it.',
+  endConfirm: 'End my break',
+  failed: 'Couldn’t save your break. Check your connection and try again.',
+};
 
 /**
- * Settings > Take a break ("Pause me"): for a holiday or being unwell. While it
- * lasts you're not expected, so the family streak carries on without you and your
- * own streak waits. Your family sees that you're away and until when, not why.
+ * Settings > Take a break: Rest of this week, One week, Two weeks. The server's
+ * limits stay (1 to 14 days counting today, at most 14 paused days in any 30),
+ * and lengths that wouldn't fit say so instead of failing. "I'm back, end it
+ * now" ends a running break.
  */
 export function TakeBreakScreen({ navigation }: RootStackScreenProps<'TakeBreak'>) {
-  const insets = useSafeAreaInsets();
   const { takeBreak, endBreak } = useApp();
-  const { myBreak, myPauses } = useView();
+  const view = useView();
   const today = dayKey();
-  const daysLeft = myBreak ? daysBetween(today, myBreak.endsOn) + 1 : null;
-  // Only lengths that fit the limits pause_me enforces (breaks.ts).
-  const lengths = LENGTHS.filter((l) => !breakProblem(myPauses, today, l.days));
-  const nextDay = lengths.length ? null : nextBreakDay(myPauses, today);
-  const [picked, setDays] = useState(daysLeft && LENGTHS.some((l) => l.days === daysLeft) ? daysLeft : 3);
-  const days = lengths.some((l) => l.days === picked) ? picked : (lengths[lengths.length - 1]?.days ?? null);
+  const options = breakOptions(view.myPauses, today, view.rules.weekStartsOn);
+  const firstFit = options.find((o) => o.fits)?.key ?? null;
+  const [picked, setPicked] = useState<BreakKey | null>(null);
+  const chosen = options.find((o) => o.key === (picked ?? firstFit) && o.fits) ?? null;
   const [busy, setBusy] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [confirmEnd, setConfirmEnd] = useState(false);
+  const nothingFits = !firstFit;
+  const from = nothingFits ? nextBreakDay(view.myPauses, today) : null;
 
   const run = async (action: () => Promise<void>) => {
     if (busy) return;
     setBusy(true);
+    setError(null);
     try {
       await action();
       navigation.goBack();
     } catch (e) {
-      showError(
-        'Couldn’t save your break',
-        e instanceof BreakError ? e.message : 'Check your connection and try again.',
-      );
+      setError(e instanceof BreakError ? e.message : TAKE_BREAK_COPY.failed);
     } finally {
       setBusy(false);
+      setConfirmEnd(false);
     }
   };
 
   return (
-    <View style={[styles.root, { paddingTop: insets.top }]}>
-      <Backdrop />
-      <View style={styles.topBar}>
-        <Pressable onPress={() => navigation.goBack()} hitSlop={10} accessibilityLabel="Back">
-          <ChevronLeft />
-        </Pressable>
+    <SubScreen
+      title={view.myBreak ? TAKE_BREAK_COPY.onBreakTitle(view.myBreak.until) : TAKE_BREAK_COPY.title}
+      lead={TAKE_BREAK_COPY.lead}
+      onBack={() => navigation.goBack()}
+      footer={
+        <>
+          <SolidButton
+            title={view.myBreak ? TAKE_BREAK_COPY.change : TAKE_BREAK_COPY.start}
+            onPress={() => chosen && run(() => takeBreak(chosen.days))}
+            disabled={busy || !chosen}
+          />
+          {view.myBreak ? <TextAction label={TAKE_BREAK_COPY.end} onPress={() => setConfirmEnd(true)} style={styles.end} /> : null}
+        </>
+      }
+    >
+      {nothingFits ? (
+        <Text style={[type.body, styles.full]}>{TAKE_BREAK_COPY.full(from ? untilLabel(from, today) : null)}</Text>
+      ) : null}
+      <ChoiceList
+        accessibilityLabel="How long"
+        value={chosen?.key ?? null}
+        onChange={(key) => setPicked(key)}
+        items={options.map((o) => ({
+          value: o.key,
+          title: o.title,
+          subtitle: o.fits ? o.detail : TAKE_BREAK_COPY.doesntFit,
+          disabled: !o.fits,
+        }))}
+      />
+      <GroupNote>{TAKE_BREAK_COPY.limit}</GroupNote>
+      <View style={styles.family}>
+        <Text style={[type.bodySmall]}>{TAKE_BREAK_COPY.family}</Text>
       </View>
-      <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{ paddingHorizontal: spacing.gutter, paddingBottom: insets.bottom + 24 }}>
-        <Text style={type.title}>{myBreak ? `On a break until ${myBreak.until}` : 'Take a break'}</Text>
-        <Text style={styles.sub}>
-          Away, unwell, or just need a few days? The family streak carries on without you, and yours waits for you.
-        </Text>
-        <View style={{ marginTop: 18 }}>
-          {lengths.length === 0 ? (
-            <Text style={styles.limit}>
-              {`You’ve been on a break for 14 of the last 30 days, which is as much as Arro allows.${
-                nextDay ? ` You can take another from ${untilLabel(nextDay, today)}.` : ''
-              }`}
-            </Text>
-          ) : null}
-          {lengths.map((l) => (
-            <ChoiceRow
-              key={l.days}
-              title={l.label}
-              body={l.days === 1 ? 'Back tomorrow' : `Starting today, for ${l.days} days`}
-              selected={days === l.days}
-              onPress={() => setDays(l.days)}
-            />
-          ))}
-        </View>
-        <Text style={styles.note}>
-          Your family sees you’re on a break and when you’re back, never why. Moving while you’re away still counts.
-        </Text>
-        <PrimaryButton
-          title={myBreak ? 'Change my break' : 'Start my break'}
-          onPress={() => days !== null && run(() => takeBreak(days))}
-          disabled={busy || days === null}
-          style={{ marginTop: 22 }}
-        />
-        {myBreak ? (
-          <View style={{ marginTop: 16, alignItems: 'center' }}>
-            <TextButton label="I’m back, end it now" onPress={() => run(endBreak)} />
-          </View>
-        ) : null}
-      </ScrollView>
-    </View>
+      {error ? <Text style={[type.bodySmall, styles.error]}>{error}</Text> : null}
+      <ConfirmSheet
+        visible={confirmEnd}
+        title={TAKE_BREAK_COPY.endTitle}
+        body={TAKE_BREAK_COPY.endBody}
+        confirmLabel={TAKE_BREAK_COPY.endConfirm}
+        onConfirm={() => run(endBreak)}
+        onCancel={() => setConfirmEnd(false)}
+        busy={busy}
+      />
+    </SubScreen>
   );
 }
 
 const styles = StyleSheet.create({
-  root: { flex: 1, backgroundColor: colors.screen },
-  topBar: { paddingHorizontal: 16, paddingVertical: 6 },
-  sub: { ...type.body, marginTop: 6 },
-  note: { fontSize: 13, lineHeight: 18, color: colors.faint, marginTop: 2 },
-  limit: { ...type.body, color: colors.muted, marginBottom: 12 },
+  full: { color: palette.smoke, marginBottom: space.s16, marginHorizontal: space.s8 },
+  family: { marginTop: space.s24, marginHorizontal: space.s8 },
+  error: { color: palette.coal, marginTop: space.s16, marginHorizontal: space.s8 },
+  end: { marginTop: space.s8 },
 });

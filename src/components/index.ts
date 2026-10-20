@@ -7,7 +7,6 @@ export { CheerButton } from './CheerButton';
 export { DayPill } from './DayPill';
 export { FadeInView } from './FadeInView';
 export { InvitePanel } from './InvitePanel';
-export { OnboardingFrame } from './OnboardingFrame';
 export { PhotoSlot } from './PhotoSlot';
 export { PrimaryButton } from './PrimaryButton';
 export { Screen } from './Screen';

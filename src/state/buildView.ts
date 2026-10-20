@@ -21,6 +21,7 @@ import {
   PastWeekRow,
   Pause,
   PhotoSource,
+  PlusStatus,
   SaunaType,
   Session,
   SessionComment,
@@ -290,7 +291,18 @@ export interface AppView {
   unit: TemperatureUnit;
   timer: TimerState | null;
   milestone: MilestoneView | null;
-  plus: { visible: boolean; active: boolean; rowLabel: string | null; wood: WallWood; payerIsMe: boolean };
+  /** `status`, `product`, `expiresAt` and `payerName` are the server's, for Settings' quiet lines (lapsed, billing). */
+  plus: {
+    visible: boolean;
+    active: boolean;
+    rowLabel: string | null;
+    wood: WallWood;
+    payerIsMe: boolean;
+    status: PlusStatus['status'];
+    product: PlusStatus['product'];
+    expiresAt: string | null;
+    payerName: string | null;
+  };
 }
 
 // ─── Optimistic changes ──────────────────────────────────────────────────────
@@ -892,6 +904,10 @@ export function buildView(input: ViewInput): AppView {
       rowLabel: plusOn ? plusRowLabel(family.plus) : null,
       wood: family.plus.wallWood,
       payerIsMe: family.plus.payerIsMe,
+      status: family.plus.status,
+      product: family.plus.product,
+      expiresAt: family.plus.expiresAt,
+      payerName: family.plus.payerName,
     },
   };
 }

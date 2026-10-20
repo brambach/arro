@@ -1,37 +1,20 @@
 import React from 'react';
-import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { colors, spacing } from '../theme/tokens';
-import { type } from '../theme/typography';
-import { ChevronLeft } from '../components/Icons';
 import { StreakRulesList } from '../components/StreakRulesList';
+import { SubScreen } from '../components/SubScreen';
 import { RootStackScreenProps } from '../navigation/types';
-import { Backdrop } from '../components/Backdrop';
+import { useView } from '../state/AppState';
 
-/** Settings > Streak rules: the same rules onboarding showed once. */
+export const STREAK_RULES_COPY = {
+  title: 'Streak rules',
+  lead: 'How the family streak, freezes and breaks work. The same rules everyone saw when they joined.',
+};
+
+/** Settings > Streak rules: the rules list onboarding showed, in the family's own rhythm. */
 export function StreakRulesScreen({ navigation }: RootStackScreenProps<'StreakRules'>) {
-  const insets = useSafeAreaInsets();
+  const { rules } = useView();
   return (
-    <View style={[styles.root, { paddingTop: insets.top }]}>
-      <Backdrop />
-      <View style={styles.topBar}>
-        <Pressable onPress={() => navigation.goBack()} hitSlop={10} accessibilityLabel="Back">
-          <ChevronLeft />
-        </Pressable>
-      </View>
-      <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{ paddingHorizontal: spacing.gutter, paddingBottom: insets.bottom + 24 }}>
-        <Text style={type.title}>Streak rules</Text>
-        <Text style={styles.sub}>How the family streak and freeze days work.</Text>
-        <View style={{ marginTop: 18 }}>
-          <StreakRulesList />
-        </View>
-      </ScrollView>
-    </View>
+    <SubScreen title={STREAK_RULES_COPY.title} lead={STREAK_RULES_COPY.lead} onBack={() => navigation.goBack()}>
+      <StreakRulesList rhythm={{ goal: rules.goal, minMinutes: rules.minMinutes, weekStartsOn: rules.weekStartsOn }} />
+    </SubScreen>
   );
 }
-
-const styles = StyleSheet.create({
-  root: { flex: 1, backgroundColor: colors.screen },
-  topBar: { paddingHorizontal: 16, paddingVertical: 6 },
-  sub: { ...type.body, marginTop: 6 },
-});

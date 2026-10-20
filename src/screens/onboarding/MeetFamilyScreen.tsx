@@ -1,103 +1,118 @@
 import React, { useEffect, useState } from 'react';
 import { StyleSheet, Text, View } from 'react-native';
-import { colors } from '../../theme/tokens';
-import { type, weights } from '../../theme/typography';
-import { AvatarRing } from '../../components/AvatarRing';
+import { alpha, palette, space } from '../../theme/tokens';
+import { maxFontScale, type } from '../../theme/typography';
+import { Avatar } from '../../components/Avatar';
 import { Card } from '../../components/Card';
-import { OnboardingFrame } from '../../components/OnboardingFrame';
+import { FixedDigits } from '../../components/FixedDigits';
+import { StepScreen } from '../../components/StepScreen';
 import { useApp } from '../../state/AppState';
 import { InviteError } from '../../state/backend';
-import { showError } from '../../state/confirm';
+import { rhythmSummary } from '../../state/buildView';
 import { PREVIEW_FAMILY_NAME, PREVIEW_MEMBERS } from '../../data/preview';
-import { Member } from '../../data/types';
 import { RootStackScreenProps } from '../../navigation/types';
 import { nextAfter, stepOf } from './steps';
 
+export const MEET_FAMILY_COPY = {
+  title: (familyName: string) => `Meet ${familyName}`,
+  subtitle: (name: string) => `Welcome, ${name}. Here’s who you’ll sauna with.`,
+  invitedBy: (name: string) => `${name} invited you.`,
+  weeks: (n: number) => (n === 1 ? 'week together' : 'weeks together'),
+  starting: 'The family streak starts with you.',
+  join: 'Join the family',
+  newCode: 'Ask them for a new code.',
+  offline: 'Couldn’t join yet. Check your connection and try again.',
+};
+
 /**
- * After sign-in the server can say who's in the family and how the streak is going.
- * "Join the family" joins it on the server there and then; the steps after it set
- * up this phone.
+ * Invitee, Meet the family: who's in, who invited you, the family streak in
+ * weeks and the rhythm ("3 sessions a week, 10 minutes or more"). "Join the
+ * family" joins on the server there and then; the steps after it set up this
+ * phone.
  */
 export function MeetFamilyScreen({ navigation }: RootStackScreenProps<'MeetFamily'>) {
   const { draft, online, lookUpInvite, joinInvitedFamily } = useApp();
   const invite = draft.invite;
   const [busy, setBusy] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  // Signed in now, the same code also returns names, colors, the streak and the rhythm.
+  useEffect(() => {
+    if (online && draft.userId) lookUpInvite().catch(() => undefined);
+  }, [online, draft.userId, lookUpInvite]);
 
   const join = async () => {
     if (busy) return;
     setBusy(true);
+    setError(null);
     try {
       await joinInvitedFamily();
-      navigation.navigate(nextAfter('invitee', 'MeetFamily') as 'HowItWorks');
+      const next = nextAfter('invitee', 'MeetFamily');
+      if (next) navigation.navigate(next as 'OnboardingPhoto');
     } catch (e) {
-      showError(
-        'Couldn’t join yet',
-        e instanceof InviteError
-          ? e.kind === 'notFound'
-            ? `${e.message} Ask your family for a new code.`
-            : e.message
-          : 'Check your connection and try again.',
+      setError(
+        e instanceof InviteError ? (e.kind === 'notFound' ? `${e.message} ${MEET_FAMILY_COPY.newCode}` : e.message) : MEET_FAMILY_COPY.offline,
       );
     } finally {
       setBusy(false);
     }
   };
 
-  // Signed in now, the same code also returns names, colours and the streak.
-  useEffect(() => {
-    if (online && draft.userId) lookUpInvite().catch(() => undefined);
-  }, [online, draft.userId, lookUpInvite]);
-
-  const members: Member[] = (invite ? invite.members : PREVIEW_MEMBERS).map((m, i) => ({ id: `invitee-preview-${i}`, name: m.name, color: m.color }));
-  const inviter = invite ? (invite.invitedBy ?? members[0]?.name ?? 'Your family') : PREVIEW_MEMBERS[0].name;
+  // The preview family: Maya invited you to Sunday sauna, where Jo is too.
+  const members = invite ? invite.members : PREVIEW_MEMBERS.slice(1);
+  const inviter = invite ? invite.invitedBy : PREVIEW_MEMBERS[1].name;
   const familyName = invite?.familyName ?? PREVIEW_FAMILY_NAME;
-  const streak = invite ? invite.weekStreak : 8;
+  const streak = invite ? (invite.weekStreak ?? 0) : 8;
+  const rhythm = rhythmSummary(invite?.goalPerWeek ?? 3, invite?.minMinutes ?? 10);
 
   return (
-    <OnboardingFrame
-      title={`${inviter} invited you to ${familyName}`}
-      subtitle={`Welcome, ${draft.name.trim() || 'friend'}. Here’s who’s in.`}
+    <StepScreen
+      title={MEET_FAMILY_COPY.title(familyName)}
+      subtitle={MEET_FAMILY_COPY.subtitle(draft.name.trim() || 'friend')}
       step={stepOf('invitee', 'MeetFamily')}
       onBack={() => navigation.goBack()}
-      primaryLabel="Join the family"
+      primaryLabel={MEET_FAMILY_COPY.join}
       primaryDisabled={busy}
       onPrimary={join}
     >
-      <Card padding={20}>
+      <Card padding={24}>
         <View style={styles.faces}>
           {members.map((m) => (
-            <View key={m.id} style={styles.face}>
-              <AvatarRing member={m} size={52} />
-              <Text style={styles.faceName}>{m.name}</Text>
+            <View key={m.name} style={styles.face}>
+              <Avatar name={m.name} color={m.color} size={56} />
+              <Text style={[type.bodySmallStrong, styles.faceName]}>{m.name}</Text>
             </View>
           ))}
         </View>
-        {streak ? (
-          <View style={styles.streakRow}>
-            <Text style={styles.streakNumber}>{streak}</Text>
-            <Text style={styles.streakLabel}>{streak === 1 ? 'week together' : 'weeks together'}</Text>
+        {inviter ? <Text style={[type.bodySmall, styles.center, styles.invited]}>{MEET_FAMILY_COPY.invitedBy(inviter)}</Text> : null}
+        <View style={styles.hairline} />
+        {streak > 0 ? (
+          <View style={styles.streak} accessible accessibilityLabel={`${streak} ${MEET_FAMILY_COPY.weeks(streak)}`}>
+            <FixedDigits value={String(streak)} variant="display" color={palette.coal} />
+            <Text style={type.heading} maxFontSizeMultiplier={maxFontScale.heading}>
+              {MEET_FAMILY_COPY.weeks(streak)}
+            </Text>
           </View>
         ) : (
-          <View style={styles.streakRow}>
-            <Text style={styles.streakLabel}>The family streak starts with you.</Text>
-          </View>
+          <Text style={[type.heading, styles.center]} maxFontSizeMultiplier={maxFontScale.heading}>
+            {MEET_FAMILY_COPY.starting}
+          </Text>
         )}
+        <Text style={[type.bodySmall, styles.center, styles.rhythm]}>{rhythm}</Text>
       </Card>
-    </OnboardingFrame>
+      {error ? <Text style={[type.bodySmall, styles.error]}>{error}</Text> : null}
+    </StepScreen>
   );
 }
 
 const styles = StyleSheet.create({
-  faces: { flexDirection: 'row', justifyContent: 'space-around' },
-  face: { alignItems: 'center', gap: 6 },
-  faceName: { fontSize: 14, fontWeight: weights.semibold, color: colors.ink },
-  streakRow: {
-    marginTop: 18,
-    paddingTop: 16,
-    borderTopWidth: 1,
-    borderTopColor: colors.dividerSoft,
-    alignItems: 'center',
-  },
-  streakNumber: { ...type.bigNumber, fontSize: 34, lineHeight: 36 },
-  streakLabel: { ...type.body, marginTop: 2 },
+  faces: { flexDirection: 'row', flexWrap: 'wrap', justifyContent: 'center', gap: space.s24 },
+  face: { alignItems: 'center', gap: space.s8 },
+  faceName: { color: palette.char },
+  center: { textAlign: 'center' },
+  invited: { marginTop: space.s16 },
+  hairline: { height: StyleSheet.hairlineWidth, backgroundColor: alpha.hairline, marginVertical: space.s20 },
+  streak: { flexDirection: 'row', alignItems: 'baseline', justifyContent: 'center', gap: space.s12, flexWrap: 'wrap' },
+  rhythm: { marginTop: space.s8 },
+  error: { color: palette.coal, marginTop: space.s16 },
 });
