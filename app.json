@@ -68,6 +68,14 @@
           "imageWidth": 64,
           "resizeMode": "contain"
         }
+      ],
+      [
+        "expo-alternate-app-icons",
+        [
+          { "name": "NightStone", "ios": "./assets/brand/out/alt/icon-night-1024.png" },
+          { "name": "Cedar", "ios": "./assets/brand/out/alt/icon-cedar-1024.png" },
+          { "name": "Lake", "ios": "./assets/brand/out/alt/icon-lake-1024.png" }
+        ]
       ]
     ],
     "extra": {

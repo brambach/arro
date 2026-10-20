@@ -31,6 +31,10 @@ const masters = {
   'android-foreground.svg': stoneIcon({ background: false, scale: 0.66 }),
   'android-background.svg': stoneIcon({ art: false }),
   'android-monochrome.svg': stoneIcon({ tone: 'tinted', background: false, scale: 0.66 }),
+  /** Saunafam Plus app icons (Me, App icon): the same stone at night, on cedar boards, by the lake. */
+  'icon-night.svg': stoneIcon({ scene: 'night' }),
+  'icon-cedar.svg': stoneIcon({ scene: 'cedar' }),
+  'icon-lake.svg': stoneIcon({ scene: 'lake' }),
 };
 
 for (const [name, svg] of Object.entries(masters)) {
