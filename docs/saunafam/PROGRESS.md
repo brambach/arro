@@ -36,6 +36,8 @@ DENO_NO_PACKAGE_JSON=1 deno test --allow-read=supabase/functions supabase/functi
 | M4 | done (db track) | `supabase/functions/remove-member/index.ts`, `delete-account/index.ts` (comments), `supabase/drafts/build10_cleanup.sql` | `deno check` clean. The cleanup draft was run inside a rolled-back transaction on the local database and goes through |
 | M15-server | done (db track) | `supabase/migrations/20261021000006_saunafam_plus.sql`, `supabase/tests/database/plus.test.sql` (32 tests), `supabase/functions/revenuecat-webhook/`, `supabase/functions/sync-plus/`, `supabase/functions/_shared/plus.ts`, `delete-account` dry run, `docs/saunafam/API.md` | pgTAP 403/403 across 11 files. Deno: 48 tests pass. App half of M15 isn't this track |
 | M13 | done (branch `saunafam/site`) | `design/screenshots/saunafam/site/`, `design/screenshots/saunafam/invite-link-preview.png`, `design/recordings/saunafam/site-first-load.mp4`, `design/lighthouse/*.json`, `site/worker.test.mjs` | Lighthouse 100/100/100/100 on all four pages, CLS 0. See M13 below |
+| M12 docs | done (branch `saunafam/docs`) | `README.md`, `AGENTS.md`, `AUDIT.md` (note), the "Written for Arro" line on `design/market-research.md`, `paid-plan.md`, `refactor-plan.md`, `visual-direction.md`, `Arro-Spec.html`, `Arro.dc.html`, `design/app-store/icon-options.md` | Docs half of section 6 only. `CLAUDE.md` is just `@AGENTS.md`, so unchanged. See "M12 and M14 docs" below |
+| M14 docs | done (branch `saunafam/docs`) | `design/app-store/listing.md`, `app-privacy.md`, `review-notes.md`, `screenshots.md`, `support.md`, `testflight.md`, `hosting.md`, `README.md`; `design/copy/app-copy.md` (skeleton) | Listing, age rating, privacy labels, products. Not the screenshot script (`scripts/` is the app track). Apple screenshot sizes changed: see below |
 
 ## M0 baseline (untouched main, b68cd61)
 
@@ -309,3 +311,119 @@ and https://www.revenuecat.com/docs/integrations/webhooks :
 - Nothing touched the hosted project.
 - Pre-existing Supabase CLI comments in `supabase/config.toml` contain em
   dashes and "rather"; left as generated.
+
+## M12 and M14 docs (branch `saunafam/docs`)
+
+Worktree `/tmp/luna-arro/wt-docs`. Only docs: `README.md`, `AGENTS.md`,
+`AUDIT.md`, `design/app-store/`, `design/copy/app-copy.md`, the line on the
+Arro design docs. `design/saunafam-rename-list.txt` and `site/` untouched.
+
+### Apple's screenshot sizes (checked 20 October 2026)
+
+Read from the raw page
+https://developer.apple.com/help/app-store-connect/reference/app-information/screenshot-specifications
+(no last-updated date on it). **The screenshot script depends on this.**
+
+- The page no longer uses inch sizes. The only iPhone set it lists as
+  required: "At least one screenshot for iPhone with Dynamic Island (medium
+  display)", which is iPhone 17 Pro, 17, 16 Pro and so on, at **1206 x 2622**
+  or 1179 x 2556 portrait.
+- **6.9 inch, 1320 x 2868** ("iPhone with Dynamic Island (large display)",
+  iPhone 17 Pro Max) is accepted, with no requirement line. It's optional now.
+- **6.5 inch, 1284 x 2778** ("iPhone with Face ID (large display)"): "Required
+  if app runs on iPhone and screenshots for iPhone with Dynamic Island (large
+  display) aren't provided". So not needed when a 6.9 inch set is uploaded.
+- The medium set's own fallback note points at the 6.5 inch set, not the 6.9
+  inch one, so a 6.9 inch set alone may not cover the required medium set.
+- Up to 10 per size, .jpeg, .jpg or .png, no alpha channel.
+
+**Decision DOC1:** `scripts/app-store-shots.mjs` should render
+`design/app-store/screenshots/6.9/` at 1320 x 2868 (iPhone 17 Pro Max
+captures) and `design/app-store/screenshots/6.3/` at 1206 x 2622 (iPhone 17
+Pro captures), check exact sizes and no alpha, and skip 6.5 inch. This changes
+the spec's Definition of done (6.9 and 6.5). Details in
+`design/app-store/screenshots.md`.
+
+### Apple's age rating (checked 20 October 2026)
+
+Read "Set an app age rating" and "Age ratings values and definitions" in App
+Store Connect Help. The questionnaire screens themselves weren't seen. Answers
+in `design/app-store/listing.md`:
+
+- In-app controls: Parental Controls No, Age Assurance No.
+- Capabilities: Unrestricted Web Access No, **User-Generated Content Yes**,
+  **Social Media No**, **Messaging and Chat Yes**, Advertising No.
+- Medical or Wellness: Medical or Treatment Information None, **Health or
+  Wellness Topics Yes**.
+- Everything else None or No. Age Categories and Override: Not Applicable.
+- Expected: **9+** (from Health or Wellness Topics; 4+ if Bryce answers No).
+  Brazil self-rated A12 (Messaging and chat), Korea All, Vietnam 12+.
+- Bryce should confirm the under-13 Default, Social Media No (Yes would make
+  it 13+) and Health or Wellness Yes.
+
+### RevenueCat privacy guidance (checked 20 October 2026)
+
+https://www.revenuecat.com/docs/platform-resources/apple-platform-resources/apple-app-privacy
+(no date on the page): Purchases > Purchase History is required, with **App
+Functionality and Analytics** both ("All RevenueCat users must select these two
+options"). User ID applies (the Supabase user id is the RevenueCat app user
+id). Contact Info only if attributes hold contact details (Saunafam only sets
+`family_id`). Device ID only with ad-identifier integrations. Usage Data only
+alongside analytics SDKs. RevenueCat collects locale and currency code, which
+it says isn't location. The page doesn't cover the SDK's privacy manifest, and
+I didn't check it.
+
+### Other checks (20 October 2026)
+
+- Field limits from Apple's "Required, localizable, and editable properties":
+  name 30, subtitle 30, promotional text 170, description 4000, keywords 100
+  bytes (each keyword more than two characters), review notes 4000 bytes.
+- In-app purchase limits from "In-App Purchase information": display name 2 to
+  30, description 45, product id 100.
+- App Review Guidelines, last updated October 16, 2026: 3.1.2(a) "ongoing
+  value" and 3.1.2(c) subscription information, read. Schedule 2 of the
+  license agreement not read.
+- Apple's standard EULA, https://www.apple.com/legal/internet-services/itunes/dev/stdeula/
+  , returns 200.
+
+### Counted
+
+- Subtitle "Your shared sauna streak": 24 of 30.
+- Promotional text: 139 of 170.
+- Keywords: 100 of 100 bytes, 14 keywords, none repeating a word from the name
+  or subtitle.
+- Description: 2,836 of 4,000 with the Plus section, 1,687 for build 9.
+
+### Decisions
+
+- DOC2 The description's Plus section and subscription terms are pasted only
+  with the version that turns Plus on (Guideline 2.3.1). Build 9's
+  description stops after "Apple Health, if you want it".
+- DOC3 App Privacy keeps **Fitness** for session data (Arro declared it for
+  check-ins; the spec's list doesn't name it). Health and Precise Location go.
+  Purchase History is App Functionality and Analytics, per RevenueCat, not
+  App Functionality only as the spec says.
+- DOC4 Purchase History can go in with build 9 if the RevenueCat SDK is
+  configured at launch even with Plus off. The app track should say which.
+- DOC5 Display names and descriptions for the Founding family product and
+  the three tips are mine (the spec gives the yearly one only), all within
+  Apple's limits.
+- DOC6 Subscription terms in the listing say "Settings app: tap your name,
+  then Subscriptions" and "Apple Account", Apple's current names. The spec's
+  Plus sheet copy says "Settings, Apple ID, Subscriptions", left as the spec
+  wrote it in `app-copy.md`.
+- DOC7 Plus is cosmetic, so Guideline 3.1.2(a) "ongoing value" is a review
+  risk for the yearly plan. Noted in `listing.md` with the fallback (Founding
+  family only).
+- DOC8 `support.md` copies the live M13 support page word for word, plus
+  drafts of the Plus answers for when Plus goes live.
+- DOC9 The AGENTS.md "Current" paragraph names `feat/saunafam` and draft PR
+  #24, not `release/build-9`.
+
+### Not verified
+
+- The App Store Connect forms themselves (screenshot slots, the age rating
+  questionnaire wording). Only Bryce can see them.
+- Whether "Saunafam" is free as an app name (the spec searched; I didn't).
+- Anything in the build 9 app code: the labels in `review-notes.md` and
+  `app-privacy.md` come from the spec, and each file lists what to check.

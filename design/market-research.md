@@ -1,3 +1,5 @@
+Written for Arro, before it became Saunafam.
+
 # Arro market scan
 
 October 2026. Who has already tried a family fitness or family check-in app, what

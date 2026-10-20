@@ -3,6 +3,15 @@
 Done on 19 October 2026, before parking the repo. The repo was already public
 on GitHub when this ran.
 
+**Note, 20 October 2026:** this audit was of Arro, before it became Saunafam.
+It covers the code and history up to that day. Build 9 adds tables (sessions,
+cheers and comments on sessions, family rules, app config, Plus events),
+functions, two edge functions (`revenuecat-webhook` and `sync-plus`) and two
+RevenueCat secrets, none of which this audit checked. Their row level security
+and access rules are tested in the pgTAP files listed in
+`docs/saunafam/PROGRESS.md`. The contact address on the privacy policy is now
+support@saunafam.com, and `design/Arro.dc.html` below keeps its old file name.
+
 ## Result
 
 **Nothing needs rotating.** No API key, token, private key, password, service

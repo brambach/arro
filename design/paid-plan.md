@@ -1,3 +1,5 @@
+Written for Arro, before it became Saunafam.
+
 # Arro paid plan
 
 October 2026. How Arro charges without breaking the family loop. Read with

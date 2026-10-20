@@ -1,224 +1,104 @@
-# Route to the first TestFlight build
+# TestFlight: build 9, Arro becomes Saunafam
 
-Goal: your family installs Arro from TestFlight, signed in to the hosted `arro`
-Supabase project, before the public release.
+Build 9 is the first Saunafam build. Testers get it as an update to Arro
+(same bundle id `com.arrofamily.arro`), stay signed in and keep their family.
+Every step here is Bryce's, and only on his go. Nothing in this file has been
+run.
 
-Nothing here has been run against your Apple account. Steps marked **You** are
-yours in App Store Connect or Xcode; nothing in this file buys, installs or
-uploads by itself.
+The history of builds 1 to 8 (Xcode archives for 4 to 6, EAS from build 7) is
+in this file's git history before 20 October 2026.
 
-## Xcode Archive or EAS?
+## How builds are made now
 
-| | Xcode Archive and upload | EAS Build and Submit |
-| --- | --- | --- |
-| New accounts or tools | None. Xcode, CocoaPods and signing already work for your dev builds | Already set up by phase 4: `eas.json` in the project root, the project linked to `@brycerambach/arro`, `npx eas-cli` signed in on your Mac |
-| Signing | Xcode "Automatically manage signing" makes the distribution certificate and profile | EAS asks for your Apple ID once and makes and stores them |
-| Supabase URL and key | Read from `.env.local` at bundle time. Checked: a release bundle built here contains the hosted project's URL | `.env.local` is git-ignored, so EAS never uploads it. You'd have to add both values as EAS environment variables. Without them a release build now opens on "This build can’t reach Arro" instead of quietly running on local data |
-| Speed | About 5-10 minutes on your Mac | Free plan: 15 iOS builds a month, low-priority queue (can wait a while), 45 minute timeout |
-| Build number | Bump `ios.buildNumber` in app.json yourself | Same as Xcode today (`appVersionSource: "local"`); can auto-increment if you switch it |
-| Upload | Xcode Organizer > Distribute App | `eas submit` (Apple ID or an App Store Connect API key) |
-| Repeatability | Depends on your Mac's Xcode (26.6 now) | Same cloud image every time; your Mac doesn't matter |
+EAS, as of build 7: `eas.json` has `appVersionSource: "local"`, so
+`ios.buildNumber` in `app.json` is the build number. The release PR bumps it to
+"9" in its own commit. EAS never sees `.env.local`, so
+`EXPO_PUBLIC_SUPABASE_URL` and `EXPO_PUBLIC_SUPABASE_ANON_KEY` must be EAS
+environment variables. They are, from build 7. Without them a release build
+opens on "This build can't reach Saunafam".
 
-**Recommendation: Xcode Archive for the TestFlight builds.** It reuses the
-setup that already builds Arro for your phone, uses no EAS build minutes, and
-picks up the Supabase settings from `.env.local` the same way your dev build
-does. Phase 4 has since set up EAS for push (`eas.json`, the Expo project
-link), so the EAS route is closer than it was, but the `.env.local` problem
-below still applies. The
-EAS gotcha with `.env.local` is exactly the kind that produces a TestFlight
-build that silently isn't talking to the server. Move to EAS later if you want
-builds that don't depend on your Mac, or when phase 7 adds more native setup.
-The EAS steps are at the end in case you'd rather.
+New for Plus, when it's turned on later: `EXPO_PUBLIC_REVENUECAT_IOS_KEY`
+(RevenueCat's public SDK key) as an EAS environment variable.
 
-## 1. App Store Connect (You)
+## Build 9 rollout, in order
 
-1. **Check the App ID.** developer.apple.com > Certificates, Identifiers &
-   Profiles > Identifiers. `com.arrofamily.arro` should already be there from
-   the dev builds, with HealthKit and Sign in with Apple ticked. If it isn't,
-   add it with both capabilities.
-2. **Create the app record and reserve the name.** appstoreconnect.apple.com >
-   Apps > + > New App:
-   - Platform: iOS
-   - Name: `Arro: Family Move Streak` (this is the moment the name is
-     reserved; fallbacks are in `listing.md`)
-   - Primary language: English (U.S.)
-   - Bundle ID: `com.arrofamily.arro`
-   - SKU: `arro-ios-1`
-   - User access: Full access
-3. **Agreements.** Business > Agreements: the free apps agreement is accepted
-   with your membership. v1 is free, so the Paid Apps agreement, tax and
-   banking can wait for phase 7.
-4. **App Information.** Subtitle, category (Health & Fitness, Lifestyle) and
-   privacy policy URL from `listing.md` and `hosting.md`.
-5. **App Privacy.** Answer it from `app-privacy.md`. It's needed before App
-   Store submission; doing it now means it's done.
+The same order as `AGENTS.md`, "Release process". Each step only on Bryce's
+go.
 
-## 2. app.json changes (done)
+1. **Site.** Deploy saunafam.com and set up DNS and email routing
+   (`site/README.md`), so the privacy and support URLs work before anyone
+   reads them. Check arrofamily.com redirects with a 301.
+2. **Migrations** on the hosted project: `supabase migration list --linked`,
+   `supabase db push --dry-run`, then `supabase db push`, for the six build 9
+   migrations:
+   - `20261021000001_saunafam_families.sql`
+   - `20261021000002_sessions.sql`
+   - `20261021000003_weekly_streaks.sql`
+   - `20261021000004_session_social.sql`
+   - `20261021000005_saunafam_pushes.sql`
+   - `20261021000006_saunafam_plus.sql`
 
-The phase 4 thread applied these to app.json. They're kept here so you know
-what each one is for:
+   They only add. Build 8 keeps working after them (it just stops getting
+   Arro's "moved" pushes). The Plus migration is safe to ship: Plus stays off
+   while `app_config.plus_enabled` is false, its default. Do this right before
+   build 9 goes to TestFlight, because `saunafam_started_on` is set to the
+   date the migration runs.
+3. **Edge functions:** deploy `remove-member` and `delete-account` (both
+   changed), and `revenuecat-webhook` and `sync-plus` (new). The webhook
+   needs JWT checks off: `npx supabase functions deploy revenuecat-webhook
+   --no-verify-jwt`.
+4. **Secrets:** `REVENUECAT_WEBHOOK_SECRET` and `REVENUECAT_SECRET_API_KEY`
+   only matter once RevenueCat exists, so they can wait for Plus. Nothing new
+   is needed for build 9 itself.
+5. **App Store Connect:**
+   - Rename the app to Saunafam, and set the subtitle from `listing.md`.
+   - Privacy Policy URL `https://saunafam.com/privacy`, Support URL
+     `https://saunafam.com/support`.
+   - App Privacy answers from `app-privacy.md` (remove Health and Precise
+     Location).
+   - TestFlight, Test Information: beta description, feedback email
+     `support@saunafam.com`, privacy URL, and the sign-in notes from
+     `review-notes.md`.
+6. **Build and submit:** `eas build --platform ios --profile production`, then
+   `eas submit --platform ios --latest`.
+7. **Testers:** add the build to the existing external group and paste the
+   "What to Test" note below. A build that changes what's collected may need a
+   fresh Beta App Review, usually about a day.
 
-```json
-{
-  "expo": {
-    "version": "1.0.0",
-    "ios": {
-      "buildNumber": "1",
-      "config": { "usesNonExemptEncryption": false }
-    },
-    "plugins": [
-      [
-        "expo-image-picker",
-        {
-          "photosPermission": "Arro uses a photo only when you pick one for your profile or a workout. Your family sees it in Arro.",
-          "cameraPermission": false,
-          "microphonePermission": false
-        }
-      ]
-    ]
-  }
-}
-```
+## What to Test (draft, not sent)
 
-- `version` is already `1.0.0`. Leave it until the App Store release.
-- `buildNumber` goes up by one for every upload (2, 3, ...). Apple refuses a
-  repeated build number for the same version.
-- `usesNonExemptEncryption: false`: Arro only uses HTTPS, which is exempt. This
-  stops App Store Connect asking the export compliance question on every build.
-- The image picker entry replaces the vague default photo text, and stops
-  adding camera and microphone text for features Arro doesn't have. Add it to
-  the existing `plugins` array; keep the other plugins as they are.
-- The Health text (`healthSharePermission`) is already specific and correct.
-  `healthUpdatePermission: false` is right, since Arro never writes to Health.
-- The icon: `"icon": "./assets/icon.png"` stays. The image is now option A
-  from `icon-options.md`.
+For TestFlight's "What to Test" box, from the spec, section 7. A draft for
+Bryce. Nobody has sent it.
 
-Optional, for the app thread: `pickPhoto()` in `src/state/photos.ts` asks for
-full photo library access before opening the picker. iOS's picker doesn't need
-that permission, so dropping the request means one less prompt and no photo
-library access at all.
+> Arro is now Saunafam, a weekly sauna streak. Your family carries over and the streak starts fresh. Try the timer, log a session for two people, and cheer someone on.
 
-## 3. Build and upload (You, on your Mac)
+## What testers will see
 
-From the repo root, with phase 4's and this
-thread's changes committed:
+- The new splash, then a one-time sheet, "Arro is now Saunafam": "Your family
+  is still here. We've moved from daily movement to a weekly sauna streak: 3
+  sessions a week each, 10 minutes or more. Everyone starts fresh at week
+  one." The founder also gets **Change the rhythm**.
+- No onboarding again. Sign-in, family, members, colors, profile photos and
+  invites carry over.
+- The streak starts at week one. Arro's workouts, cheers, comments and photos
+  are hidden in build 9 and deleted in build 10. Active breaks carry over.
+- iOS keeps Arro's Health read permission. The support page says how to turn
+  it off (Settings, Health, Data Access & Devices).
+- Anyone still on build 8 keeps working. After `app_config.min_ios_build` is
+  raised, older builds show "A new version of Saunafam is ready. Update in
+  TestFlight or the App Store."
 
-1. Type-check: `npx tsc --noEmit`
-2. Regenerate the native project from app.json:
-   `npx expo prebuild --platform ios --clean`
-   This deletes and rebuilds the git-ignored `ios/` folder, so app.json
-   changes (build number, purpose strings, icon) are actually in it.
-   If CocoaPods stops with a Unicode/ASCII encoding error during pod install,
-   run it with a UTF-8 locale:
-   `LANG=en_US.UTF-8 LC_ALL=en_US.UTF-8 npx expo prebuild --platform ios --clean`.
-   `npx expo run:ios` recreates it for dev builds later.
-3. Check `ios/Arro/Info.plist` now has your photo text, no camera or
-   microphone text, `CFBundleVersion` matching the build number and
-   `ITSAppUsesNonExemptEncryption` false. If the camera or microphone keys are
-   still there, tell the app thread; they need setting in app.json instead.
-4. Open the workspace: `open ios/Arro.xcworkspace`
-5. Arro target > Signing & Capabilities: "Automatically manage signing" on,
-   Team = your individual team. HealthKit (with Background Delivery), Sign in
-   with Apple and Push Notifications (added by `expo-notifications`) should
-   all be listed.
-6. In the toolbar, set the destination to **Any iOS Device (arm64)**.
-7. Product > Archive. This builds Release, which bundles the JavaScript into
-   the app (no dev server) and leaves out the dev launcher.
-8. When the Organizer opens: Distribute App > App Store Connect (or
-   "TestFlight & App Store") > Upload, with automatic signing.
-9. Wait for Apple's "has completed processing" email, usually 5-30 minutes.
+## On the phone after installing
 
-## 4. TestFlight (You)
+- Sign in still works, and you open straight into your family.
+- Start the timer, background the app, come back: it kept time.
+- Log a session with someone else in it, and check it shows on their phone.
+- Cheer and comment, and check the push arrives (between 7 a.m. and 9 p.m.).
+- Settings, Privacy and Help open saunafam.com.
 
-1. **Yourself first (internal testing, no review).** App Store Connect > Arro >
-   TestFlight > Internal Testing > + group "Me", add yourself and the build.
-   Install the TestFlight app on your iPhone, accept, install Arro. Delete the
-   dev build first; they share a bundle ID.
-2. **Check on that build:**
-   - Sign in with Apple is offered, works, and you land in your real family.
-     If there's no Apple button, or Settings > Sign out warns "This preview
-     keeps your family on this phone only", the Supabase settings didn't make
-     it into the build (cancel that sign-out).
-   - Settings > How you move > Apple Health shows Apple's sheet and a recent
-     workout appears.
-   - Log today works, and a cheer shows up for another family member.
-3. **Test Information** (TestFlight > Test Information): beta description,
-   feedback email, privacy policy URL, and the sign-in info from
-   `review-notes.md`.
-4. **Your family (external testing).** External Testing > + group "Family",
-   add the build, submit for Beta App Review. The first build of a version
-   usually takes about a day; later builds are often approved straight away.
-5. **Add testers** by email (they get an invite in their inbox) or turn on a
-   public link and send it in the family chat. Each person installs TestFlight,
-   opens the invite, then installs Arro and joins with your family's code.
-6. Builds expire after 90 days. Each new build: bump `ios.buildNumber`, steps
-   3.1 to 3.9, then add it to the Family group.
+## Later: Plus
 
-Your dad (Strava) should turn on Strava's Apple Health connection, so his runs
-reach Arro through Health.
-
-## Build 3: workout details, maps and photos
-
-Build 3 reads distance and routes from Health, shows them on Apple Maps and
-uploads photos. Before archiving it, in this order:
-
-1. **Apply the migration** `supabase/migrations/20261008000001_workout_details_and_photos.sql`
-   to the hosted project: `npx supabase db push`, or paste it into the SQL
-   editor. It adds three columns to `workouts` and the private `photos`
-   bucket. Build 2 keeps working after it; nothing it uses changes.
-2. **Install and prebuild**: `npm install`, then step 3.2. Two new native
-   modules (`react-native-maps`, `expo-image-manipulator`) need the fresh
-   `ios/` folder. Apple Maps needs no key.
-3. **Check Info.plist** (step 3.3): the new Health and photo texts, and
-   `CFBundleVersion` 3.
-4. **App Privacy answers** in App Store Connect: add Photos or Videos and
-   Precise Location, as `app-privacy.md` now lists.
-5. **Deploy arrofamily.com** so the live privacy policy matches
-   (`site/public/privacy/index.html` is updated in the repo).
-6. Archive and upload (steps 3.4 to 3.9), then add the build to the Family
-   group. A build that changes data collection can take a fresh Beta App
-   Review.
-
-On the phone, people who already connected Health see Apple's Health sheet
-once more, asking for workout routes.
-
-## Account deletion function (before the build after 6)
-
-Deleting an account now goes through the `delete-account` edge function. It
-removes every photo the person uploaded, revokes their Sign in with Apple token
-and then deletes the user. Until it's deployed, the app falls back to the old way.
-
-1. **Deploy it**: `npx supabase functions deploy delete-account`.
-2. **Apple revoke settings** (optional, but App Review expects the token to be
-   revoked). In the Apple Developer site, Certificates, Identifiers & Profiles >
-   Keys, make a key with Sign in with Apple enabled for the app's App ID and
-   download the `.p8`. Then:
-   `npx supabase secrets set APPLE_TEAM_ID=PP5K3YUUX6 APPLE_CLIENT_ID=com.arrofamily.arro APPLE_KEY_ID=<key id> APPLE_PRIVATE_KEY="$(cat AuthKey_<key id>.p8)"`
-   Without them the account is still deleted; only the revoke is skipped.
-3. On the phone, Settings > Delete account now shows Apple's sheet once, to
-   confirm, before deleting.
-
-## The EAS route, if you'd rather
-
-Phase 4 already did the setup: `eas.json` is in the project root (a
-development profile, an empty `production` build profile and an empty
-`production` submit profile), the project is linked to `@brycerambach/arro`
-(`owner` and `extra.eas.projectId` in app.json), and `npx eas-cli` is signed in
-on your Mac. Don't run `eas build:configure`; edit the existing file.
-
-1. **Build numbers.** `eas.json` has `"appVersionSource": "local"`, so
-   app.json's `ios.buildNumber` is the build number on both routes. Leave it
-   that way if you might still archive in Xcode. If you go EAS only, set
-   `"appVersionSource": "remote"` under `cli` and `"autoIncrement": true` in
-   `build.production`, so EAS counts builds itself (start it above any number
-   you've already uploaded).
-2. Add the Supabase settings, since `.env.local` isn't uploaded:
-   `npx eas-cli env:create --environment production --name EXPO_PUBLIC_SUPABASE_URL --value <url> --visibility plaintext`
-   and the same for `EXPO_PUBLIC_SUPABASE_ANON_KEY`.
-3. `npx eas-cli build --platform ios --profile production`. It asks for
-   your Apple ID if it needs to, creates the distribution certificate and
-   profile, and syncs HealthKit, Sign in with Apple and push from the
-   entitlements. The APNs key from phase 4 is separate and stays as it is.
-4. `npx eas-cli submit --platform ios --latest` (it can find the app record by
-   bundle ID, or set `ascAppId` in `eas.json`'s `submit.production`).
-5. Then section 4 above.
+Plus is built into build 9 switched off. The App Store Connect, RevenueCat and
+sandbox steps are in the spec's "Paid tier" section and `REPORT.md`, and they
+come after build 9 ships. Then a later build turns it on, with the listing
+changes in `listing.md`.

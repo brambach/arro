@@ -1,123 +1,158 @@
 # App Privacy answers
 
-Answers for App Store Connect > App Privacy, checked against the code on
-2026-10-05, not the plan. Phase 4's push data is covered below ("Push
-notifications"). Updated 2026-10-09 for build 3, which uploads photos and
-reads workout distance and routes: **Photos or Videos** and **Precise
-Location** are now declared. Change the answers in App Store Connect before
-build 3 goes to review.
+Answers for App Store Connect, App Privacy, for Saunafam build 9 and the
+version that turns Plus on. They follow the spec (section 5 "Privacy page" and
+"Paid tier", "App Store listing and privacy updates") and match
+`privacy-policy.md`. Written 20 October 2026.
+
+What I didn't check: the build 9 app code. Other agents are writing it in
+parallel, so the answers below are from the spec, `docs/saunafam/API.md` and
+the migrations, not from `src/`. Before pasting, run the checks at the end of
+this file against the build you submit.
+
+## What changes from Arro's label
+
+| Arro (build 3 to 8) | Saunafam (build 9) | Why |
+|---|---|---|
+| Health & Fitness > Health | **Remove** | Saunafam never reads from HealthKit. Writing mindful minutes isn't collecting Health data: the minutes come from the session the person logged, which is declared under Fitness |
+| Location > Precise Location | **Remove** | Routes are gone with the Health import. A place is free text the person types, and the app never asks for location |
+| Health & Fitness > Fitness | Keep, now for sauna sessions | |
+| Contact Info > Name, Email Address | Keep | |
+| User Content > Photos or Videos, Other User Content | Keep | |
+| Identifiers > User ID | Keep, and it's now also the RevenueCat app user id | |
+| (none) | **Add Purchases > Purchase History** | RevenueCat |
 
 ## Do you or your third-party partners collect data from this app?
 
-**Yes.** Supabase stores it on our behalf. A provider that only processes data
-for you still counts as "collected" for this label.
+**Yes.** Supabase stores it on Saunafam's behalf, and RevenueCat processes
+purchases. A provider that only processes data for you still counts as
+collecting it for this label.
 
 ## Tracking
 
-**No tracking.** No ad SDKs, no analytics, no crash reporting, no data shared
-with data brokers, no IDFA. `package.json` has no analytics package and
-`src/` has no tracking calls.
+**No tracking.** No ad SDKs, no analytics, no crash reporting, no data
+brokers, no IDFA, and no App Tracking Transparency prompt. RevenueCat's own
+guidance says it "does not inherently use purchase history to track users
+across different apps for advertising", and Saunafam turns on none of its ad
+or attribution integrations.
 
 ## Data types to declare
 
-Every type below: **Used for: App Functionality** only. **Linked to the user:
-Yes** (it's tied to their account). **Used for tracking: No.**
+Every type: **Linked to the user: Yes** (it's tied to their account). **Used
+for tracking: No.** Purpose is **App Functionality** only, except Purchase
+History.
 
-| Apple's type | What Arro stores | Where in the code |
-| --- | --- | --- |
-| Contact Info > **Name** | Display name, prefilled from Apple's first name, editable | `members.display_name`; `signInWithApple()` and `updateMember()` in `src/state/backend.ts` |
-| Contact Info > **Email Address** | The email Apple shares (often a private relay address), kept by Supabase Auth | `signInWithApple()` asks for the EMAIL scope; Supabase stores it in `auth.users` |
-| Health & Fitness > **Health** | Workouts and workout routes read through HealthKit | `connectHealth()` and `readRecentHealthWorkouts()` in `src/state/health.ts` |
-| Health & Fitness > **Fitness** | Each workout's date, kind, optional duration, source, Health workout ID, start time and distance; manual check-ins too | `insertWorkout()` and `insertHealthWorkout()` in `backend.ts`; `workouts` table |
-| Location > **Precise Location** | The route of a Health workout, trimmed by 200 m at each end and thinned, as an encoded polyline. Never the phone's current location | `healthDetails()` in `src/state/healthSync.ts`, `src/state/routes.ts`; `workouts.route` |
-| User Content > **Photos or Videos** | Profile and workout photos the person picks, resized to a JPEG and stored in the private `photos` bucket | `photoForUpload()` in `src/state/photos.ts`, `uploadPhoto()` in `backend.ts`; migration `20261008000001` |
-| User Content > **Other User Content** | Workout notes (up to 500 characters), family name, cheers and nudges | `workouts.note`, `families.name`, `cheers`, `nudges` |
-| Identifiers > **User ID** | Supabase user id and member id | `auth.users.id`, `members.id` |
+| Apple's type | What Saunafam stores | Where |
+|---|---|---|
+| Contact Info > **Name** | Display name, prefilled from Apple's first name, editable | `members.display_name` |
+| Contact Info > **Email Address** | The email Apple shares, often a private relay address, kept by Supabase Auth | `auth.users` |
+| Health & Fitness > **Fitness** | Each sauna session: date, start time, minutes, rounds, sauna type, and if added the temperature, humidity, cold plunge and its minutes | `public.sessions` (migration `20261021000002_sessions.sql`) |
+| User Content > **Photos or Videos** | Profile and session photos the person picks or takes, resized to a JPEG, in the private `photos` bucket | Storage, `photos` |
+| User Content > **Other User Content** | Family name, session notes, place text, comments, cheers, nudges and breaks | `families.name`, `sessions.note`, `sessions.place`, `session_comments`, `session_cheers`, `nudges`, `pauses` |
+| Identifiers > **User ID** | The Supabase user id and member id. The same user id is the RevenueCat app user id (`Purchases.logIn`) | `auth.users.id`, `members.id`, RevenueCat |
+| Purchases > **Purchase History** | Which Saunafam Plus products and tips the person bought, and their renewal status | RevenueCat, then `public.family_plans` and `public.plus_events` |
 
-Why both Health and Fitness: Apple's "Health" type explicitly includes data
-from the HealthKit API, and "Fitness" covers exercise data, which is what the
-manual "I moved today" check-ins are. Declaring both is the safe reading.
+**Purchase History purposes: App Functionality and Analytics.** The spec says
+App Functionality only. RevenueCat's guide says "All RevenueCat users must
+select these two options": App Functionality for receipt validation and fraud
+checks, Analytics because its dashboard (Customer History, Charts) uses the
+data. Saunafam doesn't run analytics of its own, but RevenueCat's dashboard is
+analytics, so both are ticked.
+
+### Fitness or not
+
+The spec lists Name, Email, Photos, User Content and Identifiers, and doesn't
+name Fitness. Arro declared Fitness for its manual "I moved today" check-ins,
+and a sauna session (minutes, rounds, heat) is the same kind of record. Apple's
+Fitness type is "exercise data". A sauna isn't quite exercise, so this is the
+cautious reading. Declaring a type you arguably don't need doesn't get an app
+rejected. Leaving out one you do need can. If Bryce would like the shorter
+label, move the session fields under Other User Content instead.
 
 ## Not declared, and why
 
 | Type | Why not |
-| --- | --- |
-| Coarse Location | Not collected. Routes are declared as Precise Location above; the time zone (`members.timezone`) is a setting used to work out "today", not location |
-| Contacts | Not read. Invites go out through the share sheet as a code |
-| Usage Data, Diagnostics | No analytics or crash reporting |
-| Device ID | Arro stores an Expo push token per phone once phase 4 is live (see "Push notifications" below). Apple's Device ID type is about identifiers like the IDFA or a device ID used to recognise the device; a push token used only to deliver the app's own notifications isn't commonly declared there |
-| Sensitive Info, Financial Info, Purchases | None. v1 has no in-app purchases |
+|---|---|
+| Health | No HealthKit reads. Build 9 deletes `healthSync.ts` and the read code. iOS may still list Arro's old read permission, but the app never uses it |
+| Precise and Coarse Location | Not collected. The time zone (`members.timezone`) works out your week and isn't location. RevenueCat says it collects "only locale and currency code", which isn't location either |
+| Contacts | Not read. Invites go out through the share sheet as a code and a link |
+| Financial Info | Apple handles payment. RevenueCat says it "does not collect payment information from users" |
+| Usage Data, Diagnostics | No analytics or crash reporting. RevenueCat says it doesn't collect diagnostics, and lists Usage Data only for apps that also run an analytics SDK |
+| Device ID | No IDFA. RevenueCat lists Device ID only for ad-identifier integrations, which Saunafam doesn't use. The Expo push token only delivers Saunafam's own notifications. If you'd like to be cautious, add Identifiers > Device ID, App Functionality, linked, not tracking |
+| Contact Info via RevenueCat | RevenueCat says this only applies if you put contact details in customer attributes. Saunafam sets one attribute, `family_id` (`supabase/functions/_shared/plus.ts`), and no name or email |
+| Sensitive Info, Browsing History, Search History | None |
 
-## Apple Health specifics (Guideline 5.1.3)
+## RevenueCat: what I checked
 
-Checked in code:
+Read on 20 October 2026: RevenueCat's "Apple App Privacy" page,
+https://www.revenuecat.com/docs/platform-resources/apple-platform-resources/apple-app-privacy
+(no last-updated date on the page). What it says, per type:
 
-- **Read-only.** `requestAuthorization({ toRead: [workout, workoutRoute] })`,
-  nothing in `toShare`. app.json has a `healthUpdatePermission` text only
-  because App Store Connect rejected build 1 without NSHealthUpdateUsageDescription;
-  the text says Arro never writes to Health.
-- **Workouts and their routes only.** No other HealthKit type is requested or read.
-- **Today and yesterday only.** `readRecentHealthWorkouts()` queries from local
-  midnight yesterday; `sendableHealthWorkouts()` drops anything older and the
-  server's `workouts_check_date` trigger refuses it too.
-- **What leaves the phone:** HealthKit UUID, local date, mapped type (7 kinds),
-  whole minutes, start time, distance in whole metres, and the route trimmed
-  by 200 m at each end and thinned to at most 400 points. The source app,
-  heart rate and calories are never read into the upload. Routes are shown
-  only to the person's own family (RLS on `workouts`).
-- **Never for ads**, never sold, never in iCloud. The privacy policy says so in
-  its own Health section, which is what 5.1.3 asks for.
-- **The Health purpose string** (app.json, `healthSharePermission`) is specific
-  and matches: "Arro reads your workouts from Apple Health, including distance
-  and route, so moving counts toward your family streak and your family can
-  see what you did. Routes are shared only with your family, with the start
-  and end left off. Arro only reads today's and yesterday's workouts."
+- **Purchases: required.** "RevenueCat collects purchase history from users."
+  Purposes: App Functionality and Analytics, both required.
+- **Identifiers: maybe.** "User ID" if you identify users with a custom app
+  user id (Saunafam does: the Supabase user id). "Device ID" only for
+  integrations that use an ad identifier.
+- **Contact Info: maybe.** Only if customer attributes hold contact details.
+- **Usage Data: maybe.** Only alongside analytics SDKs such as Mixpanel,
+  Firebase, PostHog or Amplitude.
+- **Linked to user:** "Yes" when the app user id can be tied to a person.
+  Saunafam's can (it's the account id), so Linked.
+- **Tracking:** not by RevenueCat itself.
+- **Not collected by RevenueCat:** health, fitness, financial, location (only
+  locale and currency code), sensitive info, contacts, browsing, search,
+  diagnostics.
 
-## Push notifications (phase 4)
+The page doesn't mention the SDK's privacy manifest (`PrivacyInfo.xcprivacy`).
+I didn't check the manifest that ships in `react-native-purchases`. After
+`npx expo prebuild`, Xcode's privacy report (Product, Archive, then Generate
+Privacy Report in the Organizer) lists what every SDK declares. Compare it with
+this file.
 
-Checked in `supabase/migrations/20261005000007_push.sql`,
-`20261005000008_evening_nudge.sql`, `20261005000009_nudge_push.sql`,
-`supabase/functions/send-push/index.ts` and the app side: `expo-notifications`
-is in `package.json`, `registerPushToken()` and `forgetPushToken()` are in
-`src/state/backend.ts`, called from `src/state/AppState.tsx`. Supabase stores:
+## When to change it in App Store Connect
 
-- **`public.push_tokens`:** the phone's Expo push token
-  (`ExponentPushToken[...]`), the signed-in user's id and when it was last
-  updated. Each person can only read or delete their own. Signing out deletes
-  the phone's token (`signOut()` in `AppState.tsx`); deleting the account
-  deletes it (`on delete cascade`).
-- **`private.push_outbox`:** each queued push: the recipient's user id, the
-  kind (cheer, joined, evening or nudge), the title and body (which include a
-  family member's display name, the family name or the workout kind), a
-  workout or member id, and when it was sent. Rows are deleted after 7 days
-  (`run_evening_nudges()`) and with the account.
+- **With build 9:** remove Health and Precise Location, keep the rest, and add
+  Purchase History if build 9 configures the RevenueCat SDK at launch even
+  with Plus off. If the app only configures RevenueCat when `plus_enabled` is
+  true, Purchase History can wait for the Plus version. Either way it does no
+  harm to add it with build 9.
+- App Privacy answers apply to the app, not one version, and can be edited at
+  any time. Edit them before build 9 goes to Beta App Review.
 
-The four kinds: a **cheer** on someone's workout, someone **joined** the
-family, the **evening** "X still has today" message to people who already
-moved, and a **nudge** ("Mum is cheering you on") when someone taps "Send a
-cheer" for a person who hasn't moved yet. A nudge is saved in
-`public.nudges` (sender, recipient, date) as before; its push is only queued
-between 07:00 and 21:00 in the recipient's time zone.
+## Apple Health (Guideline 5.1.3)
 
-Pushes go out through Expo's push service (`exp.host`), which hands the token
-and message to Apple's APNs. Expo processes them on Arro's behalf.
+- **Write only.** Mindful Minutes (`HKCategoryTypeIdentifierMindfulSession`),
+  only if the person turns on "Save sessions to Apple Health". Nothing is read.
+- **Purpose string** (spec, section 3): "Saunafam saves your sauna sessions to
+  Apple Health as mindful minutes, if you turn it on. It never reads your
+  Health data."
+- **Never for ads,** never sold, never in iCloud. The privacy policy says so in
+  its own Apple Health section.
+- Arro's read permission can't be removed by the app. `privacy-policy.md` and
+  the support page tell people how to turn it off.
 
-What it changes in the label: **no new data type.** The push text is made of
-data already declared (Name, Other User Content, Fitness). The token is used
-only to deliver Arro's own notifications, not to recognise the device or for
-tracking. If you'd rather be cautious, add Identifiers > **Device ID**, App
-Functionality, linked, not tracking; declaring more than needed doesn't cause
-a rejection.
+## Push notifications
 
-The daily "You still have today" reminder is a local notification scheduled on
-the phone (`src/state/reminders.ts`). It sends nothing to the server beyond the
-reminder time, which `members.reminder_time` already held before phase 4.
+Supabase stores the Expo push token per phone (`public.push_tokens`) and each
+queued push (`private.push_outbox`), with the title and body, for up to 7
+days. Push text is built from data declared above (names, the family name,
+comments). The token goes through Expo's push service to Apple's APNs. No new
+data type.
 
 ## Purpose strings
 
-Fixed in app.json by the phase 4 thread: the `expo-image-picker` plugin entry
-sets a specific photo text (build 3: "Arro uses a photo only when you pick one
-for your profile or a workout. Your family sees it in Arro.") and turns the camera and
-microphone texts off, so the build no longer asks for things Arro doesn't do
-(Guideline 5.1.1(ii)). Check the generated `ios/Arro/Info.plist` after
-`npx expo prebuild` (`testflight.md`, step 3).
+From the spec (section 6, `app.json`), for the app agents to set:
+
+- Photos: "Saunafam uses a photo only when you pick one for your profile or a
+  session. Your family sees it in Saunafam."
+- Camera: added (spec Default). Its exact text isn't in the spec. It's in
+  `design/copy/app-copy.md` once the app agents write it.
+- Health write: the string above. The read string goes if the plugin allows.
+
+## Check before pasting
+
+- `grep -rn "requestAuthorization\|toRead" src/` finds no Health reads.
+- `grep -rn "Location" app.json src/` finds no location permission.
+- `package.json` has no analytics or crash reporting package.
+- Where `Purchases.configure` is called, and whether it runs with Plus off.
+- `Purchases.setAttributes` only sets `family_id`.
