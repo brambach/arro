@@ -78,6 +78,14 @@ export const alpha = {
   /** Steam wisps over the light screens and over the dark room. */
   wispLight: 'rgba(205,184,154,0.55)',
   wispDark: 'rgba(248,244,238,0.09)',
+  /** The timer room's panels and dialogs: char lifted a little, almost opaque. */
+  roomPanel: 'rgba(48,43,39,0.97)',
+  /** The scrim under a panel or dialog in the room. */
+  roomScrim: 'rgba(14,12,11,0.55)',
+  /** An unpicked chip in the room. */
+  roomChip: 'rgba(248,244,238,0.09)',
+  /** A hairline in the room. */
+  roomLine: 'rgba(248,244,238,0.12)',
   transparent: 'rgba(0,0,0,0)',
 } as const;
 

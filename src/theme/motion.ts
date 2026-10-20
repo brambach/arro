@@ -146,6 +146,19 @@ export const moments = {
     /** How far the wisps rise, as a share of the screen height. */
     rise: 0.3,
   },
+  /**
+   * A sheet (the log form): it rises on the morph spring and leaves on a quick
+   * ease. Its scrim fades with it.
+   */
+  sheet: {
+    open: springs.morph,
+    close: { duration: 320, easing: easing.leave },
+    scrim: { duration: 400, easing: easing.settle },
+    /** How far a drag on the handle has to go before letting go closes it. */
+    dismissDrag: 120,
+  },
+  /** The timer room's own panels and dialogs: a short rise and fade. */
+  roomPanel: { duration: 360, easing: easing.settle, rise: 24 },
   /** The splash's wisps start one after another. */
   wispStagger: 90,
   /** Tabs, stack pushes, small state changes. */
@@ -181,7 +194,21 @@ export function peakFraction(name: CurveName): number {
 export function springTouchdownMs(config: { damping: number; stiffness: number; mass: number }): number {
   const w0 = Math.sqrt(config.stiffness / config.mass);
   const zeta = config.damping / (2 * Math.sqrt(config.stiffness * config.mass));
-  if (zeta >= 1) return Math.round((4 / (zeta * w0)) * 1000);
+  if (zeta >= 1) {
+    // Critically or overdamped (springs.morph): it never crosses its target, so
+    // "touchdown" is when it's within 1% of it. Stepped numerically; the old
+    // 4 / (zeta * w0) estimate came in at about half the real time.
+    let x = 0;
+    let v = 0;
+    const dt = 1 / 1000;
+    for (let i = 1; i <= 5000; i++) {
+      const a = (config.stiffness * (1 - x) - config.damping * v) / config.mass;
+      v += a * dt;
+      x += v * dt;
+      if (x >= 0.99) return i;
+    }
+    return 5000;
+  }
   const wd = w0 * Math.sqrt(1 - zeta * zeta);
   return Math.round(((Math.PI - Math.atan(wd / (zeta * w0))) / wd) * 1000);
 }

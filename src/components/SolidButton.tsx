@@ -71,7 +71,7 @@ export function SolidButton({
       <Animated.View
         style={[
           styles.face,
-          { height, boxShadow: tone === 'ember' ? depth.button : depth.ash },
+          { minHeight: height, boxShadow: tone === 'ember' ? depth.button : depth.ash },
           disabled && styles.disabled,
           body,
         ]}
@@ -99,7 +99,7 @@ export function SolidButton({
         )}
         <View style={styles.content}>
           {icon ? <View importantForAccessibility="no">{icon}</View> : null}
-          <Text style={[type.bodyStrong, styles.label]} numberOfLines={1}>
+          <Text style={[type.bodyStrong, styles.label]} numberOfLines={2}>
             {title}
           </Text>
         </View>
@@ -117,9 +117,11 @@ const styles = StyleSheet.create({
     overflow: 'hidden',
     justifyContent: 'center',
     paddingHorizontal: space.s24,
+    // Grows past its height only with large Dynamic Type, so the label never clips.
+    paddingVertical: space.s12,
   },
-  content: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: space.s12 },
-  label: { color: palette.steam },
+  content: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: space.s12, flexShrink: 1 },
+  label: { color: palette.steam, textAlign: 'center', flexShrink: 1 },
   ashPressed: { backgroundColor: alpha.pressOnDark },
   disabled: { opacity: 0.45 },
 });
