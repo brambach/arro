@@ -145,8 +145,8 @@ function DrawnWisp({
       <AnimatedPath
         d={w.d}
         stroke={color}
-        strokeOpacity={0.3}
-        strokeWidth={thickness * 2.6}
+        strokeOpacity={0.14}
+        strokeWidth={thickness * 3.2}
         strokeLinecap="round"
         fill="none"
         strokeDasharray={[w.length, w.length]}
@@ -155,7 +155,7 @@ function DrawnWisp({
       <AnimatedPath
         d={w.d}
         stroke={color}
-        strokeOpacity={0.55}
+        strokeOpacity={0.4}
         strokeWidth={thickness}
         strokeLinecap="round"
         fill="none"

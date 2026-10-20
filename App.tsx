@@ -5,6 +5,7 @@ import { useFonts } from 'expo-font';
 import * as SplashScreen from 'expo-splash-screen';
 import { NavigationContainer, DefaultTheme, Theme, createNavigationContainerRef } from '@react-navigation/native';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
+import { ReducedMotionConfig, ReduceMotion } from 'react-native-reanimated';
 import { palette, space } from './src/theme/tokens';
 import { fontFiles, type } from './src/theme/typography';
 import { RootNavigator } from './src/navigation/RootNavigator';
@@ -35,6 +36,10 @@ export default function App() {
 
   return (
     <SafeAreaProvider>
+      {/* The app reads Reduce Motion itself (useReduceMotion) and swaps each
+          moment for its finished state and a crossfade. Reanimated's default
+          would instead jump every animation to its end, crossfades included. */}
+      <ReducedMotionConfig mode={ReduceMotion.Never} />
       <AppStateProvider>
         <NavigationContainer ref={navigationRef} theme={navTheme}>
           <StatusBar style="dark" />

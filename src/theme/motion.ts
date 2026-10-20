@@ -12,7 +12,7 @@ export { curves, durations, momentSummary, springs, stagger };
  * - settle: one arrival per screen, played once. 1100 ms.
  * - ember: a soft overshoot, for check-ins only. 520 ms.
  * - utility: small state changes. 240 ms.
- * - springs for physical moves (a button growing into the room, slats landing),
+ * - springs for physical moves (a button growing into the room, slats dropping onto the wall),
  *   curves for fades.
  * - ambient loops are slow and named for what they do, and they pause when
  *   their screen isn't visible.
@@ -21,7 +21,7 @@ export { curves, durations, momentSummary, springs, stagger };
  * and changes are crossfades (`reduced`).
  *
  * Reanimated runs these on the UI thread: pass `timing.settle` to withTiming,
- * `springs.land` to withSpring.
+ * `springs.slat` to withSpring.
  */
 
 type CurveName = keyof typeof curves;
@@ -65,9 +65,9 @@ export const distances = {
  */
 export const loops = {
   /** The heat glow breathing, one full cycle. */
-  glowBreathe: { name: 'glow-breathe', duration: 6000, from: 0.55, to: 0.75, easing: easing.breathe },
+  glowBreathe: { ...loopTokens.glowBreathe, easing: easing.breathe },
   /** The warm haze drifting over the wall, and the wisps after the splash. */
-  steamDrift: { name: 'steam-drift', duration: 20000, distance: 24, easing: easing.breathe },
+  steamDrift: { ...loopTokens.steamDrift, easing: easing.breathe },
 } as const;
 
 /**
@@ -82,8 +82,11 @@ export const moments = {
     wordmark: { start: 700, duration: 500, easing: easing.settle, fromLetterSpacing: 2 },
     exit: { start: 1200, duration: 300, easing: easing.leave, lift: 8 },
     total: 1500,
-    /** After the splash, the wisps drift on over the next screen and thin out. */
-    hazeOut: { duration: 2400, easing: easing.breathe },
+    /**
+     * The wisps thin out a little behind the mark's exit, so they never sit on
+     * top of the next screen's content; that screen's own haze carries on.
+     */
+    hazeOut: { start: 1200, duration: 600, easing: easing.leave },
     /** Returning users skip the splash: a fade from the native splash into Today. */
     returning: { duration: 400, easing: easing.utility },
     /** Reduce Motion: the finished mark, held, then a crossfade. */
@@ -125,7 +128,7 @@ export const moments = {
   /** 6. Streak milestone: the wall builds, one slat every 50 ms. */
   milestoneWall: {
     perSlat: 50,
-    land: springs.land,
+    slat: springs.slat,
     drop: distances.slatDrop,
     number: timing.ember,
   },
@@ -151,7 +154,7 @@ export const moments = {
 
 /**
  * Where an overshoot curve peaks, as a fraction of its duration. A haptic that
- * belongs to an overshoot fires here: on the frame the motion lands, not when
+ * belongs to an overshoot fires here: on the frame the motion arrives, not when
  * it starts (Quality bar, Haptics match the motion).
  */
 export function peakFraction(name: CurveName): number {

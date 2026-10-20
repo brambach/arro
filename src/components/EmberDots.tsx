@@ -60,7 +60,7 @@ export function EmberDot({
     scale.set(moments.checkInIgnite.fromScale);
     shown.set(withTiming(1, timing.utility));
     scale.set(withTiming(1, timing.ember));
-    // The haptic lands on the overshoot's peak, not at the start.
+    // The haptic fires at the overshoot's peak, not at the start.
     const t = setTimeout(() => peakRef.current?.(), emberPeakMs);
     return () => clearTimeout(t);
   }, [lit, reduceMotion, shown, scale]);

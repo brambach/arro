@@ -1,4 +1,4 @@
-import React, { memo, useEffect, useId } from 'react';
+import React, { memo, useEffect } from 'react';
 import { StyleSheet, useWindowDimensions, View } from 'react-native';
 import Animated, {
   cancelAnimation,
@@ -8,7 +8,8 @@ import Animated, {
   withSequence,
   withTiming,
 } from 'react-native-reanimated';
-import Svg, { Defs, Ellipse, RadialGradient, Stop } from 'react-native-svg';
+import Svg from 'react-native-svg';
+import { SoftEllipse } from './SoftEllipse';
 import { gradients, heatHot, heatSteps, Stop as GradientStop } from '../theme/tokens';
 import { loops, moments, timing, useReduceMotion } from '../theme/motion';
 import { useScreenVisible } from './useScreenVisible';
@@ -129,25 +130,10 @@ const GlowArt = memo(function GlowArt({
   outer: GradientStop[];
   core?: GradientStop[];
 }) {
-  const id = `glow${useId().replace(/[^a-zA-Z0-9]/g, '')}`;
   return (
     <Svg width={width} height={height}>
-      <Defs>
-        <RadialGradient id={`${id}o`} cx="50%" cy="50%" r="50%">
-          {outer.map((s) => (
-            <Stop key={s.offset} offset={s.offset} stopColor={s.color} stopOpacity={s.opacity ?? 1} />
-          ))}
-        </RadialGradient>
-        {core ? (
-          <RadialGradient id={`${id}c`} cx="50%" cy="50%" r="50%">
-            {core.map((s) => (
-              <Stop key={s.offset} offset={s.offset} stopColor={s.color} stopOpacity={s.opacity ?? 1} />
-            ))}
-          </RadialGradient>
-        ) : null}
-      </Defs>
-      <Ellipse cx={width / 2} cy={height * 1.02} rx={width * 0.82} ry={height * 0.47} fill={`url(#${id}o)`} />
-      {core ? <Ellipse cx={width / 2} cy={height * 1.01} rx={width * 0.43} ry={height * 0.21} fill={`url(#${id}c)`} /> : null}
+      <SoftEllipse cx={width / 2} cy={height * 1.02} rx={width * 0.82} ry={height * 0.47} stops={outer} />
+      {core ? <SoftEllipse cx={width / 2} cy={height * 1.01} rx={width * 0.43} ry={height * 0.21} stops={core} /> : null}
     </Svg>
   );
 });

@@ -108,12 +108,15 @@ export function wisp(x: number, bottom: number, height: number, seed: number, sw
   let d = `M${p[0].toFixed(1)} ${p[1].toFixed(1)}`;
   let length = 0;
   let side = r() > 0.5 ? 1 : -1;
+  let prevC2: Pt | null = null;
   for (let i = 0; i < turns; i++) {
     // Sway narrows as the steam rises and thins.
     const s = sway * (1 - i / (turns + 1)) * (0.8 + r() * 0.4);
     const end: Pt = [x + (r() - 0.5) * sway * 0.6, p[1] - seg * (0.85 + r() * 0.3)];
-    const c1: Pt = [p[0] + side * s, p[1] - seg * 0.35];
+    // The first handle mirrors the last one, so the joins are smooth, no kinks.
+    const c1: Pt = prevC2 ? [2 * p[0] - prevC2[0], 2 * p[1] - prevC2[1]] : [p[0] + side * s, p[1] - seg * 0.35];
     const c2: Pt = [end[0] - side * s, end[1] + seg * 0.35];
+    prevC2 = c2;
     d += ` C${c1[0].toFixed(1)} ${c1[1].toFixed(1)} ${c2[0].toFixed(1)} ${c2[1].toFixed(1)} ${end[0].toFixed(1)} ${end[1].toFixed(1)}`;
     length += cubicLength([p, c1, c2, end]);
     p = end;

@@ -5,7 +5,7 @@ import { colors } from '../theme/tokens';
 type IconProps = { size?: number; color?: string; strokeWidth?: number };
 
 /**
- * Arro brand mark — final production logo (Arro Logo No.12 · variant "v5"):
+ * Arro brand mark, the final production logo (Arro Logo No.12 · variant "v5"):
  * a lowercase "a" route mark = Variant B's open counter + Variant D's optical
  * centering. Monochrome (currentColor). Replaces the old A-trail mark.
  */

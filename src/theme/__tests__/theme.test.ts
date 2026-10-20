@@ -34,7 +34,7 @@ describe('motion', () => {
   });
 
   it('finds a slat spring touchdown before it settles', () => {
-    const t = springTouchdownMs(springs.land);
+    const t = springTouchdownMs(springs.slat);
     expect(t).toBeGreaterThan(120);
     expect(t).toBeLessThan(300);
   });

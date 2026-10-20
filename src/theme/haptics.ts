@@ -17,7 +17,7 @@ import { Platform } from 'react-native';
  * | milestone      | heavy, then success |
  * | errors         | warning             |
  *
- * Fire each one on the frame its motion lands, not when the motion starts: the
+ * Fire each one on the frame its motion arrives, not when the motion starts: the
  * ember dot's success fires at the overshoot's peak (`emberPeakMs` in motion.ts),
  * a slat's when it touches down.
  */
@@ -80,7 +80,7 @@ export const haptics = {
   cheer: () => play('light'),
   /** The whole family's week kept: when the slat finishes filling. */
   weekKept: () => play('success'),
-  /** A streak milestone: a heavy thud as the number lands, then success. */
+  /** A streak milestone: a heavy thud as the number arrives, then success. */
   milestone: () => {
     play('heavy');
     setTimeout(() => play('success'), milestoneGapMs);

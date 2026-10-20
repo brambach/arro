@@ -3,7 +3,8 @@ import { LayoutChangeEvent, StyleSheet, useWindowDimensions, View } from 'react-
 import Animated, { useAnimatedStyle, useSharedValue, withDelay, withTiming } from 'react-native-reanimated';
 import { scheduleOnRN } from 'react-native-worklets';
 import * as SplashScreen from 'expo-splash-screen';
-import Svg, { Defs, Ellipse, RadialGradient, Stop } from 'react-native-svg';
+import Svg from 'react-native-svg';
+import { SoftEllipse } from './SoftEllipse';
 import { palette, space, stoneArt } from '../theme/tokens';
 import { moments, probeReduceMotion } from '../theme/motion';
 import { StoneMark } from './brand/StoneMark';
@@ -24,7 +25,7 @@ import { SteamWisps } from './SteamWisps';
  * | 400 to 1000 | the stone fades in and settles from 0.96 to 1                     |
  * | 700 to 1200 | the wordmark fades in as its letter spacing settles from 2 to 0   |
  * | 1200 to 1500| the mark lifts 8 pt and fades; the birch fades into the app       |
- * | after       | the wisps drift on and thin out over the next screen              |
+ * | 1200 to 1800| the wisps thin out; the next screen's own haze carries on         |
  *
  * Returning users (`returning`) get no mark: a 400 ms fade from birch into the
  * app. With Reduce Motion: the finished mark fades in, holds, and crossfades
@@ -126,8 +127,8 @@ export function AnimatedSplash({ ready, returning, onDone }: Props) {
       ));
       // After: the wisps drift on over the next screen and thin out.
       haze.set(withDelay(
-        s.total,
-        withTiming(0, s.hazeOut, (f) => {
+        s.hazeOut.start,
+        withTiming(0, { duration: s.hazeOut.duration, easing: s.hazeOut.easing }, (f) => {
           'worklet';
           if (f) scheduleOnRN(finish);
         }),
@@ -181,14 +182,7 @@ export function AnimatedSplash({ ready, returning, onDone }: Props) {
 function FloorGlow({ width, height }: { width: number; height: number }) {
   return (
     <Svg width={width} height={height}>
-      <Defs>
-        <RadialGradient id="splashGlow" cx="50%" cy="50%" r="50%">
-          {stoneArt.spill.map((s) => (
-            <Stop key={s.offset} offset={s.offset} stopColor={s.color} stopOpacity={s.opacity ?? 1} />
-          ))}
-        </RadialGradient>
-      </Defs>
-      <Ellipse cx={width / 2} cy={height} rx={width * 0.9} ry={height * 0.42} fill="url(#splashGlow)" />
+      <SoftEllipse cx={width / 2} cy={height} rx={width * 0.9} ry={height * 0.42} falloff={{ color: palette.glow, opacity: stoneArt.spill[0].opacity ?? 0 }} />
     </Svg>
   );
 }

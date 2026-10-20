@@ -1,7 +1,8 @@
 import React, { memo, useEffect, useMemo } from 'react';
 import { StyleSheet, View, useWindowDimensions } from 'react-native';
 import Animated, { cancelAnimation, useAnimatedStyle, useSharedValue, withRepeat, withTiming } from 'react-native-reanimated';
-import Svg, { Defs, Ellipse, RadialGradient, Rect, Stop } from 'react-native-svg';
+import Svg, { Rect } from 'react-native-svg';
+import { SoftEllipse, smoothStops } from './SoftEllipse';
 import { alpha, haze, palette } from '../theme/tokens';
 import { loops, useReduceMotion } from '../theme/motion';
 import { wallLines } from './material';
@@ -74,23 +75,16 @@ function Haze({ width, height }: { width: number; height: number }) {
   );
 }
 
+// SVG stops take their alpha from stopOpacity: an rgba stopColor draws black on iOS.
+const warm = smoothStops(palette.glow, haze.warm, 0.7);
+const light = smoothStops(palette.steam, haze.light, 0.7);
+
 const MemoHazeArt = memo(function HazeArt({ width, height }: { width: number; height: number }) {
   return (
     <Svg width={width} height={height}>
-      <Defs>
-        {/* SVG stops take their alpha from stopOpacity: an rgba stopColor draws black on iOS. */}
-        <RadialGradient id="hazeWarm" cx="50%" cy="50%" r="50%">
-          <Stop offset="0" stopColor={palette.glow} stopOpacity={haze.warm} />
-          <Stop offset="0.7" stopColor={palette.glow} stopOpacity={0} />
-        </RadialGradient>
-        <RadialGradient id="hazeLight" cx="50%" cy="50%" r="50%">
-          <Stop offset="0" stopColor={palette.steam} stopOpacity={haze.light} />
-          <Stop offset="0.7" stopColor={palette.steam} stopOpacity={0} />
-        </RadialGradient>
-      </Defs>
       {/* The mockup's haze: warm light from the upper right, a pale pool on the left. */}
-      <Ellipse cx={width * 0.85} cy={height * 0.06} rx={width * 0.7} ry={height * 0.38} fill="url(#hazeWarm)" />
-      <Ellipse cx={0} cy={height * 0.6} rx={width * 0.6} ry={height * 0.3} fill="url(#hazeLight)" />
+      <SoftEllipse cx={width * 0.85} cy={height * 0.06} rx={width * 0.7} ry={height * 0.38} stops={warm} />
+      <SoftEllipse cx={0} cy={height * 0.6} rx={width * 0.6} ry={height * 0.3} stops={light} />
     </Svg>
   );
 });

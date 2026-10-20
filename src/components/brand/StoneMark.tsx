@@ -1,5 +1,6 @@
 import React, { memo, useId } from 'react';
-import Svg, { ClipPath, Defs, Ellipse, G, LinearGradient, Path, RadialGradient, Rect, Stop } from 'react-native-svg';
+import Svg, { ClipPath, Defs, G, LinearGradient, Path, RadialGradient, Rect, Stop } from 'react-native-svg';
+import { SoftEllipse } from '../SoftEllipse';
 import { Stop as GradientStop, stoneArt } from '../../theme/tokens';
 import { stonePath } from './stonePath';
 
@@ -26,35 +27,23 @@ export const StoneMark = memo(function StoneMark({ width }: { width: number }) {
   return (
     <Svg width={width} height={height} viewBox={`${VIEW_X} ${VIEW_Y} ${STONE_VIEW_W} ${STONE_VIEW_H}`}>
       <Defs>
-        <RadialGradient id={`${id}spill`} cx="50%" cy="50%" r="50%">
-          {stops(stoneArt.spill)}
-        </RadialGradient>
-        <RadialGradient id={`${id}glow`} cx="50%" cy="50%" r="50%">
-          {stops(stoneArt.glow)}
-        </RadialGradient>
-        <RadialGradient id={`${id}core`} cx="50%" cy="50%" r="50%">
-          {stops(stoneArt.core)}
-        </RadialGradient>
         <RadialGradient id={`${id}body`} cx={420} cy={486} r={430} gradientUnits="userSpaceOnUse">
           {stops(stoneArt.body)}
         </RadialGradient>
         <LinearGradient id={`${id}under`} x1={0} y1={600} x2={0} y2={752} gradientUnits="userSpaceOnUse">
           {stops(stoneArt.under)}
         </LinearGradient>
-        <RadialGradient id={`${id}sheen`} cx="50%" cy="50%" r="50%">
-          {stops(stoneArt.sheen)}
-        </RadialGradient>
         <ClipPath id={`${id}clip`}>
           <Path d={stonePath} />
         </ClipPath>
       </Defs>
-      <Ellipse cx={516} cy={640} rx={360} ry={190} fill={`url(#${id}spill)`} />
-      <Ellipse cx={520} cy={744} rx={360} ry={106} fill={`url(#${id}glow)`} />
-      <Ellipse cx={516} cy={744} rx={250} ry={34} fill={`url(#${id}core)`} />
+      <SoftEllipse cx={516} cy={640} rx={360} ry={190} stops={stoneArt.spill} />
+      <SoftEllipse cx={520} cy={744} rx={360} ry={106} stops={stoneArt.glow} />
+      <SoftEllipse cx={516} cy={744} rx={250} ry={34} stops={stoneArt.core} />
       <Path d={stonePath} fill={`url(#${id}body)`} />
       <G clipPath={`url(#${id}clip)`}>
         <Rect x={200} y={540} width={640} height={230} fill={`url(#${id}under)`} />
-        <Ellipse cx={452} cy={512} rx={230} ry={84} fill={`url(#${id}sheen)`} />
+        <SoftEllipse cx={452} cy={512} rx={230} ry={84} stops={stoneArt.sheen} />
       </G>
     </Svg>
   );

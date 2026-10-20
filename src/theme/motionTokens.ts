@@ -32,8 +32,8 @@ export const stagger = 70;
  * without a visible wobble: weight, not bounce.
  */
 export const springs = {
-  /** A slat landing on the wall: a small settle at the end. */
-  land: { damping: 15, stiffness: 190, mass: 1 },
+  /** A slat dropping onto the wall: a small settle at the end. */
+  slat: { damping: 15, stiffness: 190, mass: 1 },
   /** The button's frame growing into the full screen (the door closes). */
   morph: { damping: 26, stiffness: 150, mass: 1 },
   /** Press feedback on buttons and tiles. */
@@ -66,7 +66,7 @@ export const momentSummary = [
   { moment: 'Check-in: ember dot ignites', ms: '520', curve: 'ember', key: 'checkInIgnite' },
   { moment: 'Week kept: slat fills', ms: '700', curve: 'settle', key: 'weekKept.fill' },
   { moment: 'Week kept: 10 sparks', ms: '900', curve: 'burst', key: 'weekKept.sparks' },
-  { moment: 'Milestone: a slat every 50 ms', ms: 'spring land', curve: 'spring', key: 'milestoneWall' },
+  { moment: 'Milestone: a slat every 50 ms', ms: 'spring slat', curve: 'spring', key: 'milestoneWall' },
   { moment: 'Plus: wood crossfade per slat', ms: '400', curve: 'settle', key: 'plusWoodCrossfade' },
   { moment: 'Throw löyly: wisps burst', ms: '1600', curve: 'burst', key: 'loylyBurst' },
 ] as const;
