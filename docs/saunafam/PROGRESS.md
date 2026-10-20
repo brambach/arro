@@ -122,6 +122,7 @@ Today, Week, Feed and Me rendered with no console errors.
 - `App.tsx` still says "This build can't reach Arro" (M12).
 | M6 | done (branch `saunafam/design`) | `design/brand/brand-sheet.png`, `design/screenshots/saunafam/design-sheet-1.png` to `-6.png` and `design-sheet-room.png`, `node scripts/check-contrast.mjs`, `src/theme/__tests__/theme.test.ts` | Löyly tokens, type, motion, haptics, components, Design sheet. See `docs/saunafam/DESIGN-SYSTEM.md` and M6/M7 notes below |
 | M7 | done (branch `saunafam/design`) | `design/brand/icon-explorations.png`, `design/brand/icon-sizes.png`, `design/recordings/saunafam/splash-cold.mov`, `design/screenshots/saunafam/splash-1.png` to `-3.png`, `splash-reduce-motion.mov` | Icon, wordmark, asset pipeline, native splash, AnimatedSplash |
+| M8 | done (branch `saunafam/timer`) | `design/screenshots/saunafam/timer-*.png`, `log-form*.png`; `design/recordings/saunafam/timer-start.mov`, `timer-finish.mov`, `timer-loyly.mov`, `timer-round.mov`, `timer-reduce-motion.mov`, `timer-background.mov`; `src/state/__tests__/logForm.test.ts`, `timerRoom.test.ts`, `sessionPhoto.test.ts` | Timer room ("the door closes"), log sheet, StartSessionButton, TimerBar. See M8 below |
 
 ## M0 baseline (untouched main, b68cd61)
 
@@ -600,3 +601,114 @@ Unverified or open:
   screen that uses them.
 - The tinted icon is a grayscale guess at Apple's guidance; it wasn't seen in
   iOS's tinted home screen mode.
+
+## M8: the timer and the log form
+
+Built on branch `saunafam/timer` (worktree `/tmp/luna-arro/wt-timer`).
+
+**Checks:** typecheck clean; Jest 17 suites, 235 tests (logForm 19, timerRoom
+8, sessionPhoto 3, theme 8 with the new overdamped spring test); lint clean in
+every file M8 touched; `check-design` clean in them; `check-contrast` 32 of 32.
+
+**What's in it**
+- `src/screens/TimerScreen.tsx`: the room. The door morphs on `springs.morph`
+  from the frame it was opened from (the Start button, ember; the timer bar,
+  char), ember crossfading to char over 800 ms, the glow rising over 1.4 s, the
+  medium haptic at the spring's touchdown (616 ms). Numerals (FixedDigits),
+  caps lines, the dotted ember arc (`TimerArc`), "Time to cool off at 7:27 PM",
+  glow-breathe and a warmer step every 5 minutes, a light tick and a VoiceOver
+  line at each 5-minute mark, the target and type panel (tap the line under the
+  numerals), Throw löyly (`LoylyBurst`), Add a round with the lake tint, Done,
+  Cancel behind a designed confirm, the 3-hour prompt, and a "Back to Today"
+  mark top left (the timer keeps running).
+- `src/screens/LogSessionScreen.tsx`: `LogSessionSheet`, a designed sheet used
+  by the `LogSession` route and, in place, by the timer. Logic in
+  `src/state/logForm.ts` (prefill from the timer or a draft, validation, °F to
+  °C, the start time). Photos in `src/state/sessionPhoto.ts`.
+- `src/components/StartSessionButton.tsx`, `TimerBar.tsx` for M9; the stand-in
+  Today uses both. Other new components are listed in DESIGN-SYSTEM.md.
+- Routes: `Timer` (`{ origin?, started?, startAt? }`) and `LogSession` are
+  transparent modals with no stack animation; each draws its own entrance.
+- Dev only: `src/dev/DevCapture.tsx` drives captures from simctl links or a
+  local command queue (`EXPO_PUBLIC_DEV_CAPTURE`), and `app.devSetTimer`. Both
+  do nothing in a release build. `dev/onboard` skips onboarding with no server.
+
+**Fixed from the recordings**
+- The door started about 700 ms after the tap and skipped its first frames: the
+  room's first draw (a full-screen SVG blur for the steam, and blurred halos on
+  the arc) blocked the main thread. The steam is now a PNG drawn ahead of time
+  (`scripts/render-room-steam.mjs`), the halos are radial gradients, and the
+  door waits for the route's `transitionEnd` before moving. Tap to motion is
+  now about 130 ms in a dev build.
+- Starting the timer re-rendered Today under the door (the bar appeared, the
+  button relabeled, the door's frame no longer matched). The timer now starts
+  from the tap's time but is committed when the door lands.
+- The room's contents faded in while the door was still small, over Today.
+  They now wait for the door to land.
+- The status bar turned light only after the door landed, so it sat dark on
+  char for a moment, and changing it re-rendered the room mid-move. It's set
+  imperatively (`StatusBar.setStyle`) when the door covers the top, and back
+  when the room lightens.
+- An overdamped spring stopped a hair short and left a sliver of Today at the
+  edge: the door snaps to the exact frame when its spring rests.
+- Done to sheet stalled for about 190 ms while the sheet mounted, so the room's
+  fade jumped. The sheet now mounts parked below the screen while the glow
+  cools, and its lower fields mount after it's up.
+- The room lightened faster than the sheet rose (settle curve); it now uses
+  the even `leave` ease.
+- Throw löyly's drawn wisps read as thin lines, then as gray ribbons. They're
+  now a blurred wisp image that rises, billows and fades.
+- The phase words ("Cooling off", "Back in the heat") snapped; they fade in.
+- While cooling off the numerals didn't dim (an animated opacity overrode the
+  style); they dim to 72% now.
+- At the largest Dynamic Type size the room overlapped itself and the löyly
+  label clipped. Large text gets a scrolling room with no arc, and
+  `SolidButton` grows instead of clipping.
+
+**Decisions**
+- D8.1 Done finishes the timer at once (clears it, cancels its notifications)
+  and the log sheet opens over the lightening room. Closing that sheet asks
+  "Throw this session away?", since nothing else has the time.
+- D8.2 The sheet is birch, not steam, so the steam wells and tiles read on it.
+- D8.3 "Log it" on the 3-hour prompt finishes the timer and asks for the real
+  minutes (the field starts empty with a hint), keeping the start time.
+- D8.4 The 5-minute tick fires only when the mark goes up by one while you're
+  watching; coming back from the background just catches up, silently.
+- D8.5 Saving is optimistic: the sheet closes at once and `haptics.save` fires
+  as it finishes closing. "Jo already logged this one" arrives afterwards as
+  `app.notice` (new `app.showNotice`), for Today to show.
+- D8.6 The löyly haptic fires one stagger (90 ms) after the tap, as the first
+  wisp shows.
+- D8.7 The 4:3 crop is done in `sessionPhoto.ts`: SDK 57's picker crops only
+  to a square on iOS (`aspect` is Android only). Note `photos.ts` still passes
+  `aspect: [4, 3]` for workouts, which iOS ignores.
+- D8.8 `app.json` gets a camera permission string ("Saunafam uses the camera
+  only when you take a photo for a session..."). The shared dev client was
+  built before it, so the camera needs the next native build.
+- D8.9 A local-only session (no server) stores its timer too, so the timer
+  survives being killed in a dev build. Prototype preview scenarios still keep
+  theirs in memory.
+- D8.10 "Sat with someone?" lists joined members; invited ones show grayed out with
+  "Hasn't joined yet"; people on a break can be picked. The preview family has
+  only Maya and Jo, so `log-form-shared-3.png` shows three people in the
+  session (Sam, Maya, Jo), not three picked; the 3-person cap is unit tested.
+- D8.11 The numerals stay at the type scale's 96 pt (the mockup is about 91 pt
+  at this width); FixedDigits' even digit boxes make them a little wider.
+- D8.12 Nothing about Plus appears in the timer or the form.
+
+**Not done or not verified**
+- Haptics and VoiceOver announcements can't be felt or heard on the simulator;
+  their timing is in code and tests only. No Perf Monitor reading was taken,
+  and frame timing from `simctl recordVideo` was noisy with three simulators
+  running: the door and the finish show steady 16 to 25 ms frames in the
+  cleaner runs, with occasional 40 ms gaps.
+- The camera was not tried (no camera on the simulator, and no permission
+  string in the current dev client). The library picker was not tried either.
+- `timer-background.mov` is two recordings joined: the 2 minutes in Settings
+  are cut out. Coming back shows iOS's snapshot from leaving (0:04) for a frame
+  before 2:09.
+- Screenshots after the dev client's relaunch show its floating Tools button
+  (dev chrome).
+- `design/screenshots/saunafam/INDEX.md` lines for these screens are left for
+  M9, which owns that file.
+

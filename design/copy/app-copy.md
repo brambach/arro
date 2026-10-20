@@ -142,30 +142,74 @@ Section 3, "Today".
 
 ## Timer
 
-Sections 2 ("Timer: the door closes") and 3 ("Timer").
+Sections 2 ("Timer: the door closes") and 3 ("Timer"). Built in M8
+(`src/screens/TimerScreen.tsx`, words in `src/state/timerRoom.ts`).
 
-- Under the numerals: "TRADITIONAL · 15 MIN"
-- **Throw löyly**
-- **Add a round**
-- While paused: "Cooling off"
-- **Done**
-- **Cancel** (always behind a confirm). _to write: the confirm_
-- Target chips: 10, 15, 20, 30 minutes
-- Back after 3 hours: "Still going? It's been 3 hours", with **Log it**, **Keep going**, **Discard**
-- Sign out with a timer running: a confirm. _to write_
+On Today (M8 components that M9 places):
+
+- **Start a session** (hint for VoiceOver: "Starts the sauna timer")
+- With a timer running, the same button: **Back to the timer** ("Opens the timer that's running")
+- The slim bar: "In the heat · 12:04", "Cooling off · 12:04" (VoiceOver: "In the heat, 12 minutes 4 seconds", hint "Opens the timer")
+
+In the room:
+
+- Top line, small caps: "IN THE HEAT · ROUND 1", while cooling off "COOLING OFF · ROUND 1 DONE"
+- Under the numerals, small caps, tappable: "TRADITIONAL · 15 MIN" (VoiceOver: "Traditional · 15 min. Change the target or sauna type")
+- The numerals for VoiceOver: "12 minutes 40 seconds in the heat", while cooling off "..., paused while you cool off"
+- Every 5 minutes, VoiceOver says: "5 minutes", "10 minutes", and so on
+- Above Throw löyly: "Time to cool off at 7:27 PM"; past the target "That's your 15 minutes. Cool off when you're ready."; cooling off "Cooling off. Go back in when you're ready."
+- **Throw löyly** (hint: "A burst of steam. Nothing is saved.")
+- **Add a round** (hint: "Pauses the heat clock while you cool off"); while cooling off **Back in the heat** ("Starts the next round")
+- **Done** (hint: "Opens the log form, filled in")
+- **Cancel**
+- Top left, an icon only: "Back to Today" (hint: "The timer keeps running")
+- The target and type panel: small caps "TARGET" with **10 min**, **15 min**, **20 min**, **30 min**; "SAUNA" with the seven types; **Done**
+- Cancel confirm: "Cancel this session?" / "The timer stops and nothing's saved." / **Keep going**, **Cancel session**
+- Back after 3 hours: "Still going? It's been 3 hours" / "Log it with your real time, keep the timer going, or let it go." / **Log it**, **Keep going**, **Discard**
+- Sign out with a timer running: a confirm. _to write (M10, Settings)_
 
 ## Log session
 
-Section 3, "Log session form".
+Section 3, "Log session form". Built in M8 (`src/screens/LogSessionScreen.tsx`,
+checks in `src/state/logForm.ts`).
 
-- Fields: When (Today, Yesterday, start time), Minutes (chips 10, 15, 20, 30), Sauna type, Temperature, Humidity, Rounds, Cold plunge, Place, With, Photo, Note
-- Sauna types: "Traditional", "Wood-fired", "Infrared", "Steam room", "Smoke", "Banya", "Other"
-- Place examples: "Home", "The Y"
-- With: "Sat with someone?"
-- Under a short session: "Sessions under 10 minutes are saved but don't count toward the week."
-- Duplicate in a shared session: "Jo already logged this one"
-- Refused by the server: "Couldn't save this one. Tap to fix it"
-- _to write: field labels, placeholders, save button, unit labels_
+- Titles: "Log a session"; from the timer "Log this session"; fixing a refused draft "Fix this session"
+- **Close** (the round x, for VoiceOver)
+- "When": **Today**, **Yesterday**; the start time "Started 6:45 PM" with a minus and a plus (VoiceOver: "Start time, Started at 6:45 PM", adjustable)
+- When yesterday has closed: "Yesterday closed at 5:00 PM."
+- "Minutes", placeholder "15"; chips **10**, **15**, **20**, **30**
+- From the 3-hour prompt: placeholder "How long were you in?", hint "The timer ran for hours. Put in your real time."
+- Under a short session: "Sessions under 10 minutes are saved but don't count toward the week." (the family minimum fills in the number)
+- "Sauna", tiles: "Traditional", "Wood-fired", "Infrared", "Steam room", "Smoke", "Banya", "Other"
+- "Temperature, °F" (or "Temperature, °C"), placeholder "185" (or "85"); "Humidity, %", placeholder "20"
+- "Rounds", a minus and a plus (VoiceOver: "2 rounds")
+- "Cold plunge" with a switch; when on, "Minutes in the cold", placeholder "2"
+- "Place", placeholder "Home, The Y"; chips of the family's recent places
+- "Sat with someone?"; under the people "They get a note and can take themselves off it."; when 3 are picked "That's 4 of you, the most for one session."
+- People who can't be picked or are away: "Hasn't joined yet", "On a break"
+- "Photo": **Take a photo**, **Choose one**; with a photo **Replace**, **Remove**
+- Photo access off: "Photos are off for Saunafam" / "The camera is off for Saunafam" / "You can turn them on in Settings." / **Not now**, **Open Settings**
+- "Note", placeholder "How was it?"; near the limit "12 left"
+- **Save session**; fixing a draft **Save again**, and **Throw this one away**
+- Refused draft, at the top of the form: "Couldn't save this one" / the server's reason as a sentence, then "Fix it here and save again."
+- Draft too old: "Sessions can only be logged for today or yesterday. Pick one."
+- Closing with something filled in: "Close without saving?" / "What you've put in here won't be kept." / **Keep it**, **Close**
+- Closing a timer's session: "Throw this session away?" / "The timer's done, so it won't be saved anywhere else." / **Keep it**, **Throw it away**
+- After saving, when someone was skipped (shown on Today): "Jo already logged this one", "Maya and Jo already logged this one"
+- Refused by the server (on Today, from the data layer): "Couldn't save this one. Tap to fix it"
+
+Checks, inline under the field, in coal:
+
+- "How many minutes were you in?"
+- "Minutes take a whole number, 1 or more."
+- "Sessions go up to 240 minutes."
+- "That's later than now. Pick an earlier time."
+- "Yesterday closed at 5:00 PM. This one can go on today."
+- "Somewhere from 86 to 266°F." (or "30 to 130°C")
+- "Somewhere from 0 to 100%."
+- "Up to 30 minutes."
+- "Up to 60 characters." (place), "Up to 140 characters." (note)
+- "Up to 3 people with you."
 
 ## Session detail
 
