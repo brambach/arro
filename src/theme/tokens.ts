@@ -79,6 +79,8 @@ export const alpha = {
   wispLight: 'rgba(205,184,154,0.55)',
   wispDark: 'rgba(248,244,238,0.09)',
   transparent: 'rgba(0,0,0,0)',
+  /** Birch at 0, for the fade under the status bar (fading to plain transparent would grey it). */
+  birchClear: 'rgba(239,230,216,0)',
 } as const;
 
 /** The haze that drifts over the wall (steam-drift): glow and steam, at these opacities. */

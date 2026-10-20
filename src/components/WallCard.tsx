@@ -64,9 +64,10 @@ export function WallCard({ wall, numbers, myDots, rollIn }: Props) {
 }
 
 const styles = StyleSheet.create({
-  row: { flexDirection: 'row', alignItems: 'flex-end', gap: space.s20 },
-  wall: { flex: 11 },
-  numbers: { flex: 9, paddingBottom: space.s4 },
+  row: { flexDirection: 'row', alignItems: 'flex-end', gap: space.s16 },
+  // The mockup's proportions: the wall a little over half the card.
+  wall: { flex: 13 },
+  numbers: { flex: 12, paddingBottom: space.s4 },
   label: { marginTop: space.s8 },
   stats: { flexDirection: 'row', flexWrap: 'wrap', columnGap: space.s20, rowGap: space.s8, marginTop: space.s16 },
 });

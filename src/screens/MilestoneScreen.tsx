@@ -118,7 +118,7 @@ export function MilestoneScreen({ navigation, route }: RootStackScreenProps<'Mil
           </View>
         </View>
         <View style={styles.numberArea}>
-          <SteamWisps width={inner} height={160} rise={0.8} base={0.95} columns={[0.38, 0.5, 0.62]} draw={built} drawDuration={moments.splash.wisps.duration * 2} />
+          <SteamWisps width={inner} height={140} rise={0.9} base={0.92} columns={[0.38, 0.5, 0.62]} draw={built} drawDuration={moments.splash.wisps.duration * 2} />
           <Animated.View style={numberStyle}>
             <FixedDigits value={String(m.weeks)} variant="display" color={palette.coal} accessibilityLabel={m.title} />
           </Animated.View>
@@ -176,9 +176,10 @@ const styles = StyleSheet.create({
   root: { flex: 1, backgroundColor: palette.birch, paddingHorizontal: layout.gutter },
   card: { flex: 1 },
   center: { textAlign: 'center' },
-  wallArea: { flex: 1, justifyContent: 'flex-end', marginTop: space.s16 },
+  wallArea: { flex: 1, justifyContent: 'center', marginTop: space.s16 },
   columns: { flexDirection: 'row', justifyContent: 'center', alignItems: 'flex-end', gap: space.s16 },
-  numberArea: { alignItems: 'center', justifyContent: 'flex-end', height: 104, marginTop: space.s16 },
+  // Tall enough for the steam to rise behind the number without crossing the title.
+  numberArea: { alignItems: 'center', justifyContent: 'flex-end', height: 140, marginTop: space.s16 },
   sub: { marginTop: space.s8 },
   share: { marginTop: space.s24 },
   done: { marginTop: space.s8 },

@@ -1,11 +1,13 @@
 import React, { useEffect } from 'react';
-import { StyleSheet, Text, View } from 'react-native';
+import { Pressable, StyleSheet, Text, View } from 'react-native';
+import Animated, { useAnimatedStyle, useSharedValue, withTiming } from 'react-native-reanimated';
 import { MainTabScreenProps } from '../navigation/types';
 import { useApp, useView } from '../state/AppState';
 import { FamilyRow } from '../state/buildView';
 import { PLUS_CARD_COPY } from '../state/plus';
 import { alpha, layout, palette, radii, space } from '../theme/tokens';
 import { maxFontScale, type } from '../theme/typography';
+import { timing } from '../theme/motion';
 import { Arrive } from '../components/Arrive';
 import { Card } from '../components/Card';
 import { DayStrip } from '../components/DayStrip';
@@ -101,14 +103,7 @@ export function ThisWeekScreen({ navigation }: MainTabScreenProps<'ThisWeek'>) {
               {w.past.length ? (
                 <ListGroup>
                   {w.past.map((p) => (
-                    <ListRow
-                      key={p.weekStart}
-                      title={p.title}
-                      value={p.outcome}
-                      valueTone="quiet"
-                      onPress={() => navigation.navigate('PastWeek', { weekStart: p.weekStart })}
-                      accessibilityHint="Shows who went, and on which days"
-                    />
+                    <PastRow key={p.weekStart} title={p.title} outcome={p.outcome} onPress={() => navigation.navigate('PastWeek', { weekStart: p.weekStart })} />
                   ))}
                 </ListGroup>
               ) : (
@@ -169,6 +164,35 @@ export function ThisWeekScreen({ navigation }: MainTabScreenProps<'ThisWeek'>) {
   );
 }
 
+/** A past week, as the mockup sets it: the week in regular weight, the outcome quiet on the right. */
+function PastRow({ title, outcome, onPress }: { title: string; outcome: string; onPress: () => void }) {
+  const wash = useSharedValue(0);
+  const washStyle = useAnimatedStyle(() => ({ opacity: wash.value }));
+  return (
+    <Pressable
+      onPress={onPress}
+      onPressIn={() => {
+        wash.set(withTiming(1, timing.utility));
+      }}
+      onPressOut={() => {
+        wash.set(withTiming(0, timing.utility));
+      }}
+      accessibilityRole="button"
+      accessibilityLabel={`${title}, ${outcome}`}
+      accessibilityHint="Shows who went, and on which days"
+      style={styles.past}
+    >
+      <Animated.View style={[StyleSheet.absoluteFill, styles.wash, washStyle]} />
+      <Text style={[type.body, styles.pastTitle]} numberOfLines={1}>
+        {title}
+      </Text>
+      <Text style={[type.bodySmall, styles.pastOutcome]} numberOfLines={2}>
+        {outcome}
+      </Text>
+    </Pressable>
+  );
+}
+
 function RowMark({ name }: { name: 'calendar' | 'slat' }) {
   return (
     <View style={styles.mark}>
@@ -215,6 +239,10 @@ const styles = StyleSheet.create({
   nagActions: { flexDirection: 'row', alignItems: 'center', gap: space.s24, marginTop: space.s16 },
   never: { alignSelf: 'flex-start', marginTop: space.s8 },
   rules: { marginTop: space.s24 },
+  past: { flexDirection: 'row', alignItems: 'center', gap: space.s16, minHeight: layout.rowCompact, paddingHorizontal: space.s20, paddingVertical: space.s8 },
+  wash: { backgroundColor: alpha.press },
+  pastTitle: { flexShrink: 0 },
+  pastOutcome: { flex: 1, textAlign: 'right', color: palette.stone },
   mark: { width: 38, height: 38, borderRadius: radii.round, backgroundColor: palette.aspen, alignItems: 'center', justifyContent: 'center' },
   skeletonWall: { flexDirection: 'row', alignItems: 'flex-end', gap: space.s20 },
   skeletonSlats: { flex: 11, gap: space.s4 },

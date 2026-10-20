@@ -1,4 +1,5 @@
 import { useEffect, useRef } from 'react';
+import { DeviceEventEmitter } from 'react-native';
 import type { NavigationContainerRefWithCurrent } from '@react-navigation/native';
 import { useApp } from '../state/AppState';
 import { PreviewScenarioId, previewNow } from '../data/preview';
@@ -20,7 +21,9 @@ type Command =
   | { op: 'nav'; route: keyof RootStackParamList; params?: object }
   | { op: 'tab'; tab: 'Today' | 'ThisWeek' | 'Feed' | 'Me' }
   | { op: 'reset' }
+  | { op: 'scroll'; y: number }
   | { op: 'back' }
+  | { op: 'openCard'; index: number; reply?: boolean }
   | { op: 'log'; minutes?: number; minutesAgo?: number }
   | { op: 'cheer'; id: string }
   | { op: 'comment'; id: string; body: string };
@@ -58,6 +61,16 @@ export function DevDriver({ navigation }: { navigation: NavigationContainerRefWi
         case 'reset':
           navigation.resetRoot({ index: 0, routes: [{ name: 'Main' }] });
           return;
+        case 'scroll':
+          // Every mounted Screen listens; only the visible one matters in a capture.
+          DeviceEventEmitter.emit('devScroll', c.y);
+          return;
+        case 'openCard': {
+          const cards = a.view?.feed.sections.flatMap((x) => x.cards) ?? [];
+          const card = cards[c.index];
+          if (card) (navigation.navigate as (name: string, params?: object) => void)('SessionDetail', { sessionId: card.id, reply: c.reply });
+          return;
+        }
         case 'back':
           if (navigation.canGoBack()) navigation.goBack();
           return;

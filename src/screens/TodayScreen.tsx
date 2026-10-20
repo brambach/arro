@@ -180,8 +180,6 @@ function TodayBody({
         </Arrive>
       ) : null}
 
-      <HealthOffer savedSessions={savedSessions} />
-
       <Arrive index={3}>
         <Text style={[type.caption, styles.label]} accessibilityRole="header">
           Family
@@ -192,6 +190,8 @@ function TodayBody({
           ))}
         </ListGroup>
       </Arrive>
+
+      <HealthOffer savedSessions={savedSessions} />
     </>
   );
 }
@@ -243,7 +243,7 @@ function HealthOffer({ savedSessions }: { savedSessions: number }) {
     saveHealthOffer(a).catch(() => undefined);
   };
   return (
-    <Arrive index={3} style={styles.block}>
+    <Arrive index={3} style={styles.health}>
       <Card>
         <View style={styles.healthHead}>
           <Icon name="droplet" size={22} color={palette.coal} />
@@ -320,6 +320,7 @@ const styles = StyleSheet.create({
   block: { marginTop: space.s16 },
   rowIcon: { width: 38, height: 38, borderRadius: radii.round, backgroundColor: palette.aspen, alignItems: 'center', justifyContent: 'center' },
   label: { marginTop: space.s32, marginBottom: space.s8, paddingHorizontal: space.s8 },
+  health: { marginTop: space.s24 },
   healthHead: { flexDirection: 'row', alignItems: 'center', gap: space.s12 },
   healthTitle: { flex: 1 },
   healthBody: { marginTop: space.s8 },

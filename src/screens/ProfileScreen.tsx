@@ -167,7 +167,8 @@ const styles = StyleSheet.create({
   gear: { width: layout.touch, height: layout.touch, alignItems: 'center', justifyContent: 'center', alignSelf: 'flex-start' },
   edit: { alignSelf: 'flex-start', marginLeft: space.s8, marginTop: space.s8 },
   grid: { flexDirection: 'row', flexWrap: 'wrap', gap: space.s12, marginTop: space.s20 },
-  stat: { width: '47%', flexGrow: 1 },
+  // One height for all four, so a label that wraps doesn't make its row taller than the other.
+  stat: { width: '47%', flexGrow: 1, minHeight: 120 },
   statValue: { flexDirection: 'row', alignItems: 'baseline', gap: space.s4 },
   unit: { color: palette.smoke },
   statLabel: { marginTop: space.s4 },
