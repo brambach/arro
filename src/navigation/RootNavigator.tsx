@@ -17,6 +17,9 @@ import { StreakRulesScreen } from '../screens/StreakRulesScreen';
 import { TakeBreakScreen } from '../screens/TakeBreakScreen';
 import { NotificationsScreen } from '../screens/NotificationsScreen';
 import { SessionDetailScreen } from '../screens/SessionDetailScreen';
+import { EditSessionScreen } from '../screens/EditSessionScreen';
+import { PastWeekScreen } from '../screens/PastWeekScreen';
+import { PlusScreen } from '../screens/PlusScreen';
 import { NudgeModalScreen } from '../screens/NudgeModalScreen';
 import { FamilyMembersScreen } from '../screens/FamilyMembersScreen';
 import { InviteScreen } from '../screens/InviteScreen';
@@ -48,12 +51,15 @@ export function RootNavigator() {
       {session ? (
         <>
           <Stack.Screen name="Main" component={MainTabs} />
-          <Stack.Screen name="Milestone" component={MilestoneScreen} options={{ presentation: 'modal' }} />
+          <Stack.Screen name="Milestone" component={MilestoneScreen} options={{ presentation: 'fullScreenModal', animation: 'fade' }} />
           <Stack.Screen name="Settings" component={SettingsScreen} options={{ animation: 'slide_from_right' }} />
           <Stack.Screen name="StreakRules" component={StreakRulesScreen} options={{ animation: 'slide_from_right' }} />
           <Stack.Screen name="TakeBreak" component={TakeBreakScreen} options={{ animation: 'slide_from_right' }} />
           <Stack.Screen name="Notifications" component={NotificationsScreen} options={{ animation: 'slide_from_right' }} />
           <Stack.Screen name="SessionDetail" component={SessionDetailScreen} options={{ animation: 'slide_from_right' }} />
+          <Stack.Screen name="EditSession" component={EditSessionScreen} options={{ presentation: 'modal' }} />
+          <Stack.Screen name="PastWeek" component={PastWeekScreen} options={{ presentation: 'transparentModal', animation: 'none' }} />
+          <Stack.Screen name="Plus" component={PlusScreen} options={{ presentation: 'modal' }} />
           <Stack.Screen name="FamilyMembers" component={FamilyMembersScreen} options={{ animation: 'slide_from_right' }} />
           <Stack.Screen name="Invite" component={InviteScreen} options={{ presentation: 'modal' }} />
           <Stack.Screen name="EditProfile" component={EditProfileScreen} options={{ presentation: 'modal' }} />
@@ -61,7 +67,7 @@ export function RootNavigator() {
           <Stack.Screen
             name="Nudge"
             component={NudgeModalScreen}
-            options={{ presentation: 'transparentModal', animation: 'fade' }}
+            options={{ presentation: 'transparentModal', animation: 'none' }}
           />
         </>
       ) : (

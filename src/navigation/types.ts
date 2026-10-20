@@ -27,8 +27,14 @@ export type RootStackParamList = {
   /** Settings > Take a break ("Pause me"). */
   TakeBreak: undefined;
   Notifications: undefined;
-  /** A session by its anchor id (any row id works too). */
-  SessionDetail: { sessionId: string };
+  /** A session by its anchor id (any row id works too). `reply` opens with the comment field ready. */
+  SessionDetail: { sessionId: string; reply?: boolean };
+  /** The logger changes a session's details (M9). */
+  EditSession: { sessionId: string };
+  /** A past week from Week: who went, and on which days (M9). */
+  PastWeek: { weekStart: string };
+  /** The Plus sheet (M15 builds it; M9 has a placeholder). `focus` opens it at a feature. */
+  Plus: { focus?: string } | undefined;
   Nudge: { memberId?: string } | undefined;
   FamilyMembers: undefined;
   Invite: undefined;
@@ -60,8 +66,9 @@ export type MainTabScreenProps<T extends keyof MainTabParamList> = CompositeScre
 >;
 
 declare global {
-  // eslint-disable-next-line @typescript-eslint/no-namespace
   namespace ReactNavigation {
+    // React Navigation's documented way to type useNavigation(): an empty interface that extends the list.
+    // eslint-disable-next-line @typescript-eslint/no-empty-object-type
     interface RootParamList extends RootStackParamList {}
   }
 }

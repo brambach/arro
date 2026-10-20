@@ -206,9 +206,9 @@ describe('Week', () => {
 
   it('three numbers', () => {
     expect(w.numbers).toEqual([
-      { key: 'streak', value: 8, label: 'Weeks in a row' },
-      { key: 'longest', value: 8, label: 'Longest streak' },
-      { key: 'thisYear', value: 8, label: 'Together this year' },
+      { key: 'streak', value: 8, label: 'weeks together' },
+      { key: 'longest', value: 8, label: 'Longest' },
+      { key: 'thisYear', value: 8, label: 'This year' },
     ]);
   });
 
@@ -216,6 +216,10 @@ describe('Week', () => {
     expect(w.wall.slats.map((s) => `${s.state[0]}${s.freezeUsed ? '*' : ''}`).join(' ')).toBe('c c c c* c c c c p');
     expect(w.wall.slats[w.wall.slats.length - 1].current).toBe(true);
     expect(w.wall.wood).toBe('birch');
+  });
+
+  it('the label over This week: "This week · 2 of 3 for you"', () => {
+    expect(viewFor('family').week.thisWeekLabel).toBe('This week · 2 of 3 for you');
   });
 
   it('your Mon to Sun strip', () => {

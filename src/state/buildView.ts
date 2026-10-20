@@ -173,6 +173,8 @@ export interface WeekView {
   rows: FamilyRow[];
   /** Your Mon to Sun strip, under your own row. */
   myStrip: DayCell[];
+  /** Small caps over This week's rows: "This week · 2 of 3 for you", "This week · kept". */
+  thisWeekLabel: string;
   past: PastWeekView[];
   /** Plus items under the 12 weeks; only with plus_enabled. */
   seeEveryWeek: boolean;
@@ -845,12 +847,14 @@ export function buildView(input: ViewInput): AppView {
   const weekView: WeekView = {
     wall: { slats, wood: family.plus.wallWood },
     numbers: [
-      { key: 'streak', value: solo ? 0 : s.familyStreak, label: 'Weeks in a row' },
-      { key: 'longest', value: s.longestStreak, label: 'Longest streak' },
-      { key: 'thisYear', value: s.weeksTogetherThisYear, label: 'Together this year' },
+      // The streak sits big beside the wall with its own words; the other two are short labels under it.
+      { key: 'streak', value: solo ? 0 : s.familyStreak, label: s.familyStreak === 1 && !solo ? 'week together' : 'weeks together' },
+      { key: 'longest', value: s.longestStreak, label: 'Longest' },
+      { key: 'thisYear', value: s.weeksTogetherThisYear, label: 'This year' },
     ],
     rows: joinedRows,
     myStrip,
+    thisWeekLabel: myWeek.keptThisWeek ? 'This week · kept' : `This week · ${myWeek.countedDays} of ${myWeek.goal} for you`,
     past,
     seeEveryWeek: plusOn,
     printWall: plusOn,

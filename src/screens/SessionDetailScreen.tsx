@@ -1,94 +1,159 @@
-import React, { useState } from 'react';
-import { TextInput } from 'react-native';
+import React, { useEffect, useRef, useState } from 'react';
+import { KeyboardAvoidingView, Platform, Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { RootStackScreenProps } from '../navigation/types';
 import { useApp, useView } from '../state/AppState';
+import type { FeedCard } from '../state/buildView';
 import { confirmAction } from '../state/confirm';
-import { pickPhoto } from '../state/photos';
-import { Btn, H, P, PlainScreen } from './plain';
+import { layout, palette, space } from '../theme/tokens';
+import { type } from '../theme/typography';
+import { Backdrop } from '../components/Backdrop';
+import { Card } from '../components/Card';
+import { CheerControl } from '../components/CheerControl';
+import { CommentThread, Composer, QuickReplies } from '../components/Comments';
+import { Icon } from '../components/Icon';
+import { NoticeToast } from '../components/NoticeToast';
+import { SessionFacts, SessionHeader, SessionPhoto } from '../components/SessionCard';
+import { StatusNote } from '../components/StatusNote';
+import { TextAction } from '../components/TextAction';
 
-/** One session, as plain text until M9 builds it: view.sessions[sessionId]. */
+/**
+ * One session (spec: SessionDetail replaces WorkoutDetail): everything on it,
+ * cheers, the comment thread with quick replies and a 200 character field, and
+ * what you can do with it: Edit and Delete for the logger (Delete asks first),
+ * Remove me for anyone else in it. A session that's gone (deleted, or you were
+ * removed from it) says so instead of showing a blank.
+ */
 export function SessionDetailScreen({ navigation, route }: RootStackScreenProps<'SessionDetail'>) {
   const view = useView();
-  const { cheer, uncheer, comment, deleteComment, removeMe, deleteSession, setSessionPhoto } = useApp();
-  const [text, setText] = useState('');
-  const c = view.sessions[route.params.sessionId];
-  if (!c) {
+  const { cheer, uncheer, comment, deleteComment, removeMe, deleteSession } = useApp();
+  const insets = useSafeAreaInsets();
+  const input = useRef<TextInput>(null);
+  // While this screen slides away after Delete or Remove me, it keeps showing the
+  // session it had, instead of flashing the "isn't here anymore" state.
+  const [leaving, setLeaving] = useState<FeedCard | null>(null);
+  const card = view.sessions[route.params.sessionId] ?? leaving;
+  const reply = route.params.reply;
+
+  useEffect(() => {
+    if (!reply) return;
+    // After the push has landed, so the keyboard doesn't fight the slide.
+    const t = setTimeout(() => input.current?.focus(), 450);
+    return () => clearTimeout(t);
+  }, [reply]);
+
+  const back = (
+    <Pressable onPress={() => navigation.goBack()} style={styles.back} accessibilityRole="button" accessibilityLabel="Back" hitSlop={space.s8}>
+      <Icon name="back" size={24} color={palette.char} />
+    </Pressable>
+  );
+
+  if (!card) {
     return (
-      <PlainScreen title="Session" onBack={() => navigation.goBack()}>
-        <P muted>This session isn’t here anymore.</P>
-      </PlainScreen>
+      <View style={[styles.root, { paddingTop: insets.top }]}>
+        <Backdrop />
+        {back}
+        <View style={styles.gone}>
+          <Icon name="stone" size={32} color={palette.pebble} />
+          <Text style={[type.heading, styles.gap12]} accessibilityRole="header">
+            This session isn’t here anymore
+          </Text>
+          <Text style={[type.bodySmall, styles.gap8]}>Whoever logged it may have deleted it, or you were taken off it. Your week is up to date.</Text>
+          <TextAction label="Back" onPress={() => navigation.goBack()} tone="coal" size="bodySmall" style={styles.left} />
+        </View>
+      </View>
     );
   }
-  const send = (body: string) => {
-    comment(c.id, body);
-    setText('');
+
+  const onDelete = async () => {
+    if (await confirmAction('Delete this session?', 'It goes for everyone in it, with its cheers and comments.', 'Delete')) {
+      setLeaving(card);
+      navigation.goBack();
+      deleteSession(card.id);
+    }
   };
+  const onRemoveMe = async () => {
+    if (await confirmAction('Take yourself off this session?', 'It comes off your week. Everyone else keeps it.', 'Remove me')) {
+      setLeaving(card);
+      navigation.goBack();
+      removeMe(card.id);
+    }
+  };
+
   return (
-    <PlainScreen title={c.title} onBack={() => navigation.goBack()}>
-      <P>{c.details}</P>
-      <P muted>
-        {c.when}
-        {c.rounds > 1 ? ` · ${c.rounds} rounds` : ''}
-        {c.coldPlunge ? ` · cold plunge${c.coldMinutes ? ` ${c.coldMinutes} min` : ''}` : ''}
-        {c.place ? ` · ${c.place}` : ''}
-      </P>
-      {c.note ? <P>{c.note}</P> : null}
-      {c.pending ? <P muted>Waiting to send. It’ll go when you’re back online.</P> : null}
-      {c.cheers.line ? <P muted>{c.cheers.line}</P> : null}
-      {c.canCheer ? <Btn title={c.cheers.byMe ? 'Cheered' : c.cheerLabel} onPress={() => (c.cheers.byMe ? uncheer(c.id) : cheer(c.id))} /> : null}
+    <View style={[styles.root, { paddingTop: insets.top }]}>
+      <Backdrop />
+      <View style={styles.bar}>
+        {back}
+        {card.canEdit ? (
+          <TextAction label="Edit" onPress={() => navigation.navigate('EditSession', { sessionId: card.id })} size="bodySmall" style={styles.edit} />
+        ) : null}
+      </View>
+      <KeyboardAvoidingView style={styles.flex} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
+        <ScrollView contentContainerStyle={[styles.content, { paddingBottom: insets.bottom + space.s24 }]} keyboardShouldPersistTaps="handled" showsVerticalScrollIndicator={false}>
+          <Card>
+            <SessionHeader card={card} large />
+            <SessionFacts card={card} />
+            {card.photoUri ? <SessionPhoto uri={card.photoUri} style={styles.photo} /> : null}
+            {card.note ? <Text style={[type.body, styles.gap12]}>{card.note}</Text> : null}
+            {card.pending ? (
+              <View style={styles.gap12}>
+                <StatusNote icon="timer" text="Waiting to send. It goes as soon as you’re back online." />
+              </View>
+            ) : null}
+            <View style={styles.cheers}>
+              {card.canCheer ? (
+                <CheerControl label={card.cheerLabel} cheered={card.cheers.byMe} onCheer={() => void cheer(card.id)} onUncheer={() => void uncheer(card.id)} />
+              ) : null}
+              <Text style={type.label}>{card.cheers.line ?? (card.canCheer ? '' : 'No cheers yet')}</Text>
+            </View>
+          </Card>
 
-      <H>Comments</H>
-      {c.comments.map((m) => (
-        <P key={m.id} muted={m.pending}>
-          {m.member.name}: {m.body}
-        </P>
-      ))}
-      {c.comments
-        .filter((m) => m.canDelete)
-        .map((m) => (
-          <Btn key={`del-${m.id}`} title={`Delete “${m.body}”`} onPress={() => deleteComment(m.id)} />
-        ))}
-      {!c.pending
-        ? c.quickReplies.map((r) => <Btn key={r} title={r} onPress={() => send(r)} />)
-        : null}
-      {!c.pending ? (
-        <>
-          <TextInput value={text} onChangeText={setText} maxLength={200} placeholder="Say something" accessibilityLabel="Comment" />
-          <Btn title="Send" disabled={!text.trim()} onPress={() => send(text)} />
-        </>
-      ) : null}
+          <Text style={[type.caption, styles.label]} accessibilityRole="header">
+            Comments
+          </Text>
+          <Card>
+            <CommentThread
+              comments={card.comments}
+              onDelete={async (c) => {
+                if (await confirmAction('Delete this comment?', `“${c.body}”`, 'Delete')) deleteComment(c.id);
+              }}
+            />
+          </Card>
+          {!card.pending ? (
+            <View style={styles.composeArea}>
+              <QuickReplies replies={card.quickReplies} onPick={(r) => void comment(card.id, r)} />
+              <Composer ref={input} onSend={(body) => void comment(card.id, body)} />
+            </View>
+          ) : null}
 
-      {c.canEdit ? (
-        <Btn
-          title={c.photoUri ? 'Change photo' : 'Add a photo'}
-          onPress={async () => {
-            const uri = await pickPhoto('landscape');
-            if (uri) await setSessionPhoto(c.id, uri);
-          }}
-        />
-      ) : null}
-      {c.canRemoveMe ? (
-        <Btn
-          title="Remove me from this session"
-          onPress={async () => {
-            if (await confirmAction('Remove you from this session?', 'It comes off your week. Everyone else keeps it.', 'Remove me')) {
-              removeMe(c.id);
-              navigation.goBack();
-            }
-          }}
-        />
-      ) : null}
-      {c.canDelete ? (
-        <Btn
-          title="Delete session"
-          onPress={async () => {
-            if (await confirmAction('Delete this session?', 'It goes for everyone in it, with its cheers and comments.', 'Delete')) {
-              deleteSession(c.id);
-              navigation.goBack();
-            }
-          }}
-        />
-      ) : null}
-    </PlainScreen>
+          {card.canDelete || card.canRemoveMe ? (
+            <View style={styles.actions}>
+              {card.canDelete ? <TextAction label="Delete session" onPress={onDelete} tone="coal" size="bodySmall" /> : null}
+              {card.canRemoveMe ? <TextAction label="Remove me from this session" onPress={onRemoveMe} tone="coal" size="bodySmall" /> : null}
+            </View>
+          ) : null}
+        </ScrollView>
+      </KeyboardAvoidingView>
+      <NoticeToast />
+    </View>
   );
 }
+
+const styles = StyleSheet.create({
+  root: { flex: 1, backgroundColor: palette.birch },
+  flex: { flex: 1 },
+  bar: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: space.s8, minHeight: layout.touch },
+  back: { width: layout.touch, height: layout.touch, alignItems: 'center', justifyContent: 'center' },
+  edit: { paddingHorizontal: space.s12 },
+  content: { paddingHorizontal: layout.gutter, paddingTop: space.s8 },
+  photo: { marginTop: space.s16 },
+  gap8: { marginTop: space.s8 },
+  gap12: { marginTop: space.s12 },
+  cheers: { flexDirection: 'row', alignItems: 'center', gap: space.s16, marginTop: space.s12, flexWrap: 'wrap' },
+  label: { marginTop: space.s24, marginBottom: space.s8, paddingHorizontal: space.s8 },
+  composeArea: { marginTop: space.s16, gap: space.s12 },
+  actions: { marginTop: space.s32, gap: space.s8, alignItems: 'center' },
+  gone: { paddingHorizontal: layout.inset, paddingTop: space.s40 },
+  left: { alignSelf: 'flex-start', marginTop: space.s16 },
+});
