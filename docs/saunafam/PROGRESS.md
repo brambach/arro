@@ -16,6 +16,7 @@ npm test
 supabase db start                 # or: supabase db reset, after changing migrations
 scripts/test-db.sh                # pgTAP; see note below
 DENO_NO_PACKAGE_JSON=1 deno check supabase/functions/*/index.ts
+DENO_NO_PACKAGE_JSON=1 deno test --allow-read=supabase/functions supabase/functions/
 ```
 
 - Docker here is Colima, which only mounts the home folder. The checkout lives
@@ -33,6 +34,7 @@ DENO_NO_PACKAGE_JSON=1 deno check supabase/functions/*/index.ts
 | M2 | done (db track) | `supabase/migrations/20261021000003_weekly_streaks.sql`, `supabase/tests/database/weekly_streak.test.sql` (52 tests) | pgTAP 312/312. 12 members x 52 weeks: about 7 ms for the family summary, 7 ms for all member summaries |
 | M3 | done (db track) | `supabase/migrations/20261021000004_session_social.sql`, `20261021000005_saunafam_pushes.sql`, `supabase/tests/database/saunafam_push.test.sql` (59 tests), `design/copy/notifications.md` | pgTAP 371/371 |
 | M4 | done (db track) | `supabase/functions/remove-member/index.ts`, `delete-account/index.ts` (comments), `supabase/drafts/build10_cleanup.sql` | `deno check` clean. The cleanup draft was run inside a rolled-back transaction on the local database and goes through |
+| M15-server | done (db track) | `supabase/migrations/20261021000006_saunafam_plus.sql`, `supabase/tests/database/plus.test.sql` (32 tests), `supabase/functions/revenuecat-webhook/`, `supabase/functions/sync-plus/`, `supabase/functions/_shared/plus.ts`, `delete-account` dry run, `docs/saunafam/API.md` | pgTAP 403/403 across 11 files. Deno: 48 tests pass. App half of M15 isn't this track |
 
 ## M0 baseline (untouched main, b68cd61)
 
@@ -141,3 +143,87 @@ every RPC, table, push kind and edge function this track adds.
   carries the weekly number (the daily functions go). Workout photos have to
   be deleted before `workouts` is dropped, from `workouts.photo_path`; the
   file says how.
+- D21. Plus product ids are `saunafam.plus.annual` and
+  `saunafam.plus.lifetime` (spec, App Store Connect steps), in
+  `private.plus_*_product()` and `_shared/plus.ts`. The entitlement is `plus`.
+- D22. `family_plus` (and `givesPlus` in TypeScript) also checks
+  `expires_at` for `trial`, `active` and `grace_period`. The spec doesn't, but a
+  payer who moves family sends no more events for the old family, so without
+  it that family would keep Plus forever. It always returns one row, plus a
+  `wall_wood` column that falls back to birch without Plus; the family's pick
+  stays in `families.wall_wood` for when Plus comes back.
+- D23. `set_wall_wood` without Plus raises `SF402`, a code of its own so the
+  app can show the try-on instead of an error.
+- D24. Webhook rules (`_shared/plus.ts`, `decide`): an event from the current
+  payer and product applies unless it's older than `last_event_at`. Anything
+  else only replaces the plan if it gives Plus: Founding family beats yearly,
+  then the later `expires_at`. Another payer's cancel or expiry never touches
+  the family. A refund is `CANCELLATION` with `cancel_reason`
+  `CUSTOMER_SUPPORT` and becomes `expired` at once. A `trial` period_type is
+  stored as `trial`. Tips (no `plus` entitlement) are logged only.
+  `SUBSCRIPTION_EXTENDED` and `REFUND_REVERSED` count as active; the spec
+  doesn't list them.
+- D25. The event row goes into `plus_events` before it's applied (duplicate
+  check). If applying fails, the row is deleted again and the webhook
+  answers 500, so RevenueCat's retry gets processed.
+- D26. `sync-plus` treats the RevenueCat subscriber record as an event that
+  happened now and runs it through the same `decide`, so a late webhook older
+  than the sync is ignored.
+- D27. `delete-account` gets `{ "dryRun": true }`, which deletes nothing and
+  answers `paysForPlus` and the plans. Only a yearly plan that will renew
+  counts (Founding family never charges again).
+- D28. `revenuecat-webhook` needs JWT checks off at the gateway, because
+  RevenueCat sends its own Authorization value. Added
+  `[functions.revenuecat-webhook] verify_jwt = false` to
+  `supabase/config.toml`; deploy with `--no-verify-jwt`.
+
+### RevenueCat docs checked (20 Oct 2026)
+
+From https://www.revenuecat.com/docs/integrations/webhooks/event-types-and-fields
+and https://www.revenuecat.com/docs/integrations/webhooks :
+
+- Body is `{ api_version, event }`; `event.id` and `event_timestamp_ms` are
+  reused on retries.
+- Event types used: `INITIAL_PURCHASE`, `RENEWAL`, `CANCELLATION`,
+  `UNCANCELLATION`, `NON_RENEWING_PURCHASE`, `EXPIRATION`, `BILLING_ISSUE`,
+  `PRODUCT_CHANGE`, `TRANSFER`, `SUBSCRIPTION_EXTENDED`, `REFUND_REVERSED`.
+  Logged only: `TEST`, `SUBSCRIPTION_PAUSED`, `TEMPORARY_ENTITLEMENT_GRANT`,
+  `INVOICE_ISSUANCE`, `VIRTUAL_CURRENCY_TRANSACTION`, `EXPERIMENT_ENROLLMENT`,
+  `PURCHASE_REDEEMED`, `PRICE_INCREASE_CONSENT_*`, `SUBSCRIBER_ALIAS`.
+- Fields used: `app_user_id`, `original_app_user_id`, `aliases`,
+  `product_id`, `new_product_id`, `entitlement_ids`, `period_type` (`TRIAL`),
+  `expiration_at_ms`, `grace_period_expiration_at_ms` (only on
+  `BILLING_ISSUE`), `cancel_reason`, `transferred_from`, `transferred_to`,
+  `subscriber_attributes` (`{ name: { value, updated_at_ms } }`).
+- Refunds: `CANCELLATION` with `cancel_reason` `CUSTOMER_SUPPORT`. That
+  settles the spec's unverified point.
+- Only a 200 counts as success; up to 5 retries over about 80 minutes; 60 s
+  timeout.
+- The docs say a dashboard-set authorization header is sent with every
+  request, but not its exact header name. The function reads `Authorization`
+  (as the spec says) and accepts a `Bearer ` prefix. Unverified until Bryce
+  sends a test event.
+- REST: `GET https://api.revenuecat.com/v1/subscribers/{app_user_id}` with
+  `Authorization: Bearer <secret key>` gets or creates the customer.
+  `subscriber_attributes` only come back with a secret key. The
+  subscription fields used (`expires_date`, `period_type`,
+  `unsubscribe_detected_at`, `billing_issues_detected_at`,
+  `grace_period_expires_date`, `refunded_at`) and `non_subscriptions` are
+  listed on the docs page, but their meanings and `period_type` values
+  aren't defined there (`normal` is the example; `trial` is assumed).
+  Whether a refunded Founding family purchase disappears from
+  `non_subscriptions` isn't documented; the webhook's refund handling covers
+  it either way, but a sync right after a refund might restore it.
+
+### Not verified on the DB track
+
+- The Supabase-backed store (`_shared/plusSupabase.ts`) and the deployed
+  functions weren't run end to end: `supabase start` here only brings up the
+  database (the other containers stay stopped under Colima), so there was no
+  local PostgREST, Auth or edge runtime. The Deno tests run the handlers
+  against an in-memory store. The `delete-account` dry run (an embedded
+  `families(name)` select) is type-checked only.
+- `remove-member` against a real Storage bucket (D19).
+- Nothing touched the hosted project.
+- Pre-existing Supabase CLI comments in `supabase/config.toml` contain em
+  dashes and "rather"; left as generated.
