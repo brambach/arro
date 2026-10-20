@@ -1,129 +1,23 @@
 /**
- * Apple Health through @appeeky/expo-healthkit. Read-only: Arro asks for
- * workouts and their routes, nothing else, and never writes to Health.
+ * Apple Health, write only. Saunafam never reads from Health (spec, section 3,
+ * "Apple Health"). This is the seam M11 fills in: save a Mindful Minutes sample
+ * (HKCategoryTypeIdentifierMindfulSession) for a session's heat minutes,
+ * starting at its start, when the person has turned it on.
  *
- * The module's native side only exists in the dev build. Expo Go and the web
- * preview don't have it, and importing the module there would throw, so it's
- * loaded only when its native module is present. Everywhere else Health is
- * simply unavailable and "I moved today" carries on as before.
+ * Fire and forget: a failed write never blocks a save. M11 also remembers which
+ * session ids were written so an edit doesn't write one twice.
  */
-import { requireOptionalNativeModule } from 'expo';
-import { Platform } from 'react-native';
-import type * as HealthKitModule from '@appeeky/expo-healthkit';
-import { addDays, dayKey, fromKey } from './dates';
-import { HealthWorkout } from './healthSync';
-import { LatLng } from './routes';
+import type { Session } from '../data/types';
 
-type HealthKit = typeof HealthKitModule;
+export type HealthSession = Pick<Session, 'id' | 'startedAt' | 'durationMinutes'>;
 
-let loaded: HealthKit | null | undefined;
-
-function healthKit(): HealthKit | null {
-  if (loaded !== undefined) return loaded;
-  loaded = null;
-  if (Platform.OS === 'ios' && requireOptionalNativeModule('ExpoHealthKit')) {
-    try {
-      loaded = require('@appeeky/expo-healthkit') as HealthKit;
-      if (!loaded.isAvailable()) loaded = null;
-    } catch {
-      loaded = null;
-    }
-  }
-  return loaded;
-}
-
-/** True on an iPhone dev build with HealthKit. False in Expo Go, on the web and on iPad without Health. */
+/** False until M11 wires @appeeky/expo-healthkit's write. */
 export function healthAvailable(): boolean {
-  return healthKit() !== null;
+  return false;
 }
 
-/** HKWorkoutActivityType raw value -> case name, such as 37 -> "running". */
-let activityNames: Map<number, string> | null = null;
-
-function activityName(hk: HealthKit, raw: number): string {
-  if (!activityNames) {
-    activityNames = new Map(Object.entries(hk.WorkoutActivityType).map(([name, value]) => [value as number, name]));
-  }
-  return activityNames.get(raw) ?? 'other';
-}
-
-/**
- * Starts watching Health for new workouts, so iOS wakes Arro when one is saved,
- * even with the app closed. Safe to call on every launch.
- */
-export async function watchHealthWorkouts(): Promise<void> {
-  const hk = healthKit();
-  if (!hk) return;
-  await hk.observe([hk.WorkoutType.workout]);
-  await hk.enableBackgroundDelivery(hk.WorkoutType.workout, hk.UpdateFrequency.immediate);
-}
-
-/**
- * Shows Apple's Health sheet for reading workouts and workout routes, then starts
- * watching. iOS never says whether reading was allowed: a "no" just means no
- * workouts (or no routes) come back. iOS shows the sheet again only for a type it
- * hasn't asked about, so people who connected before routes see it once more.
- * False when Health isn't available here.
- */
-export async function connectHealth(): Promise<boolean> {
-  const hk = healthKit();
-  if (!hk) return false;
-  try {
-    await hk.requestAuthorization({ toRead: [hk.WorkoutType.workout, hk.SeriesType.workoutRoute] });
-  } finally {
-    // Watch even if the sheet failed this time: access given earlier still lets
-    // iOS wake Arro for new workouts, which is how they reach the family unopened.
-    await watchHealthWorkouts();
-  }
-  return true;
-}
-
-/** Workouts that started from local midnight yesterday until now: all the server will take. */
-export async function readRecentHealthWorkouts(now: Date = new Date()): Promise<HealthWorkout[]> {
-  const hk = healthKit();
-  if (!hk) return [];
-  const from = fromKey(addDays(dayKey(now), -1));
-  from.setHours(0, 0, 0, 0);
-  const samples = await hk.queryWorkouts({ from, to: now, excludeSources: ['self'] });
-  return Promise.all(
-    samples.map(async (s) => ({
-      uuid: s.uuid,
-      activityType: activityName(hk, s.workoutActivityType),
-      start: s.startDate,
-      end: s.endDate,
-      durationSeconds: s.duration,
-      sourceId: s.sourceId,
-      sourceName: s.sourceName,
-      // The module always reports distance in metres.
-      distanceMeters: s.totalDistance && s.totalDistance > 0 ? s.totalDistance : undefined,
-      route: await readRoute(hk, s.uuid),
-    })),
-  );
-}
-
-/**
- * The GPS track of one workout, or undefined when it has none (gym, yoga, a
- * treadmill) or route access was turned off. A watch can save the route a little
- * after the workout, so a later sync picks it up.
- */
-async function readRoute(hk: HealthKit, workoutUUID: string): Promise<LatLng[] | undefined> {
-  try {
-    const routes = await hk.queryWorkoutRoute({ workoutUUID });
-    const points = routes.flatMap((r) => r.locations.map((l) => ({ latitude: l.latitude, longitude: l.longitude })));
-    return points.length > 1 ? points : undefined;
-  } catch {
-    return undefined;
-  }
-}
-
-/**
- * Calls back when Health has new workouts, including when iOS relaunches Arro in
- * the background. The returned promise holds iOS's ~30 s of background time.
- */
-export function onHealthWorkoutsChanged(listener: () => Promise<void>): { remove(): void } {
-  const hk = healthKit();
-  if (!hk) return { remove() {} };
-  return hk.addUpdateListener(async ({ type }) => {
-    if (type === hk.WorkoutType.workout) await listener();
-  });
+/** Saves a session to Apple Health if that's on. Never throws, never waits. */
+export function saveMindfulMinutes(session: HealthSession): void {
+  // M11: check the setting, request write-only permission once, save the sample.
+  void session;
 }

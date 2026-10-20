@@ -1,730 +1,952 @@
 /**
- * Turns the saved session, and the server's family when there is one, into what the
- * screens show. Streaks, freezes and "days together" for a real family come from the
- * server. The fake family in data/family.ts stays as the preview family.
+ * Turns the cached family (a FamilySnapshot from the server or the preview), the
+ * outbox and the optimistic changes into what each screen shows. Pure: no
+ * storage, no network, no clock but `now`. Every string a screen shows about
+ * weeks, streaks and sessions is made here, so it's tested in one place
+ * (src/state/__tests__/buildView.test.ts).
+ *
+ * Streaks and statuses come from the server (member_week_streaks,
+ * family_week_streak, family_week_history). The only thing worked out here is
+ * your own week with sessions still in the outbox (weeks.ts,
+ * overlayPendingSessions).
  */
-import { memberColor } from '../theme/tokens';
 import {
-  FeedItem,
+  AppConfig,
+  FamilySnapshot,
+  FamilyWeekState,
+  HistoryStatus,
   Member,
   MemberId,
-  MilestoneData,
-  ProfileStat,
-  RecentWorkout,
-  WeekRow,
-  WeekStripDay,
-  WorkoutDetail,
+  MemberWeek,
+  PastWeekRow,
+  Pause,
+  PhotoSource,
+  SaunaType,
+  Session,
+  SessionComment,
+  TemperatureUnit,
+  WallWood,
+  WeekStartsOn,
 } from '../data/types';
-import {
-  familyMembersList,
-  familyMilestone,
-  feed as demoFeed,
-  profile as demoProfile,
-  today as demoToday,
-  week as demoWeek,
-  workouts as demoWorkouts,
-} from '../data/family';
-import { distanceLabel, joinNames, workoutSummary } from '../data/workouts';
-import { LoggedWorkout, SavedSession } from './session';
-import type { RemoteFamily, RemoteWorkout } from './backend';
-import { decodePolyline } from './routes';
+import { paletteColor } from '../data/palette';
+import { joinNames, plural, saunaTypeLabels, sessionDetails } from '../data/saunas';
 import {
   WEEKDAY_LETTER,
   WEEKDAY_SHORT,
   addDays,
   dateLabel,
-  daysBetween,
   dayKey,
-  fromKey,
   greetingFor,
+  isoWeekday,
+  shortDate,
   timeLabel,
   untilLabel,
+  weekDays,
+  weekStart,
   weekdayIndex,
+  weekdayName,
 } from './dates';
+import { DRAFT_NOTICE, OutboxEntry, SessionDraft, pendingSessions } from './outbox';
+import { Milestone, MilestoneMemory, badges, dueMilestone } from './milestones';
+import { NagMemory, EMPTY_NAG, nagCardState, nagEligibleFrom, plusRowLabel, plusVisible } from './plus';
+import { overlayPendingSessions } from './weeks';
+import type { TimerState } from './timer';
 
-/** Preview states from Settings (prototype only): the fake family in different moments. */
-export type Preview = 'demo' | 'afterBreak' | 'goalDone';
+// ─── Copy ────────────────────────────────────────────────────────────────────
 
-export const GOAL_DAYS = 30;
+export const COPY = {
+  kept: 'Kept',
+  invited: 'Invited',
+  keptThisWeek: 'Kept this week',
+  logYesterday: 'Log yesterday’s',
+  soloStreak: 'Your family streak starts when someone joins',
+  inviteSomeone: 'Invite someone',
+  backAtItTitle: 'Back at it, together',
+  backAtItBody: 'A new streak starts this week. Every session counts toward it.',
+  streakRules: 'Streak rules',
+  seeEveryWeek: 'See every week',
+  printWall: 'Print the wall',
+  thisWeek: 'This week',
+  lastWeek: 'Last week',
+  updateRequired: 'A new version of Saunafam is ready. Update in TestFlight or the App Store.',
+  shortSession: (min: number) => `Sessions under ${min} minutes are saved but don’t count toward the week.`,
+};
 
-export interface StreakView {
-  /** solo: family of one · building: a running family streak · afterBreak: broken, nobody has restarted it yet */
-  kind: 'solo' | 'building' | 'afterBreak';
-  current: number;
-  longest: number;
-  /** Days the family has moved together this year. Never resets. null until the second person joins. */
-  daysTogether: number | null;
-  /** Day 1 after a break: show "Back at it, together". */
-  restartDay: boolean;
+/** Replies one tap away on someone else's session. "Cold plunge hero" only after a plunge. */
+export const QUICK_REPLIES_OTHERS = ['Nice heat', 'Jealous', 'Save me a spot'];
+export const QUICK_REPLY_PLUNGE = 'Cold plunge hero';
+/** On a session you were in. */
+export const QUICK_REPLIES_MINE = ['Felt great', 'Needed that'];
+
+// ─── View types ──────────────────────────────────────────────────────────────
+
+/** A person as screens draw them. Satisfies the old components' Member. */
+export interface MemberView extends Member {
+  photoUri: PhotoSource;
+  isMe: boolean;
+  invited: boolean;
+  joinedOn: string | null;
 }
 
-export interface GoalView {
-  /** waiting: starts when someone joins · active · done: show the milestone card · none: finished long ago */
-  status: 'waiting' | 'active' | 'done' | 'none';
-  day: number;
-  total: number;
+/** What tapping a person on Today or Week does. */
+export type PersonTap =
+  | { kind: 'nudge'; memberId: MemberId }
+  | { kind: 'session'; sessionId: string }
+  | { kind: 'invite' }
+  | { kind: 'none' };
+
+export interface FamilyRow {
+  member: MemberView;
+  /** One per session of the goal, filled for each counted day (●●○). */
+  dots: boolean[];
+  /** "Kept", "2 of 3", "On a break until Friday", "Invited". */
+  status: string;
+  state: 'kept' | 'progress' | 'break' | 'invited';
+  tap: PersonTap;
+}
+
+export interface TodayView {
+  dateLabel: string;
+  greeting: string;
+  you: { dots: boolean[]; countedDays: number; goal: number; kept: boolean; label: string };
+  /** Only ever names progress: "Maya and Jo have kept this week. Sam’s on 1." */
+  familyLine: string | null;
+  streak: {
+    kind: 'solo' | 'building' | 'broken';
+    /** The big number and what it counts: 8 "weeks together", or after a break 7 "weeks together this year". */
+    value: number;
+    label: string;
+    familyStreak: number;
+    weeksTogetherThisYear: number;
+  };
+  /** Solo founder: "Your family streak starts when someone joins", plus an invite. */
+  soloInvite: { title: string; action: string } | null;
+  /** After a broken streak. Never says who missed. */
+  backAtIt: { title: string; body: string } | null;
+  /** "Log yesterday’s", or Monday morning's "Did you sauna on Sunday? Log it". */
+  forgot: { kind: 'yesterday' | 'lastDay'; label: string; date: string } | null;
+  family: FamilyRow[];
+  /** "Couldn’t save this one. Tap to fix it", one per refused draft. */
+  drafts: { clientId: string; label: string }[];
+  /** Sessions still in the outbox. */
+  waiting: number;
+}
+
+export interface Slat {
+  weekStart: string;
+  /** solo: before the family streak started (fewer than two people). */
+  state: FamilyWeekState | 'solo';
+  freezeUsed: boolean;
+  current: boolean;
+}
+
+export interface DayCell {
+  date: string;
+  letter: string;
+  went: boolean;
+  isToday: boolean;
+  future: boolean;
+}
+
+export interface PastWeekView {
+  weekStart: string;
+  /** "Week of Oct 5: kept", "Week of Sep 28: kept, a freeze was used" */
+  label: string;
+  state: FamilyWeekState | null;
+  /** Who went and on which days (tap a week). */
+  members: { member: MemberView; status: string; days: string[]; daysLabel: string }[];
+}
+
+export interface WeekView {
+  wall: { slats: Slat[]; wood: WallWood };
+  numbers: { key: 'streak' | 'longest' | 'thisYear'; value: number; label: string }[];
+  rows: FamilyRow[];
+  /** Your Mon to Sun strip, under your own row. */
+  myStrip: DayCell[];
+  past: PastWeekView[];
+  /** Plus items under the 12 weeks; only with plus_enabled. */
+  seeEveryWeek: boolean;
+  printWall: boolean;
+  /** The quiet Plus card at the bottom. 'new' means show it and record the showing. */
+  nag: 'hidden' | 'showing' | 'new';
+}
+
+export interface CommentView {
+  id: string;
+  member: MemberView;
+  body: string;
+  mine: boolean;
+  canDelete: boolean;
+  pending: boolean;
+}
+
+export interface FeedCard {
+  /** The anchor's id: cheers, comments and the photo live there. */
+  id: string;
+  loggerId: MemberId | null;
+  /** Logger first, then the others in join order. */
+  members: MemberView[];
+  /** "Maya had a sauna", "Maya, Jo and Sam had a sauna together" */
+  title: string;
+  /** "20 min · Traditional · 85°C" */
+  details: string;
+  saunaType: SaunaType;
+  rounds: number;
+  coldPlunge: boolean;
+  coldMinutes: number | null;
+  place: string | null;
+  note: string | null;
+  photoUri: PhotoSource;
+  /** "Today · 6:21 PM" */
+  when: string;
+  localDate: string;
+  startedAt: string;
+  cheers: { count: number; line: string | null; byMe: boolean; memberIds: MemberId[] };
+  canCheer: boolean;
+  /** "Cheer Maya on" */
+  cheerLabel: string;
+  comments: CommentView[];
+  quickReplies: string[];
+  /** You logged it. */
+  mine: boolean;
+  /** You're one of the people in it. */
+  imIn: boolean;
+  /** Still in the outbox. */
+  pending: boolean;
+  canEdit: boolean;
+  canDelete: boolean;
+  canRemoveMe: boolean;
+  /** Your own row in it, for Remove me. */
+  myRowId: string | null;
+  /** The full rows, anchor first, for the edit form. */
+  rows: Session[];
+}
+
+export interface FeedView {
+  sections: { key: 'thisWeek' | 'lastWeek'; title: string; cards: FeedCard[] }[];
+  empty: boolean;
+}
+
+export interface ProfileView {
+  name: string;
+  familyName: string;
+  photoUri: PhotoSource;
+  stats: { key: 'streak' | 'longest' | 'month' | 'hours'; label: string; value: string; unit?: string }[];
+  favoriteType: string | null;
+  favoritePlace: string | null;
+  recent: FeedCard[];
+  badges: { weeks: number; earned: boolean; label: string }[];
+  /** Heat log, Timer face and App icon rows: only with plus_enabled. */
+  plusRows: boolean;
+}
+
+export interface RulesView {
+  goal: number;
+  minMinutes: number;
+  weekStartsOn: WeekStartsOn;
+  /** "Monday" */
+  weekStartDay: string;
+  /** "3 sessions a week, 10 minutes or more" */
+  summary: string;
+  /** A change waiting for next week: "Starting Monday, Oct 26". */
+  pendingChange: { goal: number; minMinutes: number; label: string } | null;
+  canEdit: boolean;
+}
+
+export interface MilestoneView extends Milestone {
+  title: string;
+  subtitle: string;
 }
 
 export interface AppView {
+  status: 'ready' | 'loading' | 'error';
+  offline: boolean;
+  updateRequired: boolean;
+  familyId: string;
   familyName: string;
   joinCode: string;
-  me: Member;
-  /** Everyone, in join order, including people who haven't joined yet. */
-  allMembers: Member[];
-  /** You started the family (you've been in it longest), so you can remove people. */
-  canRemoveMembers: boolean;
-  members: Record<MemberId, Member>;
-  /** Joined members in Today's order. */
-  familyList: Member[];
-  invitedList: Member[];
-  joinedCount: number;
-  keptCount: number;
-  /** Joined members on a break today, so not expected: "2 of 3 kept it today" leaves them out. */
-  awayCount: number;
-  /** Your break, on now or coming up: its last day and "until Friday". */
+  me: MemberView;
+  members: Record<MemberId, MemberView>;
+  /** Everyone in join order, then people invited by name. */
+  allMembers: MemberView[];
+  isFounder: boolean;
+  /** Settings, Notifications: "Weekend check-in" (members.weekend_checkin). */
+  weekendCheckin: boolean;
+  rules: RulesView;
+  today: TodayView;
+  week: WeekView;
+  feed: FeedView;
+  profile: ProfileView;
+  /** Every session card by anchor id and by each row id. */
+  sessions: Record<string, FeedCard>;
+  /** Your break today or coming up, and your breaks for Take a break's limits. */
   myBreak: { endsOn: string; until: string } | null;
-  /** Your breaks in the last two months, for the 14-in-30 limit (breaks.ts). */
   myPauses: { startsOn: string; endsOn: string }[];
-  iKeptToday: boolean;
-  /** A joined member (not you) who still has today, for the Nudge screen. */
-  nudgeTarget?: Member;
-  today: {
-    dateLabel: string;
-    greeting: string;
-    /** The "Maya's still got today" line under the summary card. */
-    pending: { id?: MemberId; prompt: string; cta?: string } | null;
-  };
-  feed: FeedItem[];
-  week: { headline: string; summary: string; strip: WeekStripDay[]; rows: WeekRow[] };
-  profile: { subtitle: string; stats: ProfileStat[]; recentWorkouts: RecentWorkout[]; milestones: number[] };
-  workouts: Record<string, WorkoutDetail>;
-  streak: StreakView;
-  goal: GoalView;
-  milestone: MilestoneData;
-  usuallyLine: string;
+  /** People you can add to a session ("Sat with someone?"): joined, not you. */
+  sessionCompanions: MemberView[];
+  recentPlaces: string[];
+  /** The family minimum this week, for the short-session line and the timer target. */
+  minMinutes: number;
+  unit: TemperatureUnit;
+  timer: TimerState | null;
+  milestone: MilestoneView | null;
+  plus: { visible: boolean; active: boolean; rowLabel: string | null; wood: WallWood; payerIsMe: boolean };
 }
 
-const SLOT_WORD = { morning: 'mornings', lunch: 'lunchtimes', evening: 'evenings' } as const;
+// ─── Optimistic changes ──────────────────────────────────────────────────────
 
-// ─── Logged workouts → labels and streaks ────────────────────────────────────
-
-function minutesLabel(minutes?: number): string | undefined {
-  return minutes ? `${minutes} min` : undefined;
+/** Changes shown before the server confirms them, rolled back quietly if it says no. */
+export interface Optimistic {
+  /** Cheers given (true) or taken back (false), by anchor id. */
+  cheers: Record<string, boolean>;
+  /** Comments not on the server yet. */
+  comments: SessionComment[];
+  deletedComments: string[];
+  /** Session rows gone: Remove me (your row) or Delete (every row of a session, by anchor). */
+  removedRows: string[];
+  removedSessions: string[];
+  /** Edit profile. */
+  profile: { name?: string; photoUri?: string | null } | null;
 }
 
-/** When it happened: a Health workout's own start, or when a check-in was logged. */
-function happenedAt(w: LoggedWorkout): Date {
-  return new Date(w.startedAt ?? w.loggedAt);
-}
+export const NO_OPTIMISTIC: Optimistic = {
+  cheers: {},
+  comments: [],
+  deletedComments: [],
+  removedRows: [],
+  removedSessions: [],
+  profile: null,
+};
 
-/** "Run · 5.4 km · 32 min" */
-function summaryOf(w: LoggedWorkout): string {
-  return workoutSummary({ type: w.type, distance: distanceLabel(w.distanceMeters), duration: minutesLabel(w.minutes) });
-}
-
-function whenLabel(w: LoggedWorkout, todayKey: string): string {
-  const time = timeLabel(happenedAt(w));
-  if (w.localDate === todayKey) return `Today · ${time}`;
-  if (w.localDate === addDays(todayKey, -1)) return `Yesterday · ${time}`;
-  const d = fromKey(w.localDate);
-  return `${WEEKDAY_SHORT[weekdayIndex(w.localDate)]}, ${d.getMonth() + 1}/${d.getDate()} · ${time}`;
-}
-
-function toDetail(w: LoggedWorkout, memberId: MemberId, todayKey: string): WorkoutDetail {
-  return {
-    id: w.id,
-    memberId,
-    type: w.type,
-    source: 'manual',
-    when: whenLabel(w, todayKey),
-    duration: minutesLabel(w.minutes),
-    distance: distanceLabel(w.distanceMeters),
-    note: w.note,
-    photoUri: w.photoUri ?? null,
-    photoPath: w.photoPath,
-    route: w.route,
-    cheeredBy: [],
-    comments: [],
-  };
-}
-
-/** Consecutive days with a workout, ending today (or yesterday, while today is still open). */
-function personalStreaks(logs: LoggedWorkout[], todayKey: string): { current: number; longest: number } {
-  const days = new Set(logs.map((l) => l.localDate));
-  let current = 0;
-  let cursor = days.has(todayKey) ? todayKey : addDays(todayKey, -1);
-  while (days.has(cursor)) {
-    current += 1;
-    cursor = addDays(cursor, -1);
-  }
-  let longest = 0;
-  for (const day of days) {
-    if (days.has(addDays(day, -1))) continue; // not the start of a run
-    let run = 0;
-    for (let c = day; days.has(c); c = addDays(c, 1)) run += 1;
-    longest = Math.max(longest, run);
-  }
-  return { current, longest };
-}
-
-function newestFirst(logs: LoggedWorkout[]): LoggedWorkout[] {
-  return [...logs].sort((a, b) => happenedAt(b).getTime() - happenedAt(a).getTime());
-}
-
-/** "You and Mum cheered", or nothing when nobody has. */
-function cheerLine(cheeredBy: string[], myId: string, members: Member[]): string | undefined {
-  const names = [...cheeredBy]
-    .sort((a, b) => Number(b === myId) - Number(a === myId))
-    .map((id) => (id === myId ? 'You' : members.find((m) => m.id === id)?.name))
-    .filter((n): n is string => !!n);
-  return names.length ? `${joinNames(names)} cheered` : undefined;
-}
-
-function feedItem(w: LoggedWorkout, me: Member, todayKey: string): FeedItem {
-  const label = w.localDate === todayKey ? 'moved today' : 'moved yesterday';
-  return {
-    id: `feed-${w.id}`,
-    memberId: me.id,
-    kind: 'kept',
-    title: `${me.name} ${label}`,
-    meta: summaryOf(w),
-    time: timeLabel(happenedAt(w)),
-    workoutId: w.id,
-    photoUri: w.photoUri ?? undefined,
-    route: w.route,
-  };
-}
-
-function meMember(session: SavedSession, logs: LoggedWorkout[], todayKey: string, streak: number): Member {
-  const latestToday = newestFirst(logs).find((l) => l.localDate === todayKey);
-  return {
-    id: session.me.id,
-    name: session.me.name,
-    color: session.me.color,
-    streak,
-    today: latestToday ? 'kept' : 'still',
-    meta: latestToday
-      ? `${summaryOf(latestToday)} · ${timeLabel(happenedAt(latestToday))}`
-      : `Still has today · usually ${SLOT_WORD[session.me.reminder]}`,
-    relationship: 'You',
-    photoUri: session.me.photoUri,
-    todayWorkoutId: latestToday?.id,
-  };
-}
-
-/** Mon-Sun strip and day list for a person's own logs. */
-function ownWeek(
-  logs: LoggedWorkout[],
-  me: Member,
-  todayKey: string,
-  joinedOn: string,
-): { strip: WeekStripDay[]; rows: WeekRow[]; movedDays: number } {
-  const days = new Set(logs.map((l) => l.localDate));
-  const todayIdx = weekdayIndex(todayKey);
-  const monday = addDays(todayKey, -todayIdx);
-  const strip: WeekStripDay[] = [];
-  const rows: WeekRow[] = [];
-  let movedDays = 0;
-  for (let i = 0; i < 7; i++) {
-    const key = addDays(monday, i);
-    const moved = days.has(key);
-    if (moved) movedDays += 1;
-    const isToday = key === todayKey;
-    const state = isToday && !moved ? 'today' : moved ? 'kept' : 'missed';
-    strip.push({ label: WEEKDAY_LETTER[i], state });
-    if (i <= todayIdx && key >= joinedOn) {
-      rows.push({
-        dow: WEEKDAY_SHORT[i],
-        date: `${fromKey(key).getDate()}`,
-        state: isToday && moved ? 'today' : state,
-        avatars: moved ? [me.id] : [],
-        badge: isToday ? 'Today' : undefined,
-      });
+/** The family with optimistic changes laid over it. */
+export function applyOptimistic(family: FamilySnapshot, o: Optimistic, myId: MemberId): FamilySnapshot {
+  const goneSession = (s: Session) =>
+    o.removedRows.includes(s.id) || o.removedSessions.includes(s.sharedId ?? s.id) || o.removedSessions.includes(s.id);
+  const sessions = family.sessions.filter((s) => !goneSession(s));
+  const myRecent = family.myRecent.filter((s) => !goneSession(s));
+  let cheers = family.cheers.filter((c) => !(c.memberId === myId && o.cheers[c.sessionId] === false));
+  for (const [sessionId, on] of Object.entries(o.cheers)) {
+    if (on && !cheers.some((c) => c.sessionId === sessionId && c.memberId === myId)) {
+      cheers = [...cheers, { id: `pending-cheer-${sessionId}`, sessionId, memberId: myId, createdAt: family.fetchedAt, pending: true }];
     }
   }
-  return { strip, rows, movedDays };
+  const comments = [
+    ...family.comments.filter((c) => !o.deletedComments.includes(c.id)),
+    ...o.comments.filter((c) => !o.deletedComments.includes(c.id)),
+  ];
+  const members = o.profile
+    ? family.members.map((m) =>
+        m.id === myId
+          ? {
+              ...m,
+              name: o.profile?.name ?? m.name,
+              photoUrl: o.profile?.photoUri !== undefined ? (o.profile.photoUri ?? null) : m.photoUrl,
+            }
+          : m,
+      )
+    : family.members;
+  return { ...family, sessions, myRecent, cheers, comments, members };
 }
 
-function ownProfile(
-  logs: LoggedWorkout[],
-  todayKey: string,
-  familyName: string,
-  me: Member,
-): AppView['profile'] {
-  const { current, longest } = personalStreaks(logs, todayKey);
-  const month = todayKey.slice(0, 7);
-  const thisMonth = logs.filter((l) => l.localDate.startsWith(month));
-  const activeDays = new Set(thisMonth.map((l) => l.localDate)).size;
-  const dayOfMonth = fromKey(todayKey).getDate();
-  return {
-    subtitle: familyName,
-    stats: [
-      { label: 'Current streak', value: current > 0 ? `${current}` : '–', unit: current > 0 ? (current === 1 ? 'day' : 'days') : undefined },
-      { label: 'Longest streak', value: longest > 0 ? `${longest}` : '–', unit: longest > 0 ? (longest === 1 ? 'day' : 'days') : undefined },
-      { label: 'Workouts this month', value: `${thisMonth.length}` },
-      { label: 'Active days', value: `${activeDays}`, unit: `of ${dayOfMonth}` },
-    ],
-    recentWorkouts: newestFirst(logs)
-      .slice(0, 3)
-      .map((l) => toDetail(l, me.id, todayKey)),
-    milestones: [30, 20, 10, 7].filter((n) => n <= longest),
-  };
+// ─── Small helpers ───────────────────────────────────────────────────────────
+
+/** Dots for a week: `goal` of them, filled for each counted day. */
+export function weekDots(countedDays: number, goal: number): boolean[] {
+  return Array.from({ length: Math.max(goal, 1) }, (_, i) => i < countedDays);
 }
 
-/**
- * The card at the end of "Your first 30 days together" for a real family. Nothing on it
- * is made up: no date or cheers until milestones live on the server.
- */
-function firstMonthMilestone(me: Member): MilestoneData {
-  return {
-    memberId: me.id,
-    day: GOAL_DAYS,
-    title: `${GOAL_DAYS} days\ntogether`,
-    subtitle: 'Your first month, the whole family.',
-    motto: 'Every day forward, together.',
-    dateLine: '',
-    cheeredBy: [],
-  };
-}
-
-// ─── The two kinds of family ─────────────────────────────────────────────────
-
-function founderView(session: SavedSession, now: Date): AppView {
-  const todayKey = dayKey(now);
-  const logs = session.workouts;
-  const { current, longest } = personalStreaks(logs, todayKey);
-  const me = meMember(session, logs, todayKey, current);
-  const invited: Member[] = session.family.invited.map((p, i) => ({
-    id: p.id,
-    name: p.name,
-    color: memberColor(i + 1),
-    streak: 0,
-    today: 'still',
-    meta: 'Invited · hasn’t joined yet',
-    relationship: 'Invited',
-    invited: true,
-  }));
-  const iKeptToday = me.today === 'kept';
-  const wk = ownWeek(logs, me, todayKey, session.me.joinedOn);
-  const waitingFor = invited.length ? `Waiting for ${joinNames(invited.map((m) => m.name))} to join.` : 'Invite someone and their days will show up here too.';
-
-  return {
-    familyName: session.family.name,
-    joinCode: session.family.joinCode,
-    me,
-    allMembers: [me, ...invited],
-    canRemoveMembers: false,
-    members: Object.fromEntries([me, ...invited].map((m) => [m.id, m])),
-    familyList: [me],
-    invitedList: invited,
-    joinedCount: 1,
-    keptCount: iKeptToday ? 1 : 0,
-    awayCount: 0,
-    myBreak: null,
-    myPauses: [],
-    iKeptToday,
-    today: { dateLabel: dateLabel(now), greeting: `${greetingFor(now)}, ${me.name}.`, pending: null },
-    feed: newestFirst(logs)
-      .filter((l) => l.localDate >= addDays(todayKey, -1))
-      .map((l) => feedItem(l, me, todayKey)),
-    week: {
-      headline: wk.movedDays === 0 ? 'Your week is open.' : `You’ve moved ${wk.movedDays} ${wk.movedDays === 1 ? 'day' : 'days'} this week.`,
-      summary: waitingFor,
-      strip: wk.strip,
-      rows: wk.rows,
-    },
-    profile: ownProfile(logs, todayKey, session.family.name, me),
-    workouts: Object.fromEntries(logs.map((l) => [l.id, toDetail(l, me.id, todayKey)])),
-    streak: { kind: 'solo', current, longest, daysTogether: null, restartDay: false },
-    goal: { status: 'waiting', day: 0, total: GOAL_DAYS },
-    milestone: firstMonthMilestone(me),
-    usuallyLine: `usually ${SLOT_WORD[session.me.reminder]}`,
-  };
+/** "Sam’s on 1" */
+function onLine(name: string, n: number): string {
+  return `${name}’s on ${n}`;
 }
 
 /**
- * The preview family: Sam, Maya and Jo. With `preview` set, you are Sam.
- * Without it, you're an invitee who joined them as the fourth member.
+ * Today's family line. Names who kept the week and who's on their way, never
+ * who hasn't started, and never you (your slat is right above it).
  */
-function previewFamilyView(session: SavedSession, preview: Preview | null, now: Date): AppView {
-  const todayKey = dayKey(now);
-  const logs = session.workouts;
-  const myLogsToday = newestFirst(logs).filter((l) => l.localDate === todayKey);
-  const base = familyMembersList.map((m) => ({ ...m }));
-  const byId = Object.fromEntries(base.map((m) => [m.id, m])) as Record<string, Member>;
-
-  // The moment being previewed.
-  if (preview === 'afterBreak') {
-    byId.sam.today = 'still';
-    byId.sam.meta = 'Still has today · usually mornings';
-  }
-  if (preview === 'goalDone') {
-    byId.maya.today = 'kept';
-    byId.maya.meta = 'Walk · 30 min · 5:40 PM';
-  }
-
-  // Who has a post in the demo feed is decided before anything you log.
-  const baseToday = Object.fromEntries(base.map((m) => [m.id, m.today])) as Record<string, Member['today']>;
-
-  // Who "me" is.
-  let me: Member;
-  let members: Member[];
-  if (preview) {
-    me = byId.sam;
-    members = base;
-  } else {
-    byId.sam.relationship = undefined;
-    byId.maya.relationship = undefined;
-    byId.jo.relationship = undefined;
-    me = meMember(session, logs, todayKey, personalStreaks(logs, todayKey).current);
-    members = [...base, me];
-  }
-  if (preview && myLogsToday[0]) {
-    me.today = 'kept';
-    me.meta = `${summaryOf(myLogsToday[0])} · ${timeLabel(happenedAt(myLogsToday[0]))}`;
-    me.todayWorkoutId = myLogsToday[0].id;
-  }
-
-  const iKeptToday = me.today === 'kept';
-  const keptCount = members.filter((m) => m.today === 'kept').length;
-  const allKept = keptCount === members.length;
-  const familyList = [...members].sort((a, b) => Number(b.today === 'kept') - Number(a.today === 'kept'));
-  const nudgeTarget = members.find((m) => m.id !== me.id && m.today === 'still');
-
-  // Streak and goal for the moment being previewed.
-  const demoStreak = 24;
-  let streak: StreakView = { kind: 'building', current: demoStreak, longest: 31, daysTogether: 158, restartDay: false };
-  let goal: GoalView = { status: 'active', day: demoStreak, total: GOAL_DAYS };
-  if (preview === 'afterBreak') {
-    streak = allKept
-      ? { kind: 'building', current: 1, longest: 31, daysTogether: 159, restartDay: true }
-      : { kind: 'afterBreak', current: 0, longest: 31, daysTogether: 158, restartDay: true };
-    goal = { status: 'none', day: GOAL_DAYS, total: GOAL_DAYS };
-  }
-  if (preview === 'goalDone') {
-    streak = { kind: 'building', current: 30, longest: 30, daysTogether: 30, restartDay: false };
-    goal = { status: 'done', day: GOAL_DAYS, total: GOAL_DAYS };
-  }
-
-  // Pending line under the summary card.
-  let pending: AppView['today']['pending'] = null;
-  if (nudgeTarget && iKeptToday && preview !== 'afterBreak') {
-    pending = { id: nudgeTarget.id, prompt: `${nudgeTarget.name}’s still got today`, cta: nudgeTarget.id === 'maya' ? 'cheer her on' : 'cheer them on' };
-  }
-
-  // Feed: the demo posts that still match, plus anything you logged.
-  const feedItems = demoFeed.filter((f) => baseToday[f.memberId] === (f.kind === 'still' ? 'still' : 'kept'));
-  // In the preview you're Sam, and his demo post already stands in for a workout you logged.
-  const samHasPost = !!preview && baseToday.sam === 'kept';
-  const myItems = samHasPost
-    ? []
-    : newestFirst(logs)
-        .filter((l) => l.localDate >= addDays(todayKey, -1))
-        .map((l) => feedItem(l, me, todayKey));
-
-  // Week: add you to today's row once you've moved.
-  const week = {
-    ...demoWeek,
-    rows: demoWeek.rows.map((r) =>
-      r.state === 'today' && iKeptToday && !r.avatars.includes(me.id) ? { ...r, avatars: [...r.avatars, me.id] } : r,
-    ),
-  };
-
-  const detail: Record<string, WorkoutDetail> = { ...demoWorkouts };
-  for (const l of logs) detail[l.id] = toDetail(l, me.id, todayKey);
-
-  return {
-    familyName: preview ? 'Home crew' : session.family.name,
-    joinCode: preview ? 'HOME42' : session.family.joinCode,
-    me,
-    allMembers: members,
-    canRemoveMembers: false,
-    members: Object.fromEntries(members.map((m) => [m.id, m])),
-    familyList,
-    invitedList: [],
-    joinedCount: members.length,
-    keptCount,
-    awayCount: 0,
-    myBreak: null,
-    myPauses: [],
-    iKeptToday,
-    nudgeTarget,
-    today: {
-      dateLabel: demoToday.dateLabel,
-      greeting: `Good morning, ${me.name}.`,
-      pending,
-    },
-    feed: [...myItems, ...feedItems],
-    week,
-    profile: preview
-      ? { subtitle: demoProfile.location, stats: demoProfile.stats, recentWorkouts: demoProfile.recentWorkouts, milestones: demoProfile.milestones }
-      : ownProfile(logs, todayKey, session.family.name, me),
-    workouts: detail,
-    streak,
-    goal,
-    milestone: familyMilestone,
-    usuallyLine: `usually ${SLOT_WORD[session.me.reminder]}`,
-  };
+export function familyLine(rows: { name: string; countedDays: number; kept: boolean; onBreak: boolean }[]): string | null {
+  const kept = rows.filter((r) => r.kept).map((r) => r.name);
+  const going = rows.filter((r) => !r.kept && !r.onBreak && r.countedDays > 0);
+  const parts: string[] = [];
+  if (kept.length) parts.push(`${joinNames(kept)} ${kept.length === 1 ? 'has' : 'have'} kept this week.`);
+  if (going.length) parts.push(`${joinNames(going.map((r) => onLine(r.name, r.countedDays)))}.`);
+  return parts.length ? parts.join(' ') : null;
 }
 
-// ─── A real family from the server ───────────────────────────────────────────
+/** "Today · 6:21 PM", "Yesterday · 7:00 AM", "Mon, Oct 12 · 7:00 AM" */
+export function whenLabel(localDate: string, startedAt: string, today: string): string {
+  const time = timeLabel(new Date(startedAt));
+  if (localDate === today) return `Today · ${time}`;
+  if (localDate === addDays(today, -1)) return `Yesterday · ${time}`;
+  return `${WEEKDAY_SHORT[weekdayIndex(localDate)]}, ${shortDate(localDate)} · ${time}`;
+}
 
-/** Decoded routes by encoded string, so a re-render doesn't decode every route again. */
-const decoded = new Map<string, ReturnType<typeof decodePolyline>>();
-function routeOf(encoded?: string) {
-  if (!encoded) return undefined;
-  let points = decoded.get(encoded);
-  if (!points) {
-    points = decodePolyline(encoded);
-    decoded.set(encoded, points);
+/** The letters for a week starting on `weekStartsOn`: M T W T F S S, or S M T W T F S. */
+export function dayLetters(weekStartsOn: WeekStartsOn): string[] {
+  return weekStartsOn === 7 ? [WEEKDAY_LETTER[6], ...WEEKDAY_LETTER.slice(0, 6)] : [...WEEKDAY_LETTER];
+}
+
+/** "Mon, Wed and Sat" */
+function daysLabel(days: string[]): string {
+  return joinNames(days.map((d) => WEEKDAY_SHORT[weekdayIndex(d)]));
+}
+
+/** Hours in the heat: "2.5" under 10, whole hours after. */
+export function hoursLabel(minutes: number): string {
+  const h = minutes / 60;
+  if (h === 0) return '0';
+  return h < 10 ? `${Math.round(h * 10) / 10}` : `${Math.round(h)}`;
+}
+
+/** What a past week reads as, in your own view. Only you are named as using your freeze. */
+export function pastWeekOutcome(state: FamilyWeekState | null, freezeUsed: boolean, myStatus: HistoryStatus | null): string {
+  if (state === 'counted') {
+    if (!freezeUsed) return 'kept';
+    return myStatus === 'frozen' ? 'kept, your freeze was used' : 'kept, a freeze was used';
   }
-  return points.length > 1 ? points : undefined;
+  if (state === 'broken') return 'not kept';
+  if (state === 'skip') return 'everyone was on a break';
+  if (state === 'pending') return 'still open';
+  // Before the family streak: just your own week.
+  switch (myStatus) {
+    case 'kept':
+      return 'kept';
+    case 'frozen':
+      return 'kept, your freeze was used';
+    case 'paused':
+      return 'on a break';
+    case 'joined':
+      return 'your first week';
+    default:
+      return 'not kept';
+  }
 }
 
-function asLogged(w: RemoteWorkout, photos: Record<string, string> | undefined): LoggedWorkout {
-  return {
-    id: w.id,
-    localDate: w.localDate,
-    loggedAt: w.createdAt,
-    startedAt: w.startedAt,
-    type: w.type,
-    minutes: w.minutes,
-    distanceMeters: w.distanceMeters,
-    route: routeOf(w.route),
-    note: w.note,
-    // The uploaded copy, or the one on this phone when the upload failed.
-    photoUri: w.photoUrl ?? photos?.[w.id] ?? null,
-    photoPath: w.photoPath,
-  };
+/** One person's line in a past week. Someone else's miss is only ever "Not kept". */
+export function pastStatusLabel(status: HistoryStatus, mine: boolean): string {
+  switch (status) {
+    case 'kept':
+      return 'Kept';
+    case 'frozen':
+      return mine ? 'Your freeze covered it' : 'Not kept';
+    case 'paused':
+      return 'On a break';
+    case 'joined':
+      return 'First week';
+    case 'pending':
+      return 'Still open';
+    default:
+      return 'Not kept';
+  }
 }
 
-/**
- * The view for a family on the server. Streaks, freezes and "days together" come from
- * the server; labels, the week and the feed are worked out here from recent workouts.
- */
-function familyView(session: SavedSession, family: RemoteFamily, now: Date): AppView {
-  const todayKey = dayKey(now);
-  const myId = session.remote!.memberId;
-  const logsBy = (memberId: string) =>
-    family.workouts.filter((w) => w.memberId === memberId).map((w) => asLogged(w, session.photos));
+export function milestoneView(m: Milestone, familyName: string): MilestoneView {
+  return m.kind === 'family'
+    ? { ...m, title: `${m.weeks} weeks together`, subtitle: `${familyName} has kept ${m.weeks} weeks in a row.` }
+    : { ...m, title: `${m.weeks} weeks in a row`, subtitle: 'Your own streak, week after week.' };
+}
 
-  // Breaks ("Pause me"). A day in one isn't expected of that member.
-  const pauses = family.pauses ?? [];
-  const breakOn = (memberId: string, day: string) =>
-    pauses.find((p) => p.memberId === memberId && p.startsOn <= day && day <= p.endsOn);
+/** "Starting Monday, Oct 26" */
+export function startingLabel(date: string): string {
+  return `Starting ${weekdayName(date)}, ${shortDate(date)}`;
+}
 
-  const joined: Member[] = family.members.map((m) => {
-    const mine = m.id === myId;
-    const latestRemote = family.workouts.find((w) => w.memberId === m.id && w.localDate === todayKey);
-    const latestToday = latestRemote ? asLogged(latestRemote, session.photos) : undefined;
-    const server = family.memberStreaks[m.id];
-    const moved = server?.movedToday ?? !!latestToday;
-    const away = moved ? undefined : breakOn(m.id, todayKey);
-    return {
+export function rhythmSummary(goal: number, minMinutes: number): string {
+  return `${plural(goal, 'session')} a week, ${minMinutes} minutes or more`;
+}
+
+// ─── Building it ─────────────────────────────────────────────────────────────
+
+export interface ViewInput {
+  myId: MemberId;
+  family: FamilySnapshot;
+  now: Date;
+  status?: AppView['status'];
+  offline?: boolean;
+  outbox?: OutboxEntry[];
+  /** Preview only: sessions logged in the preview, shown as saved (there's no server to send them to). */
+  previewSent?: OutboxEntry[];
+  drafts?: SessionDraft[];
+  optimistic?: Optimistic;
+  /** People invited by name who haven't joined (kept on the phone). */
+  invited?: { id: string; name: string }[];
+  /** Your own photo on this phone, until the uploaded one loads. */
+  myPhotoUri?: string | null;
+  /** Session photos on this phone, by session id or client id. */
+  localPhotos?: Record<string, string>;
+  timer?: TimerState | null;
+  config: AppConfig;
+  appBuild: number;
+  unit: TemperatureUnit;
+  yesterdayOpen: boolean;
+  milestones?: MilestoneMemory;
+  nag?: NagMemory;
+}
+
+function groupSessions(sessions: Session[]): Session[][] {
+  const groups = new Map<string, Session[]>();
+  for (const s of sessions) {
+    const key = s.sharedId ?? s.id;
+    const list = groups.get(key) ?? [];
+    if (!list.some((x) => x.id === s.id)) list.push(s);
+    groups.set(key, list);
+  }
+  return [...groups.entries()].map(([key, rows]) => [...rows].sort((a, b) => Number(b.id === key) - Number(a.id === key)));
+}
+
+export function buildView(input: ViewInput): AppView {
+  const myId = input.myId;
+  const now = input.now;
+  const today = dayKey(now);
+  const optimistic = input.optimistic ?? NO_OPTIMISTIC;
+  const family = applyOptimistic(input.family, optimistic, myId);
+  const unit = input.unit;
+
+  // Sessions in the outbox, unless the server already has them.
+  const onServer = new Set([...family.sessions, ...family.myRecent].filter((s) => s.loggedBy === myId).map((s) => s.clientId));
+  const pendingEntries = (input.outbox ?? []).filter((e) => !onServer.has(e.input.clientId));
+  const pending = [
+    ...pendingSessions(pendingEntries, (iso) => dayKey(new Date(iso))),
+    ...pendingSessions(input.previewSent ?? [], (iso) => dayKey(new Date(iso))).map((x) => ({ ...x, pending: false })),
+  ];
+  const allSessions = [...pending, ...family.sessions];
+
+  // People.
+  const byJoin = [...family.members].sort((a, b) => a.joinedAt.localeCompare(b.joinedAt) || a.id.localeCompare(b.id));
+  const joinIndex = new Map(byJoin.map((m, i) => [m.id, i]));
+  const members: Record<MemberId, MemberView> = {};
+  for (const m of byJoin) {
+    members[m.id] = {
       id: m.id,
       name: m.name,
       color: m.color,
-      streak: server?.personalStreak ?? 0,
-      today: moved ? 'kept' : away ? 'away' : 'still',
-      meta: latestToday
-        ? `${summaryOf(latestToday)} · ${timeLabel(happenedAt(latestToday))}`
-        : away
-          ? `On a break until ${untilLabel(away.endsOn, todayKey)}`
-          : mine
-            ? `Still has today · usually ${SLOT_WORD[session.me.reminder]}`
-            : 'Still has today',
-      relationship: mine ? 'You' : undefined,
-      // The uploaded photo, or your own from this phone when the upload failed.
-      photoUri: m.photoUrl ?? (mine ? session.me.photoUri : null),
-      todayWorkoutId: latestToday?.id,
+      photoUri: m.photoUrl ?? (m.id === myId ? (input.myPhotoUri ?? null) : null),
+      isMe: m.id === myId,
+      invited: false,
+      joinedOn: m.joinedOn,
     };
-  });
-  const me = joined.find((m) => m.id === myId) ?? joined[0];
-
-  // People you invited by name who haven't joined. The server doesn't know names, so this list stays on the phone.
-  const joinedNames = new Set(joined.map((m) => m.name.trim().toLowerCase()));
-  const invited: Member[] = session.family.invited
+  }
+  const joinedNames = new Set(byJoin.map((m) => m.name.trim().toLowerCase()));
+  const invited: MemberView[] = (input.invited ?? [])
     .filter((p) => !joinedNames.has(p.name.trim().toLowerCase()))
     .map((p, i) => ({
       id: p.id,
       name: p.name,
-      color: memberColor(joined.length + i),
-      streak: 0,
-      today: 'still',
-      meta: 'Invited · hasn’t joined yet',
-      relationship: 'Invited',
+      color: paletteColor(byJoin.length + i),
+      photoUri: null,
+      isMe: false,
       invited: true,
+      joinedOn: null,
     }));
+  for (const p of invited) members[p.id] = p;
+  const me: MemberView =
+    members[myId] ?? { id: myId, name: 'You', color: paletteColor(0), photoUri: input.myPhotoUri ?? null, isMe: true, invited: false, joinedOn: today };
+  const solo = byJoin.length < 2;
+  const isFounder = byJoin[0]?.id === myId;
+  const nameOf = (id: MemberId | null) => (id ? (members[id]?.name ?? 'Someone') : 'Someone');
 
-  const solo = joined.length < 2;
-  const keptCount = joined.filter((m) => m.today === 'kept').length;
-  const awayCount = joined.filter((m) => m.today === 'away').length;
-  const iKeptToday = me.today === 'kept';
-  const nudgeTarget = joined.find((m) => m.id !== me.id && m.today === 'still');
-  const myLogs = logsBy(myId);
-  const myNextBreak = pauses
-    .filter((p) => p.memberId === myId && p.endsOn >= todayKey)
-    .sort((a, b) => a.startsOn.localeCompare(b.startsOn))[0];
+  // Weeks, with outbox sessions counted in.
+  const weekStartsOn = family.weekStartsOn;
+  const fallbackWeek = (id: MemberId): MemberWeek => ({
+    memberId: id,
+    localToday: today,
+    weekStart: weekStart(today, weekStartsOn),
+    countedDays: 0,
+    countedDates: [],
+    goal: family.goalPerWeek,
+    minMinutes: family.minMinutes,
+    personalStreak: 0,
+    longestPersonalStreak: 0,
+    keptThisWeek: false,
+    lastWeekStatus: null,
+    freezeAvailable: true,
+    freezeBackOn: null,
+    pausedUntil: null,
+  });
+  const weekOf = (id: MemberId) => overlayPendingSessions(family.memberWeeks[id] ?? fallbackWeek(id), pending);
+  const myWeek = weekOf(myId);
+  const ws = myWeek.weekStart;
 
-  // Streak and the first-30-days goal.
-  const s = family.streak;
-  const mineLongest = personalStreaks(myLogs, todayKey).longest;
-  const streak: StreakView = solo
-    ? { kind: 'solo', current: me.streak, longest: Math.max(mineLongest, me.streak), daysTogether: null, restartDay: false }
-    : {
-        kind: s.current === 0 && s.longest > 0 ? 'afterBreak' : 'building',
-        current: s.current,
-        longest: s.longest,
-        daysTogether: s.daysTogetherThisYear,
-        restartDay: s.current <= 1 && s.longest > 1,
-      };
-  const goal: GoalView = solo
-    ? { status: 'waiting', day: 0, total: GOAL_DAYS }
-    : s.longest >= GOAL_DAYS
-      ? { status: s.current === s.longest && s.current <= GOAL_DAYS + 1 ? 'done' : 'none', day: GOAL_DAYS, total: GOAL_DAYS }
-      : { status: 'active', day: s.current, total: GOAL_DAYS };
-
-  // This week, Monday to Sunday. A past day where someone didn't move but the family
-  // streak still runs through it was covered by a freeze.
-  const movedOn = (day: string) => new Set(family.workouts.filter((w) => w.localDate === day).map((w) => w.memberId));
-  const todayIdx = weekdayIndex(todayKey);
-  const monday = addDays(todayKey, -todayIdx);
-  const firstJoined = family.members.reduce((min, m) => (m.joinedOn < min ? m.joinedOn : min), todayKey);
-  // Once today counts, it's the newest day of the streak; until then the streak ends yesterday.
-  const todayCounts = keptCount > 0 && joined.every((m) => m.today !== 'still');
-  const streakDaysBack = todayCounts ? s.current - 1 : s.current;
-  const strip: WeekStripDay[] = [];
-  const rows: WeekRow[] = [];
-  let togetherDays = 0;
-  for (let i = 0; i < 7; i++) {
-    const key = addDays(monday, i);
-    const movers = movedOn(key);
-    // Someone on a break that day isn't expected, unless they moved anyway.
-    const expected = family.members.filter((m) => movers.has(m.id) || (m.joinedOn < key && !breakOn(m.id, key)));
-    const everyone = expected.length > 0 && expected.every((m) => movers.has(m.id));
-    const daysBack = daysBetween(key, todayKey);
-    const inStreak = !solo && daysBack >= 1 && daysBack <= streakDaysBack;
-    const state: WeekRow['state'] =
-      key === todayKey ? 'today' : key > todayKey ? 'missed' : everyone ? 'kept' : inStreak ? 'freeze' : 'missed';
-    if (key < todayKey && (state === 'kept' || state === 'freeze')) togetherDays += 1;
-    strip.push({ label: WEEKDAY_LETTER[i], state: key === todayKey && everyone ? 'kept' : state });
-    if (i <= todayIdx && key >= firstJoined) {
-      rows.push({
-        dow: WEEKDAY_SHORT[i],
-        date: `${fromKey(key).getDate()}`,
-        state,
-        avatars: joined.filter((m) => movers.has(m.id)).map((m) => m.id),
-        badge: key === todayKey ? 'Today' : state === 'freeze' ? 'Freeze day' : undefined,
-      });
-    }
-  }
-  const waitingFor = invited.length
-    ? `Waiting for ${joinNames(invited.map((m) => m.name))} to join.`
-    : 'Invite someone and their days will show up here too.';
-  const myWeek = ownWeek(myLogs, me, todayKey, session.me.joinedOn);
-
-  const details: Record<string, WorkoutDetail> = {};
-  for (const w of family.workouts) {
-    details[w.id] = { ...toDetail(asLogged(w, session.photos), w.memberId, todayKey), source: w.source,
-      cheeredBy: w.cheeredBy ?? [],
-      sourceApp: w.sourceApp,
-      comments: (w.comments ?? []).map((c) => ({ id: c.id, memberId: c.memberId, body: c.body })),
+  // Session cards.
+  const cards: Record<string, FeedCard> = {};
+  const cardFor = (rows: Session[]): FeedCard => {
+    const anchor = rows[0];
+    const loggerId = anchor.loggedBy ?? anchor.memberId;
+    const people = [...rows]
+      .sort((a, b) => {
+        if (a.memberId === loggerId) return -1;
+        if (b.memberId === loggerId) return 1;
+        return (joinIndex.get(a.memberId) ?? 99) - (joinIndex.get(b.memberId) ?? 99);
+      })
+      .map((r) => members[r.memberId] ?? { id: r.memberId, name: 'Someone', color: paletteColor(0), photoUri: null, isMe: false, invited: false, joinedOn: null });
+    // The logger first, then join order; "you" goes last when someone else logged it.
+    const ordered = people[0]?.isMe ? people : [...people.filter((p) => !p.isMe), ...people.filter((p) => p.isMe)];
+    const names = ordered.map((p, i) => (p.isMe ? (i === 0 ? 'You' : 'you') : p.name));
+    const title = people.length > 1 ? `${joinNames(names)} had a sauna together` : `${names[0]} had a sauna`;
+    const myRow = rows.find((r) => r.memberId === myId) ?? null;
+    const imIn = !!myRow;
+    const mine = loggerId === myId;
+    const cheerRows = family.cheers.filter((c) => c.sessionId === anchor.id);
+    const cheerIds = cheerRows.map((c) => c.memberId).sort((a, b) => Number(b === myId) - Number(a === myId));
+    const cheerNames = cheerIds.map((id) => (id === myId ? 'You' : nameOf(id)));
+    const comments: CommentView[] = family.comments
+      .filter((c) => c.sessionId === anchor.id)
+      .sort((a, b) => a.createdAt.localeCompare(b.createdAt))
+      .map((c) => ({
+        id: c.id,
+        member: members[c.memberId] ?? me,
+        body: c.body,
+        mine: c.memberId === myId,
+        canDelete: c.memberId === myId || mine,
+        pending: !!c.pending,
+      }));
+    const isPending = rows.some((r) => r.pending);
+    return {
+      id: anchor.id,
+      loggerId,
+      members: people,
+      title,
+      details: sessionDetails(anchor, unit),
+      saunaType: anchor.saunaType,
+      rounds: anchor.rounds,
+      coldPlunge: anchor.coldPlunge,
+      coldMinutes: anchor.coldMinutes,
+      place: anchor.place,
+      note: anchor.note,
+      photoUri: anchor.photoUrl ?? input.localPhotos?.[anchor.id] ?? input.localPhotos?.[anchor.clientId] ?? null,
+      when: whenLabel(anchor.localDate, anchor.startedAt, today),
+      localDate: anchor.localDate,
+      startedAt: anchor.startedAt,
+      cheers: {
+        count: cheerIds.length,
+        line: cheerNames.length ? `${joinNames(cheerNames)} cheered` : null,
+        byMe: cheerIds.includes(myId),
+        memberIds: cheerIds,
+      },
+      canCheer: !imIn && !isPending,
+      cheerLabel: people.length > 1 ? 'Cheer them on' : `Cheer ${people[0].name} on`,
+      comments,
+      quickReplies: imIn ? QUICK_REPLIES_MINE : [...QUICK_REPLIES_OTHERS, ...(anchor.coldPlunge ? [QUICK_REPLY_PLUNGE] : [])],
+      mine,
+      imIn,
+      pending: isPending,
+      canEdit: mine && !isPending,
+      canDelete: mine && !isPending,
+      canRemoveMe: imIn && !mine && !isPending,
+      myRowId: myRow?.id ?? null,
+      rows,
     };
+  };
+  const groups = groupSessions(allSessions).sort((a, b) => b[0].startedAt.localeCompare(a[0].startedAt));
+  const feedCards = groups.map(cardFor);
+  for (const card of [...feedCards, ...groupSessions(family.myRecent).map(cardFor)]) {
+    if (cards[card.id]) continue;
+    cards[card.id] = card;
+    for (const r of card.rows) cards[r.id] = cards[r.id] ?? card;
   }
 
-  const profile = ownProfile(myLogs, todayKey, family.name, me);
-  // The server's personal streak counts freeze days; the local count can't.
-  const streakStat = (n: number) => ({ value: n > 0 ? `${n}` : '–', unit: n > 0 ? (n === 1 ? 'day' : 'days') : undefined });
-  profile.stats[0] = { ...profile.stats[0], ...streakStat(me.streak) };
-  profile.stats[1] = { ...profile.stats[1], ...streakStat(Math.max(mineLongest, me.streak)) };
-  profile.recentWorkouts = profile.recentWorkouts.map((r) => details[r.id] ?? r);
+  // Family rows (Today and Week).
+  const latestThisWeek = (id: MemberId) =>
+    allSessions
+      .filter((s) => s.memberId === id && s.localDate >= weekOf(id).weekStart)
+      .sort((a, b) => b.startedAt.localeCompare(a.startedAt))[0];
+  const rowFor = (m: MemberView): FamilyRow => {
+    const w = weekOf(m.id);
+    const latest = latestThisWeek(m.id);
+    const sessionTap: PersonTap = latest ? { kind: 'session', sessionId: latest.sharedId ?? latest.id } : { kind: 'none' };
+    if (w.keptThisWeek) return { member: m, dots: weekDots(w.countedDays, w.goal), status: COPY.kept, state: 'kept', tap: sessionTap };
+    if (w.pausedUntil) {
+      return {
+        member: m,
+        dots: weekDots(w.countedDays, w.goal),
+        status: `On a break until ${untilLabel(w.pausedUntil, today)}`,
+        state: 'break',
+        tap: m.isMe ? sessionTap : { kind: 'none' },
+      };
+    }
+    return {
+      member: m,
+      dots: weekDots(w.countedDays, w.goal),
+      status: `${w.countedDays} of ${w.goal}`,
+      state: 'progress',
+      tap: m.isMe ? sessionTap : { kind: 'nudge', memberId: m.id },
+    };
+  };
+  const joinedRows = byJoin.map((m) => rowFor(members[m.id]));
+  const invitedRows: FamilyRow[] = invited.map((m) => ({ member: m, dots: [], status: COPY.invited, state: 'invited', tap: { kind: 'invite' } }));
+
+  // Today.
+  const s = family.week;
+  const broken = !solo && s.familyStreak === 0 && s.longestStreak > 0;
+  const lastDay = addDays(today, -1);
+  const firstDayMorning = isoWeekday(today) === weekStartsOn && now.getHours() < 12;
+  const forgot: TodayView['forgot'] = !input.yesterdayOpen
+    ? null
+    : firstDayMorning && myWeek.lastWeekStatus && myWeek.lastWeekStatus !== 'kept'
+      ? { kind: 'lastDay', label: `Did you sauna on ${weekdayName(lastDay)}? Log it`, date: lastDay }
+      : { kind: 'yesterday', label: COPY.logYesterday, date: lastDay };
+  const todayView: TodayView = {
+    dateLabel: dateLabel(now),
+    greeting: `${greetingFor(now)}, ${me.name}.`,
+    you: {
+      dots: weekDots(myWeek.countedDays, myWeek.goal),
+      countedDays: myWeek.countedDays,
+      goal: myWeek.goal,
+      kept: myWeek.keptThisWeek,
+      label: myWeek.keptThisWeek ? COPY.keptThisWeek : `${myWeek.countedDays} of ${myWeek.goal} this week`,
+    },
+    familyLine: solo
+      ? null
+      : familyLine(
+          byJoin
+            .filter((m) => m.id !== myId)
+            .map((m) => {
+              const w = weekOf(m.id);
+              return { name: m.name, countedDays: w.countedDays, kept: w.keptThisWeek, onBreak: !!w.pausedUntil };
+            }),
+        ),
+    streak: solo
+      ? { kind: 'solo', value: 0, label: 'weeks together', familyStreak: 0, weeksTogetherThisYear: 0 }
+      : broken
+        ? {
+            kind: 'broken',
+            value: s.weeksTogetherThisYear,
+            label: s.weeksTogetherThisYear === 1 ? 'week together this year' : 'weeks together this year',
+            familyStreak: 0,
+            weeksTogetherThisYear: s.weeksTogetherThisYear,
+          }
+        : {
+            kind: 'building',
+            value: s.familyStreak,
+            label: s.familyStreak === 1 ? 'week together' : 'weeks together',
+            familyStreak: s.familyStreak,
+            weeksTogetherThisYear: s.weeksTogetherThisYear,
+          },
+    soloInvite: solo ? { title: COPY.soloStreak, action: COPY.inviteSomeone } : null,
+    backAtIt: broken ? { title: COPY.backAtItTitle, body: COPY.backAtItBody } : null,
+    forgot,
+    family: [...joinedRows, ...invitedRows],
+    drafts: (input.drafts ?? []).map((d) => ({ clientId: d.input.clientId, label: DRAFT_NOTICE })),
+    waiting: pendingEntries.length,
+  };
+
+  // Week.
+  const historyWeeks = [...new Map(family.history.map((h) => [h.weekStart, h])).values()].sort((a, b) =>
+    a.weekStart.localeCompare(b.weekStart),
+  );
+  const myHistory = new Map(family.history.filter((h) => h.memberId === myId).map((h) => [h.weekStart, h]));
+  const slats: Slat[] = [
+    ...historyWeeks.map(
+      (h): Slat => ({
+        weekStart: h.weekStart,
+        state: h.familyState ?? 'solo',
+        freezeUsed: h.familyState === null ? myHistory.get(h.weekStart)?.status === 'frozen' : h.freezeUsed,
+        current: false,
+      }),
+    ),
+    { weekStart: ws, state: solo ? 'solo' : 'pending', freezeUsed: false, current: true },
+  ];
+  const letters = dayLetters(weekStartsOn);
+  const myStrip: DayCell[] = weekDays(ws).map((d, i) => ({
+    date: d,
+    letter: letters[i],
+    went: myWeek.countedDates.includes(d),
+    isToday: d === today,
+    future: d > today,
+  }));
+  const pastByWeek = new Map<string, PastWeekRow[]>();
+  for (const h of family.history) pastByWeek.set(h.weekStart, [...(pastByWeek.get(h.weekStart) ?? []), h]);
+  const past: PastWeekView[] = [...pastByWeek.entries()]
+    .sort((a, b) => b[0].localeCompare(a[0]))
+    .map(([weekStartKey, rows]) => {
+      const first = rows[0];
+      const mine = rows.find((r) => r.memberId === myId) ?? null;
+      return {
+        weekStart: weekStartKey,
+        label: `Week of ${shortDate(weekStartKey)}: ${pastWeekOutcome(first.familyState, first.freezeUsed, mine?.status ?? null)}`,
+        state: first.familyState,
+        members: rows
+          .filter((r) => members[r.memberId])
+          .map((r) => ({
+            member: members[r.memberId],
+            status: pastStatusLabel(r.status, r.memberId === myId),
+            days: r.days,
+            daysLabel: daysLabel(r.days),
+          })),
+      };
+    });
+  const plusOn = plusVisible(input.config);
+  const familyWeeksKnown = historyWeeks.map((h) => ({ weekStart: h.weekStart, state: h.familyState }));
+  const nag = nagCardState({
+    plusEnabled: plusOn,
+    familyHasPlus: family.plus.active,
+    joinedOn: me.joinedOn ?? today,
+    today,
+    eligibleFrom: nagEligibleFrom(familyWeeksKnown, Math.max(s.longestStreak, s.weeksTogetherThisYear), today),
+    memory: input.nag ?? EMPTY_NAG,
+  });
+  const weekView: WeekView = {
+    wall: { slats, wood: family.plus.wallWood },
+    numbers: [
+      { key: 'streak', value: solo ? 0 : s.familyStreak, label: 'Weeks in a row' },
+      { key: 'longest', value: s.longestStreak, label: 'Longest streak' },
+      { key: 'thisYear', value: s.weeksTogetherThisYear, label: 'Together this year' },
+    ],
+    rows: joinedRows,
+    myStrip,
+    past,
+    seeEveryWeek: plusOn,
+    printWall: plusOn,
+    nag,
+  };
+
+  // Feed: this week and last week, newest first.
+  const lastWs = addDays(ws, -7);
+  const thisWeekCards = feedCards.filter((c) => c.localDate >= ws);
+  const lastWeekCards = feedCards.filter((c) => c.localDate >= lastWs && c.localDate < ws);
+  const feed: FeedView = {
+    sections: [
+      { key: 'thisWeek' as const, title: COPY.thisWeek, cards: thisWeekCards },
+      { key: 'lastWeek' as const, title: COPY.lastWeek, cards: lastWeekCards },
+    ].filter((sec) => sec.cards.length > 0),
+    empty: thisWeekCards.length + lastWeekCards.length === 0,
+  };
+
+  // Me.
+  const myCards = groupSessions([...pending.filter((p) => p.memberId === myId), ...family.myRecent, ...family.sessions.filter((x) => x.memberId === myId)])
+    .sort((a, b) => b[0].startedAt.localeCompare(a[0].startedAt))
+    .map((rows) => cards[rows[0].id] ?? cards[rows[0].sharedId ?? ''] ?? cardFor(rows));
+  const seenCards = new Set<string>();
+  const recent = myCards.filter((c) => (seenCards.has(c.id) ? false : (seenCards.add(c.id), true))).slice(0, 3);
+  const st = family.stats;
+  const profile: ProfileView = {
+    name: me.name,
+    familyName: family.name,
+    photoUri: me.photoUri,
+    stats: [
+      { key: 'streak', label: 'Weeks in a row', value: `${myWeek.personalStreak}` },
+      { key: 'longest', label: 'Longest streak', value: `${myWeek.longestPersonalStreak}`, unit: myWeek.longestPersonalStreak === 1 ? 'week' : 'weeks' },
+      { key: 'month', label: 'Sessions this month', value: `${st.sessionsThisMonth}` },
+      { key: 'hours', label: 'Hours in the heat this year', value: hoursLabel(st.minutesThisYear) },
+    ],
+    favoriteType: st.favoriteSaunaType ? saunaTypeLabels[st.favoriteSaunaType] : null,
+    favoritePlace: st.favoritePlace,
+    recent,
+    badges: badges(myWeek.longestPersonalStreak).map((b) => ({ ...b, label: `${b.weeks} weeks` })),
+    plusRows: plusOn,
+  };
+
+  // Rules.
+  const pendingRule = [...family.rules]
+    .filter((r) => r.effectiveFrom > ws)
+    .sort((a, b) => b.effectiveFrom.localeCompare(a.effectiveFrom))[0];
+  const rules: RulesView = {
+    goal: myWeek.goal,
+    minMinutes: myWeek.minMinutes,
+    weekStartsOn,
+    weekStartDay: weekStartsOn === 7 ? 'Sunday' : 'Monday',
+    summary: rhythmSummary(myWeek.goal, myWeek.minMinutes),
+    pendingChange: pendingRule
+      ? { goal: pendingRule.goalPerWeek, minMinutes: pendingRule.minMinutes, label: startingLabel(pendingRule.effectiveFrom) }
+      : null,
+    canEdit: isFounder,
+  };
+
+  // Breaks.
+  const myPausesList = family.pauses.filter((p: Pause) => p.memberId === myId);
+  const nextBreak = myPausesList.filter((p) => p.endsOn >= today).sort((a, b) => a.startsOn.localeCompare(b.startsOn))[0];
+
+  const due = input.milestones
+    ? dueMilestone(input.milestones, myId, { family: solo ? 0 : s.familyStreak, personal: myWeek.personalStreak })
+    : null;
 
   return {
+    status: input.status ?? 'ready',
+    offline: input.offline ?? false,
+    updateRequired: input.appBuild < input.config.minIosBuild,
+    familyId: family.id,
     familyName: family.name,
     joinCode: family.joinCode,
     me,
-    allMembers: [...joined, ...invited],
-    // Same rule as private.family_founder on the server.
-    canRemoveMembers: [...family.members].sort((a, b) => a.joinedAt.localeCompare(b.joinedAt) || a.id.localeCompare(b.id))[0]?.id === myId,
-    members: Object.fromEntries([...joined, ...invited].map((m) => [m.id, m])),
-    familyList: [...joined].sort((a, b) => Number(b.today === 'kept') - Number(a.today === 'kept')),
-    invitedList: invited,
-    joinedCount: joined.length,
-    keptCount,
-    awayCount,
-    myBreak: myNextBreak ? { endsOn: myNextBreak.endsOn, until: untilLabel(myNextBreak.endsOn, todayKey) } : null,
-    myPauses: pauses.filter((p) => p.memberId === myId).map((p) => ({ startsOn: p.startsOn, endsOn: p.endsOn })),
-    iKeptToday,
-    nudgeTarget,
-    today: {
-      dateLabel: dateLabel(now),
-      greeting: `${greetingFor(now)}, ${me.name}.`,
-      pending:
-        nudgeTarget && iKeptToday ? { id: nudgeTarget.id, prompt: `${nudgeTarget.name}’s still got today`, cta: 'cheer them on' } : null,
-    },
-    feed: family.workouts
-      .filter((w) => w.localDate >= addDays(todayKey, -1))
-      .map((w) => {
-        const who = joined.find((m) => m.id === w.memberId);
-        return {
-          ...feedItem(asLogged(w, session.photos), who ?? me, todayKey),
-          hearts: (w.cheeredBy ?? []).length || undefined,
-          cheer: cheerLine(w.cheeredBy ?? [], myId, joined),
-        };
-      }),
-    week: solo
-      ? {
-          headline:
-            myWeek.movedDays === 0
-              ? 'Your week is open.'
-              : `You’ve moved ${myWeek.movedDays} ${myWeek.movedDays === 1 ? 'day' : 'days'} this week.`,
-          summary: waitingFor,
-          strip: myWeek.strip,
-          rows: myWeek.rows,
-        }
-      : {
-          headline:
-            togetherDays === 0
-              ? 'This week is open.'
-              : `${togetherDays} ${togetherDays === 1 ? 'day' : 'days'} together this week.`,
-          summary: s.current > 0 ? `${s.current}-day family streak.` : 'The family streak starts again with today.',
-          strip,
-          rows,
-        },
+    members,
+    allMembers: [...byJoin.map((m) => members[m.id]), ...invited],
+    isFounder,
+    weekendCheckin: family.members.find((m) => m.id === myId)?.weekendCheckin ?? true,
+    rules,
+    today: todayView,
+    week: weekView,
+    feed,
     profile,
-    workouts: details,
-    streak,
-    goal,
-    milestone: firstMonthMilestone(me),
-    usuallyLine: `usually ${SLOT_WORD[session.me.reminder]}`,
+    sessions: cards,
+    myBreak: nextBreak ? { endsOn: nextBreak.endsOn, until: untilLabel(nextBreak.endsOn, today) } : null,
+    myPauses: myPausesList.map((p) => ({ startsOn: p.startsOn, endsOn: p.endsOn })),
+    sessionCompanions: byJoin.filter((m) => m.id !== myId).map((m) => members[m.id]),
+    recentPlaces: family.recentPlaces,
+    minMinutes: myWeek.minMinutes,
+    unit,
+    timer: input.timer ?? null,
+    milestone: due ? milestoneView(due, family.name) : null,
+    plus: {
+      visible: plusOn,
+      active: family.plus.active,
+      rowLabel: plusOn ? plusRowLabel(family.plus) : null,
+      wood: family.plus.wallWood,
+      payerIsMe: family.plus.payerIsMe,
+    },
   };
 }
 
 /**
- * The preview family (Settings > Prototype preview) always wins, so App Review and
- * empty-state checks can see a full family. Then the server's family, then local state.
+ * A family with just you in it, for the moment before the server has answered
+ * (first launch, nothing cached) and for an error with nothing cached. Screens
+ * read view.status and show their loading or error state over it.
  */
-export function buildView(
-  session: SavedSession,
-  preview: Preview | null,
-  family: RemoteFamily | null = null,
-  now: Date = new Date(),
-): AppView {
-  if (preview) return previewFamilyView(session, preview, now);
-  // A server family that hasn't loaded yet (first launch offline) shows just you.
-  if (session.remote) return family ? familyView(session, family, now) : founderView(session, now);
-  if (session.role === 'invitee') return previewFamilyView(session, null, now);
-  return founderView(session, now);
+export function placeholderFamily(
+  me: { id: MemberId; name: string; color: string; joinedOn: string },
+  familyName: string,
+  now: Date,
+): FamilySnapshot {
+  const today = dayKey(now);
+  const ws = weekStart(today, 1);
+  return {
+    id: 'placeholder',
+    name: familyName,
+    joinCode: '',
+    weekStartsOn: 1,
+    goalPerWeek: 3,
+    minMinutes: 10,
+    saunafamStartedOn: ws,
+    members: [
+      {
+        id: me.id,
+        userId: '',
+        name: me.name,
+        color: me.color,
+        photoPath: null,
+        photoUrl: null,
+        timezone: 'UTC',
+        joinedAt: `${me.joinedOn}T00:00:00.000Z`,
+        joinedOn: me.joinedOn,
+        weekendCheckin: true,
+      },
+    ],
+    rules: [],
+    sessions: [],
+    myRecent: [],
+    cheers: [],
+    comments: [],
+    pauses: [],
+    week: { familyStreak: 0, longestStreak: 0, weeksTogetherThisYear: 0, startedOn: null, latestWeekState: null },
+    memberWeeks: {},
+    history: [],
+    stats: { sessionsThisMonth: 0, minutesThisYear: 0, favoriteSaunaType: null, favoritePlace: null },
+    plus: { active: false, product: null, status: null, expiresAt: null, payerName: null, payerIsMe: false, wallWood: 'birch' },
+    recentPlaces: [],
+    fetchedAt: now.toISOString(),
+  };
 }
 
-/**
- * Today's "2 of 3 kept it today". Someone on a break isn't expected; with nobody
- * expected (everyone away) it says so instead of "0 of 1".
- */
-export function keptSummary(kept: number, joined: number, away: number): { value: string; label: string; expected: number } {
-  const expected = joined - away;
-  if (expected <= 0) {
-    return { value: 'All away', label: joined > 1 ? 'everyone’s on a break today' : 'you’re on a break today', expected: 0 };
-  }
-  return { value: `${kept} of ${expected}`, label: 'kept it today', expected };
+/** The day a session would be dated on this phone, for "Log yesterday's" defaults. */
+export function localDateOf(iso: string): string {
+  return dayKey(new Date(iso));
 }

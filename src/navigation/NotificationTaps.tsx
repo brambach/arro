@@ -1,28 +1,43 @@
-import { useEffect, useRef } from 'react';
+import { useCallback, useEffect, useRef } from 'react';
 import { NavigationContainerRefWithCurrent } from '@react-navigation/native';
 import { useApp } from '../state/AppState';
 import { NotificationTap, onNotificationTap } from '../state/notifications';
 import { RootStackParamList } from './types';
 
 /**
- * Opens the right screen for a tapped notification: the workout someone cheered,
- * commented on or just finished (or your own, just saved from Health),
- * the family list after a join, the "still has today" card for the evening nudge.
- * A nudge and the daily reminder just open the app. A tap that arrives before the session has
- * loaded (Arro opened from closed) waits for it.
+ * Opens the right screen for a tapped notification (docs/saunafam/API.md,
+ * "Pushes"): SessionDetail for a session, shared session, cheer or comment; the
+ * Nudge sheet; the Week tab for the weekend check-in; Family members after a
+ * join. Reminders and the timer just open the app. A tap that arrives before the
+ * session has loaded (opened from closed) waits for it.
  */
 export function NotificationTaps({ navigation }: { navigation: NavigationContainerRefWithCurrent<RootStackParamList> }) {
   const { ready, session, refresh } = useApp();
   const pending = useRef<NotificationTap | null>(null);
   const signedIn = ready && !!session;
 
-  const open = useRef((tap: NotificationTap) => {
-    if (tap.kind === 'cheer' || tap.kind === 'comment' || tap.kind === 'moved' || tap.kind === 'saved') navigation.navigate('WorkoutDetail', { workoutId: tap.workoutId });
-    else if (tap.kind === 'joined') navigation.navigate('FamilyMembers');
-    else if (tap.kind === 'evening') navigation.navigate('Nudge', { memberId: tap.memberId });
-    // Someone cheered you on before you'd moved: Today, where "I moved today" is.
-    else if (tap.kind === 'nudge') navigation.navigate('Main', { screen: 'Today' });
-  }).current;
+  const open = useCallback((tap: NotificationTap) => {
+    switch (tap.kind) {
+      case 'session':
+      case 'shared':
+      case 'session_cheer':
+      case 'session_comment':
+        navigation.navigate('SessionDetail', { sessionId: tap.sessionId });
+        break;
+      case 'nudge':
+        navigation.navigate('Nudge', { memberId: tap.memberId });
+        break;
+      case 'weekend':
+        navigation.navigate('Main', { screen: 'ThisWeek' });
+        break;
+      case 'joined':
+        navigation.navigate('FamilyMembers');
+        break;
+      default:
+        // A reminder or the timer: opening the app is enough.
+        break;
+    }
+  }, [navigation]);
 
   useEffect(
     () =>

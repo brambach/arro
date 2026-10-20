@@ -1,17 +1,17 @@
 import { Share } from 'react-native';
 
 /**
- * The invite link for phase 5's universal links. arrofamily.com is agreed but not
- * bought yet, so the message leaves it out until the link opens something.
+ * The invite link. The site serves /join/<code>; the message leaves it out until
+ * saunafam.com is live (spec, section 3, "Invites").
  */
 export function inviteLink(code: string): string {
-  return `https://arrofamily.com/join/${code}`;
+  return `https://saunafam.com/join/${code}`;
 }
 
 export function inviteMessage(senderName: string, familyName: string, code: string): string {
   return (
-    `${senderName} invited you to ${familyName} on Arro. We keep one daily streak by moving a little, any way we like. ` +
-    `Open Arro, tap “I have an invite” and enter the code ${code}.`
+    `${senderName} invited you to ${familyName} on Saunafam. We keep a weekly sauna streak together. ` +
+    `Get Saunafam, tap ‘I have an invite’ and enter the code ${code}.`
   );
 }
 

@@ -3,7 +3,7 @@ import { OnboardingFrame } from '../../components/OnboardingFrame';
 import { StreakRulesList } from '../../components/StreakRulesList';
 import { useApp } from '../../state/AppState';
 import { RootStackScreenProps } from '../../navigation/types';
-import { stepOf } from './steps';
+import { nextAfter, stepOf } from './steps';
 
 /** The one place onboarding explains the streak and freeze days. Settings > Streak rules repeats it. */
 export function HowItWorksScreen({ navigation }: RootStackScreenProps<'HowItWorks'>) {
@@ -16,7 +16,7 @@ export function HowItWorksScreen({ navigation }: RootStackScreenProps<'HowItWork
       step={stepOf(draft.role, 'HowItWorks')}
       onBack={() => navigation.goBack()}
       primaryLabel="Got it"
-      onPrimary={() => navigation.navigate('HowYouMove')}
+      onPrimary={() => navigation.navigate(nextAfter(draft.role, 'HowItWorks') as 'OnboardingInvite')}
     >
       <StreakRulesList />
     </OnboardingFrame>

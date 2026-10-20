@@ -7,7 +7,7 @@ import { AvatarRing } from '../../components/AvatarRing';
 import { OnboardingFrame } from '../../components/OnboardingFrame';
 import { TextButton } from '../../components/TextButton';
 import { useApp } from '../../state/AppState';
-import { familyMembersList } from '../../data/family';
+import { PREVIEW_MEMBERS } from '../../data/preview';
 import { pickPhoto } from '../../state/photos';
 import { RootStackScreenProps } from '../../navigation/types';
 import { stepOf } from './steps';
@@ -15,7 +15,7 @@ import { stepOf } from './steps';
 /** Optional photo. The colour is automatic: the next one in the palette after the people already in. */
 export function OnboardingPhotoScreen({ navigation }: RootStackScreenProps<'OnboardingPhoto'>) {
   const { draft, updateDraft } = useApp();
-  const color = memberColor(familyMembersList.length);
+  const color = memberColor(PREVIEW_MEMBERS.length);
 
   return (
     <OnboardingFrame

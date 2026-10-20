@@ -40,7 +40,7 @@
         {
           "healthSharePermission": "Arro reads your workouts from Apple Health, including distance and route, so moving counts toward your family streak and your family can see what you did. Routes are shared only with your family, with the start and end left off. Arro only reads today's and yesterday's workouts.",
           "healthUpdatePermission": "Arro never writes to Apple Health. It only reads your workouts so moving counts toward your family streak.",
-          "isBackgroundDeliveryEnabled": true
+          "isBackgroundDeliveryEnabled": false
         }
       ],
       [
@@ -50,7 +50,8 @@
           "cameraPermission": false,
           "microphonePermission": false
         }
-      ]
+      ],
+      "expo-localization"
     ],
     "extra": {
       "eas": {

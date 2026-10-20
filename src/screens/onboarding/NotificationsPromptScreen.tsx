@@ -12,7 +12,7 @@ import { showError } from '../../state/confirm';
 import { requestNotificationPermission } from '../../state/notifications';
 import { RootStackScreenProps } from '../../navigation/types';
 import { stepOf } from './steps';
-import { REMINDER_SLOTS } from './ReminderTimeScreen';
+import { clockTimeLabel } from '../../state/reminders';
 
 /**
  * Pre-prompt: explains what the family's notifications are before iOS asks. The ask
@@ -26,7 +26,7 @@ import { REMINDER_SLOTS } from './ReminderTimeScreen';
 export function NotificationsPromptScreen({ navigation, route }: RootStackScreenProps<'NotificationsPrompt'>) {
   const { draft, completeOnboarding, finishSignIn } = useApp();
   const returning = !!route.params?.returning;
-  const time = REMINDER_SLOTS.find((s) => s.slot === draft.reminder)?.time ?? '6:30 PM';
+  const time = clockTimeLabel(draft.reminderTime);
   const [reminder, setReminder] = useState(true);
   const [busy, setBusy] = useState(false);
 

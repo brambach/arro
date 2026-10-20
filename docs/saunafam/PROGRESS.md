@@ -35,9 +35,91 @@ DENO_NO_PACKAGE_JSON=1 deno test --allow-read=supabase/functions supabase/functi
 | M3 | done (db track) | `supabase/migrations/20261021000004_session_social.sql`, `20261021000005_saunafam_pushes.sql`, `supabase/tests/database/saunafam_push.test.sql` (59 tests), `design/copy/notifications.md` | pgTAP 371/371 |
 | M4 | done (db track) | `supabase/functions/remove-member/index.ts`, `delete-account/index.ts` (comments), `supabase/drafts/build10_cleanup.sql` | `deno check` clean. The cleanup draft was run inside a rolled-back transaction on the local database and goes through |
 | M15-server | done (db track) | `supabase/migrations/20261021000006_saunafam_plus.sql`, `supabase/tests/database/plus.test.sql` (32 tests), `supabase/functions/revenuecat-webhook/`, `supabase/functions/sync-plus/`, `supabase/functions/_shared/plus.ts`, `delete-account` dry run, `docs/saunafam/API.md` | pgTAP 403/403 across 11 files. Deno: 48 tests pass. App half of M15 isn't this track |
+| M5 | done (branch `saunafam/app`) | `src/state/__tests__/*.test.ts(x)`, `docs/saunafam/DATA-LAYER.md` | Jest 197/197 in 13 suites. Typecheck clean, lint clean in `src/state` and `src/data`. See M5 below |
 | M13 | done (branch `saunafam/site`) | `design/screenshots/saunafam/site/`, `design/screenshots/saunafam/invite-link-preview.png`, `design/recordings/saunafam/site-first-load.mp4`, `design/lighthouse/*.json`, `site/worker.test.mjs` | Lighthouse 100/100/100/100 on all four pages, CLS 0. See M13 below |
 | M12 docs | done (branch `saunafam/docs`) | `README.md`, `AGENTS.md`, `AUDIT.md` (note), the "Written for Arro" line on `design/market-research.md`, `paid-plan.md`, `refactor-plan.md`, `visual-direction.md`, `Arro-Spec.html`, `Arro.dc.html`, `design/app-store/icon-options.md` | Docs half of section 6 only. `CLAUDE.md` is just `@AGENTS.md`, so unchanged. See "M12 and M14 docs" below |
 | M14 docs | done (branch `saunafam/docs`) | `design/app-store/listing.md`, `app-privacy.md`, `review-notes.md`, `screenshots.md`, `support.md`, `testflight.md`, `hosting.md`, `README.md`; `design/copy/app-copy.md` (skeleton) | Listing, age rating, privacy labels, products. Not the screenshot script (`scripts/` is the app track). Apple screenshot sizes changed: see below |
+
+## M5: app data layer
+
+Built on branch `saunafam/app` (worktree `/tmp/luna-arro/wt-app`). The guide for
+the screen agents is `docs/saunafam/DATA-LAYER.md`.
+
+**Checks:** `npm run typecheck` clean. `npm test`: 13 suites, 197 tests
+(weeks 25, outbox 17, timer 19, buildView 62, plus and purchases 15, reminders
+and taps 13, milestones 8, saunas and backend mapping 12, session storage 6,
+AppState smoke 2, plus the old breaks, dates and joinCode suites). `npx eslint
+src/state src/data` clean. `npx expo export` for iOS and web both build, and the
+web build loaded in headless Chromium with a build 8 `arro.session.v1` seeded:
+Today, Week, Feed and Me rendered with no console errors.
+
+**Decisions**
+- D5.1 `src/state/weeks.ts` mirrors the server's week rules on the phone. It
+  makes the preview family's statuses and streaks from its sessions, and lets a
+  session still in the outbox fill your dots at once. It uses one "today" for
+  everyone, where the server uses each member's own zone. Real families always
+  show the server's numbers plus your pending sessions for this week only.
+- D5.2 No NetInfo. The outbox sends on launch, on coming back to the app, after
+  any request that works, and on a timer for the next one due (backoff 5 s
+  doubling to 5 minutes). A round stops at the first network failure.
+  Refusals are `22023`, `23514`, `22P02`, `42501` (except "sign in first") and
+  `P0001`; they become drafts in `saunafam.draft.v1`. Anything else retries.
+- D5.3 Client ids come from `expo-crypto` `randomUUID()` (SDK 57, synchronous,
+  v4), with a Math.random v4 fallback where the native module isn't there (Jest,
+  old dev builds). `expo-localization` `getLocales()[0].temperatureUnit` exists in
+  SDK 57 (`'celsius' | 'fahrenheit' | null`); null falls back to the region rule
+  (US, Liberia, Myanmar get °F).
+- D5.4 The preview runs on its own clock: Thursday of the real week at 4:10 PM
+  (Monday 8:10 AM for `mondayOpen`), so screenshots match whatever day they're
+  taken. 4:10 PM keeps "Log yesterday's" open in US zones. The timer scenarios
+  use the real clock.
+- D5.5 Without Supabase settings, a dev build shows the `family` preview
+  scenario with your name on Sam, and every action works in memory. Arro's
+  local-only family is gone.
+- D5.6 `arro.session.v1` keeps its key and version. `normalizeSession` reads the
+  build 8 shape: the reminder slot becomes a time (evening 18:30), days default
+  to Thursday and Saturday, and `workouts`, `moveMethod` and `dismissedHealth`
+  are dropped. Reminder days are kept on the phone only; the server has
+  `reminder_time` but no days.
+- D5.7 The family line on Today leaves you out (your slat is right above it) and
+  anyone on a break or at 0. A person on a break has no tap action (nudges skip
+  them on the server anyway). Tapping yourself opens your latest session.
+- D5.8 Feed titles say "You" when you logged it and put "you" last when someone
+  else did: "Maya, Jo and you had a sauna together". Pushes keep the server's
+  order (logger, then join order).
+- D5.9 Future weeks' reminders say the full goal ("3 to go this week"); only this
+  week's count what's done. They're rebuilt on every refresh, and skip break days.
+- D5.10 Milestones show only the highest one reached and file the lower ones
+  away, so someone at 9 weeks on a new phone sees 8, not 4 then 8. Kept per
+  member.
+- D5.11 The quiet Plus card counts a "showing" from when it's first on screen
+  until "Not now". Eligible from the Tuesday after the 8th counted family week;
+  if the phone's 12 weeks don't reach that far back but the server's longest or
+  this-year count is at least 8, it's eligible now.
+- D5.12 `APP_BUILD = 9` in `src/state/appBuild.ts` is compared with
+  `min_ios_build`, instead of reading `ios.buildNumber`, which is still 8 until
+  the release PR. Keep both in step.
+- D5.13 The tab route is still named `ThisWeek` because the design track's
+  `TabBar` keys on it. WorkoutDetail became `SessionDetail { sessionId }`,
+  LogToday became `LogSession { day?, fromTimer?, prefill?, draftId? }`, and
+  Milestone takes optional `{ kind, weeks }`.
+- D5.14 Jest gets AsyncStorage's in-memory mock for every suite
+  (`jest.setup.ts`). `react-test-renderer` 19.2.3 and its types are dev
+  dependencies now, for the AppState smoke test.
+- D5.15 Health background delivery is off in `app.json`
+  (`isBackgroundDeliveryEnabled: false`); the HealthKit permission strings are
+  left for M11. `react-native-maps` is uninstalled.
+
+**Not done / for others**
+- Screens are plain text stand-ins (`src/screens/plain.tsx`). M8 to M10 replace
+  them. `WorkoutCard`, `DayPill`, `AvatarStack` still read the legacy display
+  types at the bottom of `src/data/types.ts`; drop those types with them.
+- `saveMindfulMinutes` is a no-op until M11. `createPurchases()` returns the
+  preview fake until M15.
+- Not run against a live Supabase: `backend.ts` is type-checked against API.md and
+  its row mapping is unit tested, but no RPC was called (this task doesn't own the
+  local database). Not run on the simulator either.
+- `App.tsx` still says "This build can't reach Arro" (M12).
 
 ## M0 baseline (untouched main, b68cd61)
 
