@@ -1,0 +1,36 @@
+{
+  "api_version": "1.0",
+  "event": {
+    "id": "evt-0015",
+    "type": "INITIAL_PURCHASE",
+    "event_timestamp_ms": 1792492200000,
+    "app_id": "app_test",
+    "app_user_id": "11111111-0000-4000-8000-000000000002",
+    "original_app_user_id": "11111111-0000-4000-8000-000000000002",
+    "aliases": [
+      "11111111-0000-4000-8000-000000000002"
+    ],
+    "product_id": "saunafam.plus.annual",
+    "entitlement_ids": [
+      "plus"
+    ],
+    "period_type": "NORMAL",
+    "purchased_at_ms": 1792492200000,
+    "expiration_at_ms": 1825063200000,
+    "environment": "SANDBOX",
+    "store": "APP_STORE",
+    "presented_offering_id": "default",
+    "transaction_id": "20000000015",
+    "original_transaction_id": "2000000000",
+    "is_family_share": false,
+    "country_code": "US",
+    "currency": "USD",
+    "price": 24.99,
+    "subscriber_attributes": {
+      "family_id": {
+        "value": "aaaaaaaa-0000-4000-8000-000000000001",
+        "updated_at_ms": 1792492200000
+      }
+    }
+  }
+}
