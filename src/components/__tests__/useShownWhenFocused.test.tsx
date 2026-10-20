@@ -16,7 +16,9 @@ describe('useShownWhenFocused', () => {
     jest.useFakeTimers();
     mockFocused = true;
   });
-  afterEach(() => jest.useRealTimers());
+  afterEach(() => {
+    jest.useRealTimers();
+  });
 
   it('passes changes through while the screen is in front', () => {
     const out: { n: number }[] = [];

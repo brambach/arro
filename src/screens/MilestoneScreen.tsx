@@ -6,7 +6,7 @@ import { RootStackScreenProps } from '../navigation/types';
 import { useApp, useView } from '../state/AppState';
 import { milestoneView } from '../state/buildView';
 import { layout, palette, space } from '../theme/tokens';
-import { emberPeakMs, moments, timing, useReduceMotion } from '../theme/motion';
+import { emberPeakMs, moments, springTouchdownMs, timing, useReduceMotion } from '../theme/motion';
 import { haptics } from '../theme/haptics';
 import { maxFontScale, type } from '../theme/typography';
 import { Backdrop } from '../components/Backdrop';
@@ -37,6 +37,9 @@ export function MilestoneScreen({ navigation, route }: RootStackScreenProps<'Mil
   // The due milestone is read once: marking it shown must not blank the card as it closes.
   const [m] = useState(() => (route.params ? milestoneView(route.params, view.familyName) : view.milestone));
   const [built, setBuilt] = useState(false);
+  // The wall waits for the card to finish fading in, so the first slats aren't lost under the fade.
+  const [arrived, setArrived] = useState(false);
+  useEffect(() => navigation.addListener('transitionEnd', () => setArrived(true)), [navigation]);
   const [sharing, setSharing] = useState(false);
   const n = useSharedValue(0);
 
@@ -57,12 +60,15 @@ export function MilestoneScreen({ navigation, route }: RootStackScreenProps<'Mil
     return () => clearTimeout(t);
   }, [built, reduceMotion, n]);
 
-  // With Reduce Motion the wall is simply there.
+  // The number lands as the top slat touches down (not when its spring has fully
+  // settled, which left a dead pause). With Reduce Motion the wall is simply there.
+  const weeksForWall = m?.weeks ?? 0;
   useEffect(() => {
-    if (reduceMotion !== true) return;
-    const t = setTimeout(() => setBuilt(true), 0);
+    if (!arrived || reduceMotion === null) return;
+    const wait = reduceMotion ? 0 : (weeksForWall - 1) * moments.milestoneWall.perSlat + springTouchdownMs(moments.milestoneWall.slat);
+    const t = setTimeout(() => setBuilt(true), wait);
     return () => clearTimeout(t);
-  }, [reduceMotion]);
+  }, [arrived, reduceMotion, weeksForWall]);
 
   const numberStyle = useAnimatedStyle(() => ({
     opacity: Math.min(1, n.value * 2),
@@ -111,14 +117,15 @@ export function MilestoneScreen({ navigation, route }: RootStackScreenProps<'Mil
                 startIndex={c.startIndex}
                 slatHeight={slatHeight}
                 width={colWidth}
-                last={i === cols.length - 1}
-                onBuilt={() => setBuilt(true)}
+                go={arrived}
               />
             ))}
           </View>
         </View>
         <View style={styles.numberArea}>
-          <SteamWisps width={inner} height={140} rise={0.9} base={0.92} columns={[0.38, 0.5, 0.62]} draw={built} drawDuration={moments.splash.wisps.duration * 2} />
+          {built ? (
+            <SteamWisps width={inner} height={140} rise={0.9} base={0.92} columns={[0.38, 0.5, 0.62]} draw drawDuration={moments.splash.wisps.duration * 2} />
+          ) : null}
           <Animated.View style={numberStyle}>
             <FixedDigits value={String(m.weeks)} variant="display" color={palette.coal} accessibilityLabel={m.title} />
           </Animated.View>
@@ -141,23 +148,21 @@ function WallColumn({
   startIndex,
   slatHeight,
   width,
-  last,
-  onBuilt,
+  go,
 }: {
   slats: number;
   startIndex: number;
   slatHeight: number;
   width: number;
-  last: boolean;
-  onBuilt: () => void;
+  go: boolean;
 }) {
   const reduceMotion = useReduceMotion();
-  const [on, setOn] = useState(startIndex === 0);
+  const [on, setOn] = useState(false);
   useEffect(() => {
-    if (on) return;
+    if (on || !go) return;
     const t = setTimeout(() => setOn(true), reduceMotion ? 0 : startIndex * moments.milestoneWall.perSlat);
     return () => clearTimeout(t);
-  }, [on, startIndex, reduceMotion]);
+  }, [on, go, startIndex, reduceMotion]);
   return (
     <View style={{ width }}>
       {on ? (
@@ -165,7 +170,6 @@ function WallColumn({
           weeks={Array.from({ length: slats }, () => ({ state: 'kept' as const }))}
           slatHeight={slatHeight}
           build
-          onBuilt={last ? onBuilt : undefined}
         />
       ) : null}
     </View>
