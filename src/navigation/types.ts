@@ -1,6 +1,7 @@
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 import type { CompositeScreenProps, NavigatorScreenParams } from '@react-navigation/native';
 import type { BottomTabScreenProps } from '@react-navigation/bottom-tabs';
+import type { TimerResult } from '../state/timer';
 
 export type RootStackParamList = {
   // Onboarding: only in the stack while there's no saved session.
@@ -13,29 +14,30 @@ export type RootStackParamList = {
   NameFamily: undefined;
   OnboardingPhoto: undefined;
   HowItWorks: undefined;
-  HowYouMove: undefined;
   OnboardingInvite: undefined;
   ReminderTime: undefined;
   /** `returning`: an existing account signing in on a phone that hasn't been asked yet. */
   NotificationsPrompt: { returning?: boolean } | undefined;
   // The app: only in the stack once there is one.
   Main: NavigatorScreenParams<MainTabParamList> | undefined;
-  /** family: the end of the first 30 days · personal: a run of `days` in a row on Me. */
-  Milestone: { kind: 'family' } | { kind: 'personal'; days: number };
+  /** The due milestone (view.milestone), or a badge from Me. */
+  Milestone: { kind: 'family' | 'personal'; weeks: number } | undefined;
   Settings: undefined;
   StreakRules: undefined;
-  MoveMethod: undefined;
   /** Settings > Take a break ("Pause me"). */
   TakeBreak: undefined;
   Notifications: undefined;
-  WorkoutDetail: { workoutId: string };
-  /** Every route one member has recorded, on one map. */
-  Map: { memberId: string };
+  /** A session by its anchor id (any row id works too). */
+  SessionDetail: { sessionId: string };
   Nudge: { memberId?: string } | undefined;
   FamilyMembers: undefined;
   Invite: undefined;
   EditProfile: undefined;
-  LogToday: { day?: 'today' | 'yesterday' } | undefined;
+  /**
+   * The log form: blank, for yesterday, prefilled from the timer, or a refused
+   * draft to fix (its client id).
+   */
+  LogSession: { day?: 'today' | 'yesterday'; fromTimer?: boolean; prefill?: TimerResult; draftId?: string } | undefined;
 };
 
 export type MainTabParamList = {

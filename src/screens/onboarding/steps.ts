@@ -5,7 +5,7 @@ type Role = 'founder' | 'invitee';
 
 /** The onboarding order for each path. Screens read their place in it from here. */
 const PATHS: Record<Role, (keyof RootStackParamList)[]> = {
-  founder: ['SignIn', 'NameFamily', 'HowItWorks', 'HowYouMove', 'OnboardingInvite', 'ReminderTime', 'NotificationsPrompt'],
+  founder: ['SignIn', 'NameFamily', 'HowItWorks', 'OnboardingInvite', 'ReminderTime', 'NotificationsPrompt'],
   invitee: [
     'JoinCode',
     'InvitePreview',
@@ -13,7 +13,6 @@ const PATHS: Record<Role, (keyof RootStackParamList)[]> = {
     'MeetFamily',
     ...(PHOTOS_ON ? ['OnboardingPhoto' as const] : []),
     'HowItWorks',
-    'HowYouMove',
     'ReminderTime',
     'NotificationsPrompt',
   ],

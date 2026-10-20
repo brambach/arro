@@ -270,6 +270,8 @@ export interface AppView {
   /** Everyone in join order, then people invited by name. */
   allMembers: MemberView[];
   isFounder: boolean;
+  /** Settings, Notifications: "Weekend check-in" (members.weekend_checkin). */
+  weekendCheckin: boolean;
   rules: RulesView;
   today: TodayView;
   week: WeekView;
@@ -869,6 +871,7 @@ export function buildView(input: ViewInput): AppView {
     members,
     allMembers: [...byJoin.map((m) => members[m.id]), ...invited],
     isFounder,
+    weekendCheckin: family.members.find((m) => m.id === myId)?.weekendCheckin ?? true,
     rules,
     today: todayView,
     week: weekView,

@@ -26,7 +26,7 @@ import {
   scheduleWeeklyReminders,
   showNotificationsInForeground,
 } from './notifications';
-import { Outbox, OutboxEntry, SessionDraft } from './outbox';
+import { FlushResult, Outbox, OutboxEntry, SessionDraft } from './outbox';
 import { PhotoShape, photoForUpload } from './photos';
 import { EMPTY_NAG, NagMemory, dismissNag, loadNagMemory, recordNagShown, saveNagMemory, turnOffNag } from './plus';
 import { PackageId, PreviewBehavior, PreviewPurchases, PurchaseResult, RestoreResult, createPurchases } from './purchases';
@@ -369,7 +369,7 @@ export function AppStateProvider({ children }: { children: React.ReactNode }) {
 
   // ─── Refresh and the outbox ────────────────────────────────────────────────
 
-  const flushOutbox = useRef<(force?: boolean) => Promise<void>>(async () => undefined);
+  const flushOutbox = useRef<(force?: boolean) => Promise<FlushResult | null>>(async () => null);
 
   /** Fetch the family again. Keeps the cached one if the phone is offline. */
   const refresh = useCallback(async () => {
@@ -403,7 +403,7 @@ export function AppStateProvider({ children }: { children: React.ReactNode }) {
   useEffect(() => {
     flushOutbox.current = async (force = false) => {
       const current = sessionRef.current;
-      if (!current?.remote || previewRef.current) return;
+      if (!current?.remote || previewRef.current) return null;
       if (retryTimer.current) clearTimeout(retryTimer.current);
       retryTimer.current = null;
       const result = await outbox.flush(force);
@@ -419,6 +419,12 @@ export function AppStateProvider({ children }: { children: React.ReactNode }) {
             try {
               const path = await uploadMine(current.remote, entry.photoUri, 'landscape', `session-${anchorId}`);
               await backend.setSessionPhoto(anchorId, path);
+              const s = sessionRef.current;
+              if (s?.photos?.[entry.input.clientId]) {
+                const photos = { ...s.photos };
+                delete photos[entry.input.clientId];
+                commitSession({ ...s, photos });
+              }
             } catch {
               // Saved without it; the photo stays on this phone and can be added again from the session.
               const s = sessionRef.current;
@@ -435,6 +441,7 @@ export function AppStateProvider({ children }: { children: React.ReactNode }) {
           flushOutbox.current().catch(() => undefined);
         }, Math.max(1000, due - Date.now()));
       }
+      return result;
     };
   }, [commitSession, outbox, refresh, syncQueue, uploadMine]);
 
@@ -716,11 +723,17 @@ export function AppStateProvider({ children }: { children: React.ReactNode }) {
 
   const outcomeFor = useCallback(
     async (clientId: string): Promise<LogOutcome> => {
-      await flushOutbox.current(true);
+      const result = await flushOutbox.current(true);
       const draftHit = outbox.refusedDrafts().find((d) => d.input.clientId === clientId);
       if (draftHit) return { status: 'refused', message: draftHit.message };
       if (outbox.pending().some((e) => e.input.clientId === clientId)) return { status: 'waiting' };
-      return { status: 'saved', skippedNames: [] };
+      // "Jo already logged this one" for anyone the server skipped.
+      const rows = result?.sent.find((x) => x.entry.input.clientId === clientId)?.rows ?? [];
+      const names = familyRef.current?.members ?? [];
+      return {
+        status: 'saved',
+        skippedNames: rows.filter((r) => r.skipped).map((r) => names.find((m) => m.id === r.memberId)?.name ?? 'Someone'),
+      };
     },
     [outbox],
   );
@@ -749,13 +762,15 @@ export function AppStateProvider({ children }: { children: React.ReactNode }) {
         return { status: 'saved', skippedNames: [] };
       }
       const remote = current.remote as NonNullable<SavedSession['remote']>;
+      // The photo shows from this phone until the uploaded copy loads.
+      if (form.photoUri) commitSession({ ...current, photos: { ...current.photos, [clientId]: form.photoUri } });
       await outbox.enqueue(toInput(remote.familyId, clientId, form), remote.memberId, form.photoUri ?? null);
       syncQueue();
       tick();
       const outcome = await outcomeFor(clientId);
       return outcome;
     },
-    [inPreview, outbox, outcomeFor, syncQueue, tick],
+    [commitSession, inPreview, outbox, outcomeFor, syncQueue, tick],
   );
 
   const logSession = useCallback((form: SessionForm) => enqueue(uuid(), form), [enqueue]);

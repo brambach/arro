@@ -11,7 +11,7 @@ export function NudgeModalScreen({ navigation, route }: RootStackScreenProps<'Nu
   const view = useView();
   const { nudge } = useApp();
   const [state, setState] = useState<'idle' | 'sending' | 'sent' | 'failed'>('idle');
-  const member = (route.params?.memberId && view.members[route.params.memberId]) || view.nudgeTarget;
+  const member = route.params?.memberId ? view.members[route.params.memberId] : undefined;
   const close = () => navigation.goBack();
   if (!member || member.invited) return null;
 
@@ -31,11 +31,11 @@ export function NudgeModalScreen({ navigation, route }: RootStackScreenProps<'Nu
       <Pressable style={StyleSheet.absoluteFill} onPress={close} accessibilityLabel="Dismiss" />
       <View style={styles.card}>
         <AvatarRing member={member} size={70} />
-        <Text style={styles.title}>{member.name} still has today.</Text>
-        <Text style={styles.sub}>It’s still today for them.</Text>
+        <Text style={styles.title}>{member.name} still has this week.</Text>
+        <Text style={styles.sub}>There’s still time.</Text>
         <View style={styles.divider} />
         <Text style={styles.prompt}>A little nudge?</Text>
-        <Text style={styles.promptSub}>It’s never too late.</Text>
+        <Text style={styles.promptSub}>At most two a week reach them.</Text>
         <PrimaryButton
           title={state === 'sent' ? 'Sent' : state === 'sending' ? 'Sending…' : 'Send a cheer'}
           onPress={send}

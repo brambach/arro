@@ -105,3 +105,18 @@ export function normalizeDays(days: unknown): number[] {
   if (!Array.isArray(days)) return [...DEFAULT_REMINDER_DAYS];
   return [...new Set(days.filter((d): d is number => Number.isInteger(d) && d >= 1 && d <= 7))].sort((a, b) => a - b);
 }
+
+/** "18:30" -> "6:30 PM" */
+export function clockTimeLabel(time: string): string {
+  const { hour, minute } = parseTime(time);
+  return `${hour % 12 === 0 ? 12 : hour % 12}:${`${minute}`.padStart(2, '0')} ${hour < 12 ? 'AM' : 'PM'}`;
+}
+
+const DAY_NAMES = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
+
+/** [4, 6] -> "Thursday and Saturday" */
+export function reminderDaysLabel(days: number[]): string {
+  const names = normalizeDays(days).map((d) => DAY_NAMES[d - 1]);
+  if (names.length <= 1) return names[0] ?? 'No days';
+  return `${names.slice(0, -1).join(', ')} and ${names[names.length - 1]}`;
+}

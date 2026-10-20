@@ -1,104 +1,55 @@
-import React from 'react';
-import { StyleSheet, Text, View } from 'react-native';
-import { colors, radii, spacing } from '../theme/tokens';
-import { type, weights } from '../theme/typography';
-import { AvatarStack } from '../components/AvatarStack';
-import { Card } from '../components/Card';
-import { CalendarIcon } from '../components/Icons';
-import { CheckInPop } from '../components/CheckInPop';
-import { DayPill } from '../components/DayPill';
-import { FadeInView } from '../components/FadeInView';
-import { Screen } from '../components/Screen';
-import { TextButton } from '../components/TextButton';
-import { Member, WeekRow } from '../data/types';
-import { useView } from '../state/AppState';
+import React, { useEffect, useState } from 'react';
 import { MainTabScreenProps } from '../navigation/types';
+import { useApp, useView } from '../state/AppState';
+import { PLUS_CARD_COPY } from '../state/plus';
+import { Btn, H, P, PlainScreen, Row, dotsText } from './plain';
 
+/** The Week tab, as plain text until M9 builds the wall: view.week. */
 export function ThisWeekScreen({ navigation }: MainTabScreenProps<'ThisWeek'>) {
   const view = useView();
-  const { week } = view;
-  const solo = view.joinedCount === 1;
-  return (
-    <Screen>
-      <FadeInView style={styles.header}>
-        <Text style={type.title}>This Week</Text>
-        <CalendarIcon />
-      </FadeInView>
-
-      <FadeInView delay={60} style={styles.section}>
-        <Card radius={radii.cardLg} padding={18}>
-          <Text style={styles.headline}>{week.headline}</Text>
-          <View style={styles.strip}>
-            {week.strip.map((d, i) => (
-              // The week's check-ins land one after another, as on arrofamily.com; today waits.
-              <CheckInPop key={i} play={d.state === 'kept' || d.state === 'freeze'} delay={250 + i * 70}>
-                <DayPill state={d.state} label={d.label} />
-              </CheckInPop>
-            ))}
-          </View>
-          <Text style={styles.summary}>{week.summary}</Text>
-          {solo ? (
-            <View style={{ marginTop: 10, alignSelf: 'flex-start' }}>
-              <TextButton
-                label={view.invitedList.length ? 'Send the invite again' : 'Invite a family member'}
-                onPress={() => navigation.navigate('Invite')}
-              />
-            </View>
-          ) : null}
-        </Card>
-      </FadeInView>
-
-      <FadeInView delay={120} style={styles.section}>
-        <Card radius={radii.cardLg} padding={0} style={{ paddingHorizontal: 18 }}>
-          {week.rows.map((r, i) => (
-            <DayRow key={r.dow} row={r} members={view.members} last={i === week.rows.length - 1} />
-          ))}
-        </Card>
-      </FadeInView>
-    </Screen>
-  );
-}
-
-function DayRow({ row, members, last }: { row: WeekRow; members: Record<string, Member>; last: boolean }) {
-  const isToday = row.state === 'today';
-  // Today stands out by weight, not by colour.
-  const badgeColor = row.state === 'freeze' ? colors.freeze : colors.todayPillText;
-  const badgeBg = row.state === 'freeze' ? colors.freezeBg : colors.todayPillBg;
+  const { refresh, recordNagShown, dismissNag, turnOffNag } = useApp();
+  const w = view.week;
+  const [open, setOpen] = useState<string | null>(null);
+  // A new showing of the quiet card is recorded when it's on screen.
+  useEffect(() => {
+    if (w.nag === 'new') recordNagShown();
+  }, [w.nag, recordNagShown]);
 
   return (
-    <View style={[styles.dayRow, !last && styles.rowBorder]}>
-      <Text style={[styles.dow, isToday && styles.dowToday]}>{row.dow}</Text>
-      <Text style={styles.date}>{row.date}</Text>
-      <View style={styles.avatars}>
-        <AvatarStack members={row.avatars.map((id) => members[id]).filter(Boolean)} size={24} overlap={6} />
-      </View>
-      {row.badge ? (
-        <View style={[styles.badge, { backgroundColor: badgeBg }]}>
-          <Text style={[styles.badgeText, { color: badgeColor }]}>{row.badge}</Text>
-        </View>
+    <PlainScreen title="Week" onRefresh={refresh}>
+      <P>
+        Wall ({w.wall.wood}): {w.wall.slats.map((s) => (s.current ? '▢' : s.state === 'counted' ? (s.freezeUsed ? '❄' : '▮') : s.state === 'broken' ? '▯' : '·')).join(' ')}
+      </P>
+      {w.numbers.map((n) => (
+        <Row key={n.key} label={n.label} value={`${n.value}`} />
+      ))}
+
+      <H>This week</H>
+      {w.rows.map((r) => (
+        <Row key={r.member.id} label={`${r.member.name}  ${dotsText(r.dots)}`} value={r.status} />
+      ))}
+      <P>{w.myStrip.map((d) => `${d.letter}${d.went ? '●' : d.future ? '·' : '○'}`).join('  ')}</P>
+
+      <H>Past weeks</H>
+      {w.past.map((p) => (
+        <React.Fragment key={p.weekStart}>
+          <Row label={p.label} onPress={() => setOpen(open === p.weekStart ? null : p.weekStart)} />
+          {open === p.weekStart
+            ? p.members.map((m) => <P key={m.member.id} muted>{`${m.member.name}: ${m.status}${m.daysLabel ? ` (${m.daysLabel})` : ''}`}</P>)
+            : null}
+        </React.Fragment>
+      ))}
+      {w.seeEveryWeek ? <Btn title="See every week" onPress={() => undefined} /> : null}
+      {w.printWall ? <Btn title="Print the wall" onPress={() => undefined} /> : null}
+      {w.nag !== 'hidden' ? (
+        <>
+          <P>{PLUS_CARD_COPY.body}</P>
+          <Btn title={PLUS_CARD_COPY.action} onPress={() => undefined} />
+          <Btn title={PLUS_CARD_COPY.notNow} onPress={dismissNag} />
+          <Btn title={PLUS_CARD_COPY.never} onPress={turnOffNag} />
+        </>
       ) : null}
-    </View>
+      <Btn title="Streak rules" onPress={() => navigation.navigate('StreakRules')} />
+    </PlainScreen>
   );
 }
-
-const styles = StyleSheet.create({
-  header: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    paddingHorizontal: spacing.gutter,
-    paddingTop: 6,
-  },
-  section: { paddingHorizontal: spacing.gutter, marginTop: 20 },
-  headline: { ...type.greeting },
-  strip: { flexDirection: 'row', justifyContent: 'space-between', marginTop: 17 },
-  summary: { ...type.body, marginTop: 17 },
-  dayRow: { flexDirection: 'row', alignItems: 'center', gap: 11, paddingVertical: 10 },
-  rowBorder: { borderBottomWidth: 1, borderBottomColor: colors.dividerSoft },
-  dow: { width: 40, fontSize: 15, fontWeight: weights.regular, color: colors.inkSoft },
-  dowToday: { fontWeight: weights.semibold, color: colors.ink },
-  date: { ...type.meta, width: 22, color: colors.faint2, fontVariant: ['tabular-nums'] },
-  avatars: { flex: 1, paddingLeft: 6 },
-  badge: { borderRadius: radii.pill, paddingVertical: 3, paddingHorizontal: 9 },
-  badgeText: { fontSize: 12, fontWeight: weights.semibold },
-});

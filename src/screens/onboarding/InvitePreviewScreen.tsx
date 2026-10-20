@@ -5,8 +5,8 @@ import { type, weights } from '../../theme/typography';
 import { Card } from '../../components/Card';
 import { ArroMark } from '../../components/Icons';
 import { OnboardingFrame } from '../../components/OnboardingFrame';
-import { DEMO_FAMILY_NAME, useApp } from '../../state/AppState';
-import { familyMembersList } from '../../data/family';
+import { useApp } from '../../state/AppState';
+import { PREVIEW_FAMILY_NAME, PREVIEW_MEMBERS } from '../../data/preview';
 import { RootStackScreenProps } from '../../navigation/types';
 import { stepOf } from './steps';
 
@@ -14,8 +14,8 @@ import { stepOf } from './steps';
 export function InvitePreviewScreen({ navigation }: RootStackScreenProps<'InvitePreview'>) {
   const { draft } = useApp();
   // The server's answer, or the preview family when there's no server.
-  const familyName = draft.invite?.familyName ?? DEMO_FAMILY_NAME;
-  const count = draft.invite?.memberCount ?? familyMembersList.length;
+  const familyName = draft.invite?.familyName ?? PREVIEW_FAMILY_NAME;
+  const count = draft.invite?.memberCount ?? PREVIEW_MEMBERS.length;
 
   return (
     <OnboardingFrame

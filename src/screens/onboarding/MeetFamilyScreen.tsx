@@ -5,10 +5,10 @@ import { type, weights } from '../../theme/typography';
 import { AvatarRing } from '../../components/AvatarRing';
 import { Card } from '../../components/Card';
 import { OnboardingFrame } from '../../components/OnboardingFrame';
-import { DEMO_FAMILY_NAME, useApp } from '../../state/AppState';
+import { useApp } from '../../state/AppState';
 import { InviteError } from '../../state/backend';
 import { showError } from '../../state/confirm';
-import { familyMembersList } from '../../data/family';
+import { PREVIEW_FAMILY_NAME, PREVIEW_MEMBERS } from '../../data/preview';
 import { Member } from '../../data/types';
 import { RootStackScreenProps } from '../../navigation/types';
 import { nextAfter, stepOf } from './steps';
@@ -48,12 +48,10 @@ export function MeetFamilyScreen({ navigation }: RootStackScreenProps<'MeetFamil
     if (online && draft.userId) lookUpInvite().catch(() => undefined);
   }, [online, draft.userId, lookUpInvite]);
 
-  const members: Member[] = invite
-    ? invite.members.map((m, i) => ({ id: `invitee-preview-${i}`, name: m.name, color: m.color, streak: 0, today: 'still', meta: '' }))
-    : familyMembersList;
-  const inviter = invite ? invite.invitedBy ?? members[0]?.name ?? 'Your family' : familyMembersList[0].name;
-  const familyName = invite?.familyName ?? DEMO_FAMILY_NAME;
-  const streak = invite ? invite.familyStreak : 24;
+  const members: Member[] = (invite ? invite.members : PREVIEW_MEMBERS).map((m, i) => ({ id: `invitee-preview-${i}`, name: m.name, color: m.color }));
+  const inviter = invite ? (invite.invitedBy ?? members[0]?.name ?? 'Your family') : PREVIEW_MEMBERS[0].name;
+  const familyName = invite?.familyName ?? PREVIEW_FAMILY_NAME;
+  const streak = invite ? invite.weekStreak : 8;
 
   return (
     <OnboardingFrame
@@ -76,8 +74,8 @@ export function MeetFamilyScreen({ navigation }: RootStackScreenProps<'MeetFamil
         </View>
         {streak ? (
           <View style={styles.streakRow}>
-            <Text style={styles.streakNumber}>Day {streak}</Text>
-            <Text style={styles.streakLabel}>family streak, and still going</Text>
+            <Text style={styles.streakNumber}>{streak}</Text>
+            <Text style={styles.streakLabel}>{streak === 1 ? 'week together' : 'weeks together'}</Text>
           </View>
         ) : (
           <View style={styles.streakRow}>
