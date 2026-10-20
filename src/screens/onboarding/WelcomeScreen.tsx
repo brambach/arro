@@ -6,7 +6,7 @@ import { motion } from '../../theme/motion';
 import { type, weights } from '../../theme/typography';
 import { ArroMark } from '../../components/Icons';
 import { FadeInView } from '../../components/FadeInView';
-import { Glass } from '../../components/Glass';
+import { Card } from '../../components/Card';
 import { Backdrop } from '../../components/Backdrop';
 import { PrimaryButton } from '../../components/PrimaryButton';
 import { useApp } from '../../state/AppState';
@@ -19,7 +19,7 @@ export function WelcomeScreen({ navigation }: RootStackScreenProps<'Welcome'>) {
   return (
     <View style={[styles.root, { paddingTop: insets.top, paddingBottom: insets.bottom + 24 }]}>
       {/* The same mesh and contour map as the top of arrofamily.com, so the app opens where the site left off. */}
-      <Backdrop map />
+      <Backdrop />
       <FadeInView rise={14} {...motion.statement} style={styles.hero}>
         <ArroMark size={60} />
         <Text style={styles.wordmark}>Arro</Text>
@@ -30,7 +30,7 @@ export function WelcomeScreen({ navigation }: RootStackScreenProps<'Welcome'>) {
 
       {/* The welcome sits on glass over the map, the way the day card does on the site. */}
       <FadeInView delay={380} rise={10} {...motion.statement}>
-        <Glass radius={24} padding={18} style={styles.panel}>
+        <Card padding={20} style={styles.panel}>
           <Text style={styles.line}>
             One streak for the whole family. Move a little each day, any way you like, and see everyone’s day in one place.
           </Text>
@@ -66,7 +66,7 @@ export function WelcomeScreen({ navigation }: RootStackScreenProps<'Welcome'>) {
             </Pressable>
           ) : null}
           <Text style={styles.note}>Free for your whole family · no ads</Text>
-        </Glass>
+        </Card>
       </FadeInView>
     </View>
   );

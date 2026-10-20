@@ -101,6 +101,8 @@ export function SettingsScreen({ navigation }: RootStackScreenProps<'Settings'>)
           {PURCHASE_BEHAVIORS.map((b) => (
             <Btn key={b} title={b} onPress={() => setPreviewPurchases(b)} />
           ))}
+          <H>Design</H>
+          <Btn title="Design sheet" onPress={() => navigation.navigate('DesignSheet')} />
         </>
       ) : null}
     </PlainScreen>

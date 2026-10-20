@@ -26,7 +26,7 @@ export function WorkoutCard({
   onCheer?: () => Promise<unknown>;
 }) {
   return (
-    <Card radius={radii.card} padding={14} style={styles.card} onPress={onPress}>
+    <Card radius={radii.card} padding={16} style={styles.card} onPress={onPress}>
       <View style={styles.header}>
         <AvatarRing member={member} size={38} />
         <View style={styles.middle}>

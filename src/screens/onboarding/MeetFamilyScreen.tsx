@@ -63,7 +63,7 @@ export function MeetFamilyScreen({ navigation }: RootStackScreenProps<'MeetFamil
       primaryDisabled={busy}
       onPrimary={join}
     >
-      <Card padding={18}>
+      <Card padding={20}>
         <View style={styles.faces}>
           {members.map((m) => (
             <View key={m.id} style={styles.face}>

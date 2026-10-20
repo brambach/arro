@@ -38,6 +38,8 @@ export type RootStackParamList = {
    * draft to fix (its client id).
    */
   LogSession: { day?: 'today' | 'yesterday'; fromTimer?: boolean; prefill?: TimerResult; draftId?: string } | undefined;
+  /** Dev builds only: every token and component (src/screens/dev). */
+  DesignSheet: undefined;
 };
 
 export type MainTabParamList = {

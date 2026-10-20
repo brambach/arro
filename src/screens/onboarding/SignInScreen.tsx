@@ -8,7 +8,7 @@ import { type, weights } from '../../theme/typography';
 import { OnboardingFrame } from '../../components/OnboardingFrame';
 import { ArroMark, ChevronLeft } from '../../components/Icons';
 import { FadeInView } from '../../components/FadeInView';
-import { Glass } from '../../components/Glass';
+import { Card } from '../../components/Card';
 import { Backdrop } from '../../components/Backdrop';
 import { PrimaryButton } from '../../components/PrimaryButton';
 import { TextField } from '../../components/TextField';
@@ -133,7 +133,7 @@ function WelcomeBack({
   const insets = useSafeAreaInsets();
   return (
     <View style={[styles.back, { paddingTop: insets.top, paddingBottom: insets.bottom + 24 }]}>
-      <Backdrop map />
+      <Backdrop />
       <Pressable onPress={onBack} hitSlop={10} accessibilityLabel="Back" style={styles.backButton}>
         <ChevronLeft />
       </Pressable>
@@ -146,7 +146,7 @@ function WelcomeBack({
       <View style={styles.space} />
 
       <FadeInView delay={380} rise={10} {...motion.statement}>
-        <Glass radius={24} padding={18} style={styles.panel}>
+        <Card padding={20} style={styles.panel}>
           <Text style={styles.line}>Sign in with the Apple ID you use for Arro and you’ll go straight to your family.</Text>
           {apple ? (
             <AppleAuthentication.AppleAuthenticationButton
@@ -162,7 +162,7 @@ function WelcomeBack({
           <Text style={styles.panelNote}>
             {apple === false ? 'Sign in with Apple needs the iPhone app.' : 'Your email isn’t shared with your family.'}
           </Text>
-        </Glass>
+        </Card>
       </FadeInView>
     </View>
   );

@@ -13,11 +13,16 @@
       "usesAppleSignIn": true,
       "config": {
         "usesNonExemptEncryption": false
+      },
+      "icon": {
+        "light": "./assets/brand/out/icon-1024.png",
+        "dark": "./assets/brand/out/icon-dark-1024.png",
+        "tinted": "./assets/brand/out/icon-tinted-1024.png"
       }
     },
     "android": {
       "adaptiveIcon": {
-        "backgroundColor": "#A65A3C",
+        "backgroundColor": "#EFE6D8",
         "foregroundImage": "./assets/android-icon-foreground.png",
         "backgroundImage": "./assets/android-icon-background.png",
         "monochromeImage": "./assets/android-icon-monochrome.png"
@@ -31,7 +36,10 @@
       [
         "expo-font",
         {
-          "fonts": ["./assets/fonts/InstrumentSerif-Regular.ttf"]
+          "fonts": [
+            "./assets/fonts/FrauncesSoft-Regular.ttf",
+            "./assets/fonts/FrauncesSoft-SemiBold.ttf"
+          ]
         }
       ],
       "expo-apple-authentication",
@@ -51,7 +59,16 @@
           "microphonePermission": false
         }
       ],
-      "expo-localization"
+      "expo-localization",
+      [
+        "expo-splash-screen",
+        {
+          "backgroundColor": "#EFE6D8",
+          "image": "./assets/brand/out/splash-transparent.png",
+          "imageWidth": 64,
+          "resizeMode": "contain"
+        }
+      ]
     ],
     "extra": {
       "eas": {
