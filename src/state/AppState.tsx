@@ -134,6 +134,8 @@ interface AppContextValue {
   /** A quiet message after an optimistic change was rolled back. */
   notice: string | null;
   clearNotice: () => void;
+  /** Show a quiet message the same way ("Jo already logged this one", after a save). */
+  showNotice: (message: string) => void;
   /** Build 8 testers, once: "Arro is now Saunafam". */
   welcomeDue: boolean;
   dismissWelcome: () => void;
@@ -184,7 +186,8 @@ interface AppContextValue {
 
   // Timer
   /** One timer at a time: starting again returns the running one. */
-  startTimer: (opts?: { targetMinutes?: number; saunaType?: SaunaType }) => Promise<TimerState>;
+  /** `at`: when it started (the tap), if that was a moment ago; now by default. */
+  startTimer: (opts?: { targetMinutes?: number; saunaType?: SaunaType; at?: Date }) => Promise<TimerState>;
   coolOff: () => Promise<void>;
   resumeTimer: () => Promise<void>;
   setTimerTarget: (minutes: number) => Promise<void>;
@@ -192,6 +195,11 @@ interface AppContextValue {
   /** Done: clears the timer and hands back what the log form prefills. */
   finishTimer: () => Promise<TimerResult | null>;
   discardTimer: () => Promise<void>;
+  /**
+   * Dev builds only (captures): put a timer in place as if it had been running,
+   * such as 12:40 into a 15 minute target. Does nothing in a release build.
+   */
+  devSetTimer: (state: TimerState | null) => void;
   /** The last sauna type used, for the timer's default. */
   lastSaunaType: SaunaType;
 
@@ -328,8 +336,9 @@ export function AppStateProvider({ children }: { children: React.ReactNode }) {
   const commitTimer = useCallback((next: TimerState | null) => {
     timerRef.current = next;
     setTimer(next);
-    // The preview's timer stays in memory.
-    if (!previewRef.current && sessionRef.current?.remote) timerMath.saveTimer(next).catch(() => undefined);
+    // A Prototype preview scenario's timer stays in memory. Your own timer, with or
+    // without a server, is stored, so it survives the app being killed.
+    if (!previewRef.current) timerMath.saveTimer(next).catch(() => undefined);
   }, []);
 
   const syncQueue = useCallback(() => setQueue({ entries: outbox.pending(), drafts: outbox.refusedDrafts() }), [outbox]);
@@ -522,6 +531,11 @@ export function AppStateProvider({ children }: { children: React.ReactNode }) {
           await outbox.load();
           purchases.logIn(remote.userId).catch(() => undefined);
         }
+      }
+      if (saved && !saved.remote) {
+        // No server (a dev build without .env.local): the timer is still yours.
+        const storedTimer = await timerMath.loadTimer();
+        if (alive && storedTimer) commitTimer(storedTimer);
       }
       if (!alive) return;
       sessionRef.current = saved;
@@ -960,10 +974,10 @@ export function AppStateProvider({ children }: { children: React.ReactNode }) {
   }, [myIdNow]);
 
   const startTimer = useCallback(
-    async (opts: { targetMinutes?: number; saunaType?: SaunaType } = {}) => {
+    async (opts: { targetMinutes?: number; saunaType?: SaunaType; at?: Date } = {}) => {
       if (timerRef.current) return timerRef.current;
       const now = new Date();
-      const next = timerMath.startTimer(now, {
+      const next = timerMath.startTimer(opts.at && opts.at.getTime() <= now.getTime() ? opts.at : now, {
         targetMinutes: opts.targetMinutes ?? timerMath.defaultTargetMinutes(familyMin()),
         saunaType: opts.saunaType ?? lastSaunaTypeRef.current,
       });
@@ -1006,6 +1020,15 @@ export function AppStateProvider({ children }: { children: React.ReactNode }) {
     commitTimer(null);
     cancelTimerNotifications();
   }, [commitTimer]);
+
+  const devSetTimer = useCallback(
+    (state: TimerState | null) => {
+      if (!__DEV__) return;
+      commitTimer(state);
+      tick();
+    },
+    [commitTimer, tick],
+  );
 
   // ─── Me, family, settings ──────────────────────────────────────────────────
 
@@ -1277,6 +1300,7 @@ export function AppStateProvider({ children }: { children: React.ReactNode }) {
   );
 
   const clearNotice = useCallback(() => setNotice(null), []);
+  const showNotice = useCallback((message: string) => setNotice(message), []);
   const dismissWelcome = useCallback(() => {
     setWelcomeDue(false);
     saveWelcomed().catch(() => undefined);
@@ -1356,6 +1380,7 @@ export function AppStateProvider({ children }: { children: React.ReactNode }) {
       view,
       notice,
       clearNotice,
+      showNotice,
       welcomeDue,
       dismissWelcome,
       draft,
@@ -1392,6 +1417,7 @@ export function AppStateProvider({ children }: { children: React.ReactNode }) {
       setTimerSaunaType,
       finishTimer,
       discardTimer,
+      devSetTimer,
       lastSaunaType,
       updateProfile,
       takeBreak,
@@ -1414,11 +1440,11 @@ export function AppStateProvider({ children }: { children: React.ReactNode }) {
       setPreviewPurchases,
     }),
     [
-      ready, session, view, notice, clearNotice, welcomeDue, dismissWelcome, draft, startFlow, updateDraft, signIn, finishSignIn,
+      ready, session, view, notice, clearNotice, showNotice, welcomeDue, dismissWelcome, draft, startFlow, updateDraft, signIn, finishSignIn,
       saveFamilyName, saveRhythm, lookUpInvite, joinInvitedFamily, completeOnboarding, signOut, checkBeforeDelete, deleteAccount, refresh,
       logSession, resendDraft, discardDraft, draftFor, editSession, setSessionPhoto, deleteSession, removeMe, cheer, uncheer,
       comment, deleteComment, nudge, startTimer, coolOff, resumeTimer, setTimerTarget, setTimerSaunaType, finishTimer,
-      discardTimer, lastSaunaType, updateProfile, takeBreak, endBreak, setRules, setReminders, setWeekendCheckin,
+      discardTimer, devSetTimer, lastSaunaType, updateProfile, takeBreak, endBreak, setRules, setReminders, setWeekendCheckin,
       turnOnNotifications, addInvite, removeMember, markMilestoneShown, buyPlus, restorePurchases, setWallWood, changeNag,
       previewId, setPreview, setPreviewPurchases,
     ],

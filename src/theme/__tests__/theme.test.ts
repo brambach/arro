@@ -38,6 +38,14 @@ describe('motion', () => {
     expect(t).toBeGreaterThan(120);
     expect(t).toBeLessThan(300);
   });
+
+  it('times the overdamped door spring to when it is within 1% of the screen', () => {
+    // springs.morph is overdamped (damping 26 on stiffness 150): the old closed
+    // form said 307 ms, half the real arrival.
+    const t = springTouchdownMs(springs.morph);
+    expect(t).toBeGreaterThan(550);
+    expect(t).toBeLessThan(700);
+  });
 });
 
 describe('the moment summary', () => {

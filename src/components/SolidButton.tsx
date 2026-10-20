@@ -118,9 +118,10 @@ const styles = StyleSheet.create({
     overflow: 'hidden',
     justifyContent: 'center',
     paddingHorizontal: space.s24,
+    // Grows past its height only with large Dynamic Type, so the label never clips.
     paddingVertical: space.s12,
   },
-  content: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: space.s12 },
+  content: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: space.s12, flexShrink: 1 },
   label: { color: palette.steam, textAlign: 'center', flexShrink: 1 },
   ashPressed: { backgroundColor: alpha.pressOnDark },
   disabled: { opacity: 0.45 },
