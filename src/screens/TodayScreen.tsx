@@ -182,7 +182,7 @@ function SummaryCard({
   const pendingId = today.pending?.id;
 
   return (
-    <Card radius={radii.cardLg} padding={18} glass>
+    <Card padding={20}>
       <View style={styles.summaryRow}>
         <View>
           <RollingText value={summary.value} style={type.bigNumber} />
@@ -228,7 +228,7 @@ function SummaryCard({
 function StreakCard({ streak }: { streak: StreakView }) {
   if (streak.kind === 'solo') {
     return (
-      <Card radius={radii.cardLg} padding={18} glass>
+      <Card padding={20}>
         <Text style={styles.cardLabel}>Your streak</Text>
         <Text style={styles.streakBig}>{streak.current > 0 ? `Day ${streak.current}` : 'Start today'}</Text>
         <Text style={styles.cardNote}>
@@ -241,7 +241,7 @@ function StreakCard({ streak }: { streak: StreakView }) {
   // After a break there's no zero: lead with days together and the longest streak.
   const leadsWithTogether = streak.kind === 'afterBreak';
   return (
-    <Card radius={radii.cardLg} padding={18} glass>
+    <Card padding={20}>
       {leadsWithTogether ? (
         <>
           <Text style={styles.cardLabel}>Days together this year</Text>
@@ -273,7 +273,7 @@ function StreakCard({ streak }: { streak: StreakView }) {
 /** Day 1 after a break. Says nothing about who missed. */
 function BackAtItCard() {
   return (
-    <Card radius={radii.cardLg} padding={18} background={colors.todayPillBg}>
+    <Card radius={radii.cardLg} padding={20} background={colors.todayPillBg}>
       <Text style={styles.backTitle}>Back at it, together</Text>
       <Text style={styles.backBody}>
         A fresh start today. Every day you’ve spent together still counts, and a new streak begins when everyone moves.
@@ -287,7 +287,7 @@ function BackAtItCard() {
 function GoalCard({ goal, onOpenMilestone }: { goal: GoalView; onOpenMilestone: () => void }) {
   if (goal.status === 'done') {
     return (
-      <Card radius={radii.cardLg} padding={18} background={colors.keptBg} onPress={onOpenMilestone}>
+      <Card radius={radii.cardLg} padding={20} background={colors.keptBg} onPress={onOpenMilestone}>
         <Text style={[styles.cardLabel, { color: colors.kept }]}>Your first 30 days together</Text>
         <Text style={styles.goalDone}>You did it. 30 days together.</Text>
         <Text style={styles.cardNote}>See your milestone</Text>
@@ -296,7 +296,7 @@ function GoalCard({ goal, onOpenMilestone }: { goal: GoalView; onOpenMilestone: 
   }
   const waiting = goal.status === 'waiting';
   return (
-    <Card radius={radii.cardLg} padding={18}>
+    <Card radius={radii.cardLg} padding={20}>
       <View style={styles.goalHead}>
         <Text style={styles.cardLabel}>Your first 30 days together</Text>
         <Text style={styles.goalCount}>{waiting ? '0' : goal.day} of {goal.total}</Text>

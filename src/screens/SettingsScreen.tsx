@@ -187,6 +187,17 @@ export function SettingsScreen({ navigation }: RootStackScreenProps<'Settings'>)
 
         {__DEV__ ? (
           <>
+            <Text style={styles.previewLabel}>Design</Text>
+            <View style={styles.card}>
+              <Pressable
+                onPress={() => navigation.navigate('DesignSheet')}
+                accessibilityRole="button"
+                accessibilityLabel="Design sheet"
+                style={styles.row}
+              >
+                <Text style={styles.label}>Design sheet</Text>
+              </Pressable>
+            </View>
             <Text style={styles.previewLabel}>Prototype preview</Text>
             <View style={styles.card}>
               {PREVIEWS.map((p, i) => (

@@ -25,11 +25,18 @@ import { FamilyMembersScreen } from '../screens/FamilyMembersScreen';
 import { InviteScreen } from '../screens/InviteScreen';
 import { EditProfileScreen } from '../screens/EditProfileScreen';
 import { LogTodayScreen } from '../screens/LogTodayScreen';
+import { DesignSheetScreen } from '../screens/dev/DesignSheetScreen';
 import { useApp } from '../state/AppState';
 import { MainTabs } from './MainTabs';
 import { RootStackParamList } from './types';
 
 const Stack = createNativeStackNavigator<RootStackParamList>();
+
+/**
+ * Dev builds can open straight onto a screen for captures:
+ * EXPO_PUBLIC_DEV_SCREEN=DesignSheet npx expo start.
+ */
+const devStart = __DEV__ && process.env.EXPO_PUBLIC_DEV_SCREEN === 'DesignSheet' ? 'DesignSheet' : undefined;
 
 /**
  * Onboarding shows only when there's no saved session. Finishing it (or signing out)
@@ -40,7 +47,7 @@ export function RootNavigator() {
   if (!ready) return null; // the animated splash covers the moment the session is read
 
   return (
-    <Stack.Navigator screenOptions={{ headerShown: false }}>
+    <Stack.Navigator screenOptions={{ headerShown: false }} initialRouteName={devStart}>
       {session ? (
         <>
           <Stack.Screen name="Main" component={MainTabs} />
@@ -78,6 +85,9 @@ export function RootNavigator() {
           <Stack.Screen name="NotificationsPrompt" component={NotificationsPromptScreen} />
         </>
       )}
+      {__DEV__ ? (
+        <Stack.Screen name="DesignSheet" component={DesignSheetScreen} options={{ animation: 'slide_from_right' }} />
+      ) : null}
     </Stack.Navigator>
   );
 }

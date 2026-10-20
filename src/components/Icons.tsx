@@ -122,13 +122,13 @@ export const FlameIcon = ({ size = 24, color = colors.primary }: IconProps) => (
 );
 
 // ── Settings row icons ────────────────────────────────────────────────────
-export const PulseIcon = ({ size = 18, color = '#fff', strokeWidth = 2.2 }: IconProps) => (
+export const PulseIcon = ({ size = 18, color = colors.steam, strokeWidth = 2.2 }: IconProps) => (
   <Stroke size={size} color={color} strokeWidth={strokeWidth}>
     <Path d="M3 12h4l2.5-7 5 14 2.5-7H21" />
   </Stroke>
 );
 
-export const TargetIcon = ({ size = 18, color = '#fff', strokeWidth = 1.9 }: IconProps) => (
+export const TargetIcon = ({ size = 18, color = colors.steam, strokeWidth = 1.9 }: IconProps) => (
   <Svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth={strokeWidth}>
     <Circle cx={12} cy={12} r={8} />
     <Circle cx={12} cy={12} r={3.4} />
@@ -142,14 +142,14 @@ export const PauseIcon = ({ size = 18, color = colors.ink, strokeWidth = 1.9 }: 
   </Stroke>
 );
 
-export const BellIcon = ({ size = 18, color = '#fff', strokeWidth = 1.9 }: IconProps) => (
+export const BellIcon = ({ size = 18, color = colors.steam, strokeWidth = 1.9 }: IconProps) => (
   <Stroke size={size} color={color} strokeWidth={strokeWidth}>
     <Path d="M6 9.5a6 6 0 0 1 12 0c0 4.5 1.8 5.8 1.8 5.8H4.2S6 14 6 9.5z" />
     <Path d="M10 19a2 2 0 0 0 4 0" />
   </Stroke>
 );
 
-export const LockIcon = ({ size = 18, color = '#fff', strokeWidth = 1.9 }: IconProps) => (
+export const LockIcon = ({ size = 18, color = colors.steam, strokeWidth = 1.9 }: IconProps) => (
   <Stroke size={size} color={color} strokeWidth={strokeWidth}>
     <Rect x={5} y={10.5} width={14} height={9} rx={2.2} />
     <Path d="M8 10.5V8a4 4 0 0 1 8 0v2.5" />
@@ -173,7 +173,7 @@ export const UserPlusIcon = ({ size = 21, color = colors.primary, strokeWidth = 
 export const MapPin = ({ size = 26, color = colors.primary }: IconProps) => (
   <Svg width={size} height={size} viewBox="0 0 24 24" fill={color}>
     <Path d="M12 2c-3.9 0-7 3-7 6.9 0 4.7 6.1 12.1 6.4 12.4a.8.8 0 0 0 1.2 0C13 21 19 13.6 19 8.9 19 5 15.9 2 12 2z" />
-    <Circle cx={12} cy={9} r={2.6} fill="#fff" />
+    <Circle cx={12} cy={9} r={2.6} fill={colors.steam} />
   </Svg>
 );
 

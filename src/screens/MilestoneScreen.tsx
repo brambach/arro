@@ -41,7 +41,7 @@ export function MilestoneScreen({ navigation, route }: RootStackScreenProps<'Mil
   return (
     <View style={styles.root}>
       {/* The end of a day: the same moving map, under the evening light. */}
-      <Backdrop light="dusk" />
+      <Backdrop />
       <View style={styles.photo}>
         {hasPhoto ? (
           <>

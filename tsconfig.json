@@ -8,6 +8,7 @@
     "babel.config.js",
     "metro.config.js",
     "jest.config.js",
+    "jest.setup.js",
     "android",
     "ios",
     // Edge functions run on Deno; check them with `deno check`.

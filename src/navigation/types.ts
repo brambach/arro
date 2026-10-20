@@ -36,6 +36,8 @@ export type RootStackParamList = {
   Invite: undefined;
   EditProfile: undefined;
   LogToday: { day?: 'today' | 'yesterday' } | undefined;
+  /** Dev builds only: every token and component (src/screens/dev). */
+  DesignSheet: undefined;
 };
 
 export type MainTabParamList = {

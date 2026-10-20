@@ -26,7 +26,7 @@ export function ThisWeekScreen({ navigation }: MainTabScreenProps<'ThisWeek'>) {
       </FadeInView>
 
       <FadeInView delay={60} style={styles.section}>
-        <Card radius={radii.cardLg} padding={18}>
+        <Card radius={radii.cardLg} padding={20}>
           <Text style={styles.headline}>{week.headline}</Text>
           <View style={styles.strip}>
             {week.strip.map((d, i) => (

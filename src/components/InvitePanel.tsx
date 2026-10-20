@@ -36,7 +36,7 @@ export function InvitePanel({
         wrapStyle={{ marginTop: 20 }}
       />
       {fallback ? (
-        <Card padding={14} background={colors.cardAlt} style={{ marginTop: 16 }}>
+        <Card padding={16} background={colors.cardAlt} style={{ marginTop: 16 }}>
           <Text style={styles.fallbackLabel}>No share sheet here. Send this yourself:</Text>
           <Text style={styles.fallback} selectable>
             {fallback}
