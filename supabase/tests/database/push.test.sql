@@ -7,6 +7,16 @@ set local search_path = public, extensions;
 
 select plan(22);
 
+-- Build 9 (20261021000005) drops Arro's push triggers on workouts, cheers and
+-- comments. Their functions stay until build 10, so this file attaches them
+-- again inside its own rolled-back transaction and keeps testing them.
+create trigger workouts_queue_moved_push after insert on public.workouts
+  for each row execute function private.queue_moved_push();
+create trigger cheers_queue_push after insert on public.cheers
+  for each row execute function private.queue_cheer_push();
+create trigger comments_queue_push after insert on public.comments
+  for each row execute function private.queue_comment_push();
+
 insert into auth.users (id, email, aud, role) values
   ('91000000-0000-0000-0000-000000000000', 'p1@arro.test', 'authenticated', 'authenticated'),
   ('92000000-0000-0000-0000-000000000000', 'p2@arro.test', 'authenticated', 'authenticated'),
@@ -179,7 +189,7 @@ reset role;
 select results_eq(
   $$ select user_id, title, body, data->>'memberId' from private.push_outbox where kind = 'nudge' $$,
   $$ values ('92000000-0000-0000-0000-000000000000'::uuid, 'Mum is cheering you on'::text,
-             'You’ve still got today.'::text, '91111111-0000-0000-0000-000000000000'::text) $$,
+             'There’s still time this week.'::text, '91111111-0000-0000-0000-000000000000'::text) $$,
   'Dad is told about Mum''s nudge once, and Mum''s nudge waits in silence for her quiet hours');
 
 select * from finish();

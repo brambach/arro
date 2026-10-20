@@ -9,6 +9,16 @@ set local search_path = public, extensions;
 
 select plan(18);
 
+-- Build 9 (20261021000005) drops Arro's push triggers on workouts, cheers and
+-- comments. Their functions stay until build 10, so this file attaches them
+-- again inside its own rolled-back transaction and keeps testing them.
+create trigger workouts_queue_moved_push after insert on public.workouts
+  for each row execute function private.queue_moved_push();
+create trigger cheers_queue_push after insert on public.cheers
+  for each row execute function private.queue_cheer_push();
+create trigger comments_queue_push after insert on public.comments
+  for each row execute function private.queue_comment_push();
+
 create temp table zones on commit drop as
 with offsets as (
   select ((12 - extract(hour from now() at time zone 'UTC')::integer + 36) % 24) - 12 as awake,
