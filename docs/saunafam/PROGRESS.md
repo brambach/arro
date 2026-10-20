@@ -120,6 +120,7 @@ Today, Week, Feed and Me rendered with no console errors.
   its row mapping is unit tested, but no RPC was called (this task doesn't own the
   local database). Not run on the simulator either.
 - `App.tsx` still says "This build can't reach Arro" (M12).
+| M9 | done (branch `saunafam/screens`) | `design/screenshots/saunafam/INDEX.md` (58 screenshots), `design/recordings/saunafam/today-arrival.mov`, `checkin.mov`, `week-kept.mov`, `milestone.mov`, `tabs.mov` | Today, Week, Feed, SessionDetail, Me, Milestone, Nudge in every state. Jest 222/222 in 18 suites. See M9 below |
 | M6 | done (branch `saunafam/design`) | `design/brand/brand-sheet.png`, `design/screenshots/saunafam/design-sheet-1.png` to `-6.png` and `design-sheet-room.png`, `node scripts/check-contrast.mjs`, `src/theme/__tests__/theme.test.ts` | Löyly tokens, type, motion, haptics, components, Design sheet. See `docs/saunafam/DESIGN-SYSTEM.md` and M6/M7 notes below |
 | M7 | done (branch `saunafam/design`) | `design/brand/icon-explorations.png`, `design/brand/icon-sizes.png`, `design/recordings/saunafam/splash-cold.mov`, `design/screenshots/saunafam/splash-1.png` to `-3.png`, `splash-reduce-motion.mov` | Icon, wordmark, asset pipeline, native splash, AnimatedSplash |
 
@@ -600,3 +601,113 @@ Unverified or open:
   screen that uses them.
 - The tinted icon is a grayscale guess at Apple's guidance; it wasn't seen in
   iOS's tinted home screen mode.
+
+## M9: the main screens
+
+Built on branch `saunafam/screens` (worktree `/tmp/luna-arro/wt-screens`).
+Today, Week (route still `ThisWeek`), Feed, SessionDetail, Me, Milestone and
+Nudge, plus three routes of my own: `EditSession`, `PastWeek` and a `Plus`
+placeholder for M15 (`{ focus?: string }`: `everyWeek`, `poster`, `heatLog`,
+`timerFace`, `appIcon`, `card`).
+
+**Checks:** `npm run typecheck` clean. `npm test`: 18 suites, 222 tests (new:
+`checkIn`, `healthOffer`, `milestoneLayout`, `useShownWhenFocused`, and 8 more
+in `buildView`). `npx eslint` clean on every file M9 touched.
+`node scripts/check-design.mjs` clean on them. `node scripts/check-contrast.mjs`:
+27 of 27 pairs (one added: moss on birch for "Kept" in the past-week sheet).
+
+**Proof:** `design/screenshots/saunafam/INDEX.md` lists every screen and state.
+Recordings in `design/recordings/saunafam/`: `today-arrival.mov` (returning
+launch into Today's arrival), `checkin.mov` (the log sheet closes, the third
+dot ignites, the ring fills), `week-kept.mov` (dot, beat, ember fill, sparks,
+"Week kept, together"), `milestone.mov` (wall builds, number arrives, steam),
+`tabs.mov` (four tabs and a SessionDetail push and pop). Each under 600 KB.
+
+**How the captures were made.** No taps in the Simulator here (no cliclick,
+no accessibility access for AppleScript). `src/dev/DevDriver.tsx` polls a small
+server on the Mac (`localhost:8099`) for commands: pick a scenario, go to a
+route, scroll, log a session, cheer, press Send a nudge or Share. It's mounted
+in `App.tsx` only when `__DEV__` and `EXPO_PUBLIC_DEV_DRIVER=1`. The shared dev
+client opens straight onto Metro with
+`xcrun simctl launch <udid> com.arrofamily.arro --initialUrl http://localhost:8082`,
+which skips the "Open in Arro?" prompt that `simctl openurl` raises.
+
+**Fixed from the recordings and screenshots**
+- The check-in played under the log sheet. Today now holds view changes while
+  it's covered and hands them over once the sheet has gone
+  (`useShownWhenFocused`); a rebuilt view arriving mid-hold no longer cuts the
+  wait short (this was the bug in the second recording; tested).
+- `simctl recordVideo --codec h264` dropped about a second of frames right
+  after a sheet closed, which looked like the fill starting at 45% with no
+  ignite. Rapid screenshots showed the app was right. Every recording is HEVC
+  now, re-encoded to small H.264 for the repo.
+- Sparks vanished on the ember slat (ember on ember, 3 to 5 pt). They start
+  from the slat's top edge near its end now, and are 4 to 7 pt
+  (`SparkBurst`, one line).
+- "Kept this week" and "Week kept, together" crossfaded in the same place and
+  read as a smudge. One goes out, then the other comes in.
+- The milestone wall built during the screen's fade-in, so half of it was
+  lost; it now waits for `transitionEnd`. The number waited for the last
+  spring to settle (a dead second); it now arrives at the top slat's
+  touchdown. Steam no longer sits there before the number.
+- The nudge sheet changed height after sending. Both controls stay; the
+  button reads "Sent".
+- At the largest text size the Start button truncated, rows truncated names,
+  the slat's "WEEK 9" grew out of the wood and tab labels broke mid-word.
+  `SolidButton` caps its label at 1.6x, `ListRow` and `PersonRow` wrap (rows
+  move their dots and status under the name), the slat label and tab labels
+  cap at 1.3x. These are small fixes in M6 components.
+- Content ran into the clock when scrolled. `Screen` fades in a birch strip
+  under the status bar once you scroll (not at rest, so the haze's warm corner
+  still shows).
+- The comment field sat under the keyboard. It's docked above it now.
+- The share image came out 3240 x 4050 with the art in one corner
+  (`toDataURL` renders at screen scale). The SVG is now sized in points so it
+  comes out at exactly 1080 x 1350; checked by pulling the PNG back to the Mac.
+
+**Decisions**
+- D9.1 Data-layer additions, each tested in `buildView.test.ts`: `FamilyRow.latest`
+  ("Tonight · 20 min · 85°C", "Yesterday · 25 min with Maya and Jo"),
+  `today.weekKept`, `today.slatLabel` ("Week 9"), `streak.headline` and
+  `week.headline` ("Your first week together" instead of a big 0),
+  `week.thisWeekLabel`, `PastWeekView.title` and `outcome`. The greeting lost
+  its period to match the mockup. Week's number labels are now "weeks
+  together", "Longest", "This year", as the mockup sets them.
+- D9.2 New preview scenario `lastOne`: Maya and Jo have kept, you're on 2 of 3,
+  so the next save keeps the family's week.
+- D9.3 Check-in timing lives in `src/state/checkIn.ts` (tested): dot ignites
+  (save haptic at its peak), a 180 ms beat (`moments.weekKept.hold`, added to
+  motion.ts), the fill (week-kept haptic as it's full, sparks), then the line
+  500 ms later. With Reduce Motion: the slat turns kept and the line crossfades.
+- D9.4 Your avatar on Today wears a thin ember ring for this week's progress;
+  it fills with the dot. The mockup has no ring; the spec's moment 5 asks for one.
+- D9.5 Edit is its own sheet (`EditSession`), not M8's log form, since that
+  form's route belongs to M8. It edits minutes, type, cold plunge, place, note
+  and photo; date and people stay as logged.
+- D9.6 Past weeks open a sheet (`PastWeek`) instead of expanding in place:
+  growing a row's height isn't a transform.
+- D9.7 The Apple Health offer shows once you have a saved session of your own,
+  until answered, on iOS. The answer is kept in `saunafam.healthOffer.v1`
+  (`src/state/healthOffer.ts`); M11 should read `'on'` and do the permission and
+  writing. It sits under the family list, not above it.
+- D9.8 The milestone share image is drawn as SVG and rasterized with
+  react-native-svg's `toDataURL`, shared as a data URL with `Share.share`. No
+  react-native-view-shot, so no new native module (the shared dev client
+  doesn't have one). Over 13 weeks the wall goes into columns of 13.
+- D9.9 Tabs other than Today also play one settle arrival on their first
+  visit; coming back to a tab is instant.
+- D9.10 `StartSessionButton` and `TimerBar` are placeholders at the paths M8 is
+  filling; they navigate to a `Timer` route M8 adds.
+
+**Not done / for others**
+- No rollback screenshot: the preview never refuses a cheer or comment, so
+  `NoticeToast` (the quiet rollback line) is unseen on the Simulator. Same for
+  the nudge's "already" and "failed" lines.
+- Haptics can't be seen in a recording; they're timed in code (`emberPeakMs`,
+  `onFilled`, `springTouchdownMs`) and not felt on a device.
+- No Reduce Motion recordings of these moments, and no Perf Monitor reading.
+- Recordings start with the dev client's "Downloading 100%" bar on cold launch;
+  `today-arrival.mov` is trimmed to start after it.
+- Expired invite isn't on these screens (Invite and onboarding are M10).
+- `src/screens/plain.tsx` stays: Settings, Notifications, Family members and the
+  log form still import it.

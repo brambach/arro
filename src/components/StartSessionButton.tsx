@@ -6,7 +6,7 @@ import { Icon } from './Icon';
 import { SolidButton } from './SolidButton';
 
 /**
- * Placeholder from M9 until M8 lands its own: the 64 pt ember "Start a
+ * Placeholder from M9 until M8 brings its own: the 64 pt ember "Start a
  * session" on Today, which opens the timer. M8 owns this file and replaces it
  * with the door-closing morph; the coordinator takes M8's version at merge.
  */

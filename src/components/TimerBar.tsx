@@ -7,7 +7,7 @@ import { useView } from '../state/AppState';
 import { timerBarLabel } from '../state/timer';
 
 /**
- * Placeholder from M9 until M8 lands its own: the slim dark bar at the top of
+ * Placeholder from M9 until M8 brings its own: the slim dark bar at the top of
  * Today while a timer runs, "In the heat · 12:04". Tapping it reopens the
  * timer. M8 owns this file; the coordinator takes M8's version at merge.
  */

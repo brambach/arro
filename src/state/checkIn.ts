@@ -1,12 +1,12 @@
 /**
  * The check-in moment on Today (spec, Key motion moment 5), as plain numbers so
- * it's tested: what a change to your week plays, and when each beat lands.
+ * it's tested: what a change to your week plays, and when each beat arrives.
  *
  * 1. Your next ember dot ignites (the `ember` overshoot) and your avatar ring
  *    fills; the save haptic fires at the dot's peak.
  * 2. If that session completed the whole family's week: a short hold, then the
  *    slat fills with ember from edge to edge, the week-kept haptic and the spark
- *    burst land as it's full, then "Week kept, together" settles in.
+ *    burst arrive as it's full, then "Week kept, together" settles in.
  *
  * With Reduce Motion the slat simply turns kept and the line crossfades in.
  */

@@ -32,7 +32,8 @@ export function PersonRow({ row, onPress, compact = false, hint }: Props) {
   const name = row.member.isMe ? 'You' : row.member.name;
   const onBreak = row.state === 'break';
   const invited = row.state === 'invited';
-  const subtitle = compact ? null : onBreak ? row.status : invited ? 'Hasn’t joined yet' : row.latest;
+  // Compact rows (Week) drop the latest session, but never the break: it's the only place it shows.
+  const subtitle = onBreak ? row.status : compact ? null : invited ? 'Hasn’t joined yet' : row.latest;
   const status = onBreak ? null : row.status;
   // At the accessibility text sizes the dots and status move under the name, so nothing truncates.
   const stacked = useWindowDimensions().fontScale > 1.5;

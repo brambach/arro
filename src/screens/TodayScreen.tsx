@@ -38,7 +38,7 @@ import { useShownWhenFocused } from '../components/useShownWhenFocused';
 export function TodayScreen({ navigation }: MainTabScreenProps<'Today'>) {
   const view = useView();
   const { refresh } = useApp();
-  // Changes made while the log sheet covers Today land once it's gone, so the moment is seen.
+  // Changes made while the log sheet covers Today arrive once it's gone, so the moment is seen.
   const t = useShownWhenFocused(view.today);
 
   const tap = (target: PersonTap) => {
@@ -267,7 +267,7 @@ function useMilestoneWhenDue(due: boolean, open: () => void) {
     const wait = moments.todayArrival.duration + moments.todayArrival.stagger * 3;
     const timer = setTimeout(open, wait);
     return () => clearTimeout(timer);
-    // `open` is a new function each render; the due flag and focus are what matter.
+    // `open` is a new function each render; the due milestone and focus are what matter.
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [due, focused]);
 }

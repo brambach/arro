@@ -24,7 +24,7 @@ import { devDriverOn } from '../dev/DevDriver';
  * A streak milestone, 4, 8, 12, 26 or 52 weeks, family or personal (Key
  * motion moment 6). Shown once when due (Today opens it), or from a badge on
  * Me. A full-screen card: the wall builds up from the bottom one slat every
- * 50 ms, each landing on a spring; then the number lands in large Fraunces
+ * 50 ms, each dropping onto it on a spring; then the number arrives in large Fraunces
  * with the ember overshoot (heavy, then success haptic at its peak) as steam
  * rises behind it. Share renders a 1080 x 1350 image. Never anything about Plus.
  */
@@ -49,7 +49,7 @@ export function MilestoneScreen({ navigation, route }: RootStackScreenProps<'Mil
     navigation.goBack();
   };
 
-  // The number lands once the wall is up.
+  // The number arrives once the wall is up.
   useEffect(() => {
     if (!built) return;
     if (reduceMotion !== false) {
@@ -61,7 +61,7 @@ export function MilestoneScreen({ navigation, route }: RootStackScreenProps<'Mil
     return () => clearTimeout(t);
   }, [built, reduceMotion, n]);
 
-  // The number lands as the top slat touches down (not when its spring has fully
+  // The number arrives as the top slat touches down (not when its spring has fully
   // settled, which left a dead pause). With Reduce Motion the wall is simply there.
   const weeksForWall = m?.weeks ?? 0;
   useEffect(() => {
