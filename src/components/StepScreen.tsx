@@ -1,5 +1,5 @@
 import React from 'react';
-import { KeyboardAvoidingView, Platform, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { KeyboardAvoidingView, Platform, Pressable, ScrollView, StyleSheet, Text, useWindowDimensions, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { layout, palette, space } from '../theme/tokens';
 import { maxFontScale, type } from '../theme/typography';
@@ -49,6 +49,15 @@ export function StepScreen({
   children,
 }: Props) {
   const insets = useSafeAreaInsets();
+  // At the largest Dynamic Type sizes a pinned footer would cover most of the screen, so it scrolls with the rest.
+  const { fontScale } = useWindowDimensions();
+  const inline = fontScale >= 1.35;
+  const actions = (
+    <Settle index={2} style={[styles.footer, { paddingBottom: insets.bottom + space.s16 }, inline && styles.footerInline]}>
+      {footer ?? <SolidButton title={primaryLabel} onPress={onPrimary} disabled={primaryDisabled} />}
+      {secondaryLabel && onSecondary ? <TextAction label={secondaryLabel} onPress={onSecondary} style={styles.secondary} /> : null}
+    </Settle>
+  );
   return (
     <KeyboardAvoidingView style={[styles.root, { paddingTop: insets.top }]} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
       <Backdrop />
@@ -74,12 +83,9 @@ export function StepScreen({
             {children}
           </Settle>
         ) : null}
+        {inline ? actions : null}
       </ScrollView>
-
-      <Settle index={2} style={[styles.footer, { paddingBottom: insets.bottom + space.s16 }]}>
-        {footer ?? <SolidButton title={primaryLabel} onPress={onPrimary} disabled={primaryDisabled} />}
-        {secondaryLabel && onSecondary ? <TextAction label={secondaryLabel} onPress={onSecondary} style={styles.secondary} /> : null}
-      </Settle>
+      {inline ? null : actions}
     </KeyboardAvoidingView>
   );
 }
@@ -107,5 +113,6 @@ const styles = StyleSheet.create({
   subtitle: { color: palette.smoke, marginTop: space.s12 },
   content: { marginTop: space.s32 },
   footer: { paddingHorizontal: layout.inset, paddingTop: space.s12 },
+  footerInline: { paddingHorizontal: 0, paddingTop: space.s32 },
   secondary: { marginTop: space.s8 },
 });

@@ -81,7 +81,12 @@ function Tile<T>({
       <Text style={[type.title, light ? styles.light : null]} maxFontSizeMultiplier={maxFontScale.title}>
         {option.label}
       </Text>
-      {option.sub ? <Text style={[type.bodySmallStrong, light ? styles.light : styles.sub]}>{option.sub}</Text> : null}
+      {/* Capped so "minutes" never breaks mid-word in a tile; it still grows to twice the size. */}
+      {option.sub ? (
+        <Text style={[type.bodySmallStrong, styles.center, light ? styles.light : styles.sub]} maxFontSizeMultiplier={2}>
+          {option.sub}
+        </Text>
+      ) : null}
     </>
   );
 
@@ -128,7 +133,8 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     overflow: 'hidden',
   },
-  picked: { alignItems: 'center', justifyContent: 'center', boxShadow: depth.button, borderRadius: radii.tile },
+  picked: { alignItems: 'center', justifyContent: 'center', paddingHorizontal: space.s4, boxShadow: depth.button, borderRadius: radii.tile },
+  center: { textAlign: 'center' },
   light: { color: palette.steam },
   sub: { color: palette.smoke },
   disabled: { opacity: 0.45 },

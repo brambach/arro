@@ -6,7 +6,7 @@ import { WeekState } from '../data/types';
 import { Check, Snowflake } from './Icons';
 
 /**
- * DayPill — one dot in the compact 7-day strip.
+ * DayPill - one dot in the compact 7-day strip.
  * kept = green check on soft green · freeze = blue snowflake on soft blue ·
  * today = ink ring with an ink dot (not moving yet is not an alert, so no accent).
  */

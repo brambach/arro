@@ -44,9 +44,10 @@ export function ListRow({
 }: RowProps) {
   const press = useSharedValue(0);
   const wash = useAnimatedStyle(() => ({ opacity: press.value }));
-  // At the large Dynamic Type sizes, text wraps instead of being cut off with "...".
+  // At the large Dynamic Type sizes, text wraps instead of being cut off, and the value moves under the title.
   const { fontScale } = useWindowDimensions();
-  const lines = fontScale >= 1.3 ? undefined : 1;
+  const large = fontScale >= 1.3;
+  const lines = large ? undefined : 1;
 
   const content = (
     <View style={[styles.row, { minHeight: subtitle ? layout.row : layout.rowCompact }, style]}>
@@ -61,18 +62,21 @@ export function ListRow({
             {subtitle}
           </Text>
         ) : null}
+        {/* Large type: the value goes under the title, so neither is squeezed. */}
+        {value && large ? (
+          <Text style={[type.bodySmall, valueTone === 'kept' ? styles.kept : valueTone === 'quiet' ? styles.quiet : styles.value]}>{value}</Text>
+        ) : null}
       </View>
       {trailing}
-      {value ? (
+      {value && !large ? (
         <Text
           style={[
             type.bodySmall,
             valueTone === 'kept' && styles.kept,
             valueTone === 'quiet' && styles.quiet,
             valueTone === 'default' && styles.value,
-            lines === undefined && styles.valueWrap,
           ]}
-          numberOfLines={lines}
+          numberOfLines={1}
         >
           {value}
         </Text>
@@ -146,7 +150,6 @@ const styles = StyleSheet.create({
   wash: { backgroundColor: alpha.press },
   text: { flex: 1, minWidth: 0 },
   value: { color: palette.smoke },
-  valueWrap: { flexShrink: 1, maxWidth: '45%', textAlign: 'right' },
   quiet: { color: palette.stone },
   kept: { color: palette.moss, fontWeight: '600' },
   clip: { borderRadius: radii.card, overflow: 'hidden', paddingVertical: space.s4 },

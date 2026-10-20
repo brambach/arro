@@ -1,5 +1,6 @@
-import React from 'react';
-import { Pressable, StyleSheet, Text, useWindowDimensions, View } from 'react-native';
+import React, { useEffect, useState } from 'react';
+import Animated, { useAnimatedStyle, useSharedValue, withTiming } from 'react-native-reanimated';
+import { Pressable, ScrollView, StyleSheet, Text, useWindowDimensions, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { layout, palette, space } from '../../theme/tokens';
 import { maxFontScale, type } from '../../theme/typography';
@@ -42,6 +43,18 @@ export function WelcomeScreen({ navigation }: RootStackScreenProps<'Welcome'>) {
   // The splash's position only fits a tall screen at ordinary sizes.
   const matchSplash = height >= 800 && fontScale <= 1.2;
 
+  // The mark lifts with the splash's own mark (the same 8 pt, the same curve), so
+  // the two copies stay on top of each other while the splash fades: no ghost.
+  // Opened later (after a sign out), it's already lifted.
+  const [liftedAtMount] = useState(go);
+  const lift = useSharedValue(liftedAtMount ? -moments.splash.exit.lift : 0);
+  useEffect(() => {
+    if (!go || liftedAtMount) return;
+    const { duration, easing } = moments.splash.exit;
+    lift.set(withTiming(-moments.splash.exit.lift, { duration, easing }));
+  }, [go, liftedAtMount, lift]);
+  const liftStyle = useAnimatedStyle(() => ({ transform: [{ translateY: lift.value }] }));
+
   const mark = (
     <View style={styles.markInner}>
       <StoneMark width={SPLASH_MARK.stoneWidth} />
@@ -56,11 +69,16 @@ export function WelcomeScreen({ navigation }: RootStackScreenProps<'Welcome'>) {
       <Backdrop />
       {matchSplash ? (
         <View style={[StyleSheet.absoluteFill, styles.markCenter]} pointerEvents="none">
-          <View style={{ transform: [{ translateY: -moments.splash.exit.lift }] }}>{mark}</View>
+          <Animated.View style={liftStyle}>{mark}</Animated.View>
         </View>
       ) : null}
 
-      <View style={[styles.column, { paddingTop: insets.top + space.s40, paddingBottom: insets.bottom + space.s8 }]}>
+      <ScrollView
+        bounces={!matchSplash}
+        scrollEnabled={!matchSplash}
+        showsVerticalScrollIndicator={false}
+        contentContainerStyle={[styles.column, { paddingTop: insets.top + space.s40, paddingBottom: insets.bottom + space.s8 }]}
+      >
         {matchSplash ? <View style={styles.flex} /> : <View style={styles.markTop}>{mark}</View>}
         {matchSplash ? null : <View style={styles.flexSmall} />}
 
@@ -104,7 +122,7 @@ export function WelcomeScreen({ navigation }: RootStackScreenProps<'Welcome'>) {
             )}
           </Pressable>
         </Settle>
-      </View>
+      </ScrollView>
     </View>
   );
 }
@@ -114,7 +132,7 @@ const styles = StyleSheet.create({
   markCenter: { alignItems: 'center', justifyContent: 'center' },
   markInner: { alignItems: 'center' },
   markTop: { alignItems: 'center' },
-  column: { flex: 1, paddingHorizontal: layout.inset },
+  column: { flexGrow: 1, paddingHorizontal: layout.inset },
   flex: { flex: 1 },
   flexSmall: { flex: 1, minHeight: space.s32 },
   center: { textAlign: 'center' },

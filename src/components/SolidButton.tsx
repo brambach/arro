@@ -71,7 +71,8 @@ export function SolidButton({
       <Animated.View
         style={[
           styles.face,
-          { height, boxShadow: tone === 'ember' ? depth.button : depth.ash },
+          // minHeight, so a label at the largest Dynamic Type sizes wraps instead of being cut off.
+          { minHeight: height, boxShadow: tone === 'ember' ? depth.button : depth.ash },
           disabled && styles.disabled,
           body,
         ]}
@@ -99,7 +100,7 @@ export function SolidButton({
         )}
         <View style={styles.content}>
           {icon ? <View importantForAccessibility="no">{icon}</View> : null}
-          <Text style={[type.bodyStrong, styles.label]} numberOfLines={1}>
+          <Text style={[type.bodyStrong, styles.label]}>
             {title}
           </Text>
         </View>
@@ -117,9 +118,10 @@ const styles = StyleSheet.create({
     overflow: 'hidden',
     justifyContent: 'center',
     paddingHorizontal: space.s24,
+    paddingVertical: space.s12,
   },
   content: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: space.s12 },
-  label: { color: palette.steam },
+  label: { color: palette.steam, textAlign: 'center', flexShrink: 1 },
   ashPressed: { backgroundColor: alpha.pressOnDark },
   disabled: { opacity: 0.45 },
 });

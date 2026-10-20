@@ -5,7 +5,7 @@ import { weights } from '../theme/typography';
 import { Member, PhotoSource } from '../data/types';
 
 /**
- * Avatar — a flat solid-colour circle with a white initial, or a photo when one
+ * Avatar - a flat solid-colour circle with a white initial, or a photo when one
  * is set. No ring, badge, or glow (the flat direction expresses state with pills
  * and rows, not avatar chrome). Kept the file/name for import stability.
  */

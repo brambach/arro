@@ -1,5 +1,5 @@
 import React from 'react';
-import { KeyboardAvoidingView, Platform, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { KeyboardAvoidingView, Platform, Pressable, ScrollView, StyleSheet, Text, useWindowDimensions, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { layout, palette, space } from '../theme/tokens';
 import { maxFontScale, type } from '../theme/typography';
@@ -30,6 +30,14 @@ export function SubScreen({ title, lead, onBack, modal, footer, children }: Prop
   const insets = useSafeAreaInsets();
   // A modal sheet starts below the status bar already.
   const top = modal && Platform.OS === 'ios' ? space.s8 : insets.top;
+  // At the largest Dynamic Type sizes the footer scrolls with the content instead of covering it.
+  const { fontScale } = useWindowDimensions();
+  const inline = fontScale >= 1.35;
+  const actions = footer ? (
+    <Settle index={2} style={[styles.footer, { paddingBottom: insets.bottom + space.s16 }, inline && styles.footerInline]}>
+      {footer}
+    </Settle>
+  ) : null;
   return (
     <KeyboardAvoidingView style={[styles.root, { paddingTop: top }]} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
       <Backdrop seed={11} />
@@ -39,7 +47,7 @@ export function SubScreen({ title, lead, onBack, modal, footer, children }: Prop
       <ScrollView
         keyboardShouldPersistTaps="handled"
         showsVerticalScrollIndicator={false}
-        contentContainerStyle={[styles.body, { paddingBottom: footer ? space.s24 : insets.bottom + space.s40 }]}
+        contentContainerStyle={[styles.body, { paddingBottom: footer && !inline ? space.s24 : insets.bottom + space.s40 }]}
       >
         <Settle index={0} style={styles.heading}>
           <Text style={type.title} accessibilityRole="header" maxFontSizeMultiplier={maxFontScale.title}>
@@ -48,12 +56,9 @@ export function SubScreen({ title, lead, onBack, modal, footer, children }: Prop
           {lead ? <Text style={[type.body, styles.lead]}>{lead}</Text> : null}
         </Settle>
         <Settle index={1}>{children}</Settle>
+        {inline ? actions : null}
       </ScrollView>
-      {footer ? (
-        <Settle index={2} style={[styles.footer, { paddingBottom: insets.bottom + space.s16 }]}>
-          {footer}
-        </Settle>
-      ) : null}
+      {inline ? null : actions}
     </KeyboardAvoidingView>
   );
 }
@@ -88,6 +93,7 @@ const styles = StyleSheet.create({
   heading: { paddingHorizontal: space.s8, marginBottom: space.s24 },
   lead: { color: palette.smoke, marginTop: space.s12 },
   footer: { paddingHorizontal: layout.gutter, paddingTop: space.s12 },
+  footerInline: { paddingHorizontal: 0, paddingTop: space.s32 },
   label: { marginTop: space.s32, marginBottom: space.s8, marginHorizontal: space.s8 },
   labelFirst: { marginTop: 0 },
   note: { marginTop: space.s8, marginHorizontal: space.s8 },
