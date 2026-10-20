@@ -177,7 +177,8 @@ interface AppContextValue {
 
   // Timer
   /** One timer at a time: starting again returns the running one. */
-  startTimer: (opts?: { targetMinutes?: number; saunaType?: SaunaType }) => Promise<TimerState>;
+  /** `at`: when it started (the tap), if that was a moment ago; now by default. */
+  startTimer: (opts?: { targetMinutes?: number; saunaType?: SaunaType; at?: Date }) => Promise<TimerState>;
   coolOff: () => Promise<void>;
   resumeTimer: () => Promise<void>;
   setTimerTarget: (minutes: number) => Promise<void>;
@@ -958,10 +959,10 @@ export function AppStateProvider({ children }: { children: React.ReactNode }) {
   }, [myIdNow]);
 
   const startTimer = useCallback(
-    async (opts: { targetMinutes?: number; saunaType?: SaunaType } = {}) => {
+    async (opts: { targetMinutes?: number; saunaType?: SaunaType; at?: Date } = {}) => {
       if (timerRef.current) return timerRef.current;
       const now = new Date();
-      const next = timerMath.startTimer(now, {
+      const next = timerMath.startTimer(opts.at && opts.at.getTime() <= now.getTime() ? opts.at : now, {
         targetMinutes: opts.targetMinutes ?? timerMath.defaultTargetMinutes(familyMin()),
         saunaType: opts.saunaType ?? lastSaunaTypeRef.current,
       });

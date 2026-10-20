@@ -53,9 +53,10 @@ export type RootStackParamList = {
   /**
    * The timer room. `origin` is the frame (window coordinates) it grows from:
    * the Start button, or the slim timer bar. Without one it fades in.
-   * `started`: this tap started the timer (the medium haptic lands with the door).
+   * `started`: this tap starts the timer, at `startAt` (the tap). The room starts
+   * it once the door has landed, so Today doesn't redraw under the door.
    */
-  Timer: { origin?: DoorFrame; started?: boolean } | undefined;
+  Timer: { origin?: DoorFrame; started?: boolean; startAt?: string } | undefined;
   /** Dev builds only: every token and component (src/screens/dev). */
   DesignSheet: undefined;
 };

@@ -31,18 +31,20 @@ type Props = {
 
 export function StartSessionButton({ onStart, style }: Props) {
   const navigation = useNavigation<NativeStackNavigationProp<RootStackParamList>>();
-  const { view, startTimer } = useApp();
+  const { view } = useApp();
   const frame = useRef<View>(null);
   const running = !!view?.timer;
 
   const open = () => {
+    const tappedAt = new Date().toISOString();
     const go = (x: number, y: number, width: number, height: number) => {
-      // Starting again while one is running just reopens it (AppState.startTimer).
-      if (!running) startTimer().catch(() => undefined);
+      // Starting again while one is running just reopens it. A new one starts
+      // from this tap; the room commits it when its door lands.
       onStart?.();
       navigation.navigate('Timer', {
         origin: width > 0 ? { x, y, width, height, radius: radii.button, tone: 'ember' } : undefined,
         started: !running,
+        startAt: running ? undefined : tappedAt,
       });
     };
     if (frame.current) frame.current.measureInWindow(go);

@@ -1,5 +1,5 @@
 import React, { memo, useCallback, useEffect, useRef, useState } from 'react';
-import { AccessibilityInfo, AppState as RNAppState, Pressable, StyleSheet, Text, useWindowDimensions, View } from 'react-native';
+import { AccessibilityInfo, AppState as RNAppState, Image, Pressable, StyleSheet, Text, useWindowDimensions, View } from 'react-native';
 import Animated, {
   useAnimatedStyle,
   useSharedValue,
@@ -9,14 +9,23 @@ import Animated, {
 } from 'react-native-reanimated';
 import { scheduleOnRN } from 'react-native-worklets';
 import { StatusBar } from 'expo-status-bar';
-import { BlurView } from 'expo-blur';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import Svg, { FeGaussianBlur, Filter, G, Path, Defs } from 'react-native-svg';
+import Svg, { Path } from 'react-native-svg';
 import { RootStackScreenProps } from '../navigation/types';
 import { useApp } from '../state/AppState';
 import { LIMITS, SAUNA_TYPES, TARGET_CHOICES, saunaTypeLabels } from '../data/saunas';
-import { TimerResult, TimerState, announcement, clockLabel, heatMs, isStale, phase } from '../state/timer';
+import {
+  TimerResult,
+  TimerState,
+  announcement,
+  clockLabel,
+  defaultTargetMinutes,
+  heatMs,
+  isStale,
+  phase,
+  startTimer as startTimerState,
+} from '../state/timer';
 import {
   arcProgress,
   fiveMinuteMark,
@@ -83,6 +92,7 @@ export function TimerScreen({ navigation, route }: RootStackScreenProps<'Timer'>
   const visible = useScreenVisible();
   const origin = route.params?.origin;
   const started = !!route.params?.started;
+  const startAt = route.params?.startAt;
 
   const [stage, setStage] = useState<Stage>('open');
   const [landed, setLanded] = useState(false);
@@ -93,9 +103,19 @@ export function TimerScreen({ navigation, route }: RootStackScreenProps<'Timer'>
   const [panel, setPanel] = useState(false);
   const [burst, setBurst] = useState(0);
 
-  const ticking = stage === 'open' && visible && !!live;
+  // A new timer is committed when the door lands (Today mustn't redraw under the
+  // door); until then the room shows it from the tap, with the same defaults.
+  const [provisional] = useState(() =>
+    started && startAt && !live
+      ? startTimerState(new Date(startAt), {
+          targetMinutes: defaultTargetMinutes(app.view?.minMinutes ?? 10),
+          saunaType: app.lastSaunaType,
+        })
+      : null,
+  );
+  const ticking = stage === 'open' && visible && (!!live || !landed);
   const now = useNow(ticking);
-  const timer = frozen?.timer ?? live;
+  const timer = frozen?.timer ?? live ?? (landed ? null : provisional);
   const at = frozen?.at ?? now;
 
   // Coming back to an old timer: "Still going? It's been 3 hours".
@@ -112,27 +132,49 @@ export function TimerScreen({ navigation, route }: RootStackScreenProps<'Timer'>
 
   const morph = !!origin && reduceMotion === false;
   const fromEmber = origin?.tone === 'ember';
-  const doorX = useSharedValue(morph && origin ? origin.x : 0);
-  const doorY = useSharedValue(morph && origin ? origin.y : 0);
-  const doorW = useSharedValue(morph && origin ? origin.width : W);
-  const doorH = useSharedValue(morph && origin ? origin.height : H);
-  const doorR = useSharedValue(morph && origin ? origin.radius : 0);
-  const ember = useSharedValue(morph && fromEmber ? 1 : 0);
-  const room = useSharedValue(morph ? 1 : 0);
-  const face = useSharedValue(morph ? 0 : 0);
+  // The door starts on the button (or the bar) until it knows it may move: it
+  // looks just like what was tapped, so holding there never shows.
+  const doorX = useSharedValue(origin ? origin.x : 0);
+  const doorY = useSharedValue(origin ? origin.y : 0);
+  const doorW = useSharedValue(origin ? origin.width : W);
+  const doorH = useSharedValue(origin ? origin.height : H);
+  const doorR = useSharedValue(origin ? origin.radius : 0);
+  const ember = useSharedValue(origin && fromEmber ? 1 : 0);
+  const room = useSharedValue(origin ? 1 : 0);
+  const face = useSharedValue(0);
   const settle = useSharedValue(0);
 
-  // The door waits for Reduce Motion's answer, so it never flashes the wrong way.
+  // The door moves once the room is on screen (the stack's transitionEnd): a
+  // first frame that took long to draw would otherwise eat the start of the move.
+  const [onScreen, setOnScreen] = useState(false);
+  useEffect(() => {
+    const off = navigation.addListener('transitionEnd', () => setOnScreen(true));
+    const fallback = setTimeout(() => setOnScreen(true), moments.sheet.scrim.duration);
+    return () => {
+      off();
+      clearTimeout(fallback);
+    };
+  }, [navigation]);
+
+  // The door also waits for Reduce Motion's answer, so it never goes the wrong way.
   const opened = useRef(false);
   useEffect(() => {
-    if (reduceMotion === null || opened.current) return;
+    if (reduceMotion === null || !onScreen || opened.current) return;
     opened.current = true;
     const land = () => {
+      if (started && startAt) app.startTimer({ at: new Date(startAt) }).catch(() => undefined);
       setLanded(true);
       if (started) haptics.timerStart();
       checkStaleRef.current();
     };
     if (!morph) {
+      doorX.set(0);
+      doorY.set(0);
+      doorW.set(W);
+      doorH.set(H);
+      doorR.set(0);
+      ember.set(0);
+      room.set(0);
       room.set(withTiming(1, timing.utility));
       face.set(withTiming(1, timing.utility));
       const t = setTimeout(land, timing.utility.duration);
@@ -151,13 +193,13 @@ export function TimerScreen({ navigation, route }: RootStackScreenProps<'Timer'>
     doorH.set(withSpring(H, spring, exact(doorH, H)));
     doorR.set(withSpring(0, spring, exact(doorR, 0)));
     ember.set(withTiming(0, moments.doorCloses.room));
-    // The room's contents settle in once the door is most of the way open.
-    face.set(withDelay(springTouchdownMs(spring) / 2, withTiming(1, timing.settle)));
+    // The room's contents settle in once the door has closed behind you.
+    face.set(withDelay(springTouchdownMs(spring), withTiming(1, timing.settle)));
     const t = setTimeout(land, springTouchdownMs(spring));
     return () => clearTimeout(t);
     // Opens once.
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [reduceMotion]);
+  }, [reduceMotion, onScreen]);
 
   const doorStyle = useAnimatedStyle(() => ({
     left: doorX.value,
@@ -303,7 +345,7 @@ export function TimerScreen({ navigation, route }: RootStackScreenProps<'Timer'>
           <RoomSteam width={W} height={H} />
           <SteamWisps width={W} height={H} tone="dark" columns={[]} burstKey={burst} />
         </Animated.View>
-        {origin && fromEmber ? (
+        {origin && fromEmber && started ? (
           <Animated.View style={[StyleSheet.absoluteFill, emberStyle]}>
             <LinearGradient
               colors={[gradients.emberButton[0].color, gradients.emberButton[1].color, gradients.emberButton[2].color]}
@@ -355,7 +397,6 @@ export function TimerScreen({ navigation, route }: RootStackScreenProps<'Timer'>
             <Text style={[type.bodySmall, styles.line]}>{roomLine(timer, at)}</Text>
             <View style={styles.loylyWrap}>
               <View style={styles.loyly}>
-                <BlurView intensity={18} tint="dark" style={StyleSheet.absoluteFill} />
                 <SolidButton
                   tone="ash"
                   title="Throw löyly"
@@ -512,26 +553,14 @@ function HideMark() {
 }
 
 /**
- * The mockup's three slow steam paths rising from the floor, blurred (SVG
- * Gaussian blur), drawn once. Scaled from the 440 x 956 mockup.
+ * The mockup's three slow steam paths rising from the floor, blurred. Drawn
+ * ahead of time (scripts/render-room-steam.mjs): a full-screen SVG blur took
+ * about 600 ms to draw on first show and held up the door.
  */
+const roomSteam = require('../../assets/timer/room-steam.png');
+
 const RoomSteam = memo(function RoomSteam({ width, height }: { width: number; height: number }) {
-  return (
-    <Svg width={width} height={height} style={StyleSheet.absoluteFill} pointerEvents="none">
-      <Defs>
-        <Filter id="roomSteamBlur" x="-50%" y="-20%" width="200%" height="140%">
-          <FeGaussianBlur stdDeviation={6} />
-        </Filter>
-      </Defs>
-      <G filter="url(#roomSteamBlur)" stroke={palette.steam} strokeLinecap="round" fill="none">
-        <G transform={`scale(${width / 440} ${height / 956})`}>
-          <Path d="M150 956c-18-60 26-92 6-150s-30-80-6-130" strokeWidth={7} strokeOpacity={0.07} />
-          <Path d="M292 956c20-50-22-86-2-136s28-70 8-118" strokeWidth={9} strokeOpacity={0.06} />
-          <Path d="M222 956c-12-40 18-70 4-110" strokeWidth={5} strokeOpacity={0.08} />
-        </G>
-      </G>
-    </Svg>
-  );
+  return <Image source={roomSteam} style={[StyleSheet.absoluteFill, { width, height }]} resizeMode="stretch" />;
 });
 
 /** Change the target (10, 15, 20, 30) and the sauna type with one tap each, in the room. */
@@ -633,11 +662,11 @@ const styles = StyleSheet.create({
   arc: { position: 'absolute' },
   numerals: { alignItems: 'center', marginTop: space.s40 },
   numeralsCooling: { opacity: 0.72 },
-  sub: { flexDirection: 'row', alignItems: 'center', gap: space.s8, paddingVertical: space.s4, marginTop: space.s8 },
+  sub: { flexDirection: 'row', alignItems: 'center', gap: space.s8, paddingVertical: space.s4 },
   subText: { color: alpha.steam62 },
   line: { color: alpha.steam72, textAlign: 'center', paddingHorizontal: layout.inset },
   loylyWrap: { alignItems: 'center', marginTop: space.s32 },
-  loyly: { width: '47%', borderRadius: radii.button, borderCurve: 'continuous', overflow: 'hidden' },
+  loyly: { width: '47%' },
   gap: { flexShrink: 1, minHeight: space.s24 },
   actions: { flexDirection: 'row', alignItems: 'center', paddingHorizontal: layout.inset },
   actionLeft: { flex: 1, alignItems: 'flex-start' },

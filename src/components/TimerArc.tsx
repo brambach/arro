@@ -1,7 +1,8 @@
 import React, { memo, useEffect, useMemo } from 'react';
 import { StyleSheet } from 'react-native';
 import Animated, { useAnimatedStyle, useSharedValue, withTiming } from 'react-native-reanimated';
-import Svg, { Circle, Defs, FeGaussianBlur, Filter, G, RadialGradient, Stop } from 'react-native-svg';
+import Svg, { Circle, Defs, RadialGradient, Stop } from 'react-native-svg';
+import { smoothStops } from './SoftEllipse';
 import { gradients, palette } from '../theme/tokens';
 import { moments, timing, useReduceMotion } from '../theme/motion';
 import { ARC_DOTS, dotAngle, isMajorDot } from '../state/timerRoom';
@@ -28,9 +29,14 @@ type Props = {
 const DOT = 2.6;
 const MAJOR = 4.2;
 const MOCK_RADIUS = 176;
-/** Each lit dot's halo: this much wider than the dot, blurred. The mockup's 2.2 at 0.45 reads fainter on a phone. */
-const GLOW = 3;
-const GLOW_OPACITY = 0.55;
+/**
+ * Each lit dot's halo: the mockup blurs a glow-colored disc 2.2 pt wider than
+ * the dot (2.4 pt blur). An SVG blur took about 200 ms to draw the first time,
+ * enough to hold up the door, so the halo is a radial gradient over the same
+ * reach instead.
+ */
+const HALO = 7.5;
+const haloStops = smoothStops(palette.glow, 0.62);
 /** Room around the ring for the glow. */
 const PAD = 14;
 /** The space around the ring inside the arc's box. */
@@ -83,15 +89,15 @@ const ArcArt = memo(function ArcArt({ dots, size, lit }: { dots: Dot[]; size: nu
             <Stop key={s.offset} offset={s.offset} stopColor={s.color} />
           ))}
         </RadialGradient>
-        <Filter id="arcGlow" x="-50%" y="-50%" width="200%" height="200%">
-          <FeGaussianBlur stdDeviation={2.4} />
-        </Filter>
+        <RadialGradient id="arcHalo" cx="50%" cy="50%" r="50%">
+          {haloStops.map((st) => (
+            <Stop key={st.offset} offset={st.offset} stopColor={st.color} stopOpacity={st.opacity} />
+          ))}
+        </RadialGradient>
       </Defs>
-      <G filter="url(#arcGlow)">
-        {dots.slice(0, lit).map((d, i) => (
-          <Circle key={i} cx={d.x} cy={d.y} r={d.r + GLOW} fill={palette.glow} opacity={GLOW_OPACITY} />
-        ))}
-      </G>
+      {dots.slice(0, lit).map((d, i) => (
+        <Circle key={`h${i}`} cx={d.x} cy={d.y} r={d.r + HALO} fill="url(#arcHalo)" />
+      ))}
       {dots.map((d, i) =>
         i < lit ? (
           <Circle key={i} cx={d.x} cy={d.y} r={d.r} fill="url(#arcDot)" />
@@ -106,7 +112,7 @@ const ArcArt = memo(function ArcArt({ dots, size, lit }: { dots: Dot[]; size: nu
 /** The newest lit dot, in its own layer so it can ignite without redrawing the arc. */
 function LeadDot({ dot, ignite }: { dot: Dot; ignite: boolean }) {
   const reduceMotion = useReduceMotion();
-  const box = (dot.r + 8) * 2;
+  const box = (dot.r + HALO) * 2;
   const s = useSharedValue(ignite && reduceMotion === false ? moments.checkInIgnite.fromScale : 1);
   const o = useSharedValue(ignite ? 0 : 1);
   useEffect(() => {
@@ -126,11 +132,13 @@ function LeadDot({ dot, ignite }: { dot: Dot; ignite: boolean }) {
               <Stop key={st.offset} offset={st.offset} stopColor={st.color} />
             ))}
           </RadialGradient>
-          <Filter id="leadGlow" x="-50%" y="-50%" width="200%" height="200%">
-            <FeGaussianBlur stdDeviation={2.4} />
-          </Filter>
+          <RadialGradient id="leadHalo" cx="50%" cy="50%" r="50%">
+            {haloStops.map((st) => (
+              <Stop key={st.offset} offset={st.offset} stopColor={st.color} stopOpacity={st.opacity} />
+            ))}
+          </RadialGradient>
         </Defs>
-        <Circle cx={box / 2} cy={box / 2} r={dot.r + GLOW} fill={palette.glow} opacity={GLOW_OPACITY} filter="url(#leadGlow)" />
+        <Circle cx={box / 2} cy={box / 2} r={dot.r + HALO} fill="url(#leadHalo)" />
         <Circle cx={box / 2} cy={box / 2} r={dot.r} fill="url(#leadDot)" />
       </Svg>
     </Animated.View>
