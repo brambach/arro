@@ -8,7 +8,8 @@ const reduce = matchMedia('(prefers-reduced-motion: reduce)').matches;
 
 // The first settle. Nothing moves until the fonts are ready (or 1.5 s has
 // passed, so a slow font never holds the page). Then wait for a painted
-// frame, and start on the one after it.
+// frame, hold the still for a beat, and settle.
+const HOLD_MS = 200;
 const fontsReady = Promise.race([
   document.fonts ? document.fonts.ready : Promise.resolve(),
   new Promise((resolve) => setTimeout(resolve, 1500)),
@@ -18,7 +19,9 @@ const domReady = new Promise((resolve) => {
   else resolve();
 });
 Promise.all([fontsReady, domReady]).then(() => {
-  requestAnimationFrame(() => requestAnimationFrame(() => root.classList.add('go')));
+  requestAnimationFrame(() => requestAnimationFrame(() => {
+    setTimeout(() => root.classList.add('go'), reduce ? 0 : HOLD_MS);
+  }));
 });
 
 domReady.then(() => {
