@@ -293,8 +293,8 @@ set local role authenticated;
 set local request.jwt.claims = '{"sub": "d1000000-0000-0000-0000-000000000000", "role": "authenticated"}';
 select results_eq(
   $$ select display_name, colour, timezone from public.join_family('TEST42', 'D1', 'America/Los_Angeles') $$,
-  $$ values ('D1', '#4F97CF', 'America/Los_Angeles') $$,
-  'joining with the code adds D1 with the next palette colour');
+  $$ values ('D1', '#5F8794', 'America/Los_Angeles') $$,
+  'joining with the code adds D1 with the first unused palette colour (lake, the Saunafam palette)');
 
 select lives_ok('select public.delete_my_account()', 'D1 can delete their account');
 
