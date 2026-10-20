@@ -9,8 +9,7 @@ import { TextAction } from '../components/TextAction';
 import { PREVIEW_SCENARIOS } from '../data/preview';
 import { RootStackScreenProps } from '../navigation/types';
 import { useApp, useView } from '../state/AppState';
-import { dayKey } from '../state/dates';
-import { useDevOverrides } from '../state/devTools';
+import { setDevOverrides, useDevOverrides } from '../state/devTools';
 import { HEALTH_COPY, useHealthSetting } from '../state/healthSettings';
 import { PreviewBehavior } from '../state/purchases';
 import { PLUS_PAYER_WARNING, plusNotice, remindersValue, signOutBody } from '../state/settingsCopy';
@@ -74,6 +73,19 @@ export function SettingsScreen({ navigation }: RootStackScreenProps<'Settings'>)
   const [line, setLine] = useState<string | null>(null);
   const me = app.session?.me;
 
+  // Dev builds: a deep link can open a confirm for captures (src/navigation/DevLinks.tsx).
+  const devConfirm =
+    __DEV__ && dev.settingsConfirm
+      ? dev.settingsConfirm === 'signOut'
+        ? ('signOut' as const)
+        : { kind: 'delete' as const, paysForPlus: dev.paysForPlus }
+      : null;
+  const shown = confirm ?? devConfirm;
+  const closeConfirm = () => {
+    setConfirm(null);
+    setDevOverrides({ settingsConfirm: null });
+  };
+
   const open = (url: string) => Linking.openURL(url).catch(() => setLine(SETTINGS_COPY.linkFailed(url)));
 
   const askDelete = async () => {
@@ -87,7 +99,7 @@ export function SettingsScreen({ navigation }: RootStackScreenProps<'Settings'>)
       await app.signOut();
     } finally {
       setBusy(false);
-      setConfirm(null);
+      closeConfirm();
     }
   };
 
@@ -95,9 +107,9 @@ export function SettingsScreen({ navigation }: RootStackScreenProps<'Settings'>)
     setBusy(true);
     try {
       await app.deleteAccount();
-      setConfirm(null);
+      closeConfirm();
     } catch {
-      setConfirm(null);
+      closeConfirm();
       setLine(SETTINGS_COPY.deleteFailed);
     } finally {
       setBusy(false);
@@ -118,7 +130,7 @@ export function SettingsScreen({ navigation }: RootStackScreenProps<'Settings'>)
     );
   };
 
-  const notice = view.plus.visible ? plusNotice(view.plus, dayKey()) : null;
+  const notice = view.plus.visible ? plusNotice(view.plus, view.todayKey) : null;
 
   return (
     <SubScreen title={SETTINGS_COPY.title} onBack={() => navigation.goBack()}>
@@ -184,22 +196,22 @@ export function SettingsScreen({ navigation }: RootStackScreenProps<'Settings'>)
       {__DEV__ ? <DevSection navigation={navigation} /> : null}
 
       <ConfirmSheet
-        visible={confirm === 'signOut'}
+        visible={shown === 'signOut'}
         title={SETTINGS_COPY.signOutTitle}
         body={signOutBody(!!view.timer, view.today.waiting)}
         confirmLabel={SETTINGS_COPY.signOut}
         onConfirm={doSignOut}
-        onCancel={() => setConfirm(null)}
+        onCancel={closeConfirm}
         busy={busy}
       />
       <ConfirmSheet
-        visible={typeof confirm === 'object' && confirm !== null}
+        visible={typeof shown === 'object' && shown !== null}
         title={SETTINGS_COPY.deleteTitle}
-        warning={typeof confirm === 'object' && confirm?.paysForPlus ? PLUS_PAYER_WARNING : undefined}
+        warning={typeof shown === 'object' && shown?.paysForPlus ? PLUS_PAYER_WARNING : undefined}
         body={SETTINGS_COPY.deleteBody}
         confirmLabel={SETTINGS_COPY.deleteAccount}
         onConfirm={doDelete}
-        onCancel={() => setConfirm(null)}
+        onCancel={closeConfirm}
         busy={busy}
       />
     </SubScreen>

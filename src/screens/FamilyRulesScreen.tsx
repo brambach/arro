@@ -8,6 +8,7 @@ import { SolidButton } from '../components/SolidButton';
 import { GroupLabel, GroupNote, SubScreen } from '../components/SubScreen';
 import { RootStackScreenProps } from '../navigation/types';
 import { useApp, useView } from '../state/AppState';
+import { useDevOverrides } from '../state/devTools';
 import { rhythmSummary } from '../state/buildView';
 import { GOAL_CHOICES, MINUTE_CHOICES } from './onboarding/steps';
 
@@ -44,12 +45,15 @@ export function FamilyRulesScreen({ navigation }: RootStackScreenProps<'FamilyRu
   const view = useView();
   const { setRules } = useApp();
   const r = view.rules;
+  const dev = useDevOverrides();
+  const canEdit = r.canEdit && !dev.asMember;
   const target = r.pendingChange ?? { goal: r.goal, minMinutes: r.minMinutes };
   const [goal, setGoal] = useState(target.goal);
   const [minMinutes, setMinMinutes] = useState(target.minMinutes);
   const [busy, setBusy] = useState(false);
   const [line, setLine] = useState<{ text: string; tone: 'stone' | 'coal' } | null>(null);
-  const founder = view.allMembers.find((m) => !m.invited)?.name ?? 'The founder';
+  // (The dev-only member view skips you, since you're the preview's founder.)
+  const founder = view.allMembers.find((m) => !m.invited && !(dev.asMember && m.isMe))?.name ?? 'The founder';
   const changed = goal !== target.goal || minMinutes !== target.minMinutes;
 
   const save = async () => {
@@ -85,7 +89,7 @@ export function FamilyRulesScreen({ navigation }: RootStackScreenProps<'FamilyRu
     </>
   );
 
-  if (!r.canEdit) {
+  if (!canEdit) {
     return (
       <SubScreen title={FAMILY_RULES_COPY.title} lead={FAMILY_RULES_COPY.leadReadOnly(founder)} onBack={() => navigation.goBack()}>
         {summary}
@@ -98,7 +102,6 @@ export function FamilyRulesScreen({ navigation }: RootStackScreenProps<'FamilyRu
       title={FAMILY_RULES_COPY.title}
       lead={FAMILY_RULES_COPY.lead}
       onBack={() => navigation.goBack()}
-      footer={<SolidButton title={FAMILY_RULES_COPY.save} onPress={save} disabled={!changed || busy} />}
     >
       {summary}
       <Text style={[type.bodyStrong, styles.question]} accessibilityRole="header">
@@ -119,6 +122,7 @@ export function FamilyRulesScreen({ navigation }: RootStackScreenProps<'FamilyRu
         value={minMinutes}
         onChange={setMinMinutes}
       />
+      <SolidButton title={FAMILY_RULES_COPY.save} onPress={save} disabled={!changed || busy} style={styles.save} />
       {line ? <Text style={[type.bodySmall, styles.line, line.tone === 'coal' && styles.coal]}>{line.text}</Text> : null}
     </SubScreen>
   );
@@ -128,4 +132,5 @@ const styles = StyleSheet.create({
   question: { marginTop: space.s32, marginBottom: space.s12, marginHorizontal: space.s8 },
   line: { color: palette.smoke, marginTop: space.s16, marginHorizontal: space.s8 },
   coal: { color: palette.coal },
+  save: { marginTop: space.s32 },
 });

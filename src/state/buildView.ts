@@ -263,6 +263,8 @@ export interface AppView {
   status: 'ready' | 'loading' | 'error';
   offline: boolean;
   updateRequired: boolean;
+  /** Today on the view's clock ("2026-10-22"): the phone's day, or the preview's. */
+  todayKey: string;
   familyId: string;
   familyName: string;
   joinCode: string;
@@ -876,6 +878,7 @@ export function buildView(input: ViewInput): AppView {
     status: input.status ?? 'ready',
     offline: input.offline ?? false,
     updateRequired: input.appBuild < input.config.minIosBuild,
+    todayKey: today,
     familyId: family.id,
     familyName: family.name,
     joinCode: family.joinCode,

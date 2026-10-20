@@ -12,9 +12,13 @@ export interface DevOverrides {
   renamedSheet: 'founder' | 'member' | null;
   /** Answer delete-account's dry run with "you pay for Plus". */
   paysForPlus: boolean;
+  /** See Family rules as someone who didn't start the family. */
+  asMember: boolean;
+  /** Open one of Settings' confirms straight away. */
+  settingsConfirm: 'signOut' | 'delete' | null;
 }
 
-const DEFAULTS: DevOverrides = { appleButton: false, renamedSheet: null, paysForPlus: false };
+const DEFAULTS: DevOverrides = { appleButton: false, renamedSheet: null, paysForPlus: false, asMember: false, settingsConfirm: null };
 
 let state: DevOverrides = DEFAULTS;
 const listeners = new Set<() => void>();

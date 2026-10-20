@@ -11,7 +11,7 @@ import { RootStackScreenProps } from '../navigation/types';
 import { useApp, useView } from '../state/AppState';
 import { BreakError } from '../state/backend';
 import { nextBreakDay } from '../state/breaks';
-import { dayKey, untilLabel } from '../state/dates';
+import { addDays, untilLabel } from '../state/dates';
 import { BreakKey, breakOptions } from '../state/settingsCopy';
 
 export const TAKE_BREAK_COPY = {
@@ -23,6 +23,7 @@ export const TAKE_BREAK_COPY = {
   full: (from: string | null) =>
     `You’ve had 14 days of breaks in the last 30, which is the most there can be.${from ? ` You can take another from ${from}.` : ''}`,
   doesntFit: 'Over the limit right now',
+  longest: 'This break is as long as a break can be. It ends on its own, or end it now below.',
   start: 'Start my break',
   change: 'Change my break',
   end: 'I’m back, end it now',
@@ -41,9 +42,11 @@ export const TAKE_BREAK_COPY = {
 export function TakeBreakScreen({ navigation }: RootStackScreenProps<'TakeBreak'>) {
   const { takeBreak, endBreak } = useApp();
   const view = useView();
-  const today = dayKey();
+  const today = view.todayKey;
   const options = breakOptions(view.myPauses, today, view.rules.weekStartsOn);
-  const firstFit = options.find((o) => o.fits)?.key ?? null;
+  // On a break, the length it already has is picked; otherwise the first that fits.
+  const current = view.myBreak ? options.find((o) => o.fits && addDays(today, o.days - 1) === view.myBreak?.endsOn) : undefined;
+  const firstFit = current?.key ?? options.find((o) => o.fits)?.key ?? null;
   const [picked, setPicked] = useState<BreakKey | null>(null);
   const chosen = options.find((o) => o.key === (picked ?? firstFit) && o.fits) ?? null;
   const [busy, setBusy] = useState(false);
@@ -77,14 +80,16 @@ export function TakeBreakScreen({ navigation }: RootStackScreenProps<'TakeBreak'
           <SolidButton
             title={view.myBreak ? TAKE_BREAK_COPY.change : TAKE_BREAK_COPY.start}
             onPress={() => chosen && run(() => takeBreak(chosen.days))}
-            disabled={busy || !chosen}
+            disabled={busy || !chosen || chosen.key === current?.key}
           />
           {view.myBreak ? <TextAction label={TAKE_BREAK_COPY.end} onPress={() => setConfirmEnd(true)} style={styles.end} /> : null}
         </>
       }
     >
       {nothingFits ? (
-        <Text style={[type.body, styles.full]}>{TAKE_BREAK_COPY.full(from ? untilLabel(from, today) : null)}</Text>
+        <Text style={[type.body, styles.full]}>
+          {view.myBreak ? TAKE_BREAK_COPY.longest : TAKE_BREAK_COPY.full(from ? untilLabel(from, today) : null)}
+        </Text>
       ) : null}
       <ChoiceList
         accessibilityLabel="How long"

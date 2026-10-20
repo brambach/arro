@@ -60,7 +60,7 @@ export function WelcomeScreen({ navigation }: RootStackScreenProps<'Welcome'>) {
         </View>
       ) : null}
 
-      <View style={[styles.column, { paddingTop: insets.top + space.s40, paddingBottom: insets.bottom + space.s16 }]}>
+      <View style={[styles.column, { paddingTop: insets.top + space.s40, paddingBottom: insets.bottom + space.s8 }]}>
         {matchSplash ? <View style={styles.flex} /> : <View style={styles.markTop}>{mark}</View>}
         {matchSplash ? null : <View style={styles.flexSmall} />}
 
@@ -119,9 +119,9 @@ const styles = StyleSheet.create({
   flexSmall: { flex: 1, minHeight: space.s32 },
   center: { textAlign: 'center' },
   family: { color: palette.smoke, marginTop: space.s12 },
-  actions: { marginTop: space.s40 },
+  actions: { marginTop: space.s24 },
   invite: { marginTop: space.s12 },
-  signIn: { marginTop: space.s8, paddingVertical: space.s12 },
+  signIn: { paddingVertical: space.s8 },
   signInWord: { fontWeight: '600', color: palette.char },
   pressed: { opacity: 0.55 },
 });

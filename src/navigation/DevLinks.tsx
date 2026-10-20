@@ -15,7 +15,8 @@ import { RootStackParamList } from './types';
  *   <scheme>://dev/onboarding/Rhythm?role=founder&name=Sam&family=Sunday%20sauna
  *   <scheme>://dev/screen/TakeBreak?preview=onBreak
  *   <scheme>://dev/sheet/renamed?as=member
- *   <scheme>://dev/flags?apple=1&paysForPlus=1
+ *   <scheme>://dev/confirm/signOut (or delete), on Settings
+ *   <scheme>://dev/flags?apple=1&paysForPlus=1&member=1
  *   <scheme>://dev/reset
  *
  * `onboarding/<route>` signs out first (in the preview that only clears the
@@ -59,7 +60,7 @@ export function DevLinks({ navigation }: { navigation: Nav }) {
         return;
       }
       if (kind === 'flags') {
-        setDevOverrides({ appleButton: q.apple === '1', paysForPlus: q.paysForPlus === '1' });
+        setDevOverrides({ appleButton: q.apple === '1', paysForPlus: q.paysForPlus === '1', asMember: q.member === '1' });
         return;
       }
       if (kind === 'onboarding' && target) {
@@ -80,7 +81,8 @@ export function DevLinks({ navigation }: { navigation: Nav }) {
         const path = PATHS[role];
         const at = path.indexOf(target as keyof RootStackParamList);
         const before = at < 0 ? [] : path.slice(0, at + 1);
-        const routes = target === 'Welcome' ? [{ name: 'Welcome' as const }] : [{ name: 'Welcome' as const }, ...before.map((name) => ({ name }))];
+        const steps = q.returning === '1' ? [{ name: 'SignIn', params: { returning: true } }] : before.map((name) => ({ name }));
+        const routes = target === 'Welcome' ? [{ name: 'Welcome' }] : [{ name: 'Welcome' }, ...steps];
         await wait(100);
         if (navigation.isReady()) navigation.reset({ index: routes.length - 1, routes } as never);
         return;
@@ -96,6 +98,8 @@ export function DevLinks({ navigation }: { navigation: Nav }) {
         const preview = q.preview && PREVIEW_SCENARIOS.some((s) => s.id === q.preview) ? (q.preview as PreviewScenarioId) : 'family';
         a().setPreview(preview);
         await wait(150);
+        // The update screen is the only route then; there's nothing to open.
+        if (preview === 'updateRequired') return;
         const routes =
           target === 'Main'
             ? [{ name: 'Main' }]
@@ -103,6 +107,10 @@ export function DevLinks({ navigation }: { navigation: Nav }) {
               ? [{ name: 'Main' }, { name: 'Settings' }]
               : [{ name: 'Main' }, { name: 'Settings' }, { name: target }];
         if (navigation.isReady()) navigation.reset({ index: routes.length - 1, routes } as never);
+        return;
+      }
+      if (kind === 'confirm' && (target === 'signOut' || target === 'delete')) {
+        setDevOverrides({ settingsConfirm: target });
         return;
       }
       if (kind === 'sheet' && target === 'renamed') {
