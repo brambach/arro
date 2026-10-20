@@ -3,75 +3,77 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-  <title>Join your family · Arro</title>
-  <meta name="description" content="You've been invited to a family on Arro. Here's how to join.">
-  <meta name="theme-color" content="#F5F1E8">
-  <meta name="robots" content="noindex">
-  <link rel="icon" href="../favicon.png" sizes="48x48" type="image/png">
-  <link rel="apple-touch-icon" href="../apple-touch-icon.png">
-  <link rel="stylesheet" href="../styles.css">
-  <script src="../site.js"></script>
-  <script src="../vendor/paper-shaders-0.0.81.min.js" defer></script>
-  <script src="../backdrop.js" defer></script>
+  <title>You’re invited · Saunafam</title>
+  <meta name="description" content="Someone saved you a spot on the bench. Get Saunafam, tap I have an invite, and enter the code from your invite.">
+  <meta name="theme-color" content="#EFE6D8">
+  <!-- Every /join/<code> page folds into this one for search engines. -->
+  <link rel="canonical" href="https://saunafam.com/join/">
+  <meta property="og:type" content="website">
+  <meta property="og:site_name" content="Saunafam">
+  <meta property="og:url" content="https://saunafam.com/join/">
+  <meta property="og:title" content="You're invited to a family on Saunafam">
+  <meta property="og:description" content="Someone saved you a spot on the bench. Get Saunafam, tap I have an invite, and enter the code.">
+  <meta property="og:image" content="https://saunafam.com/og/join.png">
+  <meta property="og:image:width" content="1200">
+  <meta property="og:image:height" content="630">
+  <meta property="og:image:alt" content="You're invited to a family on Saunafam. A sauna stone with a warm ember glow.">
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:title" content="You're invited to a family on Saunafam">
+  <meta name="twitter:description" content="Someone saved you a spot on the bench. Get Saunafam, tap I have an invite, and enter the code.">
+  <meta name="twitter:image" content="https://saunafam.com/og/join.png">
+  <link rel="icon" href="/favicon.ico" sizes="32x32">
+  <link rel="icon" href="/favicon.svg" type="image/svg+xml">
+  <link rel="apple-touch-icon" href="/apple-touch-icon.png">
+  <link rel="preload" href="/fonts/fraunces-soft.woff2" as="font" type="font/woff2" crossorigin>
+  <link rel="stylesheet" href="/styles.css">
+  <script src="/site.js"></script>
 </head>
 <body>
   <a class="skip" href="#main">Skip to content</a>
 
   <header class="site-header">
     <div class="wrap">
-      <a class="brand" href="../" aria-label="Arro home"><img src="../icon-96.png" alt="" width="36" height="36">Arro</a>
+      <a class="wordmark" href="/" aria-label="Saunafam home">saunafam</a>
       <nav class="site-nav" aria-label="Site">
-        <a href="../support/">Support</a>
+        <a href="/support/">Support</a>
       </nav>
     </div>
   </header>
 
   <main id="main" class="doc">
     <div class="wrap">
-      <div class="doc-head reveal">
-        <p class="eyebrow">You’ve been invited</p>
-        <h1>Join your family on Arro</h1>
-        <p class="lede">Your family keeps one streak by moving a little each day, any way they like. Joining takes a minute.</p>
+      <div class="doc-head">
+        <h1 class="display">You’re invited to a family on Saunafam</h1>
+        <p class="lede settle s1">They keep a weekly sauna streak together, and they saved you a spot on the bench.</p>
       </div>
 
-      <div class="code" hidden>
-        <p>Your invite code</p>
-        <output id="invite-code"></output>
+      <div class="invite card settle s2">
+        <div data-code-wrap hidden>
+          <p class="caps">Your invite code</p>
+          <output class="code-big" data-code hidden></output>
+        </div>
+        <p class="fine" data-no-code>Your code is in the message that brought you here. It’s eight letters and numbers.</p>
+        <a class="button" href="mailto:support@saunafam.com?subject=TestFlight%20invite" data-testflight>Get the app</a>
+        <p class="fine">Saunafam is free for iPhone, in beta on TestFlight.</p>
       </div>
 
-      <ol class="steps">
-        <li>
-          <div>
-            <h3>Get Arro on your iPhone</h3>
-            <p>Arro is coming soon to the App Store. Until then, ask whoever invited you how to install it.</p>
-          </div>
-        </li>
-        <li>
-          <div>
-            <h3>Tap “I have an invite”</h3>
-            <p>Open Arro, tap “I have an invite” and sign in with Apple.</p>
-          </div>
-        </li>
-        <li>
-          <div>
-            <h3>Enter the code</h3>
-            <p>Type the code from the message. That’s it, you’re in.</p>
-          </div>
-        </li>
+      <ol class="join-steps">
+        <li><div><h2>Get Saunafam on your iPhone</h2><p>Install it from the button above.</p></div></li>
+        <li><div><h2>Tap “I have an invite”</h2><p>Open Saunafam, tap “I have an invite” and sign in with Apple.</p></div></li>
+        <li><div><h2>Enter the code</h2><p>Type the code from your invite, and you’re in. Codes last 14 days, so ask for a new one if yours has run out.</p></div></li>
       </ol>
-
-      <p class="note">Codes last 14 days. If yours has run out, ask for a new one. Stuck? See <a href="../support/">support</a>.</p>
     </div>
   </main>
 
   <footer class="site-footer">
     <div class="wrap">
-      <a class="brand" href="../" aria-label="Arro home"><img src="../icon-96.png" alt="" width="28" height="28">Arro</a>
+      <a class="wordmark small" href="/" aria-label="Saunafam home">saunafam</a>
       <nav aria-label="Footer">
-        <a href="../privacy/">Privacy</a>
-        <a href="../support/">Support</a>
+        <a href="mailto:support@saunafam.com">support@saunafam.com</a>
+        <a href="/privacy/">Privacy</a>
+        <a href="/support/">Support</a>
       </nav>
-      <p>© 2026 Bryce Rambach</p>
+      <p>Made by Bryce Rambach</p>
     </div>
   </footer>
 </body>

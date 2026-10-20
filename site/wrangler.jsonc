@@ -1,8 +1,9 @@
-// Arro's website: a Worker with static assets, on arrofamily.com.
-// Files in public/ are served as they are. worker.js runs first to send
-// www to the apex and to serve /join/<code> links. See README.md.
+// Saunafam's website: a Worker with static assets, on saunafam.com.
+// Files in public/ are served as they are. worker.js runs first: it sends
+// arrofamily.com and www to https://saunafam.com and serves /join/<code>.
+// See README.md. Deploying is Bryce's step only.
 {
-  "name": "arrofamily",
+  "name": "saunafam",
   "main": "worker.js",
   "compatibility_date": "2026-10-01",
   "assets": {
@@ -13,7 +14,11 @@
     "not_found_handling": "404-page"
   },
   // Custom domains: Wrangler creates the DNS records and certificates.
+  // The arrofamily.com pair stays so its 301 to saunafam.com keeps working
+  // (keep it for at least 12 months, to October 2027).
   "routes": [
+    { "pattern": "saunafam.com", "custom_domain": true },
+    { "pattern": "www.saunafam.com", "custom_domain": true },
     { "pattern": "arrofamily.com", "custom_domain": true },
     { "pattern": "www.arrofamily.com", "custom_domain": true }
   ],

@@ -1,0 +1,31 @@
+/* Shared look for the 1200 x 630 social cards. Rendered by render-og.mjs. */
+@font-face { font-family: "Fraunces"; src: url("../../public/fonts/fraunces-soft.woff2") format("woff2"); font-weight: 400 600; font-display: block; }
+* { box-sizing: border-box; margin: 0; padding: 0; }
+html, body { width: 1200px; height: 630px; overflow: hidden; }
+body {
+  position: relative;
+  background: #EFE6D8 url("../../public/art/wall.svg");
+  background-size: 560px 8px;
+  color: #221F1C;
+  font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", system-ui, sans-serif;
+  -webkit-font-smoothing: antialiased;
+}
+body::before {
+  content: ""; position: absolute; inset: 0;
+  background: radial-gradient(60% 50% at 88% 10%, rgba(242,163,94,.18), transparent 70%), radial-gradient(50% 50% at 0% 80%, rgba(248,244,238,.7), transparent 70%);
+}
+.disp { font-family: "Fraunces", serif; font-variation-settings: "SOFT" 100, "WONK" 0; }
+.mark { position: absolute; left: 80px; top: 64px; font-size: 40px; line-height: 44px; font-weight: 560; letter-spacing: -0.8px; }
+.head { position: absolute; left: 80px; top: 200px; width: 600px; font-size: 80px; line-height: 80px; font-weight: 560; letter-spacing: -2px; }
+.sub { position: absolute; left: 80px; bottom: 72px; width: 560px; font-size: 26px; line-height: 36px; color: #55504A; }
+.card { position: absolute; background: #F8F4EE; border-radius: 36px; box-shadow: 0 0 0 1px rgba(34,31,28,.08), 0 2px 3px rgba(34,31,28,.05), 0 24px 56px -24px rgba(34,31,28,.30); }
+.wall { display: flex; flex-direction: column-reverse; gap: 6px; }
+.slat { height: 20px; border-radius: 7px; background-size: 100% 100%; }
+.kept { background-image: url("../../public/art/grain-kept-0.svg"), linear-gradient(180deg,#D4643A,#C9542A 50%,#B84A24); box-shadow: inset 0 1px 0 rgba(255,214,170,.45), inset 0 -1px 0 rgba(90,30,10,.25); }
+.kept.g1 { background-image: url("../../public/art/grain-kept-1.svg"), linear-gradient(180deg,#D1613A,#C55229 50%,#B34823); }
+.kept.g2 { background-image: url("../../public/art/grain-kept-2.svg"), linear-gradient(180deg,#D86A3E,#CD582C 50%,#BA4C26); }
+.kept.g3 { background-image: url("../../public/art/grain-kept-3.svg"), linear-gradient(180deg,#CF5F36,#C24F27 50%,#B04621); }
+.frozen { background-image: url("../../public/art/frost.svg"), linear-gradient(180deg,#6C94A1,#5F8794 50%,#557C89); }
+.wall .slat:nth-child(n+5) { margin: 0 5%; }
+.wall .slat:nth-child(n+9) { margin: 0 10%; }
+.wall .bench { margin-bottom: 12px; }

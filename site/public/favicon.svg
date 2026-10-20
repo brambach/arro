@@ -1,0 +1,11 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64">
+  <!-- Temporary. The icon pipeline (scripts/generate-icons.mjs) replaces this file. -->
+  <defs>
+    <radialGradient id="g" cx=".5" cy=".5" r=".5"><stop offset="0" stop-color="#F7A45C" stop-opacity=".95"/><stop offset=".45" stop-color="#E0703A" stop-opacity=".5"/><stop offset="1" stop-color="#C9542A" stop-opacity="0"/></radialGradient>
+    <radialGradient id="s" cx="27" cy="30" r="22" gradientUnits="userSpaceOnUse"><stop offset="0" stop-color="#4B4540"/><stop offset=".55" stop-color="#2B2723"/><stop offset="1" stop-color="#1D1A17"/></radialGradient>
+  </defs>
+  <rect width="64" height="64" rx="14" fill="#EFE6D8"/>
+  <ellipse cx="32" cy="45" rx="25" ry="10" fill="url(#g)"/>
+  <path d="M12 38c0-7 9-11 20-11s20 4 20 11c0 6-9 8.5-20 8.5S12 44 12 38z" fill="url(#s)"/>
+  <path d="M27 21c-2-2.4 2-4 0-7M37 21c-2-2.4 2-4 0-7" stroke="#C7B293" stroke-width="2.6" stroke-linecap="round" fill="none"/>
+</svg>
