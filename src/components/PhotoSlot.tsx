@@ -6,7 +6,7 @@ import { PhotoSource } from '../data/types';
 
 /**
  * Photo area (milestone). Renders the image when a uri is set; otherwise a
- * flat neutral placeholder — never a broken image. Drop real uris in later.
+ * flat neutral placeholder - never a broken image. Drop real uris in later.
  */
 type Props = {
   uri?: PhotoSource;

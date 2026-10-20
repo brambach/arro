@@ -1,6 +1,6 @@
 import { useCallback, useState } from 'react';
 import { useApp } from './AppState';
-import { inviteMessage, shareInvite } from './invite';
+import { inviteLink, inviteMessage, shareInvite } from './invite';
 
 /**
  * The invite step, shared by onboarding and the in-app Invite screen: open the share
@@ -16,6 +16,7 @@ export function useSendInvite() {
   const family = session && view ? view.familyName : draft.familyName || 'our family';
   const code = session && view ? view.joinCode : draft.joinCode;
   const message = inviteMessage(sender, family, code);
+  const link = inviteLink(code);
 
   /** Remember who the invite was for. */
   const commit = useCallback(async () => {
@@ -26,15 +27,15 @@ export function useSendInvite() {
 
   /** Opens the share sheet. True once it was sent. Where there's no share sheet (web preview) it shows the message instead. */
   const send = useCallback(async () => {
-    const result = await shareInvite(message);
+    const result = await shareInvite(message, link);
     if (result === 'unavailable') {
-      setFallback(message);
+      setFallback(`${message} ${link}`);
       return false;
     }
     if (result === 'dismissed') return false;
     await commit();
     return true;
-  }, [message, commit]);
+  }, [message, link, commit]);
 
-  return { name, setName, code, message, fallback, send, commit };
+  return { name, setName, code, message, link, fallback, send, commit };
 }

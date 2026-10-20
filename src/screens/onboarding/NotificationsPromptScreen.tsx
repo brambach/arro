@@ -1,103 +1,101 @@
 import React, { useState } from 'react';
 import { StyleSheet, Text, View } from 'react-native';
-import { colors } from '../../theme/tokens';
+import { depth, palette, radii, space } from '../../theme/tokens';
 import { type } from '../../theme/typography';
 import { Card } from '../../components/Card';
-import { ChoiceRow } from '../../components/ChoiceRow';
-import { BellIcon } from '../../components/Icons';
-import { OnboardingFrame } from '../../components/OnboardingFrame';
+import { Icon } from '../../components/Icon';
+import { StepScreen } from '../../components/StepScreen';
 import { useApp } from '../../state/AppState';
 import { InviteError } from '../../state/backend';
-import { showError } from '../../state/confirm';
 import { requestNotificationPermission } from '../../state/notifications';
 import { RootStackScreenProps } from '../../navigation/types';
 import { stepOf } from './steps';
-import { clockTimeLabel } from '../../state/reminders';
+
+export const NOTIFICATIONS_PROMPT_COPY = {
+  title: 'Hear from your family?',
+  subtitle: 'Saunafam tells you when someone has a sauna, cheers you on or joins, and on Saturday who could use a cheer.',
+  calm: 'No red badges and no countdowns. Turn any of it off in Settings.',
+  reminders: 'Your reminders need this too.',
+  allow: 'Turn on notifications',
+  notNow: 'Not now',
+  errorTitle: 'Couldn’t join yet.',
+  offline: 'Check your connection and try again.',
+  newCode: 'Ask your family for a new code.',
+};
 
 /**
- * Pre-prompt: explains what the family's notifications are before iOS asks. The ask
- * is for cheers, nudges and joins; the daily reminder is a separate choice on the
- * screen. "Turn on notifications" shows iOS's sheet; either button finishes. A
- * "Don't Allow" there still finishes, and Settings > Notifications shows it's off.
+ * The notifications ask: what Saunafam sends, then iOS's own sheet. Either
+ * answer finishes onboarding. A "Don't Allow" still finishes, and reminders
+ * that can't arrive aren't kept.
  *
- * `returning`: an existing account signing in on a phone that hasn't been asked
- * yet. No reminder choice or steps then; it goes straight to the family.
+ * `returning`: an existing account signing in on a phone that hasn't been
+ * asked yet. No steps; it goes straight to the family.
  */
 export function NotificationsPromptScreen({ navigation, route }: RootStackScreenProps<'NotificationsPrompt'>) {
   const { draft, completeOnboarding, finishSignIn } = useApp();
   const returning = !!route.params?.returning;
-  const time = clockTimeLabel(draft.reminderTime);
-  const [reminder, setReminder] = useState(true);
   const [busy, setBusy] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
-  // An invitee has joined by now (Meet the family); this saves the reminder and opens the family.
   const finish = async (allow: boolean) => {
     if (busy) return;
     setBusy(true);
+    setError(null);
     try {
       const permission = allow ? await requestNotificationPermission() : null;
-      // A reminder that can't arrive isn't kept. The web preview has no notifications, so it keeps the choice.
+      // The web preview has no notifications, so it keeps the reminder choice.
       const canNotify = permission === 'granted' || permission === 'unavailable';
       if (returning) await finishSignIn();
-      else await completeOnboarding(canNotify && reminder);
+      else await completeOnboarding(canNotify && draft.remindersWanted);
     } catch (e) {
       setBusy(false);
-      showError(
-        'Couldn’t join yet',
+      const why =
         e instanceof InviteError
           ? e.kind === 'notFound'
-            ? `${e.message} Ask your family for a new code.`
+            ? `${e.message} ${NOTIFICATIONS_PROMPT_COPY.newCode}`
             : e.message
-          : 'Check your connection and try again.',
-      );
+          : NOTIFICATIONS_PROMPT_COPY.offline;
+      setError(`${NOTIFICATIONS_PROMPT_COPY.errorTitle} ${why}`);
     }
   };
 
   return (
-    <OnboardingFrame
-      title="Hear from your family?"
-      subtitle="Arro lets you know when someone in your family moves, cheers you on or joins, and at most once an evening who still has today."
+    <StepScreen
+      title={NOTIFICATIONS_PROMPT_COPY.title}
+      subtitle={NOTIFICATIONS_PROMPT_COPY.subtitle}
       step={returning ? undefined : stepOf(draft.role, 'NotificationsPrompt')}
       onBack={returning ? undefined : () => navigation.goBack()}
-      primaryLabel="Turn on notifications"
+      primaryLabel={NOTIFICATIONS_PROMPT_COPY.allow}
       primaryDisabled={busy}
       onPrimary={() => finish(true)}
-      secondaryLabel="Not now"
+      secondaryLabel={NOTIFICATIONS_PROMPT_COPY.notNow}
       onSecondary={() => finish(false)}
     >
       <Card padding={20} style={styles.card}>
         <View style={styles.bell}>
-          <BellIcon size={28} color={colors.inkSoft} />
+          <Icon name="bell" size={24} color={palette.coal} />
         </View>
-        <Text style={styles.body}>
-          No red badges, no countdowns. You can turn them off any time in Settings.
+        <Text style={[type.body, styles.text]}>
+          {NOTIFICATIONS_PROMPT_COPY.calm}
+          {!returning && draft.remindersWanted ? ` ${NOTIFICATIONS_PROMPT_COPY.reminders}` : ''}
         </Text>
       </Card>
-      {returning ? null : (
-        <View style={styles.choices}>
-          <ChoiceRow
-            title="Daily reminder too"
-            body={`At ${time}, only if you haven’t moved yet`}
-            selected={reminder}
-            onPress={() => setReminder(true)}
-          />
-          <ChoiceRow title="No daily reminder" selected={!reminder} onPress={() => setReminder(false)} />
-        </View>
-      )}
-    </OnboardingFrame>
+      {error ? <Text style={[type.bodySmall, styles.error]}>{error}</Text> : null}
+    </StepScreen>
   );
 }
 
 const styles = StyleSheet.create({
-  card: { alignItems: 'center' },
+  card: { flexDirection: 'row', alignItems: 'center', gap: space.s16 },
   bell: {
-    width: 56,
-    height: 56,
-    borderRadius: 28,
-    backgroundColor: colors.todayPillBg,
+    width: 48,
+    height: 48,
+    borderRadius: radii.round,
+    backgroundColor: palette.aspen,
+    boxShadow: depth.sunk,
     alignItems: 'center',
     justifyContent: 'center',
   },
-  body: { ...type.body, textAlign: 'center', marginTop: 12 },
-  choices: { marginTop: 18 },
+  text: { flex: 1 },
+  error: { color: palette.coal, marginTop: space.s16 },
 });

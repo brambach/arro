@@ -1,22 +1,33 @@
 import React from 'react';
 import { InvitePanel } from '../../components/InvitePanel';
-import { OnboardingFrame } from '../../components/OnboardingFrame';
+import { StepScreen } from '../../components/StepScreen';
 import { useSendInvite } from '../../state/useSendInvite';
 import { RootStackScreenProps } from '../../navigation/types';
-import { stepOf } from './steps';
+import { nextAfter, stepOf } from './steps';
 
-/** The main step for a founder: the streak only starts when a second person joins. */
+export const ONBOARDING_INVITE_COPY = {
+  title: 'Invite your family',
+  subtitle: 'The family streak starts when the second person joins, so this is the step that counts.',
+  send: 'Send invite',
+  done: 'Done',
+  later: 'I’ll do it later',
+};
+
+/** The founder's invite step: the share sheet with the message, the code and the link. */
 export function OnboardingInviteScreen({ navigation }: RootStackScreenProps<'OnboardingInvite'>) {
   const invite = useSendInvite();
-  const goNext = () => navigation.navigate('ReminderTime');
+  const goNext = () => {
+    const next = nextAfter('founder', 'OnboardingInvite');
+    if (next) navigation.navigate(next as 'ReminderTime');
+  };
 
   return (
-    <OnboardingFrame
-      title="Invite your family"
-      subtitle="Your streak starts when the second person joins, so this is the step that matters."
+    <StepScreen
+      title={ONBOARDING_INVITE_COPY.title}
+      subtitle={ONBOARDING_INVITE_COPY.subtitle}
       step={stepOf('founder', 'OnboardingInvite')}
       onBack={() => navigation.goBack()}
-      primaryLabel={invite.fallback ? 'Done' : 'Send invite'}
+      primaryLabel={invite.fallback ? ONBOARDING_INVITE_COPY.done : ONBOARDING_INVITE_COPY.send}
       onPrimary={async () => {
         if (invite.fallback) {
           await invite.commit();
@@ -25,10 +36,10 @@ export function OnboardingInviteScreen({ navigation }: RootStackScreenProps<'Onb
           goNext();
         }
       }}
-      secondaryLabel="I’ll do it later"
+      secondaryLabel={ONBOARDING_INVITE_COPY.later}
       onSecondary={goNext}
     >
-      <InvitePanel code={invite.code} name={invite.name} onName={invite.setName} fallback={invite.fallback} />
-    </OnboardingFrame>
+      <InvitePanel code={invite.code} link={invite.link} name={invite.name} onName={invite.setName} fallback={invite.fallback} />
+    </StepScreen>
   );
 }

@@ -37,21 +37,28 @@ type Props = {
   /** Someone's signed in: skip the mark and fade straight into Today. */
   returning: boolean;
   onDone: () => void;
+  /** The mark starts to lift away (1200 ms; at once for returning users): the next screen can start its arrival. */
+  onExit?: () => void;
 };
 
 const STONE_WIDTH = 136;
 const WORD_SIZE = 40;
 
-export function AnimatedSplash({ ready, returning, onDone }: Props) {
+/** The mark's sizes, so Welcome can draw it where the splash leaves it (centered, lifted `moments.splash.exit.lift`). */
+export const SPLASH_MARK = { stoneWidth: STONE_WIDTH, wordSize: WORD_SIZE, gap: space.s24 } as const;
+
+export function AnimatedSplash({ ready, returning, onDone, onExit }: Props) {
   const { width, height } = useWindowDimensions();
   const [mounted, setMounted] = useState(false);
   const [phase, setPhase] = useState<'waiting' | 'playing' | 'leaving'>('waiting');
   const [reduced, setReduced] = useState<boolean | null>(null);
   const started = useRef(false);
   const doneRef = useRef(onDone);
+  const exitRef = useRef(onExit);
   useEffect(() => {
     doneRef.current = onDone;
-  }, [onDone]);
+    exitRef.current = onExit;
+  }, [onDone, onExit]);
 
   const cover = useSharedValue(1);
   const glow = useSharedValue(0);
@@ -81,10 +88,17 @@ export function AnimatedSplash({ ready, returning, onDone }: Props) {
         play();
       }),
     );
-    return () => cancelAnimationFrame(raf);
+    let exitTimer: ReturnType<typeof setTimeout> | undefined;
+    return () => {
+      cancelAnimationFrame(raf);
+      if (exitTimer) clearTimeout(exitTimer);
+    };
 
     function play() {
       const s = moments.splash;
+      // A start signal only (nothing animates on the JS thread), so a timer is enough.
+      const exitAt = returning ? 0 : reduced ? s.reduced.duration + s.reduced.hold : s.exit.start;
+      exitTimer = setTimeout(() => exitRef.current?.(), exitAt);
       if (returning) {
         cover.set(withTiming(0, s.returning, (f) => {
           'worklet';

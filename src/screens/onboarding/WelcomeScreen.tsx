@@ -1,97 +1,145 @@
-import React from 'react';
-import { Pressable, StyleSheet, Text, View } from 'react-native';
+import React, { useEffect, useState } from 'react';
+import Animated, { useAnimatedStyle, useSharedValue, withTiming } from 'react-native-reanimated';
+import { Pressable, ScrollView, StyleSheet, Text, useWindowDimensions, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { colors, radii, shadows } from '../../theme/tokens';
-import { motion } from '../../theme/motion';
-import { type, weights } from '../../theme/typography';
-import { ArroMark } from '../../components/Icons';
-import { FadeInView } from '../../components/FadeInView';
-import { Card } from '../../components/Card';
+import { layout, palette, space } from '../../theme/tokens';
+import { maxFontScale, type } from '../../theme/typography';
+import { moments } from '../../theme/motion';
 import { Backdrop } from '../../components/Backdrop';
-import { PrimaryButton } from '../../components/PrimaryButton';
+import { SPLASH_MARK } from '../../components/AnimatedSplash';
+import { StoneMark } from '../../components/brand/StoneMark';
+import { Wordmark } from '../../components/brand/Wordmark';
+import { Settle } from '../../components/Settle';
+import { SolidButton } from '../../components/SolidButton';
+import { TextAction } from '../../components/TextAction';
+import { useSplashLeaving } from '../../components/splashSignal';
 import { useApp } from '../../state/AppState';
 import { RootStackScreenProps } from '../../navigation/types';
 
+/**
+ * Welcome (spec, section 3, Onboarding, and Key motion moment 1). The stone
+ * and wordmark sit exactly where the splash leaves them (centered, lifted 8 pt),
+ * and they're already there under the splash, so as it fades the mark simply
+ * stays. The splash's wisps thin into this screen's own haze. Then the words
+ * and the actions settle in, once, as the splash lifts away.
+ *
+ * Where the screen is short or the type is very large, the mark moves up out of
+ * the way instead of matching the splash.
+ */
+export const WELCOME_COPY = {
+  headline: 'Keep a sauna streak together.',
+  family: 'Family means whoever you sauna with.',
+  start: 'Start a family',
+  invite: 'I have an invite',
+  haveAccount: 'Already have an account?',
+  signIn: 'Sign in',
+};
+
 export function WelcomeScreen({ navigation }: RootStackScreenProps<'Welcome'>) {
   const insets = useSafeAreaInsets();
-  const { startFlow, online } = useApp();
+  const { height, fontScale } = useWindowDimensions();
+  const { startFlow } = useApp();
+  const go = useSplashLeaving();
+  // The splash's position only fits a tall screen at ordinary sizes.
+  const matchSplash = height >= 800 && fontScale <= 1.2;
+
+  // The mark lifts with the splash's own mark (the same 8 pt, the same curve), so
+  // the two copies stay on top of each other while the splash fades: no ghost.
+  // Opened later (after a sign out), it's already lifted.
+  const [liftedAtMount] = useState(go);
+  const lift = useSharedValue(liftedAtMount ? -moments.splash.exit.lift : 0);
+  useEffect(() => {
+    if (!go || liftedAtMount) return;
+    const { duration, easing } = moments.splash.exit;
+    lift.set(withTiming(-moments.splash.exit.lift, { duration, easing }));
+  }, [go, liftedAtMount, lift]);
+  const liftStyle = useAnimatedStyle(() => ({ transform: [{ translateY: lift.value }] }));
+
+  const mark = (
+    <View style={styles.markInner}>
+      <StoneMark width={SPLASH_MARK.stoneWidth} />
+      <View style={{ marginTop: SPLASH_MARK.gap }}>
+        <Wordmark fontSize={SPLASH_MARK.wordSize} />
+      </View>
+    </View>
+  );
 
   return (
-    <View style={[styles.root, { paddingTop: insets.top, paddingBottom: insets.bottom + 24 }]}>
-      {/* The same mesh and contour map as the top of arrofamily.com, so the app opens where the site left off. */}
+    <View style={styles.root}>
       <Backdrop />
-      <FadeInView rise={14} {...motion.statement} style={styles.hero}>
-        <ArroMark size={60} />
-        <Text style={styles.wordmark}>Arro</Text>
-        <Text style={styles.tagline}>Every day forward, together.</Text>
-      </FadeInView>
+      {matchSplash ? (
+        <View style={[StyleSheet.absoluteFill, styles.markCenter]} pointerEvents="none">
+          <Animated.View style={liftStyle}>{mark}</Animated.View>
+        </View>
+      ) : null}
 
-      <View style={styles.space} />
+      <ScrollView
+        bounces={!matchSplash}
+        scrollEnabled={!matchSplash}
+        showsVerticalScrollIndicator={false}
+        contentContainerStyle={[styles.column, { paddingTop: insets.top + space.s40, paddingBottom: insets.bottom + space.s8 }]}
+      >
+        {matchSplash ? <View style={styles.flex} /> : <View style={styles.markTop}>{mark}</View>}
+        {matchSplash ? null : <View style={styles.flexSmall} />}
 
-      {/* The welcome sits on glass over the map, the way the day card does on the site. */}
-      <FadeInView delay={380} rise={10} {...motion.statement}>
-        <Card padding={20} style={styles.panel}>
-          <Text style={styles.line}>
-            One streak for the whole family. Move a little each day, any way you like, and see everyone’s day in one place.
+        <Settle index={0} go={go}>
+          <Text style={[type.title, styles.center]} accessibilityRole="header" maxFontSizeMultiplier={maxFontScale.title}>
+            {WELCOME_COPY.headline}
           </Text>
-          <PrimaryButton
-            title="Start a family"
+          <Text style={[type.body, styles.center, styles.family]}>{WELCOME_COPY.family}</Text>
+        </Settle>
+
+        <Settle index={1} go={go} style={styles.actions}>
+          <SolidButton
+            title={WELCOME_COPY.start}
             onPress={() => {
               startFlow('founder');
               navigation.navigate('SignIn');
             }}
-            style={styles.cta}
           />
-          <Pressable
+          <TextAction
+            label={WELCOME_COPY.invite}
             onPress={() => {
               startFlow('invitee');
               navigation.navigate('JoinCode');
             }}
+            style={styles.invite}
+          />
+          <Pressable
+            onPress={() => {
+              startFlow('founder');
+              navigation.navigate('SignIn', { returning: true });
+            }}
+            hitSlop={space.s8}
             accessibilityRole="button"
-            style={styles.secondary}
+            accessibilityLabel={`${WELCOME_COPY.haveAccount} ${WELCOME_COPY.signIn}`}
+            style={styles.signIn}
           >
-            <Text style={styles.secondaryText}>I have an invite</Text>
+            {({ pressed }) => (
+              <Text style={[type.bodySmall, styles.center, pressed && styles.pressed]}>
+                {WELCOME_COPY.haveAccount} <Text style={styles.signInWord}>{WELCOME_COPY.signIn}</Text>
+              </Text>
+            )}
           </Pressable>
-          {online ? (
-            <Pressable
-              onPress={() => {
-                startFlow('founder');
-                navigation.navigate('SignIn', { returning: true });
-              }}
-              accessibilityRole="button"
-              hitSlop={8}
-              style={styles.signIn}
-            >
-              <Text style={styles.signInText}>Already have an account? Sign in</Text>
-            </Pressable>
-          ) : null}
-          <Text style={styles.note}>Free for your whole family · no ads</Text>
-        </Card>
-      </FadeInView>
+        </Settle>
+      </ScrollView>
     </View>
   );
 }
 
 const styles = StyleSheet.create({
-  root: { flex: 1, backgroundColor: colors.screen, paddingHorizontal: 26 },
-  hero: { alignItems: 'center', paddingTop: 72 },
-  wordmark: { ...type.display, fontSize: 52, lineHeight: 54, color: colors.ink, marginTop: 18 },
-  tagline: { ...type.body, marginTop: 6 },
-  space: { flex: 1 },
-  panel: { marginHorizontal: -8, paddingTop: 22 },
-  line: { fontSize: 17, lineHeight: 25, fontWeight: weights.regular, color: colors.inkSoft, textAlign: 'center', paddingHorizontal: 6 },
-  cta: { marginTop: 22 },
-  secondary: {
-    marginTop: 12,
-    height: 52,
-    borderRadius: radii.button,
-    backgroundColor: colors.card,
-    ...shadows.card,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  secondaryText: { fontSize: 16, fontWeight: weights.semibold, color: colors.ink },
-  signIn: { alignItems: 'center', paddingTop: 16 },
-  signInText: { fontSize: 15, fontWeight: weights.semibold, color: colors.muted },
-  note: { ...type.meta, textAlign: 'center', marginTop: 16 },
+  root: { flex: 1, backgroundColor: palette.birch },
+  markCenter: { alignItems: 'center', justifyContent: 'center' },
+  markInner: { alignItems: 'center' },
+  markTop: { alignItems: 'center' },
+  column: { flexGrow: 1, paddingHorizontal: layout.inset },
+  flex: { flex: 1 },
+  flexSmall: { flex: 1, minHeight: space.s32 },
+  center: { textAlign: 'center' },
+  family: { color: palette.smoke, marginTop: space.s12 },
+  actions: { marginTop: space.s24 },
+  invite: { marginTop: space.s12 },
+  signIn: { paddingVertical: space.s8 },
+  signInWord: { fontWeight: '600', color: palette.char },
+  pressed: { opacity: 0.55 },
 });

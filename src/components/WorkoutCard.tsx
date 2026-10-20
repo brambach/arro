@@ -10,7 +10,7 @@ import { Heart } from './Icons';
 import { PhotoSlot } from './PhotoSlot';
 
 /**
- * WorkoutCard — a feed entry. A kept post shows its photo and route when it has
+ * WorkoutCard - a feed entry. A kept post shows its photo and route when it has
  * them, then a cheer line + heart count; a still-has-today post shows a nudge
  * line + a Cheer button.
  */

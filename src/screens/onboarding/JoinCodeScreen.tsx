@@ -1,14 +1,25 @@
 import React, { useState } from 'react';
-import { StyleSheet, Text } from 'react-native';
-import { colors } from '../../theme/tokens';
-import { OnboardingFrame } from '../../components/OnboardingFrame';
-import { TextField } from '../../components/TextField';
+import { StyleSheet } from 'react-native';
+import { palette, space } from '../../theme/tokens';
+import { type } from '../../theme/typography';
+import { Field } from '../../components/Field';
+import { StepScreen } from '../../components/StepScreen';
 import { useApp } from '../../state/AppState';
 import { InviteError } from '../../state/backend';
-import { showError } from '../../state/confirm';
 import { RootStackScreenProps } from '../../navigation/types';
-import { stepOf } from './steps';
+import { nextAfter, stepOf } from './steps';
 
+export const JOIN_CODE_COPY = {
+  title: 'Enter your code',
+  subtitle: 'It’s in the message from whoever invited you.',
+  label: 'Join code',
+  hint: 'Eight letters and numbers. Codes last 14 days.',
+  previewHint: 'In this preview, any code opens Sunday sauna.',
+  find: 'Find my family',
+  offline: 'Couldn’t check the code. Check your connection and try again.',
+};
+
+/** Invitee, step 1: the join code. Before sign-in the server only says the family's name and size. */
 export function JoinCodeScreen({ navigation }: RootStackScreenProps<'JoinCode'>) {
   const { draft, updateDraft, lookUpInvite, online } = useApp();
   const code = draft.joinCode;
@@ -22,27 +33,27 @@ export function JoinCodeScreen({ navigation }: RootStackScreenProps<'JoinCode'>)
     setError(null);
     try {
       await lookUpInvite();
-      navigation.navigate('InvitePreview');
+      const next = nextAfter('invitee', 'JoinCode');
+      if (next) navigation.navigate(next as 'InvitePreview');
     } catch (e) {
-      if (e instanceof InviteError) setError(e.message);
-      else showError('Couldn’t check the code', 'Check your connection and try again.');
+      setError(e instanceof InviteError ? e.message : JOIN_CODE_COPY.offline);
     } finally {
       setBusy(false);
     }
   };
 
   return (
-    <OnboardingFrame
-      title="Enter your code"
-      subtitle="It’s in the message your family member sent."
+    <StepScreen
+      title={JOIN_CODE_COPY.title}
+      subtitle={JOIN_CODE_COPY.subtitle}
       step={stepOf('invitee', 'JoinCode')}
       onBack={() => navigation.goBack()}
-      primaryLabel="Find my family"
+      primaryLabel={JOIN_CODE_COPY.find}
       primaryDisabled={!ready}
       onPrimary={find}
     >
-      <TextField
-        label="Join code"
+      <Field
+        label={JOIN_CODE_COPY.label}
         value={code}
         onChangeText={(t) => {
           setError(null);
@@ -50,24 +61,20 @@ export function JoinCodeScreen({ navigation }: RootStackScreenProps<'JoinCode'>)
         }}
         autoCapitalize="characters"
         autoCorrect={false}
-        // Codes are eight characters (six before October 2026); room for a pasted space.
+        autoComplete="off"
+        // Eight characters (six before October 2026), with room for a pasted space.
         maxLength={12}
         placeholder="K7P4QX9M"
         returnKeyType="go"
         onSubmitEditing={find}
         style={styles.code}
+        hint={error ? undefined : online ? JOIN_CODE_COPY.hint : JOIN_CODE_COPY.previewHint}
+        error={error ?? undefined}
       />
-      {error ? (
-        <Text style={[styles.hint, styles.error]}>{error}</Text>
-      ) : (
-        <Text style={styles.hint}>{online ? 'Codes last 14 days.' : 'In this preview, any code opens the Home crew.'}</Text>
-      )}
-    </OnboardingFrame>
+    </StepScreen>
   );
 }
 
 const styles = StyleSheet.create({
-  code: { fontSize: 22, letterSpacing: 4, fontWeight: '600', textAlign: 'center', height: 60 },
-  hint: { fontSize: 13, lineHeight: 18, color: colors.faint, marginTop: 12, textAlign: 'center' },
-  error: { color: colors.ink },
+  code: { ...type.headingStrong, letterSpacing: 4, textAlign: 'center', paddingVertical: space.s16, color: palette.char },
 });

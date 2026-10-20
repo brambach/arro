@@ -122,6 +122,7 @@ Today, Week, Feed and Me rendered with no console errors.
 - `App.tsx` still says "This build can't reach Arro" (M12).
 | M6 | done (branch `saunafam/design`) | `design/brand/brand-sheet.png`, `design/screenshots/saunafam/design-sheet-1.png` to `-6.png` and `design-sheet-room.png`, `node scripts/check-contrast.mjs`, `src/theme/__tests__/theme.test.ts` | Löyly tokens, type, motion, haptics, components, Design sheet. See `docs/saunafam/DESIGN-SYSTEM.md` and M6/M7 notes below |
 | M7 | done (branch `saunafam/design`) | `design/brand/icon-explorations.png`, `design/brand/icon-sizes.png`, `design/recordings/saunafam/splash-cold.mov`, `design/screenshots/saunafam/splash-1.png` to `-3.png`, `splash-reduce-motion.mov` | Icon, wordmark, asset pipeline, native splash, AnimatedSplash |
+| M10 | done (branch `saunafam/onboarding`) | `design/screenshots/saunafam/onboarding-*.png`, `settings-*.png`, `sheet-*.png`, `update.png`, `cant-reach.png`, `invite.png` (listed in `INDEX.md`), `design/recordings/saunafam/onboarding.mov`, `design/copy/app-copy.md`, `src/screens/onboarding/__tests__/steps.test.ts`, `src/state/__tests__/settingsCopy.test.ts` | Jest 227/227 in 16 suites. See M10 below |
 
 ## M0 baseline (untouched main, b68cd61)
 
@@ -600,3 +601,129 @@ Unverified or open:
   screen that uses them.
 - The tinted icon is a grayscale guess at Apple's guidance; it wasn't seen in
   iOS's tinted home screen mode.
+
+## M10: onboarding, Settings and the app copy
+
+Built on branch `saunafam/onboarding` (worktree `/tmp/luna-arro/wt-onboarding`).
+
+**Checks:** `npm run typecheck` clean. `npm test`: 16 suites, 227 tests (new:
+`steps.test.ts` 6, `settingsCopy.test.ts` 17). ESLint clean in every file M10
+wrote or rebuilt. `node scripts/check-design.mjs` clean on the same files.
+`node scripts/check-contrast.mjs`: 26 of 26 pairs pass (no new pairs: every
+new text sits on a pair already listed). `grep -rnP "[\x{2013}\x{2014}]" src
+design/copy` finds nothing.
+
+**What's built**
+- Founder path (Welcome, Sign in, Name your family, Your rhythm, How the streak
+  works, Invite, Reminders, Notifications) and invitee path (Join code, You're
+  invited, Sign in, Meet the family, Photo, How it works, Reminders,
+  Notifications), in `src/screens/onboarding/steps.ts`. One shell,
+  `src/components/StepScreen.tsx`: back mark, steps as mini ember dots, Fraunces
+  title, one settle arrival (heading, content, footer, 70 ms apart).
+- Settings and every row in the spec table, on `src/components/SubScreen.tsx`:
+  Family rules (new), Take a break, Family members, Streak rules,
+  Notifications (days, time, Weekend check-in), Apple Health (new), The wall
+  (new), Saunafam Plus rows (only with plus_enabled), Privacy, Help & FAQ,
+  About (new screen), Sign out, Delete account, and the dev-only Prototype
+  preview, Preview App Store and Design sheet.
+- Edit profile, Invite and `InvitePanel` (message, code, `saunafam.com/join/<code>`
+  as the share sheet's link).
+- "Arro is now Saunafam" sheet (`src/components/RenamedSheet.tsx`, hosted by
+  `src/navigation/AppOverlays.tsx`), Update required (`UpdateRequiredScreen`,
+  the only route while `view.updateRequired`), "This build can't reach
+  Saunafam" (`CantReachScreen`, used by `App.tsx`).
+- New components: `Settle`, `StepScreen`, `SubScreen` (with `GroupLabel`,
+  `GroupNote`), `ChoiceTiles`, `ChoiceList` (with `PickMark`), `DayPicker`,
+  `TimeStepper`, `Toggle`-based `ToggleRow`, `Sheet`, `ConfirmSheet`,
+  `RenamedSheet`, `NoticeScreen`, `splashSignal`.
+- State: `src/state/settingsCopy.ts` (labels, break lengths, Plus lines, sheet
+  copy), `src/state/healthSettings.ts` (the switch in `saunafam.health.v1` and
+  the `healthBridge` seam for M11), `src/state/devTools.ts` (dev-only capture
+  switches).
+
+**Dev deep links (compiled out of release: `DevLinks` only renders and listens
+under `__DEV__`)**, scheme `com.arrofamily.arro`:
+`dev/onboarding/<Route>?role=founder|invitee&name=Sam&family=...&code=...&returning=1`,
+`dev/screen/<Route>?preview=<scenario>`, `dev/sheet/renamed?as=founder|member`,
+`dev/confirm/signOut|delete`, `dev/flags?apple=1&paysForPlus=1&member=1`,
+`dev/reset`. iOS 26 asks "Open in Arro?" for each; the capture scripts tapped
+Open.
+
+**Decisions**
+- D10.1 The family is made at Your rhythm, not Name your family, because
+  `create_family` fixes the week start and Your rhythm comes after the name.
+  Name your family only renames once the family exists. Coming back to Your
+  rhythm after that saves the goal and minimum with `set_family_rules` and
+  shows the week start as set (`AppState.saveRhythm`).
+- D10.2 "Family means whoever you sauna with." is on Welcome, under the
+  headline, so both paths see it exactly once.
+- D10.3 The spec's invitee path says "9 steps" but lists 8; it's the 8 plus
+  Welcome. Step dots count from the first step after Welcome (founder 7,
+  invitee 8).
+- D10.4 Welcome draws the stone and wordmark exactly where the splash leaves
+  them and lifts them the same 8 pt on the same curve as the splash's exit, so
+  the two copies stay on top of each other while the splash fades (the first
+  recording showed a ghosted wordmark when Welcome's mark sat still). The
+  headline and buttons settle in as the mark lifts (`AnimatedSplash` gained an
+  `onExit` prop, fired at 1200 ms). On a short screen or at large type the mark
+  moves up out of the way instead.
+- D10.5 Confirms (sign out, delete, end break, remove member) are a designed
+  sheet (`ConfirmSheet`), not the system alert. Sign out names a running timer
+  and unsent sessions. The delete sheet shows the Plus payer warning first, in
+  an aspen tray, from `checkBeforeDelete()`.
+- D10.6 The wall row shows only with plus_enabled (spec: "Woods and faces don't
+  appear at all" while it's off). The try-on and "Leave a tip" open the `Plus`
+  route; `PlusSeamScreen` stands in until M15 replaces it, same route name and
+  params (`{ focus: 'woods' | 'tips' | 'everyWeek' | 'poster' }`).
+- D10.7 Settings' Plus quiet lines (ended, Apple couldn't renew for the payer,
+  a plan from someone who left ending within a week) come from
+  `plusNotice()`; `view.plus` now carries `status`, `product`, `expiresAt` and
+  `payerName` for it.
+- D10.8 The rest of this week, one week and two weeks are worked out from
+  `view.todayKey` (new in `AppView`), so the preview's Thursday and the real
+  day never disagree. Lengths over the server limits stay in the list, marked
+  "Over the limit right now". On a break, the length it has is picked and
+  "Change my break" waits for a different one.
+- D10.9 In the preview, Take a break, I'm back, Family rules and Weekend
+  check-in now change the scenario's family in memory (`changePreviewFamily`
+  in AppState), so every state can be reached and captured.
+- D10.10 Reminder time is a stepper (15 minutes a tap, VoiceOver adjustable),
+  not a wheel: there's no date picker package, and the stepper is one
+  designed control. Days follow the family's week start.
+- D10.11 Apple Health keeps its switch on the phone (`saunafam.health.v1`), off
+  by default. Until M11 replaces `healthBridge`, turning it on says "On. This
+  test build can't write to Health yet, so nothing has gone there."
+- D10.12 Real bugs fixed in design-system components, both for Dynamic Type:
+  `SolidButton` had a fixed height and a one-line label, so labels were cut
+  off at the largest sizes (now `minHeight` and wrapping); `ListRow` cut titles
+  with "..." and squeezed them beside the value (from 1.3x the title wraps and
+  the value moves under it). `StepScreen` and `SubScreen` stop pinning their
+  footer from 1.35x, and `ChoiceTiles` and `DayPicker` wrap into a grid.
+- D10.13 Removed components nothing used any more: `OnboardingFrame`,
+  `ChoiceRow`, `TextButton`, `TextField`, `FadeInView`, `StreakRing`,
+  `SectionHeader`, `Chip`. The em dashes in the comments of the old
+  `WorkoutCard`, `DayPill`, `CheerButton`, `PhotoSlot`, `PrimaryButton` and
+  `AvatarRing` became spaced hyphens so the dash check is clean; those files
+  keep their pre-existing lint and design hits until M9 retires them.
+
+**Recording:** `design/recordings/saunafam/onboarding.mov` (17 s, 0.5 MB, 60
+fps, 604 wide): cold start with the splash into Welcome, then Start a family,
+Sign in (typing Sam), Name your family (typing Sunday sauna), Your rhythm. A
+static stretch on Welcome was cut out. Watched at 20 fps around the splash
+handoff and the first push: no white frame, no ghosted mark after D10.4, the
+pushes are the native iOS 26 stack transition on birch. Taps and typing were
+driven from the Mac (CGEvents into the Simulator window), so no finger is
+shown.
+
+**Not done / for others**
+- Sign in with Apple can't complete in the simulator; its button is captured
+  (`onboarding-founder-2-sign-in-apple.png`) with a dev switch.
+- Nothing ran against a live Supabase: Your rhythm's `create_family` and
+  `set_family_rules`, the delete dry run and `setWeekendCheckin` are only
+  type-checked against API.md.
+- Apple Health writes are M11 (`healthBridge`, `saveMindfulMinutes`).
+- The Plus sheet, tip jar and try-on purchase are M15 (`PlusSeamScreen`).
+- VoiceOver was not run end to end; labels and roles are set on every control
+  and checked in code only.
+- `settings-notifications*.png` show "Saunafam hasn't asked yet" because the
+  simulator never granted notifications.

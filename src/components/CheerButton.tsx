@@ -18,7 +18,7 @@ import { Heart } from './Icons';
 
 /**
  * Cheer interaction (Motion Handoff Spec §V1·3): button Press (scale 0.96), then
- * on send ONE small heart Pulse (scale 0.6→1, opacity 1→0, once — never loops),
+ * on send ONE small heart Pulse (scale 0.6→1, opacity 1→0, once - never loops),
  * then a quiet "Cheered" state. Light haptic on send. No flying hearts.
  * Reduced Motion → keep the press, skip the pulse, jump to Cheered.
  */
