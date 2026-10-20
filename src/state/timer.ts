@@ -44,8 +44,8 @@ export type TimerPhase = 'heat' | 'cooling';
 const t = (iso: string) => new Date(iso).getTime();
 
 /**
- * The default target: the family minimum, rounded up to at least 15, landing on
- * one of the one-tap choices (10, 15, 20, 30). A minimum over 30 stays as it is.
+ * The default target: the family minimum, rounded up to at least 15, then up to
+ * the next one-tap choice (10, 15, 20, 30). A minimum over 30 stays as it is.
  */
 export function defaultTargetMinutes(familyMinMinutes: number): number {
   const wanted = Math.max(15, familyMinMinutes);

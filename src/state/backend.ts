@@ -86,7 +86,7 @@ const REFUSAL_CODES = new Set(['22023', '23514', '22P02', '42501', 'P0001']);
 
 /**
  * True when the server read the request and refused it, so the outbox should
- * keep a draft rather than retry. "sign in first" is a lapsed login, not a
+ * keep a draft instead of retrying. "sign in first" is a lapsed login, not a
  * refusal: a refresh fixes it.
  */
 export function isRefusal(error: unknown): boolean {

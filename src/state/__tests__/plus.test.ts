@@ -149,7 +149,7 @@ describe('PreviewPurchases', () => {
     expect(await p.restore()).toEqual({ status: 'nothing' });
   });
 
-  it('is what this build uses until RevenueCat lands in M15', () => {
+  it('is what this build uses until RevenueCat comes in M15', () => {
     expect(createPurchases()).toBeInstanceOf(PreviewPurchases);
   });
 });

@@ -1,7 +1,7 @@
 /**
  * Plain stand-ins for the screens M8 to M10 rebuild. They show the data layer's
  * view models as text and buttons so every state can be reached and checked,
- * with no styling of their own (the design system lands with M6). Delete this
+ * with no styling of their own (the design system comes with M6). Delete this
  * file once nothing imports it.
  */
 import React from 'react';
