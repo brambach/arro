@@ -200,6 +200,49 @@ All in `src/components/`. Each file's header comment has the details.
 | `brand/StoneMark`, `brand/Wordmark` | `width`; `fontSize`, `spacing?` | The icon's stone and the outlined "saunafam". Use the wordmark on Welcome. |
 | `AnimatedSplash` | `ready`, `returning`, `onDone` | Wired in `App.tsx`. Don't mount it elsewhere. |
 
+### Added in M8 (timer and log form)
+
+| Component | Props | Notes |
+|---|---|---|
+| `StartSessionButton` | `onStart?: () => void`, `style?` | Today's 64 pt ember "Start a session". It measures itself and opens the `Timer` route with its frame, so the button grows into the dark room. With a timer running it reads "Back to the timer" and reopens it. `onStart` runs before the room opens. The timer itself starts from the tap and is committed when the door lands, so Today never redraws under the door. |
+| `TimerBar` | `style?` | The slim char bar for the top of Today: "In the heat · 12:04" or "Cooling off · 12:04", a small breathing coal beside it (lake while cooling). Renders nothing without a timer, so Today can always place it. Tapping it reopens the timer, the door growing out of the bar. Ticks once a second only while visible. |
+| `TimerArc` | `radius`, `lit`, `dim?` | The timer's dotted ember arc: 61 dots over 300 degrees, a bigger one every 20th, lit dots with a soft halo. `lit` from `litDots()` in `src/state/timerRoom.ts`. The newest dot ignites as it lights. |
+| `LoylyBurst` | `burstKey`, `width`, `height` | Throw löyly: soft blurred wisps (`assets/timer/loyly-wisp.png`) rise, spread and fade. Bump `burstKey` to throw again. |
+| `ConfirmDialog` | `visible`, `title`, `body?`, `actions: {label, onPress, kind: 'primary' \| 'secondary' \| 'quiet', dismiss?}[]`, `tone?: 'light' \| 'dark'` | The designed confirm (not the system alert). `dark` for the timer room. Tapping outside runs the action marked `dismiss`. |
+| `OptionChip` | `label`, `selected?`, `onPress`, `tone?: 'light' \| 'dark'`, `disabled?` | A filled one-tap choice (radius 9, never a pill): minute chips, recent places, the timer's target. Picked is ember. |
+| `Segmented` | `options: {value, label, disabled?}[]`, `value`, `onChange`, `accessibilityLabel` | An aspen tray with a steam thumb that springs to the pick ("Today", "Yesterday"). |
+| `Stepper` | `label`, `display`, `spoken?`, `onDecrement`, `onIncrement`, `canDecrement`, `canIncrement` | A value between a minus and a plus (rounds, the start time). One adjustable element for VoiceOver. |
+| `SaunaTypeTile`, `saunaTypeIcon` | `saunaType`, `selected`, `onPress` | The log form's large filled tiles, 2 to a row, with each type's own icon. Picked fills ember. |
+| `useNow(running, everyMs?)` | | A clock that ticks on whole seconds while `running`. Times are always worked out from timestamps; this only says when to redraw. |
+
+`SolidButton` changed in M8: its height is now a minimum and the label can take
+two lines, so it grows instead of clipping at the largest Dynamic Type sizes.
+At normal sizes it looks the same.
+
+`springTouchdownMs` changed in M8: for an overdamped spring (`springs.morph`) it
+steps the spring to within 1% of its target. The old closed form gave 307 ms
+for the door, about half the real 616 ms, so a haptic timed with it would have
+fired early.
+
+New tokens: `alpha.roomPanel`, `alpha.roomScrim`, `alpha.roomChip`,
+`alpha.roomLine` (the room's panels and dialogs); `moments.sheet` (the log
+sheet: rises on the morph spring, leaves in 320 ms, `dismissDrag` 120);
+`moments.roomPanel` (360 ms, a 24 pt rise). `moments.finishCool.room` now eases
+evenly (`leave`) so the room keeps pace with the rising sheet.
+
+Today (M9), as the stand-in uses them:
+
+```tsx
+<TimerBar />
+<StartSessionButton />
+<TextAction label="Log one I already did" onPress={() => navigation.navigate('LogSession')} />
+```
+
+The save haptic fires in the log sheet as it finishes closing. If Today's ember
+dot ignition also fires `haptics.save` at its peak, the two land about 300 ms
+apart; M9 may want only one of them.
+
+
 Icons: tabs `today week feed me`; sauna types `traditional woodFired infrared
 steam smoke banya other`; things `stone stoneFilled slat snowflake heart
 heartFilled ladle gear camera photo droplet thermometer timer bell family

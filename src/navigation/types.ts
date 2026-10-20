@@ -3,6 +3,9 @@ import type { CompositeScreenProps, NavigatorScreenParams } from '@react-navigat
 import type { BottomTabScreenProps } from '@react-navigation/bottom-tabs';
 import type { TimerResult } from '../state/timer';
 
+/** A frame on screen, in window coordinates. */
+export type DoorFrame = { x: number; y: number; width: number; height: number; radius: number; tone: 'ember' | 'char' };
+
 export type RootStackParamList = {
   // Onboarding: only in the stack while there's no saved session.
   Welcome: undefined;
@@ -60,7 +63,23 @@ export type RootStackParamList = {
    * The log form: blank, for yesterday, prefilled from the timer, or a refused
    * draft to fix (its client id).
    */
-  LogSession: { day?: 'today' | 'yesterday'; fromTimer?: boolean; prefill?: TimerResult; draftId?: string } | undefined;
+  LogSession:
+    | {
+        day?: 'today' | 'yesterday';
+        fromTimer?: boolean;
+        prefill?: TimerResult;
+        draftId?: string;
+        /** The 3-hour prompt's "Log it": the timer's minutes aren't real, so the form asks. */
+        askTime?: boolean;
+      }
+    | undefined;
+  /**
+   * The timer room. `origin` is the frame (window coordinates) it grows from:
+   * the Start button, or the slim timer bar. Without one it fades in.
+   * `started`: this tap starts the timer, at `startAt` (the tap). The room starts
+   * it once the door has landed, so Today doesn't redraw under the door.
+   */
+  Timer: { origin?: DoorFrame; started?: boolean; startAt?: string } | undefined;
   /** Dev builds only: every token and component (src/screens/dev). */
   DesignSheet: undefined;
 };
