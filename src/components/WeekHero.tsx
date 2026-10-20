@@ -66,11 +66,12 @@ export function WeekHero({ today, wood, arrive, onInvite }: Props) {
     setBurst((b) => b + 1);
   };
 
+  // One line out, then the other in: crossfading two lines of text in the same place reads as a smudge.
   const lineStyle = useAnimatedStyle(() => ({
-    opacity: line.value,
+    opacity: Math.max(0, (line.value - 0.3) / 0.7),
     transform: [{ translateY: (1 - line.value) * moments.todayArrival.rise * 0.5 }],
   }));
-  const progressStyle = useAnimatedStyle(() => ({ opacity: 1 - line.value }));
+  const progressStyle = useAnimatedStyle(() => ({ opacity: Math.max(0, 1 - line.value * 4) }));
 
   const solo = today.streak.kind === 'solo';
   const label = today.streak.label;
@@ -132,8 +133,9 @@ const styles = StyleSheet.create({
   // Sits on the number's baseline: Fraunces' 24 pt descent is about 6 pt above the 64 pt one.
   streakLabel: { paddingBottom: space.s8 },
   slatWrap: { marginTop: space.s20 },
-  // The end of the slat, halfway down: where the fill finishes.
-  sparks: { position: 'absolute', right: space.s24, top: 54 / 2 },
+  // The top edge near the slat's end, where the fill finishes: they fly up over the
+  // steam card, where they read (on the ember slat itself they vanished).
+  sparks: { position: 'absolute', right: space.s40, top: 0 },
   lines: { marginTop: space.s16 },
   kept: { color: palette.coal },
   family: { marginTop: space.s4 },
