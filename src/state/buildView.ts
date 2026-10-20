@@ -133,6 +133,8 @@ export interface TodayView {
   drafts: { clientId: string; label: string }[];
   /** Sessions still in the outbox. */
   waiting: number;
+  /** Small caps on your slat: "Week 8" (the week the family streak is building), null when solo. */
+  slatLabel: string | null;
   /** Everyone joined has kept this week (or is on a break), with two or more people: "Week kept, together". */
   weekKept: boolean;
 }
@@ -157,6 +159,9 @@ export interface PastWeekView {
   weekStart: string;
   /** "Week of Oct 5: kept", "Week of Sep 28: kept, a freeze was used" */
   label: string;
+  /** The same in two parts, for a row: "Week of Oct 5" and "Kept, a freeze was used". */
+  title: string;
+  outcome: string;
   state: FamilyWeekState | null;
   /** Who went and on which days (tap a week). */
   members: { member: MemberView; status: string; days: string[]; daysLabel: string }[];
@@ -775,6 +780,7 @@ export function buildView(input: ViewInput): AppView {
     family: [...joinedRows, ...invitedRows],
     drafts: (input.drafts ?? []).map((d) => ({ clientId: d.input.clientId, label: DRAFT_NOTICE })),
     waiting: pendingEntries.length,
+    slatLabel: solo ? null : `Week ${s.familyStreak + 1}`,
     weekKept: !solo && joinedRows.some((r) => r.state === 'kept') && joinedRows.every((r) => r.state === 'kept' || r.state === 'break'),
   };
 
@@ -809,9 +815,12 @@ export function buildView(input: ViewInput): AppView {
     .map(([weekStartKey, rows]) => {
       const first = rows[0];
       const mine = rows.find((r) => r.memberId === myId) ?? null;
+      const outcome = pastWeekOutcome(first.familyState, first.freezeUsed, mine?.status ?? null);
       return {
         weekStart: weekStartKey,
-        label: `Week of ${shortDate(weekStartKey)}: ${pastWeekOutcome(first.familyState, first.freezeUsed, mine?.status ?? null)}`,
+        label: `Week of ${shortDate(weekStartKey)}: ${outcome}`,
+        title: `Week of ${shortDate(weekStartKey)}`,
+        outcome: outcome.charAt(0).toUpperCase() + outcome.slice(1),
         state: first.familyState,
         members: rows
           .filter((r) => members[r.memberId])

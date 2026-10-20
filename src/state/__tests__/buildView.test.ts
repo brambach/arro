@@ -116,6 +116,12 @@ describe('Today', () => {
     expect(latestLine({ ...base, tempC: null, localDate: '2026-10-19', startedAt: new Date(2026, 9, 19, 9).toISOString() }, '2026-10-22', [], 'C')).toBe('Monday · 20 min');
   });
 
+  it('the slat says which week the streak is building: "Week 9" after 8 together', () => {
+    expect(v.today.slatLabel).toBe(`Week ${v.today.streak.familyStreak + 1}`);
+    expect(viewFor('brokenStreak').today.slatLabel).toBe('Week 1');
+    expect(viewFor('solo').today.slatLabel).toBeNull();
+  });
+
   it('weekKept only once everyone joined has kept (or is on a break)', () => {
     expect(v.today.weekKept).toBe(false);
     expect(viewFor('lastOne').today.weekKept).toBe(false);
@@ -239,6 +245,13 @@ describe('Week', () => {
       ['Jo', 'Kept'],
     ]);
     expect(freezeWeek.members[0].daysLabel).toMatch(/^(Mon|Tue|Wed|Thu|Fri|Sat|Sun)(, \w{3})* and \w{3}$/);
+  });
+
+  it('past weeks split into a title and an outcome for the row', () => {
+    for (const p of viewFor('family').week.past) {
+      expect(`${p.title}: ${p.outcome.charAt(0).toLowerCase()}${p.outcome.slice(1)}`).toBe(p.label);
+      expect(p.outcome.charAt(0)).toBe(p.outcome.charAt(0).toUpperCase());
+    }
   });
 
   it('only your own view names your freeze', () => {

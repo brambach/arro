@@ -119,6 +119,8 @@ export const moments = {
   checkInIgnite: { ...timing.ember, fromScale: 0.2 },
   /** 5. The whole family's week is kept: the slat fills, sparks, a line of copy. */
   weekKept: {
+    /** After a save, the dot lands first; then this beat, then the fill (src/state/checkIn.ts). */
+    hold: 180,
     fill: { duration: 700, easing: easing.settle },
     sparks: { count: 10, duration: 900, easing: easing.burst, distance: [28, 56] as const },
     /** "Week kept, together" appears after the sparks start. */

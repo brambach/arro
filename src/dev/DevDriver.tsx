@@ -1,0 +1,94 @@
+import { useEffect, useRef } from 'react';
+import type { NavigationContainerRefWithCurrent } from '@react-navigation/native';
+import { useApp } from '../state/AppState';
+import { PreviewScenarioId, previewNow } from '../data/preview';
+import type { RootStackParamList } from '../navigation/types';
+
+/**
+ * Dev builds only, and only with EXPO_PUBLIC_DEV_DRIVER=1: lets a script on the
+ * Mac drive the app in the Simulator for screenshots and recordings, with no
+ * taps. It polls a little local server (localhost:8099/next) for one command at
+ * a time: sign in to the preview family, pick a scenario, go to a screen, or log
+ * a session as if the form had just closed. Release builds never include it
+ * (App.tsx mounts it behind __DEV__).
+ */
+export const devDriverOn = __DEV__ && process.env.EXPO_PUBLIC_DEV_DRIVER === '1';
+
+type Command =
+  | { op: 'onboard' }
+  | { op: 'scenario'; id: PreviewScenarioId | null }
+  | { op: 'nav'; route: keyof RootStackParamList; params?: object }
+  | { op: 'tab'; tab: 'Today' | 'ThisWeek' | 'Feed' | 'Me' }
+  | { op: 'reset' }
+  | { op: 'back' }
+  | { op: 'log'; minutes?: number; minutesAgo?: number }
+  | { op: 'cheer'; id: string }
+  | { op: 'comment'; id: string; body: string };
+
+export function DevDriver({ navigation }: { navigation: NavigationContainerRefWithCurrent<RootStackParamList> }) {
+  const app = useApp();
+  const appRef = useRef(app);
+  useEffect(() => {
+    appRef.current = app;
+  });
+
+  useEffect(() => {
+    let alive = true;
+    const run = async (c: Command) => {
+      const a = appRef.current;
+      switch (c.op) {
+        case 'onboard':
+          if (a.session) return;
+          a.startFlow('founder');
+          a.updateDraft({ name: 'Sam', familyName: 'Sunday sauna' });
+          // updateDraft commits through a ref; give it a frame.
+          await new Promise((r) => setTimeout(r, 50));
+          await appRef.current.completeOnboarding(false);
+          return;
+        case 'scenario':
+          a.setPreview(c.id);
+          return;
+        case 'nav':
+          // The route names are checked by the server script, not here.
+          (navigation.navigate as (name: string, params?: object) => void)(c.route, c.params);
+          return;
+        case 'tab':
+          (navigation.navigate as (name: string, params?: object) => void)('Main', { screen: c.tab });
+          return;
+        case 'reset':
+          navigation.resetRoot({ index: 0, routes: [{ name: 'Main' }] });
+          return;
+        case 'back':
+          if (navigation.canGoBack()) navigation.goBack();
+          return;
+        case 'log': {
+          const at = new Date(previewNow(new Date()).getTime() - (c.minutesAgo ?? 30) * 60_000);
+          await a.logSession({ startedAt: at.toISOString(), durationMinutes: c.minutes ?? 20, saunaType: 'traditional', tempC: 85, source: 'timer' });
+          return;
+        }
+        case 'cheer':
+          await a.cheer(c.id);
+          return;
+        case 'comment':
+          await a.comment(c.id, c.body);
+          return;
+      }
+    };
+    const tick = async () => {
+      if (!alive) return;
+      try {
+        const res = await fetch('http://localhost:8099/next');
+        if (res.status === 200) await run((await res.json()) as Command);
+      } catch {
+        // No server running: try again later.
+      }
+      if (alive) setTimeout(tick, 300);
+    };
+    tick();
+    return () => {
+      alive = false;
+    };
+  }, [navigation]);
+
+  return null;
+}

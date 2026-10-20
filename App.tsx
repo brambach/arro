@@ -14,6 +14,7 @@ import { RootStackParamList } from './src/navigation/types';
 import { AnimatedSplash } from './src/components/AnimatedSplash';
 import { AppStateProvider, useApp } from './src/state/AppState';
 import { missingServerSettings } from './src/state/supabase';
+import { DevDriver, devDriverOn } from './src/dev/DevDriver';
 
 // Keep the native splash (plain birch) up until the first JS frame is ready to
 // match it: AnimatedSplash hides it. Called at module scope, as the Expo docs ask.
@@ -45,6 +46,7 @@ export default function App() {
           <StatusBar style="dark" />
           <RootNavigator />
           <NotificationTaps navigation={navigationRef} />
+          {devDriverOn ? <DevDriver navigation={navigationRef} /> : null}
           <Splash fontsReady={fontsLoaded || !!fontError} />
         </NavigationContainer>
       </AppStateProvider>
