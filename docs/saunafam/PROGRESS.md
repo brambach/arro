@@ -31,6 +31,8 @@ DENO_NO_PACKAGE_JSON=1 deno check supabase/functions/*/index.ts
 | M0 | done | `design/saunafam-lint-baseline.txt`, `design/saunafam-rename-list.txt` | baseline below |
 | M1 | done (db track, branch `saunafam/db`) | `supabase/migrations/20261021000001_saunafam_families.sql`, `20261021000002_sessions.sql`, `supabase/tests/database/sessions.test.sql` (68 tests) | pgTAP 260/260 after M1. See "DB track" below |
 | M2 | done (db track) | `supabase/migrations/20261021000003_weekly_streaks.sql`, `supabase/tests/database/weekly_streak.test.sql` (52 tests) | pgTAP 312/312. 12 members x 52 weeks: about 7 ms for the family summary, 7 ms for all member summaries |
+| M3 | done (db track) | `supabase/migrations/20261021000004_session_social.sql`, `20261021000005_saunafam_pushes.sql`, `supabase/tests/database/saunafam_push.test.sql` (59 tests), `design/copy/notifications.md` | pgTAP 371/371 |
+| M4 | done (db track) | `supabase/functions/remove-member/index.ts`, `delete-account/index.ts` (comments), `supabase/drafts/build10_cleanup.sql` | `deno check` clean. The cleanup draft was run inside a rolled-back transaction on the local database and goes through |
 
 ## M0 baseline (untouched main, b68cd61)
 
@@ -107,3 +109,35 @@ every RPC, table, push kind and edge function this track adds.
   fetch a year of rows. `preview_invite` gains `week_streak`,
   `goal_per_week` and `min_minutes` at the end; `family_streak` keeps the
   daily number for build 8.
+- D13. Dropping Arro's push triggers (spec, section 4.5) breaks the old tests
+  that assert those pushes. Their functions stay until build 10, so
+  `push.test.sql`, `review.test.sql` and `workout_pushes.test.sql` now
+  re-attach the three triggers inside their own rolled-back transaction and
+  keep testing them. `push.test.sql`'s nudge assertion expects the new copy,
+  because build 9 replaces the nudge push for everyone. Still 192 tests in
+  the old files.
+- D14. Session pushes are queued from `log_session` itself
+  (`private.after_session_logged`), not a row trigger, because the shared
+  title needs every row in first. A retry with the same `client_id` pushes
+  nothing.
+- D15. `shared` for a session under the family minimum says "Tap to see it."
+  instead of "It counts toward your week.", which would be false. Bryce
+  should check that line.
+- D16. The nudge cap counts nudges saved to that person in their own current
+  week (the push is skipped past 2, the nudge is still saved, like quiet
+  hours). Pinned-time tests go through `private.nudge_push_allowed`.
+- D17. "Weekend check-in" needs a server switch, since the server sends it:
+  `members.weekend_checkin boolean default true`, which members update on
+  their own row.
+- D18. Weekend push "on a break" means on a break today. "Can't still make
+  it" is goal minus counted days greater than the days left in their own
+  week, today included. People in their first week aren't named.
+- D19. `remove-member` (M4): confirmed it empties the whole member folder
+  `<family>/<member>/` with the service role. Session photos are written
+  flat to the logger's own folder (`uploadPhoto` in `src/state/backend.ts`),
+  so they're covered. The list isn't recursive, which is fine while the app
+  never writes subfolders. Not run against a live Storage bucket here.
+- D20. `build10_cleanup.sql` rewrites `preview_invite` so `family_streak`
+  carries the weekly number (the daily functions go). Workout photos have to
+  be deleted before `workouts` is dropped, from `workouts.photo_path`; the
+  file says how.

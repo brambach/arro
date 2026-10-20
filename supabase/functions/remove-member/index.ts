@@ -2,6 +2,16 @@
 // deletes their photos. Removing the member row doesn't touch Storage, and the
 // family folder stays readable to everyone left in it, so the photos go here.
 //
+// The database side (remove_member) deletes their member row, and with it their
+// sessions, cheers, comments and nudges (and Arro's workouts until build 10). A
+// shared session they logged goes too; the others' rows in it stay as solo
+// sessions. Every photo they uploaded lives flat in their own folder,
+// <family id>/<member id>/<name>.jpg: profile photos, session photos (only ever on
+// the logger's own anchor or solo row) and Arro's workout photos. So emptying that
+// one folder removes all of them. removePhotoFolder lists it without recursing,
+// which is enough because the app never writes a subfolder (uploadPhoto in
+// src/state/backend.ts).
+//
 // The remove_member RPC runs as the caller, so the database decides who may remove
 // whom (only the person who started the family). Photos are only deleted after it
 // succeeds, with the service role, and only from the removed member's own folder.

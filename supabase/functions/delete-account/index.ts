@@ -4,8 +4,13 @@
 //   2. their Sign in with Apple token, revoked with Apple, when the app sent a fresh
 //      authorization code and the Apple settings below are set (App Review
 //      Guideline 5.1.1(v) expects this for apps that use Sign in with Apple);
-//   3. the auth user, which cascades to their member rows, workouts, cheers, nudges
-//      and push tokens, and to any family they leave empty.
+//   3. the auth user, which cascades to their member rows and from there to their
+//      sessions, session cheers and comments, nudges, breaks and push tokens (and
+//      Arro's workouts, cheers and comments until build 10), and to any family
+//      they leave empty. A shared session they logged goes with them; the others'
+//      rows in it stay as solo sessions.
+// Photos live flat in <family id>/<member id>/, so step 1 covers profile photos,
+// session photos and Arro's workout photos alike.
 //
 // Called by the app with the person's own JWT; it only ever deletes that person.
 // SUPABASE_URL and SUPABASE_SERVICE_ROLE_KEY are provided by the edge runtime.
