@@ -98,3 +98,41 @@ export function untilLabel(endKey: string, todayKey: string = dayKey()): string 
   const d = fromKey(endKey);
   return d.toLocaleDateString(undefined, days < 7 ? { weekday: 'long' } : { weekday: 'long', day: 'numeric', month: 'short' });
 }
+
+// ─── Weeks ───────────────────────────────────────────────────────────────────
+
+const MONTHS_SHORT = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+
+/** ISO weekday of a day key: Monday 1 to Sunday 7. */
+export function isoWeekday(key: string): number {
+  return weekdayIndex(key) + 1;
+}
+
+/**
+ * The first day of the week a day falls in, for a family whose weeks start on
+ * `weekStartsOn` (1 Monday, 7 Sunday). The same sum as private.week_start.
+ */
+export function weekStart(key: string, weekStartsOn: number): string {
+  return addDays(key, -((isoWeekday(key) - weekStartsOn + 7) % 7));
+}
+
+/** The seven day keys of the week starting `start`. */
+export function weekDays(start: string): string[] {
+  return Array.from({ length: 7 }, (_, i) => addDays(start, i));
+}
+
+/** "Oct 5" */
+export function shortDate(key: string): string {
+  const d = fromKey(key);
+  return `${MONTHS_SHORT[d.getMonth()]} ${d.getDate()}`;
+}
+
+/** "Monday" */
+export function weekdayName(key: string): string {
+  return WEEKDAYS[fromKey(key).getDay()];
+}
+
+/** The local day key of an ISO time on this phone. */
+export function dayKeyOf(iso: string): string {
+  return dayKey(new Date(iso));
+}

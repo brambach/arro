@@ -1,31 +1,45 @@
-/** Streak and freeze rules. Shown once in onboarding and again in Settings > Streak rules. */
-export const streakRules = [
-  {
-    title: 'One streak for the whole family',
-    body: 'A day counts when everyone has moved or used a freeze. The streak starts when the second person joins.',
-  },
-  {
-    title: 'Any movement counts',
-    body: 'A walk, a class, a swim, or a tap on “I moved today”. No minimum, and nobody is ranked.',
-  },
-  {
-    title: 'One freeze each',
-    body: 'If you can’t move one day, your freeze covers it automatically. It comes back 7 days after you use it.',
-  },
-  {
-    title: 'Take a break',
-    body: 'Away or unwell? Settings > Take a break pauses you for up to two weeks. The family streak carries on without you.',
-  },
-  {
-    title: 'Today or yesterday',
-    body: 'You can log today or yesterday, not older days. That keeps every day honest.',
-  },
-  {
-    title: 'Days together never reset',
-    body: 'Under the streak is a count of the days your family has moved together this year. A break never takes it back.',
-  },
-  {
-    title: 'Your own day',
-    body: 'Your day runs midnight to midnight where you are, so it works across time zones.',
-  },
-] as const;
+/**
+ * The streak rules list, shown in onboarding and Settings > Streak rules
+ * (spec, section 3, "Rules list"). Rule 2 and 3 follow the family's own rhythm.
+ */
+import { WeekStartsOn } from './types';
+
+export interface StreakRule {
+  title: string;
+  body: string;
+}
+
+export interface RulesRhythm {
+  goal: number;
+  minMinutes: number;
+  weekStartsOn: WeekStartsOn;
+}
+
+export const DEFAULT_RHYTHM: RulesRhythm = { goal: 3, minMinutes: 10, weekStartsOn: 1 };
+
+/** The seven rules for a family's rhythm. */
+export function streakRulesFor({ goal, minMinutes, weekStartsOn }: RulesRhythm): StreakRule[] {
+  const sessions = goal === 1 ? '1 session' : `${goal} sessions`;
+  const week = weekStartsOn === 7 ? 'Sunday to Saturday' : 'Monday to Sunday';
+  return [
+    { title: 'One streak', body: 'One streak for the whole family. It starts when the second person joins.' },
+    {
+      title: 'Your part',
+      body: `Each of you does ${sessions} a week, ${minMinutes} minutes or more. Two in one day counts once.`,
+    },
+    { title: 'The week', body: `The week runs ${week}, in your own time zone.` },
+    {
+      title: 'One freeze',
+      body: 'Everyone has one freeze. Miss a week and it’s used for you. It comes back after 4 weeks.',
+    },
+    {
+      title: 'Breaks',
+      body: 'Going away? Take a break. A break of 4 days or more in a week means that week doesn’t count against you.',
+    },
+    { title: 'Together', body: 'Sat together? One of you logs it for everyone.' },
+    { title: 'No rankings', body: 'Nobody is ranked, and a missed week is never pinned on anyone.' },
+  ];
+}
+
+/** The default rhythm's rules, for places that don't know the family yet. */
+export const streakRules: StreakRule[] = streakRulesFor(DEFAULT_RHYTHM);
