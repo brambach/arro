@@ -1,6 +1,7 @@
 import React, { memo, useCallback, useEffect, useRef, useState } from 'react';
 import { AccessibilityInfo, AppState as RNAppState, Image, Pressable, ScrollView, StyleSheet, Text, useWindowDimensions, View } from 'react-native';
 import Animated, {
+  FadeIn,
   useAnimatedStyle,
   useSharedValue,
   withDelay,
@@ -76,6 +77,9 @@ import { LogSessionSheet } from './LogSessionScreen';
  *
  * Reduce Motion: no morph or rise; the room crossfades in and out.
  */
+
+/** Words that change with the phase fade in rather than snap. */
+const swap = FadeIn.duration(timing.utility.duration);
 
 /** How bright the numerals stay while the clock is paused. */
 const PAUSED_NUMERALS = 0.72;
@@ -315,8 +319,8 @@ export function TimerScreen({ navigation, route }: RootStackScreenProps<'Timer'>
   }, [cooling, paused]);
   const throwLoyly = () => {
     setBurst((b) => b + 1);
-    // The water hits the stones on the tap: the burst starts on the same frame.
-    haptics.loyly();
+    // The soft tap lands as the first wisp shows (one stagger in), not before it.
+    setTimeout(haptics.loyly, moments.loylyBurst.stagger);
   };
   const round = () => (cooling ? app.resumeTimer() : app.coolOff());
   const cancelSession = async () => {
@@ -359,9 +363,11 @@ export function TimerScreen({ navigation, route }: RootStackScreenProps<'Timer'>
         >
           <HideMark />
         </Pressable>
-        <Text style={[type.caption, styles.caps]} maxFontSizeMultiplier={maxFontScale.caption} accessibilityRole="header">
-          {roomHeading(timer)}
-        </Text>
+        <Animated.View key={roomHeading(timer)} entering={swap} style={styles.capsBox}>
+          <Text style={[type.caption, styles.caps]} maxFontSizeMultiplier={maxFontScale.caption} accessibilityRole="header">
+            {roomHeading(timer)}
+          </Text>
+        </Animated.View>
         <View style={styles.hide} />
       </Animated.View>
 
@@ -378,7 +384,9 @@ export function TimerScreen({ navigation, route }: RootStackScreenProps<'Timer'>
       />
 
       <Animated.View style={settleStyle}>
-        <Text style={[type.bodySmall, styles.line]}>{roomLine(timer, at)}</Text>
+        <Animated.View key={cooling ? 'cool' : 'heat'} entering={swap}>
+          <Text style={[type.bodySmall, styles.line]}>{roomLine(timer, at)}</Text>
+        </Animated.View>
         <View style={styles.loylyWrap}>
           <View style={big ? styles.loylyBig : styles.loyly}>
             <SolidButton
@@ -398,20 +406,23 @@ export function TimerScreen({ navigation, route }: RootStackScreenProps<'Timer'>
         {big ? (
           <>
             <TextAction label="Done" tone="steam" onPress={() => finish(false)} />
-            <TextAction label={cooling ? 'Back in the heat' : 'Add a round'} tone="steam" onPress={round} disabled={!cooling && !roundsLeft} />
+            <Animated.View key={cooling ? 'cool' : 'heat'} entering={swap}>
+              <TextAction label={cooling ? 'Back in the heat' : 'Add a round'} tone="steam" onPress={round} disabled={!cooling && !roundsLeft} />
+            </Animated.View>
             <TextAction label="Cancel" tone="steamDim" onPress={() => setDialog('cancel')} />
           </>
         ) : (
           <>
             <TextAction label="Cancel" tone="steamDim" onPress={() => setDialog('cancel')} style={styles.actionLeft} />
-            <TextAction
-              label={cooling ? 'Back in the heat' : 'Add a round'}
-              tone="steam"
-              onPress={round}
-              disabled={!cooling && !roundsLeft}
-              accessibilityHint={cooling ? 'Starts the next round' : 'Pauses the heat clock while you cool off'}
-              style={styles.actionMid}
-            />
+            <Animated.View key={cooling ? 'cool' : 'heat'} entering={swap} style={styles.actionMid}>
+              <TextAction
+                label={cooling ? 'Back in the heat' : 'Add a round'}
+                tone="steam"
+                onPress={round}
+                disabled={!cooling && !roundsLeft}
+                accessibilityHint={cooling ? 'Starts the next round' : 'Pauses the heat clock while you cool off'}
+              />
+            </Animated.View>
             <TextAction label="Done" tone="steam" onPress={() => finish(false)} accessibilityHint="Opens the log form, filled in" style={styles.actionRight} />
           </>
         )}
@@ -694,7 +705,8 @@ const styles = StyleSheet.create({
   face: { ...StyleSheet.absoluteFill },
   top: { flexDirection: 'row', alignItems: 'center', paddingHorizontal: space.s16, minHeight: layout.touch },
   hide: { width: layout.touch, height: layout.touch, alignItems: 'center', justifyContent: 'center' },
-  caps: { flex: 1, textAlign: 'center', color: alpha.steam62 },
+  capsBox: { flex: 1 },
+  caps: { textAlign: 'center', color: alpha.steam62 },
   clockFace: { flex: 1, alignItems: 'center', justifyContent: 'center', paddingTop: space.s16 },
   arc: { position: 'absolute' },
   numerals: { alignItems: 'center', marginTop: space.s40 },
