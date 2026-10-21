@@ -99,7 +99,8 @@ a...". The battery is plain now, the preview's sample places are Home,
 Bathhouse, Lake cabin and Gym sauna, and a shared session's row reads
 "Yesterday · 25 min" over "with Maya and Jo". The taller rows moved Today's
 scroll to 150 pt on 6.3 and 100 on 6.9, so the streak card and the whole family
-list still show. The set before this is in `/tmp/luna-arro/shots-before/` on
+list still show. The log form scrolls 950 pt (was 1000) so the Cold plunge
+row shows whole. The set before this is in `/tmp/luna-arro/shots-before/` on
 the build machine only.
 
 ## How to regenerate

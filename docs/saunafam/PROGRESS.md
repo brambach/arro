@@ -1444,6 +1444,9 @@ changed, so pgTAP and Deno weren't rerun.
   row still stacks as before. Checked at the default size, XXXL and AX5.
 - Today's App Store scroll is 150 pt on 6.3 (was 128) and 100 on 6.9 (was 0),
   because the rows are taller.
+- The log form's App Store scroll is 950 on both sizes (was 1000). Bathhouse
+  wraps the chips onto a second row on 6.9, and at 1000 the Cold plunge row
+  sat half under the sheet's title.
 - `PlusSheetScreen` at 1.35 times the text size and up: the wall and its woods
   stack, the two price tiles stack full width (the loading bones too), each
   tip's price goes under its name, and the Preview tag stops growing at 1.35
