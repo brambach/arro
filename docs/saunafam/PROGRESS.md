@@ -43,6 +43,7 @@ DENO_NO_PACKAGE_JSON=1 deno test --allow-read=supabase/functions supabase/functi
 | M14 shots | done (branch `saunafam/shots`) | `design/app-store/screenshots/6.9/`, `6.3/`, `raw/`, `scripts/app-store-shots.mjs`, `scripts/app-store/capture.mjs` | Six framed, captioned screenshots at 1320 x 2868 and 1206 x 2622, size and alpha checked by the script. See "M14: App Store screenshots" below |
 | M12 | done (feat/saunafam) | `design/saunafam-rename-check.txt` (the grep, a reason for each group, every line), the dash check (0 hits) | App name, permission strings, package name, dead Arro code removed. See M12 below |
 | M16 | done (branch `saunafam/review`) | `design/recordings/saunafam/m16/` (16 clips), `design/screenshots/saunafam/review/` (one per screen, 42), `docs/saunafam/review/` (6 stills, 2 clips), `src/dev/FpsProbe.tsx` | Every motion moment recorded on one fresh Debug build of the merged app, watched frame by frame, frame rates probed. Six fixes, each re-recorded. Jest 385/385 in 30 suites, lint 0. See "M16: self-review" below |
+| M17 | done (feat/saunafam) | `REPORT.md` (copy at `/tmp/luna-arro/REPORT-saunafam.md`), commit "Build 9" (`ios.buildNumber` 9) | PR #24 is the build 9 PR; no separate `release/build-9` PR. Not done items are listed in the report |
 
 ## M5: app data layer
 
