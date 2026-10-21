@@ -134,6 +134,6 @@ describe('Apple Health state', () => {
     expect(healthState(true, 'granted')).toBe('on');
     expect(healthState(true, 'denied')).toBe('denied');
     expect(healthState(true, 'unavailable')).toBe('unavailable');
-    expect(healthState(true, 'notWired')).toBe('waiting');
+    expect(healthState(true, 'notAsked')).toBe('on');
   });
 });

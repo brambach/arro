@@ -164,6 +164,34 @@ export function cancelAllLocalNotifications(): Promise<void> {
   return serial((n) => n.cancelAllScheduledNotificationsAsync());
 }
 
+/**
+ * What's scheduled on this phone (dev captures and checks). iOS hands a DATE
+ * trigger back as a time interval counted from when it was scheduled, so that's
+ * what this reports.
+ */
+export async function scheduledNotifications(): Promise<{ identifier: string; title: string | null; trigger: string }[]> {
+  const n = notifications();
+  if (!n) return [];
+  const all = await n.getAllScheduledNotificationsAsync();
+  return all.map((s) => {
+    const t = s.trigger as { type?: string; seconds?: number } | null;
+    const trigger = typeof t?.seconds === 'number' ? `${Math.round(t.seconds)} s after scheduling` : t?.type ?? 'unknown';
+    return { identifier: s.identifier, title: s.content.title, trigger };
+  });
+}
+
+/** Dev builds only: schedule one notification `seconds` from now, as is (legacy cleanup and tap checks). */
+export function devScheduleNotification(identifier: string, title: string, body: string, seconds: number, data: Record<string, unknown>): Promise<void> {
+  if (!__DEV__) return Promise.resolve();
+  return serial(async (n) => {
+    await n.scheduleNotificationAsync({
+      identifier,
+      content: { title, body, data },
+      trigger: { type: n.SchedulableTriggerInputTypes.DATE, date: new Date(Date.now() + seconds * 1000) },
+    });
+  });
+}
+
 /** This phone's Expo push token, or null without permission, a project id, or a connection. */
 export async function expoPushToken(): Promise<string | null> {
   const n = notifications();
@@ -202,17 +230,32 @@ export function parseTap(data: unknown): NotificationTap | null {
   return null;
 }
 
+// Taps already handled, by notification id and delivery time: the launch tap can come through
+// both the "last response" and the listener, and the listener is set up again as sign-in changes.
+const handledTaps = new Set<string>();
+
 /** Calls `onTap` for each notification tapped, including the one that opened the app. */
 export function onNotificationTap(onTap: (tap: NotificationTap) => void): () => void {
   const n = notifications();
   if (!n) return () => undefined;
+  let alive = true;
   const handle = (response: NotificationsModule.NotificationResponse | null) => {
-    if (!response || response.actionIdentifier !== n.DEFAULT_ACTION_IDENTIFIER) return;
+    if (!alive || !response || response.actionIdentifier !== n.DEFAULT_ACTION_IDENTIFIER) return;
+    const key = `${response.notification.request.identifier}@${response.notification.date}`;
+    if (handledTaps.has(key)) return;
+    handledTaps.add(key);
     const tap = parseTap(response.notification.request.content.data);
-    n.clearLastNotificationResponse();
+    // Cleared so the same tap isn't handled again when this listener is set up again.
+    n.clearLastNotificationResponseAsync().catch(() => undefined);
     if (tap) onTap(tap);
   };
-  handle(n.getLastNotificationResponse());
+  // The tap that opened the app (SDK 57: the async getter; the sync one is deprecated).
+  n.getLastNotificationResponseAsync()
+    .then(handle)
+    .catch(() => undefined);
   const sub = n.addNotificationResponseReceivedListener(handle);
-  return () => sub.remove();
+  return () => {
+    alive = false;
+    sub.remove();
+  };
 }

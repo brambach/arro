@@ -161,6 +161,8 @@ interface AppContextValue {
   checkBeforeDelete: () => Promise<{ paysForPlus: boolean }>;
   deleteAccount: () => Promise<'deleted' | 'cancelled'>;
   refresh: () => Promise<void>;
+  /** Apple Health: saves your saved sessions that aren't there yet, if it's on (after turning it on). */
+  syncHealth: () => void;
 
   // Sessions
   /** Shows at once (outbox), then sends. Resolves after the first try. */
@@ -397,6 +399,7 @@ export function AppStateProvider({ children }: { children: React.ReactNode }) {
     try {
       const next = await backend.fetchFamily(remote.familyId, remote.memberId);
       commitFamily(next);
+      saveMindfulMinutes(...mySessions(next, remote.memberId));
       setStatus('ready');
       setOffline(false);
       saveCachedFamily(next).catch(() => undefined);
@@ -462,6 +465,13 @@ export function AppStateProvider({ children }: { children: React.ReactNode }) {
       return result;
     };
   }, [commitSession, outbox, refresh, syncQueue, uploadMine]);
+
+  const syncHealth = useCallback(() => {
+    const remote = sessionRef.current?.remote;
+    const fam = familyRef.current;
+    if (!remote || previewRef.current || !fam) return;
+    saveMindfulMinutes(...mySessions(fam, remote.memberId));
+  }, []);
 
   // ─── Reminders ─────────────────────────────────────────────────────────────
 
@@ -1397,6 +1407,7 @@ export function AppStateProvider({ children }: { children: React.ReactNode }) {
       checkBeforeDelete,
       deleteAccount,
       refresh,
+      syncHealth,
       logSession,
       resendDraft,
       discardDraft,
@@ -1442,7 +1453,7 @@ export function AppStateProvider({ children }: { children: React.ReactNode }) {
     [
       ready, session, view, notice, clearNotice, showNotice, welcomeDue, dismissWelcome, draft, startFlow, updateDraft, signIn, finishSignIn,
       saveFamilyName, saveRhythm, lookUpInvite, joinInvitedFamily, completeOnboarding, signOut, checkBeforeDelete, deleteAccount, refresh,
-      logSession, resendDraft, discardDraft, draftFor, editSession, setSessionPhoto, deleteSession, removeMe, cheer, uncheer,
+      syncHealth, logSession, resendDraft, discardDraft, draftFor, editSession, setSessionPhoto, deleteSession, removeMe, cheer, uncheer,
       comment, deleteComment, nudge, startTimer, coolOff, resumeTimer, setTimerTarget, setTimerSaunaType, finishTimer,
       discardTimer, devSetTimer, lastSaunaType, updateProfile, takeBreak, endBreak, setRules, setReminders, setWeekendCheckin,
       turnOnNotifications, addInvite, removeMember, markMilestoneShown, buyPlus, restorePurchases, setWallWood, changeNag,
@@ -1464,4 +1475,9 @@ export function useView(): AppView {
   const { view } = useApp();
   if (!view) throw new Error('useView needs a saved session');
   return view;
+}
+
+/** Your own sessions on the server (ones others logged with you included), for Apple Health. */
+function mySessions(family: FamilySnapshot, memberId: string) {
+  return [...family.myRecent, ...family.sessions].filter((s) => s.memberId === memberId);
 }
