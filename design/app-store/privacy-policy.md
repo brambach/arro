@@ -33,7 +33,7 @@ time zone is used to work out your week. It isn't your location.
 
 **Sessions.** For each sauna session: the time, the minutes, the rounds, the
 sauna type, and, if you add them, the temperature, the humidity, a cold plunge
-and its minutes, a place you type (such as "Home" or "The Y"), a note and a
+and its minutes, a place you type (such as "Home" or "Gym sauna"), a note and a
 photo. When you log a session for people who sat with you, it's saved for each
 of them too.
 

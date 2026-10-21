@@ -483,7 +483,7 @@ export function LogSessionSheet({
               value={form.place}
               onChangeText={(t) => set({ place: t })}
               maxLength={LIMITS.place}
-              placeholder="Home, The Y"
+              placeholder="Home, Gym sauna"
               autoCapitalize="words"
               error={errors.place}
               accessibilityLabel="Place, optional"

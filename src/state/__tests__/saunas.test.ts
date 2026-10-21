@@ -58,15 +58,15 @@ describe('sauna words', () => {
     const at = (d: number) => `2026-10-${String(d).padStart(2, '0')}T18:00:00Z`;
     const places = recentPlaces([
       { place: 'Home', startedAt: at(20) },
-      { place: 'the y', startedAt: at(19) },
-      { place: 'The Y', startedAt: at(21) },
+      { place: 'bathhouse', startedAt: at(19) },
+      { place: 'Bathhouse', startedAt: at(21) },
       { place: null, startedAt: at(22) },
       { place: 'Lake cabin', startedAt: at(18) },
       { place: 'Gym sauna', startedAt: at(17) },
       { place: 'Spa', startedAt: at(16) },
       { place: 'Pier', startedAt: at(15) },
     ]);
-    expect(places).toEqual(['The Y', 'Home', 'Lake cabin', 'Gym sauna', 'Spa']);
+    expect(places).toEqual(['Bathhouse', 'Home', 'Lake cabin', 'Gym sauna', 'Spa']);
   });
 
   it('rules follow the family’s rhythm', () => {

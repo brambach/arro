@@ -417,7 +417,7 @@ export function whenLabel(localDate: string, startedAt: string, today: string): 
  * A person's latest session this week, for their row: the day ("Tonight" after
  * 5 PM today, "Today", "Yesterday", then the weekday), the minutes, then who they
  * went with, or the place, or the heat. "Tonight · 20 min · 85°C",
- * "Yesterday · 18 min with Jo", "Tuesday · 15 min · The Y".
+ * "Yesterday · 18 min with Jo", "Tuesday · 15 min · Bathhouse".
  */
 export function latestLine(
   s: Pick<Session, 'localDate' | 'startedAt' | 'durationMinutes' | 'place' | 'tempC'>,

@@ -194,7 +194,7 @@ Section 3, "Today". Most of these lines are built in `src/state/buildView.ts` (`
 - Monday, last week not kept: "Did you sauna on Sunday? Log it", with "It still counts toward last week" under it
 - A refused draft: "Couldn't save this one", with "Tap to fix it" under it
 - Family list statuses: "Kept", "2 of 3", "On a break until Friday", "Invited"
-- Family list second line, their latest session this week: "Tonight · 20 min · 85°C", "Yesterday · 18 min with Jo", "Tuesday · 15 min · The Y"; someone invited: "Hasn't joined yet"
+- Family list second line, their latest session this week: "Tonight · 20 min · 85°C", "Yesterday · 18 min with Jo", "Tuesday · 15 min · Bathhouse"; someone invited: "Hasn't joined yet"
 - Solo founder: "Your family streak starts when someone joins", with **Invite someone**
 - After a broken streak: "**7** weeks together this year", and the card "Back at it, together" / "A new streak starts this week. Every session counts toward it."
 - Timer running bar: "In the heat · 12:04"
@@ -251,7 +251,7 @@ checks in `src/state/logForm.ts`).
 - "Temperature, °F" (or "Temperature, °C"), placeholder "185" (or "85"); "Humidity, %", placeholder "20"
 - "Rounds", a minus and a plus (VoiceOver: "2 rounds")
 - "Cold plunge" with a switch; when on, "Minutes in the cold", placeholder "2"
-- "Place", placeholder "Home, The Y"; chips of the family's recent places
+- "Place", placeholder "Home, Gym sauna"; chips of the family's recent places
 - "Sat with someone?"; under the people "They get a note and can take themselves off it."; when 3 are picked "That's 4 of you, the most for one session."
 - People who can't be picked or are away: "Hasn't joined yet", "On a break"
 - "Photo": **Take a photo**, **Choose one**; with a photo **Replace**, **Remove**

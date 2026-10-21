@@ -112,7 +112,7 @@ describe('Today', () => {
     const base = { durationMinutes: 20, place: null, tempC: 85 };
     expect(latestLine({ ...base, localDate: '2026-10-22', startedAt: new Date(2026, 9, 22, 18).toISOString() }, '2026-10-22', [], 'C')).toBe('Tonight · 20 min · 85°C');
     expect(latestLine({ ...base, localDate: '2026-10-22', startedAt: new Date(2026, 9, 22, 9).toISOString() }, '2026-10-22', [], 'C')).toBe('Today · 20 min · 85°C');
-    expect(latestLine({ ...base, place: 'The Y', localDate: '2026-10-20', startedAt: new Date(2026, 9, 20, 9).toISOString() }, '2026-10-22', [], 'C')).toBe('Tuesday · 20 min · The Y');
+    expect(latestLine({ ...base, place: 'Bathhouse', localDate: '2026-10-20', startedAt: new Date(2026, 9, 20, 9).toISOString() }, '2026-10-22', [], 'C')).toBe('Tuesday · 20 min · Bathhouse');
     expect(latestLine({ ...base, tempC: null, localDate: '2026-10-19', startedAt: new Date(2026, 9, 19, 9).toISOString() }, '2026-10-22', [], 'C')).toBe('Monday · 20 min');
   });
 

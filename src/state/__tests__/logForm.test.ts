@@ -179,12 +179,12 @@ describe('checks', () => {
 
 describe('saving', () => {
   it('stores °C: typed °F converts, to one decimal', () => {
-    const s = { ...blank({ unit: 'F' }).state, temp: '185', humidity: '15', place: ' The Y ', note: '' };
+    const s = { ...blank({ unit: 'F' }).state, temp: '185', humidity: '15', place: ' Bathhouse ', note: '' };
     const form = toSessionForm(s, 'F', NOW, 'manual');
     expect(form.tempC).toBe(85);
     expect(toSessionForm({ ...s, temp: '190' }, 'F', NOW, 'manual').tempC).toBe(87.8);
     expect(form.humidityPct).toBe(15);
-    expect(form.place).toBe('The Y');
+    expect(form.place).toBe('Bathhouse');
     expect(form.note).toBeNull();
     expect(form.durationMinutes).toBe(15);
     expect(new Date(form.startedAt).getHours()).toBe(19);

@@ -888,7 +888,7 @@ Tapping a person:
 | Humidity | no | 0 to 100% |
 | Rounds | no | 1 to 10, prefilled from the timer |
 | Cold plunge | no | toggle; when on, optional minutes 0 to 30 |
-| Place | no | free text up to 60 characters ("Home", "The Y"), plus chips of the family's 5 most recent places. No location permission, ever |
+| Place | no | free text up to 60 characters ("Home", "Gym sauna"), plus chips of the family's 5 most recent places. No location permission, ever |
 | With | no | "Sat with someone?" Pick up to 3 others (4 people total) |
 | Photo | no | library or camera, cropped 4:3, 1440 px long edge, JPEG (Arro's photo rules) |
 | Note | no | 140 characters |

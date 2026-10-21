@@ -41,9 +41,6 @@ export const LIMITS = {
   people: 4,
 } as const;
 
-/** Examples for the empty place field. Never real places. */
-export const PLACE_EXAMPLES = ['Home', 'The Y'];
-
 /**
  * The family's most recent places for the chips: newest first, one per spelling
  * regardless of case, at most `limit`.

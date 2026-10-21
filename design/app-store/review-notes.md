@@ -35,7 +35,7 @@ named arro):
    time zone and `joined_on` about five weeks back.
 4. **About five weeks of `sessions`,** three or four per person per week, a mix
    of Traditional, Wood-fired and Infrared, 12 to 25 minutes, a few with a
-   place ("Home", "The Y") and a short note, and at least one shared session
+   place ("Home", "Gym sauna") and a short note, and at least one shared session
    for two people. Use `log_session` where you can. Dates older than
    yesterday are refused by the `sessions_20_check_date` trigger, so
    backfilling needs it bypassed for that one SQL editor session
