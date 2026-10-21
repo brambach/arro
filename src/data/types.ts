@@ -228,11 +228,6 @@ export interface FamilySnapshot {
   fetchedAt: string;
 }
 
-// ─── Legacy display types ────────────────────────────────────────────────────
-// The Arro components that are still in src/components (AvatarRing, AvatarStack,
-// WorkoutCard, DayPill) read these. They go when M6 to M10 replace those
-// components; nothing new should use FeedItem or WeekState.
-
 /** Who to draw: enough for an avatar. buildView's MemberView satisfies it. */
 export interface Member {
   id: MemberId;
@@ -240,19 +235,3 @@ export interface Member {
   color: string;
   photoUri?: PhotoSource;
 }
-
-/** @deprecated Arro's feed card. Use buildView's FeedCard. */
-export interface FeedItem {
-  id: string;
-  memberId: MemberId;
-  kind: 'kept' | 'still';
-  title: string;
-  meta: string;
-  time?: string;
-  cheer?: string;
-  hearts?: number;
-  photoUri?: PhotoSource;
-}
-
-/** @deprecated Arro's day dot. */
-export type WeekState = 'kept' | 'freeze' | 'today' | 'missed';
