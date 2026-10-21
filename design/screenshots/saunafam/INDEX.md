@@ -148,3 +148,16 @@ Captured with the dev-only capture driver (`src/dev/DevDriver.tsx`, Metro with
 - `sheet-renamed-member.png`: "Arro is now Saunafam", everyone else (Got it)
 - `update.png`: Update required (dev-only "Leave the preview" shows under it in the preview)
 - `cant-reach.png`: This build can't reach Saunafam
+
+## Native features (M11, iPhone 17 Pro simulator, iOS 26.2, Debug build)
+
+- `health-permission-sheet.png`: iOS's Health sheet after Turn on: write only, Mindful Minutes, the new explanation, no read section
+- `health-settings-on.png`: Settings, Apple Health, on and allowed
+- `health-mindful-minutes-written.png`: the Health app, Mental Wellbeing: 35 mindful minutes written by two test sessions (15 and 20 min)
+- `notification-timer-target.png`: the timer's target notification, "15 minutes in. Time to cool off.", over Settings
+- `notification-tap-timer.png`: tapping it opens the timer room
+- `notification-reminder.png`: a weekly reminder, "2 to go this week" / "Ten minutes counts. Your family will see it."
+- `notification-tap-session.png`, `notification-tap-shared.png`, `notification-tap-cheer.png`, `notification-tap-comment.png`, `notification-tap-nudge.png`, `notification-tap-weekend.png`, `notification-tap-joined.png`: where each push lands when tapped (simctl push with the server's payloads)
+- `camera-permission.png`: the camera permission prompt, from Take a photo
+- `camera-open.png`: the camera open (the simulator has no camera feed, so nothing can be taken)
+

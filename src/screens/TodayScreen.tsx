@@ -1,9 +1,11 @@
 import React, { useEffect, useState } from 'react';
-import { Platform, Pressable, StyleSheet, Text, View } from 'react-native';
+import { Pressable, StyleSheet, Text, View } from 'react-native';
 import { useIsFocused } from '@react-navigation/native';
 import { MainTabScreenProps } from '../navigation/types';
 import { useApp, useView } from '../state/AppState';
 import { FamilyRow, PersonTap, TodayView } from '../state/buildView';
+import { healthAvailable } from '../state/health';
+import { setHealthEnabled } from '../state/healthSettings';
 import { HEALTH_OFFER_COPY, HealthOfferAnswer, healthOfferDue, loadHealthOffer, saveHealthOffer } from '../state/healthOffer';
 import { layout, palette, radii, space } from '../theme/tokens';
 import { moments } from '../theme/motion';
@@ -226,8 +228,9 @@ function Notes({ offline, waiting }: { offline: boolean; waiting: number }) {
   );
 }
 
-/** "Save sessions to Apple Health?" once, after your first saved session. M11 does the writing. */
+/** "Save sessions to Apple Health?" once, after your first saved session. Turn on asks iOS and writes (health.ts). */
 function HealthOffer({ savedSessions }: { savedSessions: number }) {
+  const { syncHealth } = useApp();
   const [answer, setAnswer] = useState<HealthOfferAnswer | null | 'unknown'>('unknown');
   useEffect(() => {
     let alive = true;
@@ -237,10 +240,16 @@ function HealthOffer({ savedSessions }: { savedSessions: number }) {
     };
   }, []);
   if (answer === 'unknown') return null;
-  if (!healthOfferDue({ answer, savedSessions, available: Platform.OS === 'ios' })) return null;
+  if (!healthOfferDue({ answer, savedSessions, available: healthAvailable() })) return null;
   const answerWith = (a: HealthOfferAnswer) => {
     setAnswer(a);
     saveHealthOffer(a).catch(() => undefined);
+    // Turn on: the same switch as Settings, then iOS's Health sheet, then the session that earned the card.
+    if (a === 'on') {
+      setHealthEnabled(true)
+        .then((p) => p === 'granted' && syncHealth())
+        .catch(() => undefined);
+    }
   };
   return (
     <Arrive index={3} style={styles.health}>

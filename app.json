@@ -46,8 +46,8 @@
       [
         "@appeeky/expo-healthkit",
         {
-          "healthSharePermission": "Arro reads your workouts from Apple Health, including distance and route, so moving counts toward your family streak and your family can see what you did. Routes are shared only with your family, with the start and end left off. Arro only reads today's and yesterday's workouts.",
-          "healthUpdatePermission": "Arro never writes to Apple Health. It only reads your workouts so moving counts toward your family streak.",
+          "healthSharePermission": false,
+          "healthUpdatePermission": "Saunafam saves your sauna sessions to Apple Health as mindful minutes, if you turn it on. It never reads your Health data.",
           "isBackgroundDeliveryEnabled": false
         }
       ],
