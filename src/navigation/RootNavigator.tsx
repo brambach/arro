@@ -53,11 +53,16 @@ const Stack = createNativeStackNavigator<RootStackParamList>();
 const devStart = __DEV__ && process.env.EXPO_PUBLIC_DEV_SCREEN === 'DesignSheet' ? 'DesignSheet' : undefined;
 
 /**
- * The timer room and the log sheet draw their own entrances (the door, the
- * sheet's rise) over the screen that opened them, so their routes are
- * transparent and the stack doesn't animate them.
+ * The timer room, the log sheet, Nudge and PastWeek draw their own entrances
+ * (the door, the sheet's rise) over the screen that opened them, so their
+ * routes are transparent and the stack doesn't animate them.
  */
-const overScreen = { presentation: 'transparentModal', animation: 'none' } as const;
+const overScreen = {
+  presentation: 'transparentModal',
+  animation: 'none',
+  // Overrides the navigator's birch, which would hide the screen underneath.
+  contentStyle: { backgroundColor: 'transparent' },
+} as const;
 
 /**
  * Onboarding shows only when there's no saved session. Finishing it (or signing out)
@@ -87,7 +92,7 @@ export function RootNavigator() {
           <Stack.Screen name="HealthSettings" component={HealthSettingsScreen} options={{ animation: 'slide_from_right' }} />
           <Stack.Screen name="Wall" component={WallScreen} options={{ animation: 'slide_from_right' }} />
           <Stack.Screen name="About" component={AboutScreen} options={{ animation: 'slide_from_right' }} />
-          <Stack.Screen name="Plus" component={PlusSheetScreen} options={{ presentation: 'transparentModal', animation: 'none' }} />
+          <Stack.Screen name="Plus" component={PlusSheetScreen} options={overScreen} />
           <Stack.Screen name="TimerFace" component={TimerFaceScreen} options={{ animation: 'slide_from_right' }} />
           <Stack.Screen name="AppIcon" component={AppIconScreen} options={{ animation: 'slide_from_right' }} />
           <Stack.Screen name="EveryWeek" component={EveryWeekScreen} options={{ animation: 'slide_from_right' }} />
@@ -97,17 +102,13 @@ export function RootNavigator() {
           <Stack.Screen name="Notifications" component={NotificationsScreen} options={{ animation: 'slide_from_right' }} />
           <Stack.Screen name="SessionDetail" component={SessionDetailScreen} options={{ animation: 'slide_from_right' }} />
           <Stack.Screen name="EditSession" component={EditSessionScreen} options={{ presentation: 'modal' }} />
-          <Stack.Screen name="PastWeek" component={PastWeekScreen} options={{ presentation: 'transparentModal', animation: 'none' }} />
+          <Stack.Screen name="PastWeek" component={PastWeekScreen} options={overScreen} />
           <Stack.Screen name="FamilyMembers" component={FamilyMembersScreen} options={{ animation: 'slide_from_right' }} />
           <Stack.Screen name="Invite" component={InviteScreen} options={{ presentation: 'modal' }} />
           <Stack.Screen name="EditProfile" component={EditProfileScreen} options={{ presentation: 'modal' }} />
           <Stack.Screen name="LogSession" component={LogSessionScreen} options={overScreen} />
           <Stack.Screen name="Timer" component={TimerScreen} options={{ ...overScreen, gestureEnabled: false }} />
-          <Stack.Screen
-            name="Nudge"
-            component={NudgeModalScreen}
-            options={{ presentation: 'transparentModal', animation: 'none' }}
-          />
+          <Stack.Screen name="Nudge" component={NudgeModalScreen} options={overScreen} />
         </>
       ) : (
         <>

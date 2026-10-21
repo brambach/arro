@@ -302,7 +302,7 @@ Section 3, "Shared sessions" and "Feed".
 - Under it: "Mon, Oct 19 · 7:00 AM. Changes show for everyone in it."
 - Small caps: "Minutes", "Type", "Photo"; fields "Place" (example "Home"), "Note"; toggle "Cold plunge"
 - VoiceOver on the stepper: "Fewer minutes", "More minutes"
-- **Change photo** / **Add a photo**, **Remove photo**
+- **Take a photo**, **Choose one** (**Choose another** once there is one), **Remove photo**
 - **Save changes** (while saving: "Saving")
 - Refused: "Couldn't save that: " and the server's reason, or "Couldn't save that. Try again."
 - Gone while editing: "This session isn't here anymore" with **Close**
@@ -458,7 +458,7 @@ Settings, each with a short name above it:
   - "On. Each session you save goes into Health as mindful minutes, starting when it started."
   - "Health isn't letting Saunafam save. Open the Health app, tap your picture, then Apps, Saunafam, and turn on Mindful Minutes." **Open the Health app**
   - "Apple Health isn't on this device."
-  - Until M11 wires the write: "On. This test build can't write to Health yet, so nothing has gone there."
+- iOS's Health sheet (`NSHealthUpdateUsageDescription` in `app.json`, write only; there's no read string): "Saunafam saves your sauna sessions to Apple Health as mindful minutes, if you turn it on. It never reads your Health data."
 - "Only the minutes in the heat, from the time you started. No calories, no heart rate."
 - "Used Arro before? iOS may still list its old permission to read your workouts. Saunafam never reads them, and you can remove it in Settings, Health, Data Access & Devices."
 
@@ -491,7 +491,7 @@ Settings, each with a short name above it:
 The push it sends is in `notifications.md`.
 
 - Title: "Cheer Jo on"
-- Line: "Jo's on 1 of 3 this week. A nudge says you're thinking of them."
+- Line: "Jo's on 1 of 3 this week. A nudge says you're thinking of them."; for someone who has kept (opened from a nudge push, to cheer them back): "Maya has kept this week. A nudge says you're thinking of them."; otherwise "A nudge says you're thinking of Jo."
 - **Send a nudge** (while sending: "Sending"; after: "Sent"), **Not now** (after: **Done**)
 - Sent: "Sent. Jo will see it soon."
 - Already nudged today: "Jo has already had a nudge today. Try again tomorrow."

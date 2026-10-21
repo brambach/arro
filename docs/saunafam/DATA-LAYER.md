@@ -62,6 +62,7 @@ if the server says no.
 | `updateProfile({name, photoUri})` | Optimistic |
 | `editSession(anchorId, changes)`, `setSessionPhoto(anchorId, uri)` | Not optimistic; throws the server error for the form to show |
 | `nudge(memberId)` | `'sent'` or `'already'` |
+| `syncHealth()` | Apple Health: writes your saved sessions not there yet (the last week's, from when the switch went on). Fire and forget |
 | `takeBreak(days)`, `endBreak()`, `setRules(goal, min)` (returns "Starting ..."), `setReminders({wanted, days, time})`, `setWeekendCheckin(on)`, `turnOnNotifications()`, `addInvite(name)`, `removeMember(id)` | Plain writes, then refresh |
 | `buyPlus(pkg)`, `restorePurchases()`, `setWallWood(wood)` | Plus. `setWallWood` throws `NeedsPlusError` without Plus (show the try-on). Never decide Plus locally: these call `sync-plus` and refresh `family_plus` |
 | `recordNagShown()`, `dismissNag()`, `turnOffNag()` | The quiet Plus card. When `view.week.nag` is `'new'`, show it and call `recordNagShown()` once |
@@ -128,14 +129,17 @@ the fake App Store `succeed`, `fail`, `cancel`, go `pending`, find
 `arro.session.v1` (kept; older shapes are read), `arro.family.v2` (the cache),
 Supabase's auth key, `saunafam.outbox.v1`, `saunafam.draft.v1`,
 `saunafam.timer.v1`, `saunafam.lastSaunaType.v1`, `saunafam.milestones.v1`,
-`saunafam.plusNag.v1`, `saunafam.welcomed.v1`. `arro.family.v1` and
+`saunafam.plusNag.v1`, `saunafam.welcomed.v1`, `saunafam.health.v1` (the Apple
+Health switch and when it went on), `saunafam.healthWritten.v1` (session ids
+already in Health), `saunafam.healthOffer.v1`. `arro.family.v1` and
 `arro.moveMethod.v1` are deleted on launch, and so is every pending
 notification starting `arro-`.
 
 ## Seams left for later milestones
 
-- M11 Health: `saveMindfulMinutes(session)` in `src/state/health.ts` is a no-op stub,
-  already called after each session is saved.
+- M11 Health (done): `src/state/health.ts` writes your saved sessions as mindful
+  minutes after each send and each refresh, once each, when the switch is on.
+  `syncHealth()` on the app context runs it right after the switch goes on.
 - M15 RevenueCat: `createPurchases()` in `src/state/purchases.ts` returns
   `PreviewPurchases`; return a `RevenueCatPurchases` there.
 - M8 Timer and log form, M9 main screens, M10 onboarding and Settings: replace the

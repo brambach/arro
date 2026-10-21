@@ -67,9 +67,11 @@ export function NudgeModalScreen({ navigation, route }: RootStackScreenProps<'Nu
         ? `${name} has already had a nudge today. Try again tomorrow.`
         : state === 'failed'
           ? 'Couldn’t send it just now. Try again in a moment.'
-          : row
-            ? `${name}’s on ${row.status} this week. A nudge says you’re thinking of them.`
-            : `A nudge says you’re thinking of ${name}.`;
+          : row?.state === 'kept'
+            ? `${name} has kept this week. A nudge says you’re thinking of them.`
+            : row?.state === 'progress'
+              ? `${name}’s on ${row.status} this week. A nudge says you’re thinking of them.`
+              : `A nudge says you’re thinking of ${name}.`;
 
   return (
     <RouteSheet ref={sheet} onClosed={() => navigation.goBack()} accessibilityLabel={`Cheer ${name} on`}>

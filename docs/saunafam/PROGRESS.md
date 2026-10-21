@@ -39,6 +39,7 @@ DENO_NO_PACKAGE_JSON=1 deno test --allow-read=supabase/functions supabase/functi
 | M13 | done (branch `saunafam/site`) | `design/screenshots/saunafam/site/`, `design/screenshots/saunafam/invite-link-preview.png`, `design/recordings/saunafam/site-first-load.mp4`, `design/lighthouse/*.json`, `site/worker.test.mjs` | Lighthouse 100/100/100/100 on all four pages, CLS 0. See M13 below |
 | M12 docs | done (branch `saunafam/docs`) | `README.md`, `AGENTS.md`, `AUDIT.md` (note), the "Written for Arro" line on `design/market-research.md`, `paid-plan.md`, `refactor-plan.md`, `visual-direction.md`, `Arro-Spec.html`, `Arro.dc.html`, `design/app-store/icon-options.md` | Docs half of section 6 only. `CLAUDE.md` is just `@AGENTS.md`, so unchanged. See "M12 and M14 docs" below |
 | M14 docs | done (branch `saunafam/docs`) | `design/app-store/listing.md`, `app-privacy.md`, `review-notes.md`, `screenshots.md`, `support.md`, `testflight.md`, `hosting.md`, `README.md`; `design/copy/app-copy.md` (skeleton) | Listing, age rating, privacy labels, products. Not the screenshot script (`scripts/` is the app track). Apple screenshot sizes changed: see below |
+| M14 shots | done (branch `saunafam/shots`) | `design/app-store/screenshots/6.9/`, `6.3/`, `raw/`, `scripts/app-store-shots.mjs`, `scripts/app-store/capture.mjs` | Six framed, captioned screenshots at 1320 x 2868 and 1206 x 2622, size and alpha checked by the script. See "M14: App Store screenshots" below |
 
 ## M5: app data layer
 
@@ -125,6 +126,7 @@ Today, Week, Feed and Me rendered with no console errors.
 | M7 | done (branch `saunafam/design`) | `design/brand/icon-explorations.png`, `design/brand/icon-sizes.png`, `design/recordings/saunafam/splash-cold.mov`, `design/screenshots/saunafam/splash-1.png` to `-3.png`, `splash-reduce-motion.mov` | Icon, wordmark, asset pipeline, native splash, AnimatedSplash |
 | M10 | done (branch `saunafam/onboarding`) | `design/screenshots/saunafam/onboarding-*.png`, `settings-*.png`, `sheet-*.png`, `update.png`, `cant-reach.png`, `invite.png` (listed in `INDEX.md`), `design/recordings/saunafam/onboarding.mov`, `design/copy/app-copy.md`, `src/screens/onboarding/__tests__/steps.test.ts`, `src/state/__tests__/settingsCopy.test.ts` | Jest 227/227 in 16 suites. See M10 below |
 | M8 | done (branch `saunafam/timer`) | `design/screenshots/saunafam/timer-*.png`, `log-form*.png`; `design/recordings/saunafam/timer-start.mov`, `timer-finish.mov`, `timer-loyly.mov`, `timer-round.mov`, `timer-reduce-motion.mov`, `timer-background.mov`; `src/state/__tests__/logForm.test.ts`, `timerRoom.test.ts`, `sessionPhoto.test.ts` | Timer room ("the door closes"), log sheet, StartSessionButton, TimerBar. See M8 below |
+| M11 | done (branch `saunafam/native`) | `design/screenshots/saunafam/health-*.png`, `notification-*.png`, `camera-*.png` (listed in `INDEX.md`); `design/recordings/saunafam/notification-tap-timer.mov`, `notification-tap-push.mov`; `src/state/__tests__/health.test.ts`, `localization.test.ts`, `src/navigation/__tests__/tapRoute.test.ts` | Write-only Health, notification taps, camera, units. Jest 304/304 in 26 suites. See M11 below |
 
 ## M0 baseline (untouched main, b68cd61)
 
@@ -947,4 +949,187 @@ every file M8 touched; `check-design` clean in them; `check-contrast` 32 of 32.
   (dev chrome).
 - `design/screenshots/saunafam/INDEX.md` lines for these screens are left for
   M9, which owns that file.
+
+## M14: App Store screenshots
+
+Built on branch `saunafam/shots` (worktree `/tmp/luna-arro/wt-shots`), the
+half of M14 the docs track left: the designed set. How to regenerate is in
+`design/app-store/screenshots.md`.
+
+**Checks:** `npm run typecheck` clean. `npm test`: 23 suites, 276 tests.
+`npx eslint` clean on every file touched (the 30 errors `npm run lint` still
+reports are in Arro's old `CheckInPop`, `CheerButton`, `PrimaryButton` and
+`RollingText`, untouched). `node scripts/app-store-shots.mjs`: "All 12
+screenshots are the exact size, with no alpha channel." Each output is read
+back after writing: 1320 x 2868 or 1206 x 2622, PNG color type 2 (RGB).
+
+**Proof:** `design/app-store/screenshots/6.9/1-timer.png` to `6-milestone.png`
+and the same in `6.3/`; raw captures in `design/app-store/screenshots/raw/`.
+
+**What's in it**
+- `scripts/app-store-shots.mjs`: the frame and caption template as SVG
+  (birch, the app's faint slats and warm corner, Fraunces Soft SemiBold
+  captions at 106 px on the 6.9 grid with -2.2 tracking, a dark device frame
+  with side buttons and a soft warm shadow, the wordmark over the first
+  caption), rendered with resvg, flattened to RGB with pngjs, then checked.
+- `scripts/app-store/capture.mjs`: the captures with no taps, through the dev
+  driver; `scripts/app-store/sample-photo.mjs`: the feed card's photo.
+- Dev only: `DevDriver` reads `EXPO_PUBLIC_DEV_DRIVER_URL` (default
+  `http://localhost:8099`, so other agents' runs are unchanged) and takes three
+  new commands: `photo` (a photo on the preview's shared session, through
+  `setDevSharedPhoto` in `preview.ts`), `timer` (DevCapture's `dev/timer`)
+  and `dev` (the screens' `form-*` commands).
+
+**Fixed from the captures**
+- Session photos came out about 21 pt narrower than the card, with a strip of
+  card to their right (Yoga's `aspectRatio` with a stretched width). The
+  photo box now has `width: '100%'` (`SessionCard.tsx`); the feed card, the
+  session screen and the edit sheet all use it. No photo had been on screen
+  before, so nothing had caught it.
+- The timer's "Time to cool off at 6:38 PM" disagreed with the 9:41 status
+  bar. The timer shot is taken in a POSIX time zone made for the moment
+  (`SFM+04:13:44`, say), so it reads 9:41 PM.
+- The numerals read 14:31: the room redraws once a second, so the shot waits
+  1.2 s after the timer is set.
+- A fresh dev client install showed Expo's developer menu over the app. The
+  capture script turns its first-run screen and Tools button off first.
+
+**Decisions**
+- D14.1 Two sets, 6.9 and 6.3, as `screenshots.md` planned from Apple's page.
+  No 6.5 set; the script can scale one from the 6.9 frames if App Store
+  Connect still asks.
+- D14.2 Every caption is two lines at one fixed baseline, so the six read as a
+  strip; the device sits at the same place on each. The wordmark only on the
+  first, where there's room above the caption.
+- D14.3 No ember in the captions (the spec's "ember once at most"): every
+  screen already has ember in it.
+- D14.4 Today is scrolled so the streak card and all three family rows show;
+  on 6.9 at rest that's already true, and scrolling would bring in the Apple
+  Health offer.
+- D14.5 The log form shows Maya and Jo picked, three people in the session
+  (D8.10: the preview family has no fourth member).
+- D14.6 The feed photo is drawn, not a stock photo: a lake at dusk from a
+  dock, matching the session's "Lake cabin" and "Three rounds and the lake".
+
+**Not done or not checked**
+- App Store Connect's upload form itself (only Bryce can see it).
+- "Yesterday · 25 min with Maya a..." truncates on Today's rows at both
+  widths. That's the app's layout, not changed here.
+- The battery shows the charging bolt, from the specified
+  `--batteryState charged`. `discharging` at 100 would show a plain battery.
+
+## M11: native features
+
+Built on branch `saunafam/native` (worktree `/tmp/luna-arro/wt-native`), with
+its own Debug simulator build (`npx expo prebuild --platform ios`, then
+`xcodebuild -configuration Debug -sdk iphonesimulator`, Metro on 8084) on the
+iPhone 17 Pro simulator `F5F8CE0B`, iOS 26.2. No preview family settings
+(`.env.local`) in the worktree, so the app ran on the local preview family.
+
+**Checks:** `npm run typecheck` clean. `npm test`: 26 suites, 304 tests (new:
+`health.test.ts` 15, `tapRoute.test.ts` 10, `localization.test.ts` 3; one line
+changed in `settingsCopy.test.ts`). ESLint clean in every file M11 touched; the
+full `npm run lint` still reports 30 errors and 1 warning, all in
+`CheckInPop`, `CheerButton`, `PrimaryButton` and `RollingText`, which M11 didn't
+touch. `node scripts/check-design.mjs` clean on the touched files.
+`npx expo export --platform ios` builds (4.7 MB Hermes bundle).
+
+**What's built**
+- Apple Health, write only (`src/state/health.ts`). `@appeeky/expo-healthkit`
+  0.4.1 does what the spec needs on SDK 57: `requestAuthorization({ toShare:
+  [mindful minutes] })` asks for write access alone, `getAuthorizationStatus`
+  reports it, `saveCategorySample` writes an `HKCategoryTypeIdentifierMindfulSession`
+  sample from the session's start for its heat minutes (capped at 240), tagged
+  with `HKExternalUUID` = the session id. The native module is loaded only when
+  present (Jest, web, an old dev client say "unavailable").
+- `app.json`: the plugin's `healthSharePermission: false` removes the read
+  string (`NSHealthShareUsageDescription`); the write string is the spec's.
+  Background delivery stays off. Checked with `npx expo config --type introspect`
+  and on the simulator's Health sheet.
+- Writes happen after each outbox send and after each refresh, for your own
+  saved sessions (ones others logged with you included), once each: ids are kept
+  in `saunafam.healthWritten.v1`, so edits, refreshes and retries never write
+  twice. Failures are quiet and tried again next refresh.
+- Turning it on (Settings, or Turn on on Today's one-time card) stores the
+  switch with the time, asks iOS, and if allowed writes the past week's sessions
+  at once (`syncHealth()` on the app context). The Today card shows only where
+  Health is available. The M10 "This test build can't write to Health yet" state
+  is gone.
+- Notification taps (`src/navigation/tapRoute.ts`, pure and tested): session,
+  shared, session_cheer, session_comment open SessionDetail; nudge opens the
+  Nudge sheet for whoever nudged; weekend the Week tab; joined Family members;
+  the timer's two notifications open the timer room while it runs, else Today;
+  a weekly reminder opens Today. Local ones don't wait for a refresh. A tap is
+  handled once, whether it comes through the launch response or the listener
+  (SDK 57's async `getLastNotificationResponseAsync`, the sync one is
+  deprecated). If the tap arrives before the app is active, the navigation
+  waits for it.
+- Camera alongside the library: the log form already had both (M8); Edit
+  session now has Take a photo and Choose one too, through `pickSessionPhoto`,
+  so its photos get the 4:3 crop on iOS (it used `pickPhoto`, whose `aspect` iOS
+  ignores, D8.7).
+- `expo-localization`: the °F/°C rule (D5.3) now has a test with
+  `getLocales()` mocked (the phone's `temperatureUnit` first, then the region).
+- Nudge sheet line: opened from a nudge push for someone who has kept the week,
+  it read "Maya's on Kept this week". It now says "Maya has kept this week. A
+  nudge says you're thinking of them." (`design/copy/app-copy.md` updated).
+- Dev only (`DevCapture`, compiled out of release): `dev/health-on`,
+  `dev/health-write`, `dev/timer-start?ago=`, `dev/reminder-soon`,
+  `dev/notif-raw`, `dev/notif-list`, `dev/photo?from=`, `dev/ids`.
+
+**Checked end to end on the simulator**
+- Health: Turn on showed iOS's sheet with only "Allow Arro to write: Mindful
+  Minutes" and the new explanation (`health-permission-sheet.png`); after
+  Allow, status read granted, two test writes (15 and 20 min) went through, and
+  the Health app shows 35 mindful minutes (`health-mindful-minutes-written.png`).
+- Timer: started 14:45 in, with the app in the background the target
+  notification arrived ("15 minutes in. Time to cool off.") and tapping it opened
+  the timer room (`notification-tap-timer.mov`). Both timer notifications are
+  scheduled with the real copy (`dev/notif-list`).
+- Weekly reminder: one with the real id prefix and copy ("2 to go this week" /
+  "Ten minutes counts. Your family will see it.") arrived and its tap landed on
+  Today.
+- Legacy cleanup: an `arro-reminder-...` notification scheduled by hand was
+  gone after a relaunch.
+- Pushes: `xcrun simctl push` with the server's payloads (`data` under `body`,
+  as Expo sends it) for all seven kinds; each tap landed as listed above
+  (`notification-tap-*.png`, `notification-tap-push.mov`).
+- Camera: the permission prompt shows the M8 string, and the camera opens. The
+  simulator has no camera feed, so no photo could be taken; cancelling returns
+  nothing and the app carries on. Choosing from the library came back cropped
+  to 1440 x 1080.
+
+**Decisions**
+- D11.1 Health writes your own sessions, including ones someone else logged
+  with you, not only ones logged on this phone: they're your heat minutes too.
+  Each phone writes only its own person.
+- D11.2 Turning Health on saves sessions that started up to 7 days before (so
+  the session that earned Today's card goes in), and every later one.
+  `saunafam.health.v1` now stores `since`; M10's `{ enabled }` still reads, and
+  counts a week back from now.
+- D11.3 Edits and deletes don't change what's in Health: a session is written
+  once, with the minutes it had. Health keeps it if the session is deleted.
+- D11.4 A weekly reminder's tap opens Today; the timer's opens the room only if
+  a timer is still running.
+- D11.5 The nudge push opens the Nudge sheet for the person who nudged (the
+  spec's table), so you can cheer them back.
+- D11.6 The existing `timer-background.mov` (M8) stays: it shows the timer
+  catching up after 2 minutes away, which is what the Quality bar asks for.
+
+**Not done or not verified**
+- On this simulator (iOS 26.2, this Debug build) every transparent modal
+  (Nudge, the log sheet) shows a flat gray scrim with no screen under it, from
+  the first frame, however it's opened (`dev/open` too, not only a tap). M9's
+  `nudge.png` (iOS 26.5, the shared dev client) shows Today under the sheet. Not
+  investigated; worth a look on a device.
+- No camera photo was taken (no camera on the simulator); a device check is
+  needed.
+- Pushes were simulated with `simctl push`, not sent through `send-push` and
+  Expo's service (no hosted Supabase here). The Expo push token wasn't fetched.
+- Haptics and VoiceOver weren't checked (simulator).
+- The other agents' simulator windows sat on top of this one for part of the
+  run, so a few early taps may have landed in the iPhone 17 simulator; `tap.sh`
+  now refuses unless this simulator's window is in front.
+- The app is still named "Arro" on iOS's sheets and banners (the rename is M12),
+  and `app.json`'s photo string still says Arro and workouts (M12).
 

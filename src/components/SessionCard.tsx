@@ -163,7 +163,7 @@ const styles = StyleSheet.create({
   plunge: { flexDirection: 'row', alignItems: 'center', gap: space.s4 },
   lake: { color: palette.lake },
   photo: { marginTop: space.s16 },
-  photoBox: { aspectRatio: 4 / 3, borderRadius: radii.field, overflow: 'hidden', backgroundColor: palette.aspen, boxShadow: depth.sunk },
+  photoBox: { width: '100%', aspectRatio: 4 / 3, borderRadius: radii.field, overflow: 'hidden', backgroundColor: palette.aspen, boxShadow: depth.sunk },
   photoMissing: { position: 'absolute', top: 0, right: 0, bottom: 0, left: 0, alignItems: 'center', justifyContent: 'center' },
   note: { marginTop: space.s12 },
   pending: { marginTop: space.s12 },

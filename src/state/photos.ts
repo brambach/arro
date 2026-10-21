@@ -21,7 +21,7 @@ export async function pickPhoto(shape: PhotoShape = 'square'): Promise<string | 
   const permission = await ImagePicker.requestMediaLibraryPermissionsAsync();
   if (!permission.granted) {
     if (!permission.canAskAgain) {
-      Alert.alert('Photos are off for Arro', 'You can turn them on in Settings.', [
+      Alert.alert('Photos are off for Saunafam', 'You can turn them on in Settings.', [
         { text: 'Not now', style: 'cancel' },
         { text: 'Open Settings', onPress: () => Linking.openSettings() },
       ]);

@@ -3,7 +3,7 @@ import { KeyboardAvoidingView, Platform, Pressable, ScrollView, StyleSheet, Text
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { RootStackScreenProps } from '../navigation/types';
 import { useApp, useView } from '../state/AppState';
-import { pickPhoto } from '../state/photos';
+import { PhotoSource, pickSessionPhoto } from '../state/sessionPhoto';
 import { SaunaType } from '../data/types';
 import { LIMITS, SAUNA_TYPES, saunaTypeLabels } from '../data/saunas';
 import { depth, layout, palette, radii, space } from '../theme/tokens';
@@ -60,6 +60,15 @@ export function EditSessionScreen({ navigation, route }: RootStackScreenProps<'E
 
   const shownPhoto = photo === undefined ? card.photoUri : photo;
   const step = (d: number) => setMinutes((m) => Math.max(LIMITS.minutes.min, Math.min(LIMITS.minutes.max, m + d)));
+
+  const pick = async (from: PhotoSource) => {
+    try {
+      const uri = await pickSessionPhoto(from);
+      if (uri) setPhoto(uri);
+    } catch {
+      haptics.error();
+    }
+  };
 
   const save = async () => {
     setSaving(true);
@@ -134,14 +143,9 @@ export function EditSessionScreen({ navigation, route }: RootStackScreenProps<'E
         <Text style={[type.caption, styles.label]}>Photo</Text>
         {shownPhoto ? <SessionPhoto uri={shownPhoto} /> : null}
         <View style={styles.photoActions}>
-          <TextAction
-            label={shownPhoto ? 'Change photo' : 'Add a photo'}
-            onPress={async () => {
-              const uri = await pickPhoto('landscape');
-              if (uri) setPhoto(uri);
-            }}
-            size="bodySmall"
-          />
+          {/* The camera alongside the library, as on the log form; both crop to 4:3 (sessionPhoto.ts). */}
+          <TextAction label="Take a photo" onPress={() => pick('camera')} size="bodySmall" />
+          <TextAction label={shownPhoto ? 'Choose another' : 'Choose one'} onPress={() => pick('library')} size="bodySmall" />
           {shownPhoto ? <TextAction label="Remove photo" onPress={() => setPhoto(null)} tone="coal" size="bodySmall" /> : null}
         </View>
 
@@ -199,7 +203,7 @@ const styles = StyleSheet.create({
   tileTextOn: { color: palette.steam },
   plunge: { flexDirection: 'row', alignItems: 'center', gap: space.s12, marginTop: space.s16 },
   field: { marginTop: space.s16 },
-  photoActions: { flexDirection: 'row', gap: space.s24, marginTop: space.s8 },
+  photoActions: { flexDirection: 'row', flexWrap: 'wrap', columnGap: space.s24, rowGap: space.s8, marginTop: space.s8 },
   save: { marginTop: space.s32 },
   error: { color: palette.coal, marginTop: space.s12 },
   left: { alignSelf: 'flex-start', marginTop: space.s16 },

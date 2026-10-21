@@ -2,7 +2,9 @@ import { useEffect, useRef } from 'react';
 import { DeviceEventEmitter } from 'react-native';
 import type { NavigationContainerRefWithCurrent } from '@react-navigation/native';
 import { useApp } from '../state/AppState';
-import { PreviewScenarioId, previewNow } from '../data/preview';
+import { PreviewScenarioId, previewNow, setDevSharedPhoto } from '../data/preview';
+import { isSaunaType } from '../data/saunas';
+import { sendDevCommand } from './capture';
 import type { RootStackParamList } from '../navigation/types';
 import type { PreviewBehavior } from '../state/purchases';
 
@@ -13,10 +15,12 @@ import type { PreviewBehavior } from '../state/purchases';
  * a time: sign in to the preview family, pick a scenario, go to a screen, or log
  * a session as if the form had just closed. Release builds never include it
  * (App.tsx mounts it behind __DEV__).
+ *
+ * EXPO_PUBLIC_DEV_DRIVER_URL moves the server (default http://localhost:8099),
+ * so captures on two simulators at once don't take each other's commands.
  */
 export const devDriverOn = __DEV__ && process.env.EXPO_PUBLIC_DEV_DRIVER === '1';
-/** Several simulators can run captures at once, each with its own driver server. */
-const DRIVER_PORT = process.env.EXPO_PUBLIC_DEV_DRIVER_PORT || '8099';
+const driverUrl = process.env.EXPO_PUBLIC_DEV_DRIVER_URL || 'http://localhost:8099';
 
 type Command =
   | { op: 'onboard' }
@@ -32,9 +36,14 @@ type Command =
   | { op: 'log'; minutes?: number; minutesAgo?: number }
   | { op: 'cheer'; id: string }
   | { op: 'comment'; id: string; body: string }
+  /** A photo on this week's shared session; send a scenario after it. */
+  | { op: 'photo'; uri: string | null }
+  /** A timer `ago` seconds in, as if it had been running (DevCapture's dev/timer). */
+  | { op: 'timer'; ago: number; target?: number; type?: string }
+  /** One of the screens' dev commands (form-pick, form-scroll, ...), as DevCapture sends them. */
+  | { op: 'dev'; command: string; args?: Record<string, string> }
   | { op: 'plusStore'; behavior: PreviewBehavior; storeMs?: number; serverMs?: number }
-  | { op: 'emitArg'; event: string; arg: string | number }
-  | { op: 'timer'; ago: number; target?: number };
+  | { op: 'emitArg'; event: string; arg: string | number };
 
 export function DevDriver({ navigation }: { navigation: NavigationContainerRefWithCurrent<RootStackParamList> }) {
   const app = useApp();
@@ -101,14 +110,25 @@ export function DevDriver({ navigation }: { navigation: NavigationContainerRefWi
         case 'comment':
           await a.comment(c.id, c.body);
           return;
-        case 'plusStore':
-          a.setPreviewPurchases(c.behavior, { storeMs: c.storeMs, serverMs: c.serverMs });
+        case 'photo':
+          setDevSharedPhoto(c.uri);
           return;
         case 'timer': {
           const start = new Date(Date.now() - c.ago * 1000).toISOString();
-          a.devSetTimer({ startedAt: start, rounds: [{ start, end: null }], targetMinutes: c.target ?? 15, saunaType: 'traditional' });
+          a.devSetTimer({
+            startedAt: start,
+            rounds: [{ start, end: null }],
+            targetMinutes: c.target ?? 15,
+            saunaType: isSaunaType(c.type) ? c.type : 'traditional',
+          });
           return;
         }
+        case 'dev':
+          sendDevCommand(c.command, c.args ?? {});
+          return;
+        case 'plusStore':
+          a.setPreviewPurchases(c.behavior, { storeMs: c.storeMs, serverMs: c.serverMs });
+          return;
         case 'emitArg':
           DeviceEventEmitter.emit(c.event, c.arg);
           return;
@@ -117,7 +137,7 @@ export function DevDriver({ navigation }: { navigation: NavigationContainerRefWi
     const tick = async () => {
       if (!alive) return;
       try {
-        const res = await fetch(`http://localhost:${DRIVER_PORT}/next`);
+        const res = await fetch(`${driverUrl}/next`);
         if (res.status === 200) await run((await res.json()) as Command);
       } catch {
         // No server running: try again later.
