@@ -26,6 +26,8 @@ type Command =
   | { op: 'onboard' }
   /** Before onboarding: start the invitee path as Sam, with this join code typed in. */
   | { op: 'invitee'; code: string }
+  /** Text a person would type on an onboarding step, set in place, with no keyboard. */
+  | { op: 'draft'; name?: string; familyName?: string; joinCode?: string }
   | { op: 'scenario'; id: PreviewScenarioId | null }
   | { op: 'nav'; route: keyof RootStackParamList; params?: object }
   | { op: 'tab'; tab: 'Today' | 'ThisWeek' | 'Feed' | 'Me' }
@@ -72,6 +74,11 @@ export function DevDriver({ navigation }: { navigation: NavigationContainerRefWi
           a.startFlow('invitee');
           a.updateDraft({ joinCode: c.code, name: 'Sam' });
           return;
+        case 'draft': {
+          const { op: _op, ...patch } = c;
+          a.updateDraft(patch);
+          return;
+        }
         case 'scenario':
           a.setPreview(c.id);
           return;
