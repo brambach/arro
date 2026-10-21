@@ -36,6 +36,15 @@ export const PREVIEW_ME = 'sam';
 export const PREVIEW_FAMILY_NAME = 'Sunday sauna';
 export const PREVIEW_JOIN_CODE = 'SAUNA234';
 
+/**
+ * Dev builds only (App Store captures): a photo on this week's shared session,
+ * set by the dev driver before it picks a scenario. Always null in a release build.
+ */
+let devSharedPhoto: string | null = null;
+export function setDevSharedPhoto(uri: string | null): void {
+  if (__DEV__) devSharedPhoto = uri;
+}
+
 export type PreviewScenarioId =
   | 'family'
   | 'solo'
@@ -248,6 +257,7 @@ function buildFamily(plan: Plan, now: Date, extra?: (f: FamilySnapshot) => void)
       for (const s of together) {
         Object.assign(s, base, { sharedId: anchor.id, loggedBy: 'maya', note: s === anchor ? 'Three rounds and the lake. Perfect.' : null });
       }
+      if (devSharedPhoto) anchor.photoUrl = devSharedPhoto;
       cheers.push({ id: 'cheer-1', sessionId: anchor.id, memberId: 'sam', createdAt: iso(sharedDay, 21, 0) });
       comments.push(
         { id: 'comment-1', sessionId: anchor.id, memberId: 'jo', body: 'Cold plunge hero', createdAt: iso(sharedDay, 21, 5) },

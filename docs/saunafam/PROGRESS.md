@@ -39,6 +39,7 @@ DENO_NO_PACKAGE_JSON=1 deno test --allow-read=supabase/functions supabase/functi
 | M13 | done (branch `saunafam/site`) | `design/screenshots/saunafam/site/`, `design/screenshots/saunafam/invite-link-preview.png`, `design/recordings/saunafam/site-first-load.mp4`, `design/lighthouse/*.json`, `site/worker.test.mjs` | Lighthouse 100/100/100/100 on all four pages, CLS 0. See M13 below |
 | M12 docs | done (branch `saunafam/docs`) | `README.md`, `AGENTS.md`, `AUDIT.md` (note), the "Written for Arro" line on `design/market-research.md`, `paid-plan.md`, `refactor-plan.md`, `visual-direction.md`, `Arro-Spec.html`, `Arro.dc.html`, `design/app-store/icon-options.md` | Docs half of section 6 only. `CLAUDE.md` is just `@AGENTS.md`, so unchanged. See "M12 and M14 docs" below |
 | M14 docs | done (branch `saunafam/docs`) | `design/app-store/listing.md`, `app-privacy.md`, `review-notes.md`, `screenshots.md`, `support.md`, `testflight.md`, `hosting.md`, `README.md`; `design/copy/app-copy.md` (skeleton) | Listing, age rating, privacy labels, products. Not the screenshot script (`scripts/` is the app track). Apple screenshot sizes changed: see below |
+| M14 shots | done (branch `saunafam/shots`) | `design/app-store/screenshots/6.9/`, `6.3/`, `raw/`, `scripts/app-store-shots.mjs`, `scripts/app-store/capture.mjs` | Six framed, captioned screenshots at 1320 x 2868 and 1206 x 2622, size and alpha checked by the script. See "M14: App Store screenshots" below |
 
 ## M5: app data layer
 
@@ -947,4 +948,72 @@ every file M8 touched; `check-design` clean in them; `check-contrast` 32 of 32.
   (dev chrome).
 - `design/screenshots/saunafam/INDEX.md` lines for these screens are left for
   M9, which owns that file.
+
+## M14: App Store screenshots
+
+Built on branch `saunafam/shots` (worktree `/tmp/luna-arro/wt-shots`), the
+half of M14 the docs track left: the designed set. How to regenerate is in
+`design/app-store/screenshots.md`.
+
+**Checks:** `npm run typecheck` clean. `npm test`: 23 suites, 276 tests.
+`npx eslint` clean on every file touched (the 30 errors `npm run lint` still
+reports are in Arro's old `CheckInPop`, `CheerButton`, `PrimaryButton` and
+`RollingText`, untouched). `node scripts/app-store-shots.mjs`: "All 12
+screenshots are the exact size, with no alpha channel." Each output is read
+back after writing: 1320 x 2868 or 1206 x 2622, PNG color type 2 (RGB).
+
+**Proof:** `design/app-store/screenshots/6.9/1-timer.png` to `6-milestone.png`
+and the same in `6.3/`; raw captures in `design/app-store/screenshots/raw/`.
+
+**What's in it**
+- `scripts/app-store-shots.mjs`: the frame and caption template as SVG
+  (birch, the app's faint slats and warm corner, Fraunces Soft SemiBold
+  captions at 106 px on the 6.9 grid with -2.2 tracking, a dark device frame
+  with side buttons and a soft warm shadow, the wordmark over the first
+  caption), rendered with resvg, flattened to RGB with pngjs, then checked.
+- `scripts/app-store/capture.mjs`: the captures with no taps, through the dev
+  driver; `scripts/app-store/sample-photo.mjs`: the feed card's photo.
+- Dev only: `DevDriver` reads `EXPO_PUBLIC_DEV_DRIVER_URL` (default
+  `http://localhost:8099`, so other agents' runs are unchanged) and takes three
+  new commands: `photo` (a photo on the preview's shared session, through
+  `setDevSharedPhoto` in `preview.ts`), `timer` (DevCapture's `dev/timer`)
+  and `dev` (the screens' `form-*` commands).
+
+**Fixed from the captures**
+- Session photos came out about 21 pt narrower than the card, with a strip of
+  card to their right (Yoga's `aspectRatio` with a stretched width). The
+  photo box now has `width: '100%'` (`SessionCard.tsx`); the feed card, the
+  session screen and the edit sheet all use it. No photo had been on screen
+  before, so nothing had caught it.
+- The timer's "Time to cool off at 6:38 PM" disagreed with the 9:41 status
+  bar. The timer shot is taken in a POSIX time zone made for the moment
+  (`SFM+04:13:44`, say), so it reads 9:41 PM.
+- The numerals read 14:31: the room redraws once a second, so the shot waits
+  1.2 s after the timer is set.
+- A fresh dev client install showed Expo's developer menu over the app. The
+  capture script turns its first-run screen and Tools button off first.
+
+**Decisions**
+- D14.1 Two sets, 6.9 and 6.3, as `screenshots.md` planned from Apple's page.
+  No 6.5 set; the script can scale one from the 6.9 frames if App Store
+  Connect still asks.
+- D14.2 Every caption is two lines at one fixed baseline, so the six read as a
+  strip; the device sits at the same place on each. The wordmark only on the
+  first, where there's room above the caption.
+- D14.3 No ember in the captions (the spec's "ember once at most"): every
+  screen already has ember in it.
+- D14.4 Today is scrolled so the streak card and all three family rows show;
+  on 6.9 at rest that's already true, and scrolling would bring in the Apple
+  Health offer.
+- D14.5 The log form shows Maya and Jo picked, three people in the session
+  (D8.10: the preview family has no fourth member).
+- D14.6 The feed photo is drawn, not a stock photo: a lake at dusk from a
+  dock, matching the session's "Lake cabin" and "Three rounds and the lake".
+
+**Not done or not checked**
+- App Store Connect's upload form itself (only Bryce can see it).
+- "Yesterday · 25 min with Maya a..." truncates on Today's rows at both
+  widths. That's the app's layout, not changed here.
+- The battery shows the charging bolt, from the specified
+  `--batteryState charged`. `discharging` at 100 would show a plain battery.
 
