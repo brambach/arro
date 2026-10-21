@@ -28,7 +28,7 @@ Captured with the dev-only capture driver (`src/dev/DevDriver.tsx`, Metro with
 - `today-error.png`: Today, couldn't load with nothing cached: Try again
 - `today-last-one.png`: Today before the save that keeps the family's week (Maya and Jo kept, you on 2 of 3)
 - `today-week-kept.png`: Today after that save: the slat filled with ember, "Week kept, together"
-- `today-dynamic-type.png`, `today-dynamic-type-2.png`, `today-dynamic-type-3.png`: Today at the largest accessibility text size (AX5), top, middle and family list (`-3` retaken after the row change)
+- `today-dynamic-type.png`, `today-dynamic-type-2.png`, `today-dynamic-type-3.png`: Today at the largest accessibility text size (AX5), top, middle and family list (`-3` retaken after the row change; `-2` retaken on 21 October with the row's icon above "Log yesterday's", which no longer breaks inside the word)
 
 ### Week
 
@@ -137,6 +137,7 @@ Captured with the dev-only capture driver (`src/dev/DevDriver.tsx`, Metro with
 - `settings-apple-health-on.png`: Apple Health, on (before M11 wires the write)
 - `settings-family-members.png`: Family members, founder
 - `settings-family-members-remove.png`: Remove Maya? confirm
+- `family-members-dynamic-type.png`: Family members at AX5, each avatar above the name
 - `settings-streak-rules.png`: Streak rules, a Sunday-start family
 - `settings-wall-plus-enabled.png`: The wall, plus_enabled, birch, locked woods
 - `settings-wall-try-on.png`: The wall, trying on cedar, "Keep this wood with Plus"
