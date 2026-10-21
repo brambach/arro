@@ -31,6 +31,7 @@ import {
   WallWood,
   WeekStartsOn,
 } from '../data/types';
+import { paletteColor } from '../data/palette';
 import { isSaunaType, recentPlaces } from '../data/saunas';
 import { addDays, dayKey, weekStart } from './dates';
 import { HISTORY_WEEKS } from './weeks';
@@ -503,7 +504,7 @@ export async function previewInvite(code: string): Promise<InvitePreview> {
     familyName: row.family_name,
     memberCount: row.member_count,
     invitedBy: row.invited_by_name,
-    members: (row.member_names ?? []).map((name, i) => ({ name, color: row.member_colours?.[i] ?? '#999999' })),
+    members: (row.member_names ?? []).map((name, i) => ({ name, color: row.member_colours?.[i] ?? paletteColor(i) })),
     weekStreak: row.week_streak,
     goalPerWeek: row.goal_per_week,
     minMinutes: row.min_minutes,

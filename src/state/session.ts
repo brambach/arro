@@ -14,6 +14,7 @@
  * modules: timer.ts, outbox.ts, milestones.ts, plus.ts.
  */
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { paletteColor } from '../data/palette';
 import { FamilySnapshot } from '../data/types';
 import { DEFAULT_REMINDER_DAYS, DEFAULT_REMINDER_TIME, normalizeDays } from './reminders';
 
@@ -71,7 +72,7 @@ export function normalizeSession(raw: unknown): SavedSession | null {
     me: {
       id: me.id as string,
       name: me.name ?? 'You',
-      color: me.color ?? '#5F8794',
+      color: me.color ?? paletteColor(0),
       photoUri: me.photoUri ?? null,
       reminderDays: me.reminderDays ? normalizeDays(me.reminderDays) : [...DEFAULT_REMINDER_DAYS],
       reminderTime: me.reminderTime ?? (me.reminder ? SLOT_TIMES[me.reminder] : undefined) ?? DEFAULT_REMINDER_TIME,
