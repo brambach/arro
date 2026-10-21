@@ -19,8 +19,6 @@ type Props = {
   accessibilityLabel?: string;
   accessibilityHint?: string;
   style?: StyleProp<ViewStyle>;
-  /** @deprecated Arro's prop; cards have one radius now. */
-  radius?: number;
   /** A tray-colored card (aspen) for something that sits in the page. */
   background?: string;
 };

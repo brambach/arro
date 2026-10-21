@@ -1,0 +1,692 @@
+M12 rename check (20 October 2026, feat/saunafam after M15)
+
+Command: grep -rnw --exclude-dir=node_modules --exclude-dir=.git --exclude-dir=ios --exclude-dir=android 'Arro' .
+Dash check: grep -rnP "[\x{2013}\x{2014}]" src site/public app.json design/copy design/app-store finds nothing.
+
+Every remaining "Arro" falls in one of these groups. None is the app calling
+itself Arro.
+
+1. The move itself, said on purpose to people who used Arro: the "Arro is now
+   Saunafam" sheet (src/state/settingsCopy.ts, RenamedSheet, AppOverlays,
+   devTools), the Health note for old testers (src/state/healthSettings.ts),
+   the site FAQ, privacy and support pages, design/app-store/privacy-policy.md,
+   support.md, review-notes.md, testflight.md, app-privacy.md, listing.md (the
+   App Store record is still named Arro until Bryce renames it), and
+   design/copy/app-copy.md, which collects those strings.
+2. Kept identifiers (spec section 6, "Keep"): com.arrofamily.arro, slug "arro",
+   project_id "arro", the arro.session.v1 and arro.family.v2 storage keys, and
+   the arro- notification prefix that build 9 cancels (src/state/session.ts,
+   reminders.ts, notifications.ts and their tests).
+3. Migrations already applied to production, which never get edited:
+   20261005000001_schema.sql, 20261005000005_hardening.sql and the old
+   pgTAP files (push, review, workout_pushes).
+4. Build 9 code and comments that name Arro's data still on the server until
+   build 10: the 2026102100000x migrations, saunafam_push.test.sql,
+   delete-account, remove-member, supabase/drafts/build10_cleanup.sql,
+   design/copy/notifications.md.
+5. Code comments that compare with Arro's old behavior (RollingNumber,
+   FamilyMembersScreen, Sheet, sessionPhoto, motion.ts, generate-icons.mjs,
+   site/worker.js's redirect).
+6. History: design docs that start with "Written for Arro, before it became
+   Saunafam." (market-research, paid-plan, refactor-plan, visual-direction,
+   Arro.dc.html, Arro-Spec.html, icon-options), README.md, AGENTS.md,
+   AUDIT.md, the spec, docs/saunafam/*, and design/saunafam-rename-list.txt
+   (the M0 search this check replaces).
+7. Build output names: design/app-store/screenshots.md points at the
+   Debug-iphonesimulator Arro.app, which keeps that name until the next
+   prebuild picks up expo.name "Saunafam".
+
+Counts per file:
+ 311 design/saunafam-rename-list.txt
+  43 design/saunafam-spec.md
+  31 design/market-research.md
+  22 design/paid-plan.md
+  16 docs/saunafam/PROGRESS.md
+  15 design/refactor-plan.md
+  11 design/visual-direction.md
+  10 design/saunafam-rename-check.txt
+   8 design/Arro.dc.html
+   7 src/state/session.ts
+   7 design/app-store/testflight.md
+   5 docs/saunafam/API.md
+   5 design/app-store/privacy-policy.md
+   5 design/app-store/app-privacy.md
+   4 supabase/drafts/build10_cleanup.sql
+   4 design/copy/notifications.md
+   4 design/Arro-Spec.html
+   3 supabase/migrations/20261021000003_weekly_streaks.sql
+   3 src/state/settingsCopy.ts
+   3 src/state/AppState.tsx
+   3 site/public/privacy/index.html
+   3 design/copy/app-copy.md
+   3 README.md
+   3 AUDIT.md
+   3 AGENTS.md
+   2 supabase/migrations/20261021000005_saunafam_pushes.sql
+   2 supabase/migrations/20261005000001_schema.sql
+   2 supabase/functions/remove-member/index.ts
+   2 supabase/functions/delete-account/index.ts
+   2 src/state/reminders.ts
+   2 site/public/support/index.html
+   2 site/public/index.html
+   2 design/screenshots/saunafam/INDEX.md
+   2 design/app-store/support.md
+   2 design/app-store/review-notes.md
+   2 design/app-store/listing.md
+   2 design/app-store/icon-options.md
+   1 supabase/tests/database/workout_pushes.test.sql
+   1 supabase/tests/database/saunafam_push.test.sql
+   1 supabase/tests/database/review.test.sql
+   1 supabase/tests/database/push.test.sql
+   1 supabase/migrations/20261021000002_sessions.sql
+   1 supabase/migrations/20261005000005_hardening.sql
+   1 src/theme/motion.ts
+   1 src/state/sessionPhoto.ts
+   1 src/state/notifications.ts
+   1 src/state/healthSettings.ts
+   1 src/state/devTools.ts
+   1 src/state/__tests__/settingsCopy.test.ts
+   1 src/state/__tests__/session.test.ts
+   1 src/state/__tests__/saunas.test.ts
+   1 src/state/__tests__/reminders.test.ts
+   1 src/state/__tests__/AppState.test.tsx
+   1 src/screens/FamilyMembersScreen.tsx
+   1 src/navigation/AppOverlays.tsx
+   1 src/components/Sheet.tsx
+   1 src/components/RollingNumber.tsx
+   1 src/components/RenamedSheet.tsx
+   1 site/worker.js
+   1 scripts/generate-icons.mjs
+   1 docs/saunafam/DESIGN-SYSTEM.md
+   1 docs/saunafam/DATA-LAYER.md
+   1 design/app-store/screenshots.md
+   1 design/app-store/hosting.md
+   1 design/app-store/README.md
+
+Every line:
+AUDIT.md:6:**Note, 20 October 2026:** this audit was of Arro, before it became Saunafam.
+AUDIT.md:13:support@saunafam.com, and `design/Arro.dc.html` below keeps its old file name.
+AUDIT.md:65:  relatives in `design/Arro.dc.html` are Ruth and Tom. The same swap went
+AGENTS.md:18:It was Arro, a daily movement streak, until build 9 (October 2026). The spec
+AGENTS.md:22:Design docs that start with "Written for Arro, before it became Saunafam." are
+AGENTS.md:29:  and the EAS project id (`app.json`). All kept from Arro so testers get Saunafam as an
+README.md:13:**It used to be Arro,** a daily movement streak for families. Build 9 (October
+README.md:17:an update. The design docs in `design/` that start with "Written for Arro,
+README.md:179:- `AUDIT.md`: the security and privacy check done on Arro in October 2026
+design/saunafam-rename-check.txt:3:Command: grep -rnw --exclude-dir=node_modules --exclude-dir=.git --exclude-dir=ios --exclude-dir=android 'Arro' .
+design/saunafam-rename-check.txt:6:Every remaining "Arro" falls in one of these groups. None is the app calling
+design/saunafam-rename-check.txt:7:itself Arro.
+design/saunafam-rename-check.txt:9:1. The move itself, said on purpose to people who used Arro: the "Arro is now
+design/saunafam-rename-check.txt:14:   App Store record is still named Arro until Bryce renames it), and
+design/saunafam-rename-check.txt:23:4. Build 9 code and comments that name Arro's data still on the server until
+design/saunafam-rename-check.txt:27:5. Code comments that compare with Arro's old behavior (RollingNumber,
+design/saunafam-rename-check.txt:30:6. History: design docs that start with "Written for Arro, before it became
+design/saunafam-rename-check.txt:32:   Arro.dc.html, Arro-Spec.html, icon-options), README.md, AGENTS.md,
+design/saunafam-rename-check.txt:36:   Debug-iphonesimulator Arro.app, which keeps that name until the next
+design/saunafam-rename-check.txt:48:   8 design/Arro.dc.html
+design/saunafam-rename-check.txt:56:   4 design/Arro-Spec.html
+design/saunafam-spec.md:1:# Saunafam build spec (rebuilding Arro, build 9)
+design/saunafam-spec.md:3:Written 20 October 2026 for one Claude Code session working in the Arro repo (`brambach/arro`).
+design/saunafam-spec.md:11:- for the paid tier, Arro's `design/paid-plan.md` and the App Store and web sources in the appendix.
+design/saunafam-spec.md:48:The tone stays Arro's:
+design/saunafam-spec.md:184:- [ ] Proof: the grep output, with every remaining "Arro" listed and justified.
+design/saunafam-spec.md:361:- The exception to Arro's "never retry a write" rule: logging a session is made **offline safe**. Saves go into an outbox in AsyncStorage (`saunafam.outbox.v1`) and send wh
+design/saunafam-spec.md:420:**Arro** (`/tmp/luna-arro/repo`)
+design/saunafam-spec.md:437:Those are Arro's identity. Reusing them would make Saunafam read as a reskin.
+design/saunafam-spec.md:441:I didn't find its repo on the Mac in a quick read-only look, so it wasn't reviewed. The only fact used here: Arro's `src/theme/typography.ts` says Arro's display face is sh
+design/saunafam-spec.md:465:- Body text starts at 15 pt, as Arro's does, so grandparents can read it.
+design/saunafam-spec.md:468:**Motion tokens** (they replace Arro's values in `src/theme/motion.ts`):
+design/saunafam-spec.md:507:Ember goes last on purpose. Arro's own audit flagged that the founder's color matching the main button makes their face read as a button.
+design/saunafam-spec.md:511:  - Ship static TTFs at 400 and 600 through the `expo-font` plugin, the way Arro ships Instrument Serif today.
+design/saunafam-spec.md:522:- Cards are steam-colored. Keep Arro's lifted ring-and-shadow technique, retinted to char.
+design/saunafam-spec.md:523:- Delete Arro's contour map and color mesh (`src/theme/contours.ts`, the `Backdrop` mesh).
+design/saunafam-spec.md:570:3. **A new identity that keeps what testers liked.** It's warm and light, and it shares no fonts, colors or backdrops with Arro, the portfolio or Dervo. What carries over i
+design/saunafam-spec.md:672:**The splash** replaces Arro's route-drawing splash. It runs once, for about 1.5 s:
+design/saunafam-spec.md:695:Numbers roll in using the same technique as Arro's `RollingText`.
+design/saunafam-spec.md:759:There are 4 tabs, with no badges (as in Arro): **Today**, **Week**, **Feed** and **Me**.
+design/saunafam-spec.md:884:| When | yes | Today or Yesterday (the server refuses anything older, as in Arro), plus a start time that defaults to now minus the duration |
+design/saunafam-spec.md:893:| Photo | no | library or camera, cropped 4:3, 1440 px long edge, JPEG (Arro's photo rules) |
+design/saunafam-spec.md:911:**Units.** Use `expo-localization` (`getLocales()[0].temperatureUnit`) **(unverified)**. It isn't in `package.json`, so add it and check that field exists in SDK 57. Fallba
+design/saunafam-spec.md:932:- People on a break can be included. A session on a paused day still counts, as in Arro.
+design/saunafam-spec.md:939:**What's shown.** Sessions from this week and last week, newest first. Arro showed only today and yesterday, but a weekly rhythm needs the longer window. **Default.**
+design/saunafam-spec.md:1037:- the "Your run is in Arro" note.
+design/saunafam-spec.md:1113:**9. Removing a member** removes their sessions. Streaks are computed on read (Arro's design), so past weeks can change, for example a broken week can become counted. That
+design/saunafam-spec.md:1164:- Arro scheduled 14 days of `arro-reminder-*` notifications ahead.
+design/saunafam-spec.md:1179:**They also switch off Arro's old pushes:**
+design/saunafam-spec.md:1549:Whole-word "Arro" at `b68cd61`, excluding `node_modules`:
+design/saunafam-spec.md:1567:grep -rnw --exclude-dir=node_modules --exclude-dir=.git 'Arro' .
+design/saunafam-spec.md:1624:- Leave the historical design docs as they are, with one line added at the top of each: "Written for Arro, before it became Saunafam."
+design/saunafam-spec.md:1675:- Arro's daily streaks, freezes and milestones don't carry over.
+design/saunafam-spec.md:1684:2. A one-time sheet, "Arro is now Saunafam":
+design/saunafam-spec.md:1700:> "Arro is now Saunafam, a weekly sauna streak. Your family carries over and the streak starts fresh. Try the timer, log a session for two people, and cheer someone on."
+design/saunafam-spec.md:1718:This builds on `design/paid-plan.md` in the repo, Arro's paid plan (October 2026). The rules carry over: one payer covers the family, invitees never see a price, nothing i
+design/saunafam-spec.md:1759:**Primary: Saunafam Plus, one plan per Saunafam family.** It earns more than a one-time unlock, it rewards the founder (the person who cares most and is most likely to pay
+design/saunafam-spec.md:1801:- **$24.99 a year for the whole family is less than one person pays elsewhere.** GoPolar, Brisk and Gentler Streak each list $39.99 a year for one person, and Arro's plan 
+design/saunafam-spec.md:1901:- **Arro's plan already chose it,** and `family_plans` was designed around its webhook (the comment in the RLS migration says so).
+design/saunafam-spec.md:2156:| M10 | Onboarding, Settings, copy | Both onboarding paths, Family rules, Take a break, Notifications, Health, the "Arro is now Saunafam" sheet, the update screen. Every s
+design/saunafam-spec.md:2158:| M12 | Rename | Section 6 done. The grep check, each remaining "Arro" justified. The dash check: `grep -rnP "[\x{2013}\x{2014}]" src site/public app.json design/copy desi
+design/saunafam-spec.md:2194:- Deleting old Arro data. That's build 10.
+design/saunafam-spec.md:2244:- **App Review Guidelines** 3.1.1 (in-app purchase, restore) and 3.1.2 (subscriptions): https://developer.apple.com/app-store/review/guidelines/ . I didn't re-read these o
+design/saunafam-spec.md:2249:- **Arro's own plan,** for the reasoning that carries over: `design/paid-plan.md` in the repo (read only).
+design/refactor-plan.md:1:Written for Arro, before it became Saunafam.
+design/refactor-plan.md:3:# Arro refactor plan
+design/refactor-plan.md:9:`design/paid-plan.md` (how Arro charges).
+design/refactor-plan.md:13:- **Arro is a family workouts streak app, not a running app.** It's a small,
+design/refactor-plan.md:21:  `src/theme/typography.ts`). `Arro-Spec.html` and `Arro.dc.html` describe an
+design/refactor-plan.md:29:  each family private, edge functions to send pushes). Arro gets its own project
+design/refactor-plan.md:56:- **The paid plan stays as is.** v1 free, then Arro Family ($39.99 a year per
+design/refactor-plan.md:58:- **App Store name: "Arro: Family Move Streak".** Agreed, not yet reserved or
+design/refactor-plan.md:73:   Arro Family ($39.99 a year per family) in the first update
+design/refactor-plan.md:75:4. ~~**The App Store name.**~~ **Decided (Oct 2026): "Arro: Family Move Streak".**
+design/refactor-plan.md:76:   "Arro" on its own is taken (a travel app, a taxi app, a credit card app), so it
+design/refactor-plan.md:88:  domain Arro controls).
+design/refactor-plan.md:201:  opening Arro.
+design/refactor-plan.md:232:- Reserve the App Store name "Arro: Family Move Streak" (open decision 4). Not
+design/refactor-plan.md:244:## Phase 7 - Arro Family (first update after launch)
+design/Arro-Spec.html:2:<title>Arro — Implementation Spec</title>
+design/Arro-Spec.html:31:<body><p style="max-width:920px;margin:0 auto 16px;font-weight:700;font-size:14px;color:#40312A">Written for Arro, before it became Saunafam.</p><div class="sheet">
+design/Arro-Spec.html:32:  <div class="head"><div class="logo"><svg viewBox="0 0 48 48" width="30" height="30" fill="none"><path d="M11.5 38.5 L24 10.5 L36.5 38.5" stroke="#fff" stroke-width="4.6" str
+design/Arro-Spec.html:89:    <section><h2>9 · Final screens</h2><p class="desc">Locked directions in <code>Arro.dc.html</code> — build these; no new experimental screens.</p>
+design/paid-plan.md:1:Written for Arro, before it became Saunafam.
+design/paid-plan.md:3:# Arro paid plan
+design/paid-plan.md:5:October 2026. How Arro charges without breaking the family loop. Read with
+design/paid-plan.md:13:- **One paid plan, Arro Family.** One person pays and the whole family gets it:
+design/paid-plan.md:18:  is how Snapchat and Duolingo do it, and it breaks Arro's promise.
+design/paid-plan.md:23:- **Timing: launch v1 free, add Arro Family in the first update**, ideally in
+design/paid-plan.md:54:## What Arro Family adds
+design/paid-plan.md:64:   family uses Arro.
+design/paid-plan.md:76:## What Arro never sells
+design/paid-plan.md:80:  It works for them. For Arro, selling relief from streak anxiety breaks
+design/paid-plan.md:110:- It sits under the big family plans ($120-160) because Arro is new, has no
+design/paid-plan.md:125:That's a big gap. For Arro, a paywall on joining is out, because the free loop is
+design/paid-plan.md:137:| End of each month | "Your October recap is ready", first two cards free, the rest in Arro Family | Everyone sees the teaser |
+design/paid-plan.md:138:| Opening a day before this month | "Your history is kept. Arro Family opens it." | Whoever taps |
+design/paid-plan.md:151:family a year of Arro." Families get together in December and make resolutions in
+design/paid-plan.md:162:- One subscription group, "Arro Family", with an annual and a monthly product and
+design/paid-plan.md:195:  Apple handles refunds, not Arro.
+design/paid-plan.md:216:  server-side family plan already covers everyone in the Arro family.
+design/paid-plan.md:223:in-app purchase handles refunds and family billing, and at Arro's size the saving
+design/paid-plan.md:228:**Recommendation: launch v1 free, add Arro Family in the first update.**
+design/paid-plan.md:240:  "give your family a year of Arro" pitch line up with New Year.
+design/paid-plan.md:257:  by day 35. For Arro, only founders count, since invitees don't pay.
+design/visual-direction.md:1:Written for Arro, before it became Saunafam.
+design/visual-direction.md:3:# Arro visual direction
+design/visual-direction.md:5:October 2026. An audit of how Arro looks after phase 1, and two directions for
+design/visual-direction.md:156:**A, Paper and clay.** It keeps Arro's warmth, which suits a family app better
+design/visual-direction.md:198:- **Headings set by hand.** Welcome's "Arro", Today's "Day 24" and a few other
+design/visual-direction.md:220:- Hand-set headings are serif: Welcome's "Arro", Today's "Day 24" and "Back at
+design/visual-direction.md:246:What we took from Dervo, adapted to Arro's warm paper rather than Dervo's cool
+design/visual-direction.md:253:  the light. Dervo's `--lift`, in Arro's warm brown instead of green-grey.
+design/visual-direction.md:260:- **A light to sit in.** Dervo puts its windows on a blurred meadow photo. Arro
+design/visual-direction.md:314:It belongs to Arro (the route maps, "your map") rather than to any calm app,
+design/visual-direction.md:352:- **Background: a soft colour mesh**, the way trydervo.com draws its own. Arro's
+design/market-research.md:1:Written for Arro, before it became Saunafam.
+design/market-research.md:3:# Arro market scan
+design/market-research.md:6:the evidence says, and where Arro fits. Read with `design/refactor-plan.md`.
+design/market-research.md:15:- **The way in is the one you named: staying in touch in a healthy way.** Arro is
+design/market-research.md:22:  faster than competition, and people pull back after a broken streak. Arro has to
+design/market-research.md:29:  Supabase and RevenueCat are free at Arro's size.
+design/market-research.md:38:| Product | What it does | Price | What Arro takes from it |
+design/market-research.md:40:| Apple Fitness sharing | Activity rings shared with up to 40 friends, 7-day 1-on-1 competitions | Free, Apple Watch-centred | Health as the automatic source. Arro is the 
+design/market-research.md:41:| MoveShare | Private friends feed from Apple Health, kudos, streaks, group goals, no leaderboards | Unknown | The closest app in spirit. It's friends and Health-only. Arr
+design/market-research.md:44:| Pacer, StepUp | Step leaderboards and groups | Pacer Premium $9.99/mo or $49.99/yr (unconfirmed) | Steps only, ranked. The opposite of Arro |
+design/market-research.md:51:| Product | What it does | Price | What Arro takes from it |
+design/market-research.md:55:| FamilyAlbum, Tinybeans | Private family photo sharing | Around $59-75/yr premium (unconfirmed) | People pay to keep family memories, which is what Arro's paid plan sells
+design/market-research.md:70:  ones Arro needs.
+design/market-research.md:83:  on 53% of days against 32%. That's the closest study to Arro.
+design/market-research.md:98:**Against, and what Arro should do about it:**
+design/market-research.md:101:  adult children living away are in daily contact. Arro can't replace the phone
+design/market-research.md:107:  nothing measurable. Arro's shared streak is the collaboration arm. Arro is
+design/market-research.md:109:  evidence says that bet costs some motivation, so Arro needs other ways to stay
+design/market-research.md:119:## Where Arro fits
+design/market-research.md:141:**Arro's gap:** a daily reason to say hi that nobody has to think up. Moving is
+design/market-research.md:147:**For families who live apart, Arro is a daily ritual that keeps you close:
+design/market-research.md:160:  Strava and Apple Fitness already serve them well. Arro shouldn't try.
+design/market-research.md:165:## Healthy contact: the rules Arro keeps
+design/market-research.md:204:6. **The App Store name needs more than "Arro".** "Arro" is already used by a
+design/market-research.md:205:   travel-buddy app ("Arro: Explore Together"), a taxi app, a credit card app and
+design/market-research.md:207:   "Arro: Family Move Streak", and settle it before buying a domain.
+design/market-research.md:212:  already knows who your family is. If Apple joins the two, Arro's edge is what
+design/market-research.md:226:- **Arro becomes another obligation.** Nearly half of parents with adult kids
+design/market-research.md:227:  away are already in daily contact. If Arro feels like homework, it gets muted.
+design/market-research.md:242:Supabase Pro, and only if Arro outgrows the free plan.
+design/market-research.md:267:- App Store listings named Arro: [Explore Together](https://apps.apple.com/us/app/arro-explore-together/id6779081474), [Taxi](https://apps.apple.com/us/app/arro-taxi-app/
+design/saunafam-rename-list.txt:1:app.json:3:    "name": "Arro",
+design/saunafam-rename-list.txt:2:app.json:41:          "healthSharePermission": "Arro reads your workouts from Apple Health, including distance and route, so moving counts toward your family streak a
+design/saunafam-rename-list.txt:3:app.json:42:          "healthUpdatePermission": "Arro never writes to Apple Health. It only reads your workouts so moving counts toward your family streak.",
+design/saunafam-rename-list.txt:4:app.json:49:          "photosPermission": "Arro uses a photo only when you pick one for your profile or a workout. Your family sees it in Arro.",
+design/saunafam-rename-list.txt:5:App.tsx:56:      <Text style={type.title}>This build can’t reach Arro</Text>
+design/saunafam-rename-list.txt:6:AGENTS.md:6:# Arro: shared context for agents
+design/saunafam-rename-list.txt:7:AGENTS.md:8:## What Arro is
+design/saunafam-rename-list.txt:8:AGENTS.md:28:  family; a release build refuses to start ("This build can't reach Arro").
+design/saunafam-rename-list.txt:9:README.md:1:# Arro
+design/saunafam-rename-list.txt:10:README.md:3:**Status: parked.** Arro isn't maintained anymore. It got as far as
+design/saunafam-rename-list.txt:11:README.md:7:Arro is a daily movement streak for families who live apart. Everyone moves a
+design/saunafam-rename-list.txt:12:README.md:50:start ("This build can't reach Arro").
+design/saunafam-rename-list.txt:13:README.md:69:   as the client id, and turn off email and phone sign-up. Arro only uses
+design/saunafam-rename-list.txt:14:README.md:154:- `AGENTS.md` holds the working notes for the coding agents that built Arro.
+design/saunafam-rename-list.txt:15:AUDIT.md:56:  relatives in `design/Arro.dc.html` are Ruth and Tom. The same swap went
+design/saunafam-rename-list.txt:16:design/visual-direction.md:1:# Arro visual direction
+design/saunafam-rename-list.txt:17:design/visual-direction.md:3:October 2026. An audit of how Arro looks after phase 1, and two directions for
+design/saunafam-rename-list.txt:18:design/visual-direction.md:154:**A, Paper and clay.** It keeps Arro's warmth, which suits a family app better
+design/saunafam-rename-list.txt:19:design/visual-direction.md:196:- **Headings set by hand.** Welcome's "Arro", Today's "Day 24" and a few other
+design/saunafam-rename-list.txt:20:design/visual-direction.md:218:- Hand-set headings are serif: Welcome's "Arro", Today's "Day 24" and "Back at
+design/saunafam-rename-list.txt:21:design/visual-direction.md:244:What we took from Dervo, adapted to Arro's warm paper rather than Dervo's cool
+design/saunafam-rename-list.txt:22:design/visual-direction.md:251:  the light. Dervo's `--lift`, in Arro's warm brown instead of green-grey.
+design/saunafam-rename-list.txt:23:design/visual-direction.md:258:- **A light to sit in.** Dervo puts its windows on a blurred meadow photo. Arro
+design/saunafam-rename-list.txt:24:design/visual-direction.md:312:It belongs to Arro (the route maps, "your map") rather than to any calm app,
+design/saunafam-rename-list.txt:25:design/visual-direction.md:350:- **Background: a soft colour mesh**, the way trydervo.com draws its own. Arro's
+design/saunafam-rename-list.txt:26:design/market-research.md:1:# Arro market scan
+design/saunafam-rename-list.txt:27:design/market-research.md:4:the evidence says, and where Arro fits. Read with `design/refactor-plan.md`.
+design/saunafam-rename-list.txt:28:design/market-research.md:13:- **The way in is the one you named: staying in touch in a healthy way.** Arro is
+design/saunafam-rename-list.txt:29:design/market-research.md:20:  faster than competition, and people pull back after a broken streak. Arro has to
+design/saunafam-rename-list.txt:30:design/market-research.md:27:  Supabase and RevenueCat are free at Arro's size.
+design/saunafam-rename-list.txt:31:design/market-research.md:36:| Product | What it does | Price | What Arro takes from it |
+design/saunafam-rename-list.txt:32:design/market-research.md:38:| Apple Fitness sharing | Activity rings shared with up to 40 friends, 7-day 1-on-1 competitions | Free, Apple Watch-centred | Health as
+design/saunafam-rename-list.txt:33:design/market-research.md:39:| MoveShare | Private friends feed from Apple Health, kudos, streaks, group goals, no leaderboards | Unknown | The closest app in spirit
+design/saunafam-rename-list.txt:34:design/market-research.md:42:| Pacer, StepUp | Step leaderboards and groups | Pacer Premium $9.99/mo or $49.99/yr (unconfirmed) | Steps only, ranked. The opposite of
+design/saunafam-rename-list.txt:35:design/market-research.md:49:| Product | What it does | Price | What Arro takes from it |
+design/saunafam-rename-list.txt:36:design/market-research.md:53:| FamilyAlbum, Tinybeans | Private family photo sharing | Around $59-75/yr premium (unconfirmed) | People pay to keep family memories, w
+design/saunafam-rename-list.txt:37:design/market-research.md:68:  ones Arro needs.
+design/saunafam-rename-list.txt:38:design/market-research.md:81:  on 53% of days against 32%. That's the closest study to Arro.
+design/saunafam-rename-list.txt:39:design/market-research.md:96:**Against, and what Arro should do about it:**
+design/saunafam-rename-list.txt:40:design/market-research.md:99:  adult children living away are in daily contact. Arro can't replace the phone
+design/saunafam-rename-list.txt:41:design/market-research.md:105:  nothing measurable. Arro's shared streak is the collaboration arm. Arro is
+design/saunafam-rename-list.txt:42:design/market-research.md:107:  evidence says that bet costs some motivation, so Arro needs other ways to stay
+design/saunafam-rename-list.txt:43:design/market-research.md:117:## Where Arro fits
+design/saunafam-rename-list.txt:44:design/market-research.md:139:**Arro's gap:** a daily reason to say hi that nobody has to think up. Moving is
+design/saunafam-rename-list.txt:45:design/market-research.md:145:**For families who live apart, Arro is a daily ritual that keeps you close:
+design/saunafam-rename-list.txt:46:design/market-research.md:158:  Strava and Apple Fitness already serve them well. Arro shouldn't try.
+design/saunafam-rename-list.txt:47:design/market-research.md:163:## Healthy contact: the rules Arro keeps
+design/saunafam-rename-list.txt:48:design/market-research.md:202:6. **The App Store name needs more than "Arro".** "Arro" is already used by a
+design/saunafam-rename-list.txt:49:design/market-research.md:203:   travel-buddy app ("Arro: Explore Together"), a taxi app, a credit card app and
+design/saunafam-rename-list.txt:50:design/market-research.md:205:   "Arro: Family Move Streak", and settle it before buying a domain.
+design/saunafam-rename-list.txt:51:design/market-research.md:210:  already knows who your family is. If Apple joins the two, Arro's edge is what
+design/saunafam-rename-list.txt:52:design/market-research.md:224:- **Arro becomes another obligation.** Nearly half of parents with adult kids
+design/saunafam-rename-list.txt:53:design/market-research.md:225:  away are already in daily contact. If Arro feels like homework, it gets muted.
+design/saunafam-rename-list.txt:54:design/market-research.md:240:Supabase Pro, and only if Arro outgrows the free plan.
+design/saunafam-rename-list.txt:55:design/market-research.md:265:- App Store listings named Arro: [Explore Together](https://apps.apple.com/us/app/arro-explore-together/id6779081474), [Taxi](https://a
+design/saunafam-rename-list.txt:56:design/paid-plan.md:1:# Arro paid plan
+design/saunafam-rename-list.txt:57:design/paid-plan.md:3:October 2026. How Arro charges without breaking the family loop. Read with
+design/saunafam-rename-list.txt:58:design/paid-plan.md:11:- **One paid plan, Arro Family.** One person pays and the whole family gets it:
+design/saunafam-rename-list.txt:59:design/paid-plan.md:16:  is how Snapchat and Duolingo do it, and it breaks Arro's promise.
+design/saunafam-rename-list.txt:60:design/paid-plan.md:21:- **Timing: launch v1 free, add Arro Family in the first update**, ideally in
+design/saunafam-rename-list.txt:61:design/paid-plan.md:52:## What Arro Family adds
+design/saunafam-rename-list.txt:62:design/paid-plan.md:62:   family uses Arro.
+design/saunafam-rename-list.txt:63:design/paid-plan.md:74:## What Arro never sells
+design/saunafam-rename-list.txt:64:design/paid-plan.md:78:  It works for them. For Arro, selling relief from streak anxiety breaks
+design/saunafam-rename-list.txt:65:design/paid-plan.md:108:- It sits under the big family plans ($120-160) because Arro is new, has no
+design/saunafam-rename-list.txt:66:design/paid-plan.md:123:That's a big gap. For Arro, a paywall on joining is out, because the free loop is
+design/saunafam-rename-list.txt:67:design/paid-plan.md:135:| End of each month | "Your October recap is ready", first two cards free, the rest in Arro Family | Everyone sees the teaser |
+design/saunafam-rename-list.txt:68:design/paid-plan.md:136:| Opening a day before this month | "Your history is kept. Arro Family opens it." | Whoever taps |
+design/saunafam-rename-list.txt:69:design/paid-plan.md:149:family a year of Arro." Families get together in December and make resolutions in
+design/saunafam-rename-list.txt:70:design/paid-plan.md:160:- One subscription group, "Arro Family", with an annual and a monthly product and
+design/saunafam-rename-list.txt:71:design/paid-plan.md:193:  Apple handles refunds, not Arro.
+design/saunafam-rename-list.txt:72:design/paid-plan.md:214:  server-side family plan already covers everyone in the Arro family.
+design/saunafam-rename-list.txt:73:design/paid-plan.md:221:in-app purchase handles refunds and family billing, and at Arro's size the saving
+design/saunafam-rename-list.txt:74:design/paid-plan.md:226:**Recommendation: launch v1 free, add Arro Family in the first update.**
+design/saunafam-rename-list.txt:75:design/paid-plan.md:238:  "give your family a year of Arro" pitch line up with New Year.
+design/saunafam-rename-list.txt:76:design/paid-plan.md:255:  by day 35. For Arro, only founders count, since invitees don't pay.
+design/saunafam-rename-list.txt:77:design/refactor-plan.md:1:# Arro refactor plan
+design/saunafam-rename-list.txt:78:design/refactor-plan.md:7:`design/paid-plan.md` (how Arro charges).
+design/saunafam-rename-list.txt:79:design/refactor-plan.md:11:- **Arro is a family workouts streak app, not a running app.** It's a small,
+design/saunafam-rename-list.txt:80:design/refactor-plan.md:19:  `src/theme/typography.ts`). `Arro-Spec.html` and `Arro.dc.html` describe an
+design/saunafam-rename-list.txt:81:design/refactor-plan.md:27:  each family private, edge functions to send pushes). Arro gets its own project
+design/saunafam-rename-list.txt:82:design/refactor-plan.md:54:- **The paid plan stays as is.** v1 free, then Arro Family ($39.99 a year per
+design/saunafam-rename-list.txt:83:design/refactor-plan.md:56:- **App Store name: "Arro: Family Move Streak".** Agreed, not yet reserved or
+design/saunafam-rename-list.txt:84:design/refactor-plan.md:71:   Arro Family ($39.99 a year per family) in the first update
+design/saunafam-rename-list.txt:85:design/refactor-plan.md:73:4. ~~**The App Store name.**~~ **Decided (Oct 2026): "Arro: Family Move Streak".**
+design/saunafam-rename-list.txt:86:design/refactor-plan.md:74:   "Arro" on its own is taken (a travel app, a taxi app, a credit card app), so it
+design/saunafam-rename-list.txt:87:design/refactor-plan.md:86:  domain Arro controls).
+design/saunafam-rename-list.txt:88:design/refactor-plan.md:199:  opening Arro.
+design/saunafam-rename-list.txt:89:design/refactor-plan.md:230:- Reserve the App Store name "Arro: Family Move Streak" (open decision 4). Not
+design/saunafam-rename-list.txt:90:design/refactor-plan.md:242:## Phase 7 - Arro Family (first update after launch)
+design/saunafam-rename-list.txt:91:design/Arro-Spec.html:2:<title>Arro — Implementation Spec</title>
+design/saunafam-rename-list.txt:92:design/Arro-Spec.html:32:  <div class="head"><div class="logo"><svg viewBox="0 0 48 48" width="30" height="30" fill="none"><path d="M11.5 38.5 L24 10.5 L36.5 38.5" s
+design/saunafam-rename-list.txt:93:design/Arro-Spec.html:89:    <section><h2>9 · Final screens</h2><p class="desc">Locked directions in <code>Arro.dc.html</code> — build these; no new experimental scr
+design/saunafam-rename-list.txt:94:design/app-store/testflight.md:3:Goal: your family installs Arro from TestFlight, signed in to the hosted `arro`
+design/saunafam-rename-list.txt:95:design/app-store/testflight.md:16:| Supabase URL and key | Read from `.env.local` at bundle time. Checked: a release bundle built here contains the hosted project's 
+design/saunafam-rename-list.txt:96:design/app-store/testflight.md:23:setup that already builds Arro for your phone, uses no EAS build minutes, and
+design/saunafam-rename-list.txt:97:design/app-store/testflight.md:42:   - Name: `Arro: Family Move Streak` (this is the moment the name is
+design/saunafam-rename-list.txt:98:design/app-store/testflight.md:73:          "photosPermission": "Arro uses a photo only when you pick one for your profile or a workout. Your family sees it in Arro.
+design/saunafam-rename-list.txt:99:design/app-store/testflight.md:86:- `usesNonExemptEncryption: false`: Arro only uses HTTPS, which is exempt. This
+design/saunafam-rename-list.txt:100:design/app-store/testflight.md:89:  adding camera and microphone text for features Arro doesn't have. Add it to
+design/saunafam-rename-list.txt:101:design/app-store/testflight.md:92:  `healthUpdatePermission: false` is right, since Arro never writes to Health.
+design/saunafam-rename-list.txt:102:design/app-store/testflight.md:115:3. Check `ios/Arro/Info.plist` now has your photo text, no camera or
+design/saunafam-rename-list.txt:103:design/app-store/testflight.md:119:4. Open the workspace: `open ios/Arro.xcworkspace`
+design/saunafam-rename-list.txt:104:design/app-store/testflight.md:120:5. Arro target > Signing & Capabilities: "Automatically manage signing" on,
+design/saunafam-rename-list.txt:105:design/app-store/testflight.md:133:1. **Yourself first (internal testing, no review).** App Store Connect > Arro >
+design/saunafam-rename-list.txt:106:design/app-store/testflight.md:135:   Install the TestFlight app on your iPhone, accept, install Arro. Delete the
+design/saunafam-rename-list.txt:107:design/app-store/testflight.md:153:   opens the invite, then installs Arro and joins with your family's code.
+design/saunafam-rename-list.txt:108:design/app-store/testflight.md:158:reach Arro through Health.
+design/saunafam-rename-list.txt:109:design/app-store/screenshots.md:5:- Arro is iPhone-only, so one set is enough: **6.9-inch display, 1320 x 2868
+design/saunafam-rename-list.txt:110:design/app-store/review-notes.md:9:Arro's only sign-in is Sign in with Apple (`signInWithApple()` in
+design/saunafam-rename-list.txt:111:design/app-store/review-notes.md:49:   reviewer looks. Either accept that (Arro handles a broken streak gently,
+design/saunafam-rename-list.txt:112:design/app-store/review-notes.md:59:> Arro is a daily ritual for families who live apart: each person logs that they moved today, and the family keeps one shared st
+design/saunafam-rename-list.txt:113:design/app-store/review-notes.md:74:> Apple Health is optional. Arro only reads workouts (read-only, never writes), and only today's and yesterday's, to count them 
+design/saunafam-rename-list.txt:114:design/app-store/review-notes.md:83:> If a Health workout has a route, Arro shares it with the family after cutting off the first and last 200 metres, so where you 
+design/saunafam-rename-list.txt:115:design/app-store/README.md:1:# Arro on the App Store: phase 6 prep
+design/saunafam-rename-list.txt:116:design/app-store/app-privacy.md:26:| Apple's type | What Arro stores | Where in the code |
+design/saunafam-rename-list.txt:117:design/app-store/app-privacy.md:48:| Device ID | Arro stores an Expo push token per phone once phase 4 is live (see "Push notifications" below). Apple's Device ID t
+design/saunafam-rename-list.txt:118:design/app-store/app-privacy.md:58:  the text says Arro never writes to Health.
+design/saunafam-rename-list.txt:119:design/app-store/app-privacy.md:71:  and matches: "Arro reads your workouts from Apple Health, including distance
+design/saunafam-rename-list.txt:120:design/app-store/app-privacy.md:74:  and end left off. Arro only reads today's and yesterday's workouts."
+design/saunafam-rename-list.txt:121:design/app-store/app-privacy.md:103:and message to Apple's APNs. Expo processes them on Arro's behalf.
+design/saunafam-rename-list.txt:122:design/app-store/app-privacy.md:107:only to deliver Arro's own notifications, not to recognise the device or for
+design/saunafam-rename-list.txt:123:design/app-store/app-privacy.md:119:sets a specific photo text (build 3: "Arro uses a photo only when you pick one
+design/saunafam-rename-list.txt:124:design/app-store/app-privacy.md:120:for your profile or a workout. Your family sees it in Arro.") and turns the camera and
+design/saunafam-rename-list.txt:125:design/app-store/app-privacy.md:121:microphone texts off, so the build no longer asks for things Arro doesn't do
+design/saunafam-rename-list.txt:126:design/app-store/app-privacy.md:122:(Guideline 5.1.1(ii)). Check the generated `ios/Arro/Info.plist` after
+design/saunafam-rename-list.txt:127:design/Arro.dc.html:42:      <span style="font-family:'Literata',serif; font-weight:600; font-size:40px; color:#40312A; letter-spacing:-.5px;">Arro</span>
+design/saunafam-rename-list.txt:128:design/Arro.dc.html:80:          <span style="font-weight:700; font-size:13px; color:#5B4636;">Arro</span>
+design/saunafam-rename-list.txt:129:design/Arro.dc.html:112:          <span style="font-family:'Literata',serif; font-weight:600; font-size:42px; color:#3A2B22; letter-spacing:-.6px; line-height:1;">A
+design/saunafam-rename-list.txt:130:design/Arro.dc.html:724:  <div style="position:absolute; top:60px; left:24px; right:24px; display:flex; align-items:center; justify-content:space-between; z-index:6
+design/saunafam-rename-list.txt:131:design/Arro.dc.html:748:  <div style="position:absolute; bottom:20px; left:0; right:0; text-align:center; display:flex; align-items:center; justify-content:center; 
+design/saunafam-rename-list.txt:132:design/Arro.dc.html:754:  <div style="position:absolute; top:60px; left:24px; z-index:6; display:flex;align-items:center;gap:7px;"><svg viewBox="0 0 48 48" width="2
+design/saunafam-rename-list.txt:133:design/Arro.dc.html:768:        <div style="display:flex; align-items:center; gap:12px; margin-bottom:8px;"><div style="width:52px;height:52px;border-radius:15px;ba
+design/saunafam-rename-list.txt:134:design/app-store/listing.md:11:**Arro: Family Move Streak** (24)
+design/saunafam-rename-list.txt:135:design/app-store/listing.md:16:1. Arro - Family Move Streak (25)
+design/saunafam-rename-list.txt:136:design/app-store/listing.md:17:2. Arro: Move Together (19)
+design/saunafam-rename-list.txt:137:design/app-store/listing.md:18:3. Arro Family Streak (18)
+design/saunafam-rename-list.txt:138:design/app-store/listing.md:37:> Arro is a daily ritual for families who live apart.
+design/saunafam-rename-list.txt:139:design/app-store/listing.md:42:> The family streak grows each day everyone moves. Each person also has a free freeze that covers a missed day automatically, so a si
+design/saunafam-rename-list.txt:140:design/app-store/listing.md:56:> Arro reads workouts from Apple Health only if you choose to connect it. It reads workouts and nothing else, only today's and yester
+design/saunafam-rename-list.txt:141:design/app-store/listing.md:61:same build, add to "A reason to say hello": "Arro reminds you once a day, at the
+design/saunafam-rename-list.txt:142:design/app-store/listing.md:80:  and Arro is invite-only family, not a social network.
+design/saunafam-rename-list.txt:143:design/app-store/privacy-policy.md:1:# Arro privacy policy
+design/saunafam-rename-list.txt:144:design/app-store/privacy-policy.md:5:Arro is a daily ritual for families: each person moves a little, the family
+design/saunafam-rename-list.txt:145:design/app-store/privacy-policy.md:6:sees it, and you keep one streak together. This policy says what Arro collects,
+design/saunafam-rename-list.txt:146:design/app-store/privacy-policy.md:9:Arro is made by Bryce Rambach, an individual developer ("we", "us"). Questions:
+design/saunafam-rename-list.txt:147:design/app-store/privacy-policy.md:14:- Arro collects what it needs to run your family's streak and nothing else.
+design/saunafam-rename-list.txt:148:design/app-store/privacy-policy.md:21:## What Arro collects
+design/saunafam-rename-list.txt:149:design/app-store/privacy-policy.md:26:which Arro offers as your display name. You can change it.
+design/saunafam-rename-list.txt:150:design/app-store/privacy-policy.md:28:**Your family.** The family name, your display name, the color Arro gives you,
+design/saunafam-rename-list.txt:151:design/app-store/privacy-policy.md:38:one such as "Proud of you". Arro saves the comment, who wrote it and when. Your
+design/saunafam-rename-list.txt:152:design/app-store/privacy-policy.md:42:**Breaks, only if you take one.** When you take a break in Settings, Arro saves
+design/saunafam-rename-list.txt:153:design/app-store/privacy-policy.md:44:and when you're back. Arro never asks why.
+design/saunafam-rename-list.txt:154:design/app-store/privacy-policy.md:46:**Apple Health, only if you connect it.** Arro asks Apple Health for permission
+design/saunafam-rename-list.txt:155:design/app-store/privacy-policy.md:49:today, and never writes anything to Health. From each Health workout Arro saves
+design/saunafam-rename-list.txt:156:design/app-store/privacy-policy.md:55:**Which app recorded a Health workout.** Arro also saves a short label for the
+design/saunafam-rename-list.txt:157:design/app-store/privacy-policy.md:60:**Routes.** Before a route leaves your phone, Arro cuts off its first and last
+design/saunafam-rename-list.txt:158:design/app-store/privacy-policy.md:63:route on the workout and on your map in Arro. Arro never reads your current
+design/saunafam-rename-list.txt:159:design/app-store/privacy-policy.md:67:workout, Arro shrinks it and uploads it, and the members of your family can see
+design/saunafam-rename-list.txt:160:design/app-store/privacy-policy.md:72:**Notifications, only if you allow them.** Arro reminds you once a day at the
+design/saunafam-rename-list.txt:161:design/app-store/privacy-policy.md:74:tells you a workout from Apple Health is in Arro. If you allow notifications,
+design/saunafam-rename-list.txt:162:design/app-store/privacy-policy.md:75:Arro also saves a push token for your phone, an address Apple gives Arro for
+design/saunafam-rename-list.txt:163:design/app-store/privacy-policy.md:76:sending notifications to it. Arro uses it to tell you when:
+design/saunafam-rename-list.txt:164:design/app-store/privacy-policy.md:94:Only to run Arro: to sign you in, show your family who's moved, work out the
+design/saunafam-rename-list.txt:165:design/app-store/privacy-policy.md:103:purpose other than running Arro. It isn't stored in iCloud.
+design/saunafam-rename-list.txt:166:design/app-store/privacy-policy.md:112:- **Our hosting provider.** Arro's data is stored with Supabase, a database
+design/saunafam-rename-list.txt:167:design/app-store/privacy-policy.md:115:- **Expo**, which delivers Arro's push notifications. It receives your phone's
+design/saunafam-rename-list.txt:168:design/app-store/privacy-policy.md:126:**Settings > Delete account** in Arro. That removes your account, your place in
+design/saunafam-rename-list.txt:169:design/app-store/privacy-policy.md:140:under Health > Data Access & Devices > Arro, or switch to "I moved today" in
+design/saunafam-rename-list.txt:170:design/app-store/privacy-policy.md:141:Arro's Settings. Workouts already counted stay until you delete them with your
+design/saunafam-rename-list.txt:171:design/app-store/privacy-policy.md:146:Arro isn't directed at children under 13, and we don't knowingly collect data
+design/saunafam-rename-list.txt:172:design/app-store/support.md:1:# Arro support
+design/saunafam-rename-list.txt:173:design/app-store/support.md:3:Arro is a daily ritual for families: everyone moves a little, everyone sees it,
+design/saunafam-rename-list.txt:174:design/app-store/support.md:10:**How do I start a family?** Open Arro, sign in with Apple, name your family,
+design/saunafam-rename-list.txt:175:design/app-store/support.md:13:**How do I join my family?** Ask whoever started it for the invite. Open Arro,
+design/saunafam-rename-list.txt:176:design/app-store/support.md:17:**Does everyone need an iPhone?** For now, yes. Arro is iPhone-only.
+design/saunafam-rename-list.txt:177:design/app-store/support.md:37:**How do I connect Apple Health?** In Arro, open Settings > How you move and
+design/saunafam-rename-list.txt:178:design/app-store/support.md:38:choose Apple Health, then allow Arro to read workouts.
+design/saunafam-rename-list.txt:179:design/app-store/support.md:40:**My workouts aren't showing up.** Check that Arro is allowed to read workouts
+design/saunafam-rename-list.txt:180:design/app-store/support.md:41:in the iPhone's Settings app, under Health > Data Access & Devices > Arro. Only
+design/saunafam-rename-list.txt:181:design/app-store/support.md:42:workouts from today and yesterday count. Opening Arro makes it check again.
+design/saunafam-rename-list.txt:182:design/app-store/support.md:45:Apple Health, Arro picks them up from there. Strava can do this: turn on its
+design/saunafam-rename-list.txt:183:design/app-store/support.md:48:**What does Arro read from Health?** Only workouts, only today's and
+design/saunafam-rename-list.txt:184:design/app-store/support.md:56:**I got a new phone.** Install Arro and sign in with the same Apple ID. You'll be
+design/saunafam-rename-list.txt:185:design/app-store/icon-options.md:6:Before that, `assets/icon.png` was the white lowercase-"a" route mark on Arro
+design/saunafam-rename-list.txt:186:design/app-store/hosting.md:40:Invites the app sends today carry only the code: "Open Arro, tap “I have an
+design/saunafam-rename-list.txt:187:supabase/migrations/20261005000001_schema.sql:1:-- Arro schema: families, members, invites, workouts, cheers, nudges, family_plans.
+design/saunafam-rename-list.txt:188:supabase/migrations/20261005000001_schema.sql:189:-- Arro Family subscription state, written only by the RevenueCat webhook (service
+design/saunafam-rename-list.txt:189:supabase/migrations/20261005000005_hardening.sql:11:-- phone offline for more than a day loses those workouts, and Arro can't import
+design/saunafam-rename-list.txt:190:site/README.md:3:Arro's website. Plain HTML, CSS and a little JS, served by a Cloudflare Worker
+design/saunafam-rename-list.txt:191:site/README.md:12:| `/` | `public/index.html` | Landing page. Copy comes from `design/app-store/listing.md` so the site and the App Store say the same thing. No dow
+design/saunafam-rename-list.txt:192:site/public/index.html:6:  <title>Arro: Family Move Streak</title>
+design/saunafam-rename-list.txt:193:site/public/index.html:12:  <meta property="og:title" content="Arro: Move a little. Stay close.">
+design/saunafam-rename-list.txt:194:site/public/index.html:28:      <a class="brand" href="./" aria-label="Arro home"><img src="icon-96.png" alt="" width="36" height="36">Arro</a>
+design/saunafam-rename-list.txt:195:site/public/index.html:56:          <div class="day" role="img" aria-label="An example family's day in Arro: a 24-day streak. You, Dad and Nan have moved. Mum still
+design/saunafam-rename-list.txt:196:site/public/index.html:85:          <figcaption class="day-caption">Arro says “Mum still has today”, never who broke it.</figcaption>
+design/saunafam-rename-list.txt:197:site/public/index.html:165:              <p>Open Arro, sign in with Apple, name your family, then send the invite to your family from the app.</p>
+design/saunafam-rename-list.txt:198:site/public/index.html:171:              <p>Open Arro, tap “I have an invite”, sign in and enter the code from the invite.</p>
+design/saunafam-rename-list.txt:199:site/public/index.html:189:          <ul class="nots" aria-label="What Arro doesn't have">
+design/saunafam-rename-list.txt:200:site/public/index.html:195:          <p>Arro reads workouts from Apple Health only if you choose to connect it. It reads workouts and nothing else, only today’s and
+design/saunafam-rename-list.txt:201:site/public/index.html:212:      <a class="brand" href="./" aria-label="Arro home"><img src="icon-96.png" alt="" width="28" height="28">Arro</a>
+design/saunafam-rename-list.txt:202:site/wrangler.jsonc:1:// Arro's website: a Worker with static assets, on arrofamily.com.
+design/saunafam-rename-list.txt:203:scripts/generate-icons.mjs:2: * Generates the Arro app icons from the final production mark (lowercase-"a"
+design/saunafam-rename-list.txt:204:scripts/generate-icons.mjs:3: * route mark, Arro Brand & Logo handoff): a paper mark on a flat clay tile
+design/saunafam-rename-list.txt:205:site/public/backdrop.js:2:   Arro's paper colours (warm cream, a little apricot, sage, a pale evening
+design/saunafam-rename-list.txt:206:site/public/styles.css:1:/* Arro website. Paper and clay, from src/theme/tokens.ts and
+design/saunafam-rename-list.txt:207:site/public/styles.css:531:   Arro's paper colours on one fixed canvas behind everything, drifting very
+design/saunafam-rename-list.txt:208:site/public/styles.css:825:/* --- Landing: invite ticket and the things Arro leaves out ------------- */
+design/saunafam-rename-list.txt:209:site/public/404.html:6:  <title>Page not found · Arro</title>
+design/saunafam-rename-list.txt:210:site/public/404.html:18:      <a class="brand" href="/" aria-label="Arro home"><img src="/icon-96.png" alt="" width="36" height="36">Arro</a>
+design/saunafam-rename-list.txt:211:site/public/404.html:27:        <p class="lede">The link may be old or mistyped. <a href="/">Go to the Arro home page</a>.</p>
+design/saunafam-rename-list.txt:212:site/public/privacy/index.html:6:  <title>Privacy policy · Arro</title>
+design/saunafam-rename-list.txt:213:site/public/privacy/index.html:7:  <meta name="description" content="What Arro collects, why, who sees it and how to delete it.">
+design/saunafam-rename-list.txt:214:site/public/privacy/index.html:22:      <a class="brand" href="../" aria-label="Arro home"><img src="../icon-96.png" alt="" width="36" height="36">Arro</a>
+design/saunafam-rename-list.txt:215:site/public/privacy/index.html:34:        <h1>Arro privacy policy</h1>
+design/saunafam-rename-list.txt:216:site/public/privacy/index.html:39:        <p>Arro is a daily ritual for families: each person moves a little, the family sees it, and you keep one streak together. 
+design/saunafam-rename-list.txt:217:site/public/privacy/index.html:40:        <p>Arro is made by Bryce Rambach, an individual developer (“we”, “us”). Questions: <a href="mailto:support@arrofamily.com"
+design/saunafam-rename-list.txt:218:site/public/privacy/index.html:44:          <li>Arro collects what it needs to run your family’s streak and nothing else.</li>
+design/saunafam-rename-list.txt:219:site/public/privacy/index.html:51:        <h2>What Arro collects</h2>
+design/saunafam-rename-list.txt:220:site/public/privacy/index.html:52:        <p><strong>Account.</strong> You sign in with Apple. Apple gives us an account identifier and the email address you chose 
+design/saunafam-rename-list.txt:221:site/public/privacy/index.html:53:        <p><strong>Your family.</strong> The family name, your display name, the color Arro gives you, your time zone and the remi
+design/saunafam-rename-list.txt:222:site/public/privacy/index.html:55:        <p><strong>Comments, only if you write one.</strong> You can leave a short comment, up to 200 characters, on a workout in 
+design/saunafam-rename-list.txt:223:site/public/privacy/index.html:56:        <p><strong>Breaks, only if you take one.</strong> When you take a break in Settings, Arro saves the day it starts and the 
+design/saunafam-rename-list.txt:224:site/public/privacy/index.html:57:        <p><strong>Apple Health, only if you connect it.</strong> Arro asks Apple Health for permission to read workouts and worko
+design/saunafam-rename-list.txt:225:site/public/privacy/index.html:58:        <p><strong>Which app recorded a Health workout.</strong> Arro also saves a short label for the app or device that recorded
+design/saunafam-rename-list.txt:226:site/public/privacy/index.html:59:        <p><strong>Routes.</strong> Before a route leaves your phone, Arro cuts off its first and last 200 meters (about 650 feet)
+design/saunafam-rename-list.txt:227:site/public/privacy/index.html:60:        <p><strong>Photos, only if you add one.</strong> If you add a profile photo or a photo to a workout, Arro shrinks it and u
+design/saunafam-rename-list.txt:228:site/public/privacy/index.html:61:        <p><strong>Notifications, only if you allow them.</strong> Arro reminds you once a day at the time you pick. That reminder
+design/saunafam-rename-list.txt:229:site/public/privacy/index.html:74:        <p>Only to run Arro: to sign you in, show your family who’s moved, work out the family streak and freeze days, let you che
+design/saunafam-rename-list.txt:230:site/public/privacy/index.html:77:        <p>Data from Apple Health is used only to count your workouts toward your family’s streak and to show them to your family.
+design/saunafam-rename-list.txt:231:site/public/privacy/index.html:82:          <li><strong>Our hosting provider.</strong> Arro’s data is stored with Supabase, a database provider, on servers in the U
+design/saunafam-rename-list.txt:232:site/public/privacy/index.html:83:          <li><strong>Expo</strong>, which delivers Arro’s push notifications. It receives your phone’s push token and the notific
+design/saunafam-rename-list.txt:233:site/public/privacy/index.html:89:        <p>Your data is kept while you have an account. To delete everything, open <strong>Settings &gt; Delete account</strong> i
+design/saunafam-rename-list.txt:234:site/public/privacy/index.html:92:        <p>You can also disconnect Apple Health at any time in the iPhone’s Settings app, under Health &gt; Data Access &amp; Devi
+design/saunafam-rename-list.txt:235:site/public/privacy/index.html:95:        <p>Arro isn’t directed at children under 13, and we don’t knowingly collect data from them. If you think a child has given
+design/saunafam-rename-list.txt:236:site/public/privacy/index.html:111:      <a class="brand" href="../" aria-label="Arro home"><img src="../icon-96.png" alt="" width="28" height="28">Arro</a>
+design/saunafam-rename-list.txt:237:site/public/site.js:64:    card.setAttribute('aria-label', "An example family's day in Arro: everyone has moved, and the family streak is now 25 days.");
+design/saunafam-rename-list.txt:238:site/public/join/index.html:6:  <title>Join your family · Arro</title>
+design/saunafam-rename-list.txt:239:site/public/join/index.html:7:  <meta name="description" content="You've been invited to a family on Arro. Here's how to join.">
+design/saunafam-rename-list.txt:240:site/public/join/index.html:22:      <a class="brand" href="../" aria-label="Arro home"><img src="../icon-96.png" alt="" width="36" height="36">Arro</a>
+design/saunafam-rename-list.txt:241:site/public/join/index.html:33:        <h1>Join your family on Arro</h1>
+design/saunafam-rename-list.txt:242:site/public/join/index.html:45:            <h3>Get Arro on your iPhone</h3>
+design/saunafam-rename-list.txt:243:site/public/join/index.html:46:            <p>Arro is coming soon to the App Store. Until then, ask whoever invited you how to install it.</p>
+design/saunafam-rename-list.txt:244:site/public/join/index.html:52:            <p>Open Arro, tap “I have an invite” and sign in with Apple.</p>
+design/saunafam-rename-list.txt:245:site/public/join/index.html:69:      <a class="brand" href="../" aria-label="Arro home"><img src="../icon-96.png" alt="" width="28" height="28">Arro</a>
+design/saunafam-rename-list.txt:246:site/public/support/index.html:6:  <title>Support · Arro</title>
+design/saunafam-rename-list.txt:247:site/public/support/index.html:7:  <meta name="description" content="Help with Arro: starting or joining a family, the streak, Apple Health and your account.">
+design/saunafam-rename-list.txt:248:site/public/support/index.html:22:      <a class="brand" href="../" aria-label="Arro home"><img src="../icon-96.png" alt="" width="36" height="36">Arro</a>
+design/saunafam-rename-list.txt:249:site/public/support/index.html:34:        <h1>Arro support</h1>
+design/saunafam-rename-list.txt:250:site/public/support/index.html:35:        <p class="lede">Arro is a daily ritual for families: everyone moves a little, everyone sees it, and you keep one streak to
+design/saunafam-rename-list.txt:251:site/public/support/index.html:42:        <p>Open Arro, sign in with Apple, name your family, then send the invite to your family from the app.</p>
+design/saunafam-rename-list.txt:252:site/public/support/index.html:44:        <p>Ask whoever started it for the invite. Open Arro, sign in and enter the code from the invite. Codes last 14 days; ask f
+design/saunafam-rename-list.txt:253:site/public/support/index.html:46:        <p>For now, yes. Arro is iPhone-only.</p>
+design/saunafam-rename-list.txt:254:site/public/support/index.html:60:        <p>In Arro, open Settings &gt; How you move and choose Apple Health, then allow Arro to read workouts.</p>
+design/saunafam-rename-list.txt:255:site/public/support/index.html:62:        <p>Check that Arro is allowed to read workouts in the iPhone’s Settings app, under Health &gt; Data Access &amp; Devices &
+design/saunafam-rename-list.txt:256:site/public/support/index.html:64:        <p>If that app saves workouts to Apple Health, Arro picks them up from there. Strava can do this: turn on its Health conne
+design/saunafam-rename-list.txt:257:site/public/support/index.html:65:        <h3>What does Arro read from Health?</h3>
+design/saunafam-rename-list.txt:258:site/public/support/index.html:72:        <p>Install Arro and sign in with the same Apple ID. You’ll be back in your family.</p>
+design/saunafam-rename-list.txt:259:site/public/support/index.html:82:      <a class="brand" href="../" aria-label="Arro home"><img src="../icon-96.png" alt="" width="28" height="28">Arro</a>
+design/saunafam-rename-list.txt:260:src/state/photos.ts:24:      Alert.alert('Photos are off for Arro', 'You can turn them on in Settings.', [
+design/saunafam-rename-list.txt:261:src/state/invite.ts:13:    `${senderName} invited you to ${familyName} on Arro. We keep one daily streak by moving a little, any way we like. ` +
+design/saunafam-rename-list.txt:262:src/state/invite.ts:14:    `Open Arro, tap “I have an invite” and enter the code ${code}.`
+design/saunafam-rename-list.txt:263:src/state/backend.ts:2: * Every call Arro makes to the hosted Supabase project. Screens never import this;
+design/saunafam-rename-list.txt:264:src/state/backend.ts:25:          ? 'That family already has 12 people, which is as many as Arro allows.'
+design/saunafam-rename-list.txt:265:src/state/backend.ts:195: * sends the name the first time someone signs in to Arro, so givenName is often null.
+design/saunafam-rename-list.txt:266:src/state/reminders.ts:2: * When the daily reminder fires. iOS can't ask Arro "moved today?" at the moment
+design/saunafam-rename-list.txt:267:src/state/reminders.ts:19: * doesn't open Arro for longer than that stops getting reminders, which is fine.
+design/saunafam-rename-list.txt:268:src/state/__tests__/healthSync.test.ts:62:  it('maps HealthKit activity names to Arro types', () => {
+design/saunafam-rename-list.txt:269:src/state/__tests__/healthSync.test.ts:170:  it('skips a workout its owner removed from Arro', () => {
+design/saunafam-rename-list.txt:270:src/state/AppState.tsx:175:/** "Your run is in Arro", "Your gym session is in Arro". */
+design/saunafam-rename-list.txt:271:src/state/AppState.tsx:254:   * yet, because iOS can wake Arro in the background for a new workout.
+design/saunafam-rename-list.txt:272:src/state/AppState.tsx:283:          // background it brings them into Arro, in the foreground it's the moment it arrives.
+design/saunafam-rename-list.txt:273:src/state/AppState.tsx:288:            `Your ${SAVED_NOUN[newest.type]} is in Arro`,
+design/saunafam-rename-list.txt:274:src/screens/LogTodayScreen.tsx:55:        setError(`Yesterday closed at ${yesterdayClosedAt()}, so Arro couldn’t save it. Today still counts.`);
+design/saunafam-rename-list.txt:275:src/screens/WorkoutDetailScreen.tsx:130:        ? 'It comes off Arro for your family, with its cheers and comments. Apple Health keeps it.'
+design/saunafam-rename-list.txt:276:src/screens/WorkoutDetailScreen.tsx:131:        : 'It comes off Arro for your family, with its cheers and comments.',
+design/saunafam-rename-list.txt:277:src/navigation/NotificationTaps.tsx:12: * loaded (Arro opened from closed) waits for it.
+design/saunafam-rename-list.txt:278:src/screens/SettingsScreen.tsx:166:            // About Arro only shows the version, so it has no arrow.
+design/saunafam-rename-list.txt:279:src/screens/TakeBreakScreen.tsx:75:              {`You’ve been on a break for 14 of the last 30 days, which is as much as Arro allows.${
+design/saunafam-rename-list.txt:280:src/screens/onboarding/SignInScreen.tsx:48:        showError('No Arro account yet', 'This Apple ID isn’t in a family. Go back to start a family or use an invite.');
+design/saunafam-rename-list.txt:281:src/screens/onboarding/SignInScreen.tsx:57:          ? 'Arro couldn’t reach the server. Check your connection and try again.'
+design/saunafam-rename-list.txt:282:src/screens/onboarding/SignInScreen.tsx:111:            : 'Arro only uses your Apple ID to sign you in. Your email isn’t shared with your family.'
+design/saunafam-rename-list.txt:283:src/screens/onboarding/SignInScreen.tsx:150:          <Text style={styles.line}>Sign in with the Apple ID you use for Arro and you’ll go straight to your family.</T
+design/saunafam-rename-list.txt:284:src/state/notifications.ts:5: * nudge (send-push), plus the "your run is in Arro" note after a Health sync.
+design/saunafam-rename-list.txt:285:src/state/notifications.ts:65:/** Notifications that arrive while Arro is open show as a banner too, without a badge. */
+design/saunafam-rename-list.txt:286:src/state/notifications.ts:114: * "Your run is in Arro": shown straight away when a Health sync in the background
+design/saunafam-rename-list.txt:287:src/state/notifications.ts:172: * opened Arro from closed. Returns a function that stops listening.
+design/saunafam-rename-list.txt:288:src/state/session.ts:59:  /** Health workout UUIDs this person took off in Arro, so a sync leaves them off. */
+design/saunafam-rename-list.txt:289:src/screens/onboarding/NotificationsPromptScreen.tsx:59:      subtitle="Arro lets you know when someone in your family moves, cheers you on or joins, and at most on
+design/saunafam-rename-list.txt:290:src/state/routes.ts:2: * Workout routes: what Arro keeps of the GPS track Apple Health recorded, and the
+design/saunafam-rename-list.txt:291:src/components/AnimatedSplash.tsx:91:      <Animated.Text style={[styles.word, { opacity: word }]}>Arro</Animated.Text>
+design/saunafam-rename-list.txt:292:src/state/healthSync.ts:52:  /** The workouts this sync added, so Arro can say so. */
+design/saunafam-rename-list.txt:293:src/state/healthSync.ts:125: * when `canRemove` (Arro is open, so Health could be read in full: a locked phone
+design/saunafam-rename-list.txt:294:src/state/healthSync.ts:321:    // Saved before its route arrived, or before Arro read routes: fill in what's new.
+design/saunafam-rename-list.txt:295:src/state/health.ts:2: * Apple Health through @appeeky/expo-healthkit. Read-only: Arro asks for
+design/saunafam-rename-list.txt:296:src/state/health.ts:51: * Starts watching Health for new workouts, so iOS wakes Arro when one is saved,
+design/saunafam-rename-list.txt:297:src/state/health.ts:75:    // iOS wake Arro for new workouts, which is how they reach the family unopened.
+design/saunafam-rename-list.txt:298:src/state/health.ts:120: * Calls back when Health has new workouts, including when iOS relaunches Arro in
+design/saunafam-rename-list.txt:299:src/screens/onboarding/HowYouMoveScreen.tsx:13: * Apple Health leads, because it brings workouts in without anyone opening Arro:
+design/saunafam-rename-list.txt:300:src/screens/onboarding/HowYouMoveScreen.tsx:66:            ? 'Using Strava or Garmin? Turn on Apple Health in its settings so your workouts come through. Arro only 
+design/saunafam-rename-list.txt:301:src/theme/tokens.ts:2: * Arro design tokens — "Paper and clay" (design/visual-direction.md, direction A),
+design/saunafam-rename-list.txt:302:src/components/InvitePanel.tsx:27:        <Text style={styles.codeNote}>It’s in the message. They tap “I have an invite” in Arro and type it in.</Text>
+design/saunafam-rename-list.txt:303:src/screens/NotificationsScreen.tsx:93:          <Text style={styles.note}>Notifications aren’t available in this version of Arro.</Text>
+design/saunafam-rename-list.txt:304:src/screens/NotificationsScreen.tsx:106:              Notifications for Arro are off in the iPhone’s Settings, so cheers, nudges and reminders don’t arrive yet. Tur
+design/saunafam-rename-list.txt:305:src/screens/NotificationsScreen.tsx:115:            Arro also lets you know when someone in your family moves, cheers or comments on your workout, or joins, and at 
+design/saunafam-rename-list.txt:306:src/screens/MoveMethodScreen.tsx:64:              ? 'Arro only reads your workouts and their routes, nothing else. Routes leave off the start and end. Workouts from
+design/saunafam-rename-list.txt:307:src/data/family.ts:2: * ALL fake data for the Arro prototype. No backend, Apple Health, auth, or maps.
+design/saunafam-rename-list.txt:308:src/data/family.ts:244:    { key: 'about', label: 'About Arro', value: 'Version 1.0.0', glyph: 'i' },
+design/saunafam-rename-list.txt:309:src/screens/onboarding/WelcomeScreen.tsx:25:        <Text style={styles.wordmark}>Arro</Text>
+design/saunafam-rename-list.txt:310:src/components/Backdrop.tsx:10: * colours: Arro's paper with pools of warm cream, apricot, sage and a pale
+design/saunafam-rename-list.txt:311:src/components/Icons.tsx:8: * Arro brand mark — final production logo (Arro Logo No.12 · variant "v5"):
+design/Arro.dc.html:37:<p style="margin:0; padding:16px 24px; font-family:system-ui, sans-serif; font-weight:700; font-size:14px; color:#40312A; text-align:center;">Written for Arro, before it became 
+design/Arro.dc.html:44:      <span style="font-family:'Literata',serif; font-weight:600; font-size:40px; color:#40312A; letter-spacing:-.5px;">Arro</span>
+design/Arro.dc.html:82:          <span style="font-weight:700; font-size:13px; color:#5B4636;">Arro</span>
+design/Arro.dc.html:114:          <span style="font-family:'Literata',serif; font-weight:600; font-size:42px; color:#3A2B22; letter-spacing:-.6px; line-height:1;">Arro</span>
+design/Arro.dc.html:726:  <div style="position:absolute; top:60px; left:24px; right:24px; display:flex; align-items:center; justify-content:space-between; z-index:6;"><div style="display:flex;align-it
+design/Arro.dc.html:750:  <div style="position:absolute; bottom:20px; left:0; right:0; text-align:center; display:flex; align-items:center; justify-content:center; gap:6px; opacity:.5;"><svg viewBox="
+design/Arro.dc.html:756:  <div style="position:absolute; top:60px; left:24px; z-index:6; display:flex;align-items:center;gap:7px;"><svg viewBox="0 0 48 48" width="20" height="20" fill="none"><path d="
+design/Arro.dc.html:770:        <div style="display:flex; align-items:center; gap:12px; margin-bottom:8px;"><div style="width:52px;height:52px;border-radius:15px;background:linear-gradient(155deg,#FF9
+design/screenshots/saunafam/INDEX.md:147:- `sheet-renamed-founder.png`: "Arro is now Saunafam", founder (Got it, Change the rhythm)
+design/screenshots/saunafam/INDEX.md:148:- `sheet-renamed-member.png`: "Arro is now Saunafam", everyone else (Got it)
+design/app-store/testflight.md:1:# TestFlight: build 9, Arro becomes Saunafam
+design/app-store/testflight.md:3:Build 9 is the first Saunafam build. Testers get it as an update to Arro
+design/app-store/testflight.md:42:   Arro's "moved" pushes). The Plus migration is safe to ship: Plus stays off
+design/app-store/testflight.md:73:> Arro is now Saunafam, a weekly sauna streak. Your family carries over and the streak starts fresh. Try the timer, log a session for two people, and cheer someone on
+design/app-store/testflight.md:77:- The new splash, then a one-time sheet, "Arro is now Saunafam": "Your family
+design/app-store/testflight.md:83:- The streak starts at week one. Arro's workouts, cheers, comments and photos
+design/app-store/testflight.md:85:- iOS keeps Arro's Health read permission. The support page says how to turn
+design/app-store/review-notes.md:59:> Saunafam (formerly Arro) is a weekly sauna streak for families and friend groups: each person logs their sauna sessions, and the group keeps one shared weekly str
+design/app-store/review-notes.md:103:deleted (Arro used touch and hold).
+design/app-store/README.md:19:| `icon-options.md`, `icon-options/` | Arro's icon options, kept for the record |
+design/app-store/hosting.md:27:  invite links and Arro's App Store privacy URL keep working. Keep it for at
+design/app-store/listing.md:22:The app record is still named Arro. Renaming it is step 4 of "Bryce's steps" in
+design/app-store/listing.md:156:| SKU | unchanged from the Arro record. It's never shown and can't be edited |
+design/copy/notifications.md:8:Server pushes use a typographic apostrophe (’), like Arro's did.
+design/copy/notifications.md:60:| `joined` | Family members (unchanged from Arro) |
+design/copy/notifications.md:62:Arro's old pushes ("Dad went for a run", "Mum cheered you on" for a workout,
+design/copy/notifications.md:99:identifier starts with `arro-`. Otherwise Arro's "You still have today"
+design/app-store/app-privacy.md:13:## What changes from Arro's label
+design/app-store/app-privacy.md:15:| Arro (build 3 to 8) | Saunafam (build 9) | Why |
+design/app-store/app-privacy.md:65:name Fitness. Arro declared Fitness for its manual "I moved today" check-ins,
+design/app-store/app-privacy.md:76:| Health | No HealthKit reads. Build 9 deletes `healthSync.ts` and the read code. iOS may still list Arro's old read permission, but the app never uses it |
+design/app-store/app-privacy.md:138:- Arro's read permission can't be removed by the app. `privacy-policy.md` and
+design/copy/app-copy.md:463:- "Used Arro before? iOS may still list its old permission to read your workouts. Saunafam never reads them, and you can remove it in Settings, Health, Data Access & Device
+design/copy/app-copy.md:527:## "Arro is now Saunafam" sheet
+design/copy/app-copy.md:532:- Title: "Arro is now Saunafam"
+docs/saunafam/API.md:28:| `PT429` | too many invite code attempts (unchanged from Arro) |
+docs/saunafam/API.md:81:Returns the founder's `members` row (same as Arro). The founder gets the first
+docs/saunafam/API.md:93:`#C9542A` ember. Existing members keep the color they have (Arro's palette),
+docs/saunafam/API.md:203:The date window is the same as Arro's workouts: the member's own today or
+docs/saunafam/API.md:334:`family_streak` is still Arro's daily number (for build 8); don't show it.
+docs/saunafam/DESIGN-SYSTEM.md:79:Old Arro names (`colors.ink`, `colors.primary`, `type.meta`, `radii.pill`,
+docs/saunafam/PROGRESS.md:41:| M12 docs | done (branch `saunafam/docs`) | `README.md`, `AGENTS.md`, `AUDIT.md` (note), the "Written for Arro" line on `design/market-research.md`, `paid-plan.md`, `refa
+docs/saunafam/PROGRESS.md:79:  scenario with your name on Sam, and every action works in memory. Arro's
+docs/saunafam/PROGRESS.md:124:- `App.tsx` still says "This build can't reach Arro" (M12).
+docs/saunafam/PROGRESS.md:143:- Rename search (`grep -rnw 'Arro'`): 311 lines, saved to
+docs/saunafam/PROGRESS.md:227:  the Arro policy did; the spec marks the exact region unverified.
+docs/saunafam/PROGRESS.md:230:- `design/app-store/support.md` still has Arro's text (outside this task's
+docs/saunafam/PROGRESS.md:288:- D13. Dropping Arro's push triggers (spec, section 4.5) breaks the old tests
+docs/saunafam/PROGRESS.md:409:Arro design docs. `design/saunafam-rename-list.txt` and `site/` untouched.
+docs/saunafam/PROGRESS.md:492:- DOC3 App Privacy keeps **Fitness** for session data (Arro declared it for
+docs/saunafam/PROGRESS.md:636:- "Arro is now Saunafam" sheet (`src/components/RenamedSheet.tsx`, hosted by
+docs/saunafam/PROGRESS.md:654:`dev/reset`. iOS 26 asks "Open in Arro?" for each; the capture scripts tapped
+docs/saunafam/PROGRESS.md:763:which skips the "Open in Arro?" prompt that `simctl openurl` raises.
+docs/saunafam/PROGRESS.md:962:reports are in Arro's old `CheckInPop`, `CheerButton`, `PrimaryButton` and
+docs/saunafam/PROGRESS.md:1082:- Health: Turn on showed iOS's sheet with only "Allow Arro to write: Mindful
+docs/saunafam/PROGRESS.md:1134:- The app is still named "Arro" on iOS's sheets and banners (the rename is M12),
+docs/saunafam/PROGRESS.md:1135:  and `app.json`'s photo string still says Arro and workouts (M12).
+design/app-store/support.md:29:**I used Arro. How do I turn off its old Health access?** iOS keeps the read
+design/app-store/support.md:30:permission Arro had, and the app can't remove it for you. Open the Settings
+design/app-store/icon-options.md:1:Written for Arro, before it became Saunafam.
+design/app-store/icon-options.md:8:Before that, `assets/icon.png` was the white lowercase-"a" route mark on Arro
+supabase/migrations/20261021000005_saunafam_pushes.sql:2:--   1. Arro's workout pushes stop: the triggers on workouts, cheers and comments
+supabase/migrations/20261021000005_saunafam_pushes.sql:24:-- 1. Arro's pushes off ------------------------------------------------------------
+supabase/migrations/20261021000003_weekly_streaks.sql:2:-- read, like Arro's daily streaks (20261005000003). The rules are the spec's
+supabase/migrations/20261021000003_weekly_streaks.sql:20:-- Arro's daily functions (family_streak, member_streaks) stay for build 8.
+supabase/migrations/20261021000003_weekly_streaks.sql:536:-- family_streak keeps Arro's daily number for build 8. Signed out, the new
+supabase/tests/database/push.test.sql:10:-- Build 9 (20261021000005) drops Arro's push triggers on workouts, cheers and
+supabase/tests/database/review.test.sql:12:-- Build 9 (20261021000005) drops Arro's push triggers on workouts, cheers and
+docs/saunafam/DATA-LAYER.md:31:- `app.welcomeDue` / `app.dismissWelcome()`: the one-time "Arro is now Saunafam" sheet
+supabase/migrations/20261021000002_sessions.sql:5:--     and must fall in the same today-or-yesterday window as Arro's workouts.
+supabase/migrations/20261005000001_schema.sql:1:-- Arro schema: families, members, invites, workouts, cheers, nudges, family_plans.
+supabase/migrations/20261005000001_schema.sql:189:-- Arro Family subscription state, written only by the RevenueCat webhook (service
+supabase/drafts/build10_cleanup.sql:5:-- Drops what Arro used and Saunafam doesn't: workouts, cheers, comments, the
+supabase/drafts/build10_cleanup.sql:6:-- daily streak functions, Arro's push functions and phrases, and the old push
+supabase/drafts/build10_cleanup.sql:98:-- 2. Arro's tables. Their triggers, policies and indexes go with them.
+supabase/drafts/build10_cleanup.sql:103:-- 3. Arro's functions.
+supabase/tests/database/saunafam_push.test.sql:51:-- Arro's pushes are off --------------------------------------------------------------------
+design/app-store/privacy-policy.md:67:If you used Saunafam when it was called Arro, iOS may still list the read
+design/app-store/privacy-policy.md:68:permission Arro asked for, and the app can't remove it. To turn it off, open
+design/app-store/privacy-policy.md:94:## If you used Arro
+design/app-store/privacy-policy.md:96:Saunafam used to be Arro. Your account, family, members, colors and profile
+design/app-store/privacy-policy.md:97:photo carried over. Arro's workouts, cheers, comments and workout photos are
+supabase/functions/delete-account/index.ts:9://      Arro's workouts, cheers and comments until build 10), and to any family
+supabase/functions/delete-account/index.ts:13:// session photos and Arro's workout photos alike.
+design/app-store/screenshots.md:117:   install <udid> <path to the Debug-iphonesimulator Arro.app>`). Run one
+site/worker.js:17:    // Arro's domain. Build 8 invite links, the App Store privacy URL and
+site/public/index.html:242:            <summary>I used Arro. How do I turn off its old Health access?</summary>
+site/public/index.html:243:            <p>iOS keeps the read permission Arro had, and the app can’t remove it for you. Open the Settings app, then Health, then Data Access &amp; Devices, choose Saunaf
+site/public/privacy/index.html:77:        <p>If you used Saunafam when it was called Arro, iOS may still list the read permission Arro asked for, and the app can’t remove it. To turn it off, open the 
+site/public/privacy/index.html:93:        <h2>If you used Arro</h2>
+site/public/privacy/index.html:94:        <p>Saunafam used to be Arro. Your account, family, members, colors and profile photo carried over. Arro’s workouts, cheers, comments and workout photos are hi
+site/public/support/index.html:71:          <summary>I used Arro. How do I turn off its old Health access?</summary>
+site/public/support/index.html:72:          <p>iOS keeps the read permission Arro had, and the app can’t remove it for you. Open the Settings app, then Health, then Data Access &amp; Devices, choose S
+supabase/migrations/20261005000005_hardening.sql:11:-- phone offline for more than a day loses those workouts, and Arro can't import
+supabase/tests/database/workout_pushes.test.sql:11:-- Build 9 (20261021000005) drops Arro's push triggers on workouts, cheers and
+supabase/functions/remove-member/index.ts:6:// sessions, cheers, comments and nudges (and Arro's workouts until build 10). A
+supabase/functions/remove-member/index.ts:10:// the logger's own anchor or solo row) and Arro's workout photos. So emptying that
+src/state/healthSettings.ts:64:    'Used Arro before? iOS may still list its old permission to read your workouts. Saunafam never reads them, and you can remove it in Settings, Health, Data Access & D
+src/state/notifications.ts:103: * Cancels Arro's pending notifications (every identifier starting "arro-"), so
+scripts/generate-icons.mjs:165:// The site's favicons, over the old Arro ones.
+src/state/devTools.ts:11:  /** Show "Arro is now Saunafam" now, as the founder or as anyone else. */
+src/state/reminders.ts:17:/** Arro's identifiers ("arro-reminder-", "arro-saved-"), cancelled on build 9's first launch. */
+src/state/reminders.ts:98:/** Which scheduled identifiers are Arro's, to cancel. */
+src/navigation/AppOverlays.tsx:11: * Things that sit over the whole app. For now: "Arro is now Saunafam", once,
+src/state/settingsCopy.ts:4: * quiet Plus lines, the "Arro is now Saunafam" sheet. Pure, and tested in
+src/state/settingsCopy.ts:113:/** "Arro is now Saunafam" (spec, section 7). The rhythm follows the family's, which starts at 3 and 10. */
+src/state/settingsCopy.ts:115:  title: 'Arro is now Saunafam',
+src/state/__tests__/settingsCopy.test.ts:112:  it('"Arro is now Saunafam" says the spec words at the default rhythm', () => {
+src/state/__tests__/session.test.ts:76:  it('never reads Arro’s family shape as a cached family', async () => {
+src/state/session.ts:4: *   arro.session.v1   who you are and your family on the server. Kept from Arro
+src/state/session.ts:8: *                     screens render from cache first. v1 had Arro's shape and
+src/state/session.ts:12: * Arro's arro.family.v1 and arro.moveMethod.v1 are deleted on launch
+src/state/session.ts:24:/** "Arro is now Saunafam", shown once. */
+src/state/session.ts:55:/** Arro's reminder slots, read once from an older session. */
+src/state/session.ts:60: * it isn't one. Arro's `workouts`, `moveMethod`, `dismissedHealth` and
+src/state/session.ts:140:/** Arro's keys this build doesn't read. Safe on every launch. */
+src/state/sessionPhoto.ts:3: * to 1440 px on the long edge, saved as a JPEG on the phone (Arro's photo rules,
+src/state/AppState.tsx:144:  /** Build 8 testers, once: "Arro is now Saunafam". */
+src/state/AppState.tsx:583:      // Someone already signed in from Arro sees "Arro is now Saunafam" once.
+src/state/AppState.tsx:638:      // Signing in on a new phone isn't the Arro-to-Saunafam moment.
+src/state/__tests__/AppState.test.tsx:69:    // Arro's keys are gone.
+src/screens/FamilyMembersScreen.tsx:29:/** Settings > Family members (unchanged from Arro, in Löyly): everyone in join order, then people invited by name. */
+src/state/__tests__/reminders.test.ts:108:  it('picks out Arro’s identifiers only', () => {
+src/state/__tests__/saunas.test.ts:40:  it('falls back to Arro’s region rule: the US, Liberia and Myanmar get °F', () => {
+src/components/RenamedSheet.tsx:12: * "Arro is now Saunafam" (spec, section 7): once, for testers who were signed
+src/components/Sheet.tsx:10: * A bottom sheet in steam over a soft char scrim (confirms, "Arro is now
+src/components/RollingNumber.tsx:9: * A number in Fraunces that rolls, digit by digit, the way Arro's RollingText
+src/theme/motion.ts:9: * Saunafam's motion: slower and heavier than Arro (design/saunafam-spec.md,
