@@ -91,6 +91,17 @@ caption in Fraunces Soft SemiBold (char, two lines set by hand), the capture
 in a dark device frame, and the wordmark above the first caption only. No
 ember in the captions: the app screens bring their own.
 
+## Retaken on 21 October 2026
+
+The status bar showed a green charging battery, the log form had "The Y" as a
+place chip, and Today's family rows cut off at "Yesterday · 25 min with Maya
+a...". The battery is plain now, the preview's sample places are Home,
+Bathhouse, Lake cabin and Gym sauna, and a shared session's row reads
+"Yesterday · 25 min" over "with Maya and Jo". The taller rows moved Today's
+scroll to 150 pt on 6.3 and 100 on 6.9, so the streak card and the whole family
+list still show. The set before this is in `/tmp/luna-arro/shots-before/` on
+the build machine only.
+
 ## How to regenerate
 
 Only the frames and captions changed (new caption, spacing, frame):
@@ -128,13 +139,13 @@ New captures (the app changed):
 
 `capture.mjs` needs no taps. It turns off the dev client's first-run menu and
 floating Tools button (its `EXDevMenu*` defaults), sets the status bar to 9:41
-with full bars and battery, launches the app on Metro and drives it through
+with full bars and a plain full battery, launches the app on Metro and drives it through
 `src/dev/DevDriver.tsx`:
 
 | Shot | State |
 |---|---|
 | 1-timer | A traditional 15 minute timer set to 14:32 just before the shot. The app is relaunched in a made-up time zone whose clock reads 9:41 PM at that moment, so "Time to cool off at 9:41 PM" agrees with the 9:41 status bar. It retries if the clock misses |
-| 2-today | The `family` scenario (8 weeks together, 2 of 3), scrolled so the streak card and the whole family list show (scroll 128 pt on 6.3, 0 on 6.9) |
+| 2-today | The `family` scenario (8 weeks together, 2 of 3), scrolled so the streak card and the whole family list show (scroll 150 pt on 6.3, 100 on 6.9) |
 | 3-week | Week tab: the wall with Maya's frost-blue freeze |
 | 4-log | Log form: 25 min, Lake cabin, 185°F, cold plunge, Maya and Jo picked, scrolled to "Sat with someone?" |
 | 5-feed | Feed scrolled to the shared Lake cabin session, with a photo, Sam's cheer and two comments |
@@ -154,11 +165,9 @@ show a code change, restart Metro with `--clear`.
 - **"Three people picked":** the preview family is Sam, Maya and Jo, so the
   form shows two others picked (three people in the session). Picking three
   others needs a fourth member; the 3-person cap is unit tested (D8.10).
-- **Status bar:** 9:41 with the charging battery, as specified. The preview's
-  own clock is Thursday 4:10 PM ("Good afternoon, Sam"); a status bar without
-  AM or PM doesn't contradict it.
-- **Truncation:** "Yesterday · 25 min with Maya a..." on Today's family rows is
-  how the app lays that line out at these widths. Not changed here.
-- **"The Y"** is one of the preview's sample place chips on the log form.
+- **Status bar:** 9:41, full bars, and a plain full battery (discharging at
+  100%, so it isn't drawn green with a bolt). The preview's own clock is
+  Thursday 4:10 PM ("Good afternoon, Sam"); a status bar without AM or PM
+  doesn't contradict it.
 - Before uploading, check each screen still matches the build being submitted
   (Guideline 2.3.3: screenshots show the app in use).

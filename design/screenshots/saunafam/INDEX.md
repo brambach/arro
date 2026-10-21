@@ -13,7 +13,8 @@ Captured with the dev-only capture driver (`src/dev/DevDriver.tsx`, Metro with
 ### Today
 
 - `today-family.png`: Today, the family: greeting, the This week hero (8 weeks together, Week 9 slat with 2 of 3 dots), Start a session, Log one I already did, Log yesterday's
-- `today-family-list.png`: Today, the family list: latest sessions, mini dots, Kept in moss, the Apple Health offer under it
+- `today-family-list.png`: Today, the family list: latest sessions, mini dots, Kept in moss, the Apple Health offer under it. Retaken after the screenshot fixes: a shared session reads "Yesterday · 25 min" over "with Maya and Jo" (9:41 status bar)
+- `today-text-xxxl-family-list.png`: the family list at the largest standard text size (XXXL, below the accessibility sizes): every row on two lines, nothing cut off
 - `today-health-offer.png`: Today, the one-time "Save sessions to Apple Health?" card with Turn on and Not now
 - `today-solo.png`: Today, solo founder: "Your family streak starts when someone joins" with Invite someone
 - `today-new-family.png`: Today, a family in its first week: "Your first week together", nothing logged
@@ -27,7 +28,7 @@ Captured with the dev-only capture driver (`src/dev/DevDriver.tsx`, Metro with
 - `today-error.png`: Today, couldn't load with nothing cached: Try again
 - `today-last-one.png`: Today before the save that keeps the family's week (Maya and Jo kept, you on 2 of 3)
 - `today-week-kept.png`: Today after that save: the slat filled with ember, "Week kept, together"
-- `today-dynamic-type.png`, `today-dynamic-type-2.png`, `today-dynamic-type-3.png`: Today at the largest accessibility text size (AX5), top, middle and family list
+- `today-dynamic-type.png`, `today-dynamic-type-2.png`, `today-dynamic-type-3.png`: Today at the largest accessibility text size (AX5), top, middle and family list (`-3` retaken after the row change)
 
 ### Week
 
@@ -105,6 +106,8 @@ Captured with the dev-only capture driver (`src/dev/DevDriver.tsx`, Metro with
 - `onboarding-invitee-2-invited.png`: You're invited
 - `onboarding-invitee-3-sign-in.png`: Sign in, invitee
 - `onboarding-invitee-4-meet-family.png`: Meet the family: faces, who invited you, 8 weeks together, the rhythm
+- `onboarding-join-code-expired.png`: Join code, an expired code: "That code has expired or doesn't exist."
+- `onboarding-meet-family-expired.png`: Meet the family when the code expired before joining: "That code has expired or doesn't exist. Ask them for a new code." The preview family never fails, so the dev driver's `inviteExpired` event sets the same error a refused join does
 - `onboarding-invitee-5-photo.png`: Photo
 - `onboarding-invitee-6-how-it-works.png`: How it works, invitee
 - `onboarding-invitee-7-reminders.png`: Reminders, invitee
@@ -194,6 +197,17 @@ and `plus-08-success-wall.png` show the top.
 - `plus-focus-heat-log.png`: opened from the Heat log: that feature row highlighted with its line
 - `plus-tips.png`, `plus-tips-thanks.png`: the tip jar rows (A ladle, A bucket, An armful of birch), and after a tip
 
+### Largest text size
+
+At AX5, the largest accessibility size (iPhone 17 Pro, 9:41 status bar). From 1.35 times the text size the wall and its woods stack, the two prices stack full width, each tip's price goes under its name, and the Preview tag stops growing so it fits its header row.
+
+- `plus-dynamic-type-top.png`: the top: the wall over its wood name and swatches, Saunafam Plus, the lead
+- `plus-dynamic-type-prices.png`: Yearly and Founding family stacked, Get Plus for $24.99 a year
+- `plus-dynamic-type-failed.png`: a failed purchase: "The purchase didn't go through..." under the prices
+- `plus-dynamic-type-owned.png`: your family has Plus and you pay: "Plus is on for Sunday sauna. You pay for it. Thank you.", Renews on May 24, Manage
+- `plus-dynamic-type-lapsed.png`: lapsed: "Plus ended on Oct 5..." over the prices
+- `plus-dynamic-type-tips.png`: the tip jar, each price under its name
+
 ### Try-on
 
 - `plus-wall.png`: Settings, The wall, with the three Plus woods to try
@@ -241,7 +255,7 @@ the dev driver, no taps. Scenario `family` unless noted.
 - `onboarding-invite.png`: Invite your family, the code and link, Who's it for?
 - `onboarding-reminders.png`: Remind me if I'm behind, Thu and Sat at 6:30 PM
 - `onboarding-notifications.png`: Hear from your family?, Turn on notifications, Not now
-- `02-today.png`: Today, 8 weeks together, Week 9 slat at 2 of 3, Start a session, the family list
+- `02-today.png`: Today, 8 weeks together, Week 9 slat at 2 of 3, Start a session, the family list (retaken after the row change; same file as `docs/saunafam/review/2-today.png`)
 - `03-week.png`: Week, the wall with Maya's freeze, this week's days, the family
 - `04-feed.png`: Feed, Maya's session and the shared one with cheers and comments
 - `05-me.png`: Me, your numbers, favorite type and place, your last sessions

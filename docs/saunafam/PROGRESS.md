@@ -44,6 +44,7 @@ DENO_NO_PACKAGE_JSON=1 deno test --allow-read=supabase/functions supabase/functi
 | M12 | done (feat/saunafam) | `design/saunafam-rename-check.txt` (the grep, a reason for each group, every line), the dash check (0 hits) | App name, permission strings, package name, dead Arro code removed. See M12 below |
 | M16 | done (branch `saunafam/review`) | `design/recordings/saunafam/m16/` (16 clips), `design/screenshots/saunafam/review/` (one per screen, 42), `docs/saunafam/review/` (6 stills, 2 clips), `src/dev/FpsProbe.tsx` | Every motion moment recorded on one fresh Debug build of the merged app, watched frame by frame, frame rates probed. Six fixes, each re-recorded. Jest 385/385 in 30 suites, lint 0. See "M16: self-review" below |
 | M17 | done (feat/saunafam) | `REPORT.md` (copy at `/tmp/luna-arro/REPORT-saunafam.md`), commit "Build 9" (`ios.buildNumber` 9) | PR #24 is the build 9 PR; no separate `release/build-9` PR. Not done items are listed in the report |
+| Shots | done (feat/saunafam) | `design/app-store/screenshots/6.9/`, `6.3/`, the new stills in `INDEX.md`, `/tmp/luna-arro/REPORT-saunafam-shots.md` | After M17: the App Store sets retaken with a plain battery, no "The Y" and family rows that don't cut off; the Plus sheet fixed at the large text sizes; expired invite stills |
 
 ## M5: app data layer
 
@@ -1425,3 +1426,50 @@ changed, so pgTAP and Deno weren't rerun.
   milestone wall about 250 ms after the card is in: both are the Debug build's
   JS work. Worth checking in a Release build.
 - Nothing ran on a physical phone or at 120 Hz.
+
+## After M17: screenshot fixes and small gaps (21 October 2026)
+
+**What changed**
+- `scripts/app-store/capture.mjs` sets the status bar with
+  `--batteryState discharging --batteryLevel 100` (plus Wi-Fi data and active
+  bars) after a `status_bar clear`. `charged` drew the battery green with a
+  bolt. The captures were checked for green pixels in the battery: none.
+- The preview's sample places (`src/data/preview.ts`) are Home, Bathhouse,
+  Lake cabin and Gym sauna. "The Y" is gone from the preview family. It's still
+  the spec's example in the place field's placeholder ("Home, The Y"), in the
+  privacy policy and in unit test inputs, none of which show on the screenshots.
+- `PersonRow`: the latest session line may take two lines. A shared session
+  always breaks before "with" ("Yesterday · 25 min" over "with Maya and Jo"),
+  so it reads the same on both phone sizes. Above 1.5 times the text size the
+  row still stacks as before. Checked at the default size, XXXL and AX5.
+- Today's App Store scroll is 150 pt on 6.3 (was 128) and 100 on 6.9 (was 0),
+  because the rows are taller.
+- `PlusSheetScreen` at 1.35 times the text size and up: the wall and its woods
+  stack, the two price tiles stack full width (the loading bones too), each
+  tip's price goes under its name, and the Preview tag stops growing at 1.35
+  so it fits the sheet's one-row header. Before this, at AX5 the tag was
+  clipped to "PREVIEW, NO R", the wood read "CEDA / R" and the tiles broke
+  words ("Yearl y", "$24. 99"). The default size is unchanged.
+- Dev-only, for captures: `inviteExpired` on Join code and Meet the family
+  sets the error an expired code gets (the preview family never fails), and
+  the driver's `invitee` op starts the invitee path as Sam with a code typed in.
+
+**Proof:** the App Store sets, `onboarding-join-code-expired.png`,
+`onboarding-meet-family-expired.png`, `today-text-xxxl-family-list.png`,
+`plus-dynamic-type-*.png` (6), and the retaken `today-family-list.png`,
+`today-dynamic-type-3.png`, `review/02-today.png`,
+`docs/saunafam/review/2-today.png` and `log-form-shared-3.png` (its place
+chips showed "The Y").
+
+**Checks:** typecheck and lint clean, Jest 30 suites and 385 tests, pgTAP 11
+files and 403 tests (`scripts/test-db.sh`), `deno check` clean, Deno tests 48,
+`check-design` and `check-contrast` (39 of 39) clean, `npx expo export
+--platform ios` succeeds, `node scripts/app-store-shots.mjs`: 12 of 12 at the
+exact size with no alpha.
+
+**Not done**
+- The StoreKit purchase recording, still: it needs a RevenueCat API key.
+- At AX5, Today's "Log yesterday's" title breaks inside the word
+  ("yesterday'" / "s"). It was like that before. It's the shared `ListRow`,
+  used across Settings too, so I left it for its own change.
+
