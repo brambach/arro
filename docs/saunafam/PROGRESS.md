@@ -41,6 +41,7 @@ DENO_NO_PACKAGE_JSON=1 deno test --allow-read=supabase/functions supabase/functi
 | M12 docs | done (branch `saunafam/docs`) | `README.md`, `AGENTS.md`, `AUDIT.md` (note), the "Written for Arro" line on `design/market-research.md`, `paid-plan.md`, `refactor-plan.md`, `visual-direction.md`, `Arro-Spec.html`, `Arro.dc.html`, `design/app-store/icon-options.md` | Docs half of section 6 only. `CLAUDE.md` is just `@AGENTS.md`, so unchanged. See "M12 and M14 docs" below |
 | M14 docs | done (branch `saunafam/docs`) | `design/app-store/listing.md`, `app-privacy.md`, `review-notes.md`, `screenshots.md`, `support.md`, `testflight.md`, `hosting.md`, `README.md`; `design/copy/app-copy.md` (skeleton) | Listing, age rating, privacy labels, products. Not the screenshot script (`scripts/` is the app track). Apple screenshot sizes changed: see below |
 | M14 shots | done (branch `saunafam/shots`) | `design/app-store/screenshots/6.9/`, `6.3/`, `raw/`, `scripts/app-store-shots.mjs`, `scripts/app-store/capture.mjs` | Six framed, captioned screenshots at 1320 x 2868 and 1206 x 2622, size and alpha checked by the script. See "M14: App Store screenshots" below |
+| M12 | done (feat/saunafam) | `design/saunafam-rename-check.txt` (the grep, a reason for each group, every line), the dash check (0 hits) | App name, permission strings, package name, dead Arro code removed. See M12 below |
 
 ## M5: app data layer
 
@@ -1279,3 +1280,44 @@ pgTAP wasn't rerun. The dash check on `src`, `design/copy`, `design/app-store`,
 - VoiceOver wasn't run end to end on the new screens; labels and roles are set
   in code.
 - Dynamic Type at the largest sizes wasn't captured for the Plus screens.
+
+
+## M12: rename
+
+Done on `feat/saunafam` after M11, M14 and M15 merged. The docs half was done
+earlier on `saunafam/docs`, and the site on `saunafam/site`.
+
+**What changed**
+- `app.json`: `expo.name` is Saunafam; the photo string talks about sessions
+  ("Saunafam uses a photo only when you pick one for your profile or a
+  session. Your family sees it in Saunafam."). The HealthKit write string and
+  the camera string came with M11 and M8. The Android adaptive icon background
+  is birch (`#EFE6D8`) from M7. `ios.buildNumber` goes to 9 in its own commit
+  at M17.
+- `package.json` and the lock file: `saunafam`.
+- `src/state/photos.ts`: "Photos are off for Saunafam".
+- Dead Arro code removed: the components nothing imported (AvatarRing,
+  AvatarStack, CheerButton, PrimaryButton, DayPill, WorkoutCard, CheckInPop,
+  RollingText, PhotoSlot, Icons.tsx with ArroMark, the `src/components`
+  barrel), `plain.tsx`, `useYesterdayOpen`, the legacy FeedItem and WeekState
+  types, and Arro's deprecated color, radius, depth, type, spacing and motion
+  names in `src/theme/`. Lint went from 31 problems to 0.
+- The member palette lived in `src/data/palette.ts` and `src/theme/tokens.ts`;
+  it's only in the theme now, and `check-design` finds no hex values outside
+  `src/theme/`.
+
+**Also fixed here:** M10 gave every route a birch `contentStyle` so pushes
+never flash white, which made the transparent routes (Nudge, PastWeek, the log
+sheet, the timer) opaque: their scrims sat over flat birch. They share one
+`overScreen` options object with a transparent `contentStyle` now. Proof:
+`design/screenshots/saunafam/nudge-over-today.png`.
+
+**Kept, as the spec says:** bundle id `com.arrofamily.arro`, slug `arro`, the
+EAS owner and project id, `project_id = "arro"`, the `arro.session.v1` and
+`arro.family.v2` keys, and the `arro-` prefix that build 9 cancels.
+
+**Proof:** `design/saunafam-rename-check.txt`. Every remaining "Arro" is the
+move said on purpose (the "Arro is now Saunafam" sheet, the Health note, the
+privacy and support pages), a kept identifier, an applied migration, a comment
+about Arro's data still on the server until build 10, or history. The spec's
+dash check finds nothing.
