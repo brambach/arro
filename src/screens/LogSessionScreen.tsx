@@ -13,7 +13,10 @@ import {
 import Animated, { useAnimatedStyle, useSharedValue, withSpring, withTiming } from 'react-native-reanimated';
 import { scheduleOnRN } from 'react-native-worklets';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { useNavigation } from '@react-navigation/native';
+import { closesOntoToday } from '../navigation/closesOntoToday';
 import { RootStackParamList, RootStackScreenProps } from '../navigation/types';
+import { markSheetGone } from '../components/useShownWhenFocused';
 import { useApp, useView } from '../state/AppState';
 import { COPY } from '../state/buildView';
 import { LIMITS, MINUTE_CHIPS, SAUNA_TYPES, plural } from '../data/saunas';
@@ -79,7 +82,9 @@ export function LogSessionScreen({ navigation, route }: RootStackScreenProps<'Lo
  *
  * Every control is Saunafam's own, with a label and a role. Checks are inline,
  * in coal, and only after the first Save. Saving is optimistic: the session goes
- * into the outbox, the sheet closes with the save haptic, and Today has it at once.
+ * into the outbox, the sheet closes, and Today has it at once. The save haptic
+ * plays as the sheet goes, or, when it lights your next dot on Today, at that
+ * dot's peak instead.
  */
 export function LogSessionSheet({
   params,
@@ -97,6 +102,14 @@ export function LogSessionSheet({
 }) {
   const app = useApp();
   const view = useView();
+  const navigation = useNavigation();
+  // Your week as the sheet opened, and the latest view, so closing can tell whether
+  // Today is about to light a new dot (and play the save haptic itself, at its peak).
+  const [weekAtOpen] = useState(() => view.today.you.countedDays);
+  const viewRef = useRef(view);
+  useEffect(() => {
+    viewRef.current = view;
+  });
   const insets = useSafeAreaInsets();
   const { height: H, fontScale } = useWindowDimensions();
   const reduceMotion = useReduceMotion();
@@ -159,6 +172,8 @@ export function LogSessionSheet({
       closed.current = true;
       const done = () => {
         after?.();
+        // Gone: Today needn't wait for a sheet to slide away (useShownWhenFocused).
+        markSheetGone();
         onClosed();
       };
       scrim.set(withTiming(0, moments.sheet.close));
@@ -236,8 +251,14 @@ export function LogSessionSheet({
     const session = toSessionForm(form, unit, new Date(), source);
     const sent = draft ? app.resendDraft(draft.input.clientId, session) : app.logSession(session);
     // Optimistic: the session is on Today already; the sheet goes, and the save
-    // haptic lands as it does.
-    slideAway(() => haptics.save());
+    // haptic lands as it does, unless the sheet closes onto Today and the save
+    // lights your next dot there: then the dot plays it at its peak (moment 5),
+    // and playing it here too made two.
+    slideAway(() => {
+      const you = viewRef.current.today.you;
+      const lightsDot = you.countedDays > weekAtOpen && weekAtOpen < you.goal;
+      if (!(lightsDot && closesOntoToday(navigation.getState()))) haptics.save();
+    });
     sent
       .then((outcome) => {
         if (outcome.status === 'saved') {

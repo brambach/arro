@@ -19,6 +19,7 @@ import { AppStateProvider, useApp } from './src/state/AppState';
 import { missingServerSettings } from './src/state/supabase';
 import { DevDriver, devDriverOn } from './src/dev/DevDriver';
 import { DevCapture } from './src/dev/DevCapture';
+import { FpsProbe } from './src/dev/FpsProbe';
 
 // Keep the native splash (plain birch) up until the first JS frame is ready to
 // match it: AnimatedSplash hides it. Called at module scope, as the Expo docs ask.
@@ -53,6 +54,7 @@ export default function App() {
           <AppOverlays navigation={navigationRef} />
           {__DEV__ ? <DevLinks navigation={navigationRef} /> : null}
           {devDriverOn ? <DevDriver navigation={navigationRef} /> : null}
+          {devDriverOn ? <FpsProbe /> : null}
           {__DEV__ ? <DevCapture /> : null}
           <Splash fontsReady={fontsLoaded || !!fontError} />
         </NavigationContainer>

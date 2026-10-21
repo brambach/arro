@@ -1,9 +1,8 @@
 import React, { memo, useEffect, useMemo } from 'react';
-import { StyleSheet, View, useWindowDimensions } from 'react-native';
+import { Image, StyleSheet, View, useWindowDimensions } from 'react-native';
 import Animated, { cancelAnimation, useAnimatedStyle, useSharedValue, withRepeat, withTiming } from 'react-native-reanimated';
 import Svg, { Rect } from 'react-native-svg';
-import { SoftEllipse, smoothStops } from './SoftEllipse';
-import { alpha, haze, palette } from '../theme/tokens';
+import { alpha } from '../theme/tokens';
 import { loops, useReduceMotion } from '../theme/motion';
 import { wallLines } from './material';
 import { useScreenVisible } from './useScreenVisible';
@@ -13,6 +12,10 @@ import { useScreenVisible } from './useScreenVisible';
  * slats, like a sauna wall, drawn once as SVG, with a soft warm haze drifting
  * slowly over them (`steam-drift`, 20 s). The drift pauses when the screen
  * isn't visible, and with Reduce Motion the haze holds still.
+ *
+ * The haze is a pre-rendered image (scripts/render-backdrop-haze.mjs), not SVG:
+ * drawing its gradients on every screen's first frame cost about 30 ms of each
+ * stack push (M16).
  *
  * Put it first inside a screen's root view; it fills the screen behind the
  * content and never takes touches. `tone="dark"` is the timer room.
@@ -75,16 +78,10 @@ function Haze({ width, height }: { width: number; height: number }) {
   );
 }
 
-// SVG stops take their alpha from stopOpacity: an rgba stopColor draws black on iOS.
-const warm = smoothStops(palette.glow, haze.warm, 0.7);
-const light = smoothStops(palette.steam, haze.light, 0.7);
+// Warm light from the upper right, a pale pool on the left. Every position in it
+// is a share of its box, so stretched to any box it draws the same haze.
+const hazeArt = require('../../assets/backdrop/haze.png');
 
 const MemoHazeArt = memo(function HazeArt({ width, height }: { width: number; height: number }) {
-  return (
-    <Svg width={width} height={height}>
-      {/* The mockup's haze: warm light from the upper right, a pale pool on the left. */}
-      <SoftEllipse cx={width * 0.85} cy={height * 0.06} rx={width * 0.7} ry={height * 0.38} stops={warm} />
-      <SoftEllipse cx={0} cy={height * 0.6} rx={width * 0.6} ry={height * 0.3} stops={light} />
-    </Svg>
-  );
+  return <Image source={hazeArt} style={{ width, height }} resizeMode="stretch" />;
 });

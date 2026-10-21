@@ -16,6 +16,17 @@ import { useIsFocused } from '@react-navigation/native';
  */
 export const SHEET_DISMISS_MS = 400;
 
+/**
+ * Saunafam's own sheets (the log sheet) slide away first and only then go
+ * back, so the screen is in plain view the moment it's focused. They call this
+ * as they go; a focus that comes within GONE_MS of it skips the wait.
+ */
+let sheetGoneAt = 0;
+const GONE_MS = 250;
+export function markSheetGone(): void {
+  sheetGoneAt = Date.now();
+}
+
 export function useShownWhenFocused<T>(value: T, settleMs: number = SHEET_DISMISS_MS): T {
   const focused = useIsFocused();
   const [shown, setShown] = useState(value);
@@ -25,7 +36,10 @@ export function useShownWhenFocused<T>(value: T, settleMs: number = SHEET_DISMIS
   const holdUntil = useRef(0);
 
   useEffect(() => {
-    if (focused && !wasFocused.current) holdUntil.current = Date.now() + settleMs;
+    if (focused && !wasFocused.current) {
+      // Back from one of our own sheets: it has already gone, the screen is in view.
+      holdUntil.current = Date.now() - sheetGoneAt < GONE_MS ? 0 : Date.now() + settleMs;
+    }
     wasFocused.current = focused;
     if (!focused || shown === value) return;
     // Coming back, the sheet is still sliding away: wait for it.

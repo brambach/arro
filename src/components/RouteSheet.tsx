@@ -1,5 +1,5 @@
 import React, { forwardRef, useCallback, useEffect, useImperativeHandle } from 'react';
-import { Pressable, StyleSheet, View } from 'react-native';
+import { DeviceEventEmitter, Pressable, StyleSheet, View } from 'react-native';
 import Animated, { useAnimatedStyle, useSharedValue, withSpring, withTiming } from 'react-native-reanimated';
 import { scheduleOnRN } from 'react-native-worklets';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -49,6 +49,12 @@ export const RouteSheet = forwardRef<RouteSheetHandle, Props>(function RouteShee
     );
   }, [onClosed, p]);
   useImperativeHandle(ref, () => ({ close }), [close]);
+  // Dev captures only: the driver closes the sheet the way its close mark does.
+  useEffect(() => {
+    if (!__DEV__) return;
+    const sub = DeviceEventEmitter.addListener('devSheetClose', close);
+    return () => sub.remove();
+  }, [close]);
 
   const still = reduceMotion !== false;
   const travel = height ?? TRAVEL;

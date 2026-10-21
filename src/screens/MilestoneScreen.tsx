@@ -38,9 +38,21 @@ export function MilestoneScreen({ navigation, route }: RootStackScreenProps<'Mil
   // The due milestone is read once: marking it shown must not blank the card as it closes.
   const [m] = useState(() => (route.params ? milestoneView(route.params, view.familyName) : view.milestone));
   const [built, setBuilt] = useState(false);
-  // The wall waits for the card to finish fading in, so the first slats aren't lost under the fade.
+  // The wall waits for the card to finish fading in, so the first slats aren't lost
+  // under the fade: cardFade after the transition starts, or its end if that's sooner.
   const [arrived, setArrived] = useState(false);
-  useEffect(() => navigation.addListener('transitionEnd', () => setArrived(true)), [navigation]);
+  useEffect(() => {
+    let t: ReturnType<typeof setTimeout> | undefined;
+    const offStart = navigation.addListener('transitionStart', () => {
+      t = setTimeout(() => setArrived(true), moments.milestoneWall.cardFade);
+    });
+    const offEnd = navigation.addListener('transitionEnd', () => setArrived(true));
+    return () => {
+      offStart();
+      offEnd();
+      if (t) clearTimeout(t);
+    };
+  }, [navigation]);
   const [sharing, setSharing] = useState(false);
   const n = useSharedValue(0);
 
@@ -65,7 +77,8 @@ export function MilestoneScreen({ navigation, route }: RootStackScreenProps<'Mil
   // settled, which left a dead pause). With Reduce Motion the wall is simply there.
   const weeksForWall = m?.weeks ?? 0;
   useEffect(() => {
-    if (!arrived || reduceMotion === null) return;
+    // With Reduce Motion the wall is there from the first frame, fading in with the card.
+    if (reduceMotion === null || (!arrived && !reduceMotion)) return;
     const wait = reduceMotion ? 0 : (weeksForWall - 1) * moments.milestoneWall.perSlat + springTouchdownMs(moments.milestoneWall.slat);
     const t = setTimeout(() => setBuilt(true), wait);
     return () => clearTimeout(t);
@@ -140,7 +153,7 @@ export function MilestoneScreen({ navigation, route }: RootStackScreenProps<'Mil
                 startIndex={c.startIndex}
                 slatHeight={slatHeight}
                 width={colWidth}
-                go={arrived}
+                go={arrived || reduceMotion === true}
               />
             ))}
           </View>
