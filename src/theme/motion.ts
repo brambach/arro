@@ -129,6 +129,13 @@ export const moments = {
   },
   /** 6. Streak milestone: the wall builds, one slat every 50 ms. */
   milestoneWall: {
+    /**
+     * How long iOS's cross-dissolve takes to show the card. The wall starts
+     * this long after the route's transition starts: its transitionEnd comes
+     * about 550 ms after mount, which left the card standing empty for about
+     * 350 ms (M16), and animationDuration doesn't apply to a full-screen modal.
+     */
+    cardFade: 250,
     perSlat: 50,
     slat: springs.slat,
     drop: distances.slatDrop,
