@@ -15,9 +15,9 @@ The running log, with every decision and proof path, is
    the timer, Week, the milestone, Feed) and two clips, `timer-start.mp4` (the
    door) and `week-kept.mp4` (the spark burst).
 2. **The App Store screenshots** in `design/app-store/screenshots/6.9/` and
-   `6.3/`. The status bar shows a green charging battery. That came from my
-   capture settings, and retaking them means rerunning
-   `scripts/app-store/capture.mjs` with the battery discharging.
+   `6.3/`. Retaken on 21 October with a plain full battery (it was green and
+   charging), Bathhouse in place of "The Y", and family rows that don't cut
+   off. `docs/saunafam/PROGRESS.md` has the details, under "After M17".
 3. **The icon at small sizes**, `design/brand/icon-sizes.png` (16 to 1024 px,
    light and dark wallpapers).
 4. **The Plus sheet**, `plus-01-loading.png` to `plus-16-preview-label.png` in
@@ -90,7 +90,7 @@ Ticked items have their proof next to them. Anything I couldn't tick is in
 
 ### App
 
-- [x] Every screen and state, including empty, loading, offline, server error and removed session, listed in `design/screenshots/saunafam/INDEX.md` (204 lines). M16 added one clean screenshot per screen in `design/screenshots/saunafam/review/` (42). The one gap, the expired invite, is under "Not done".
+- [x] Every screen and state, including empty, loading, offline, server error and removed session, listed in `design/screenshots/saunafam/INDEX.md` (204 lines). M16 added one clean screenshot per screen in `design/screenshots/saunafam/review/` (42). The expired invite was added on 21 October (`onboarding-join-code-expired.png`, `onboarding-meet-family-expired.png`).
 - [x] Haptics mapped in the table in `src/theme/haptics.ts`. The call sites are below, under "Haptics".
 - [x] Push copy for every trigger and local notification in `design/copy/notifications.md`, matched by pgTAP checks on the queued titles and bodies in `saunafam_push.test.sql`.
 - [x] Invite share text and link, and the `saunafam.com/join/<code>` preview with `og:title`, `og:description` and an OG image. Proof: `design/screenshots/saunafam/invite-link-preview.png`.
@@ -131,8 +131,8 @@ Ticked items have their proof next to them. Anything I couldn't tick is in
 ## Not done
 
 - **The StoreKit purchase recording (`plus-storekit.mov`).** RevenueCat's SDK won't load offerings or take a purchase without a project API key, and that key only comes from its dashboard, which was off limits. Its Test Store needs the dashboard too. A StoreKit file also only applies when the app runs from Xcode's scheme. `design/recordings/saunafam/plus-preview-flow.mov` records the same flow against `PreviewPurchases`: a cancelled, a failed and an Ask to Buy purchase, Founding family bought, then a restore.
-- **An expired invite screenshot.** The app handles it (Meet the family and the join step say "Ask them for a new code."), but no screenshot shows it.
-- **Dynamic Type at the largest size for the Plus screens.** Today, the timer, the log form, onboarding and Settings have them (`*-dynamic-type*.png`). The Plus screens don't.
+- ~~An expired invite screenshot.~~ Done on 21 October.
+- ~~Dynamic Type at the largest size for the Plus screens.~~ Done on 21 October (`plus-dynamic-type-*.png`). The sheet broke at that size, so it stacks now from 1.35 times the text size.
 - **A separate `release/build-9` PR.** The spec asks for one. `AGENTS.md` makes PR #24 the build 9 PR, so `ios.buildNumber` went to 9 in its own commit there and I didn't open a second PR against main.
 
 ## Decisions
@@ -224,8 +224,8 @@ first load. The OG image. The Plus sheet, the try-on and the three new woods.
 All of the copy, including the Plus copy.
 
 A few smaller things came up along the way:
-- "The Y" is one of the preview's sample place chips, and it's on App Store screenshot 4. You may want another name.
-- Today's family rows cut off at "Yesterday · 25 min with Maya a..." on both phone sizes, screenshot 2 included.
+- ~~"The Y" on App Store screenshot 4.~~ It's Bathhouse now (21 October).
+- ~~Today's family rows cut off at "Yesterday · 25 min with Maya a...".~~ They wrap onto a second line now (21 October).
 - Screenshot 4 shows Maya and Jo picked: three people in the session, but not three others. The preview family has no fourth person.
 
 ## Needs Bryce, in order
