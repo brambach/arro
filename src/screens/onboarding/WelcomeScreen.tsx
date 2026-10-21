@@ -4,9 +4,9 @@ import { Pressable, ScrollView, StyleSheet, Text, useWindowDimensions, View } fr
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { layout, palette, space } from '../../theme/tokens';
 import { maxFontScale, type } from '../../theme/typography';
-import { moments } from '../../theme/motion';
+import { moments, useReduceMotion } from '../../theme/motion';
 import { Backdrop } from '../../components/Backdrop';
-import { SPLASH_MARK } from '../../components/AnimatedSplash';
+import { SPLASH_MARK, welcomeMatchesSplash } from '../../components/AnimatedSplash';
 import { StoneMark } from '../../components/brand/StoneMark';
 import { Wordmark } from '../../components/brand/Wordmark';
 import { Settle } from '../../components/Settle';
@@ -41,18 +41,22 @@ export function WelcomeScreen({ navigation }: RootStackScreenProps<'Welcome'>) {
   const { startFlow } = useApp();
   const go = useSplashLeaving();
   // The splash's position only fits a tall screen at ordinary sizes.
-  const matchSplash = height >= 800 && fontScale <= 1.2;
+  const matchSplash = welcomeMatchesSplash(height, fontScale);
 
   // The mark lifts with the splash's own mark (the same 8 pt, the same curve), so
   // the two copies stay on top of each other while the splash fades: no ghost.
-  // Opened later (after a sign out), it's already lifted.
+  // Opened later (after a sign out), it's already lifted. With Reduce Motion the
+  // splash's mark never lifts, so this one stays put too: the crossfade is then
+  // between two marks in the same place (an 8 pt lift here showed a doubled
+  // wordmark mid-fade, then a jump).
+  const reduceMotion = useReduceMotion();
   const [liftedAtMount] = useState(go);
   const lift = useSharedValue(liftedAtMount ? -moments.splash.exit.lift : 0);
   useEffect(() => {
-    if (!go || liftedAtMount) return;
+    if (!go || liftedAtMount || reduceMotion !== false) return;
     const { duration, easing } = moments.splash.exit;
     lift.set(withTiming(-moments.splash.exit.lift, { duration, easing }));
-  }, [go, liftedAtMount, lift]);
+  }, [go, liftedAtMount, lift, reduceMotion]);
   const liftStyle = useAnimatedStyle(() => ({ transform: [{ translateY: lift.value }] }));
 
   const mark = (

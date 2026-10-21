@@ -47,8 +47,13 @@ const WORD_SIZE = 40;
 /** The mark's sizes, so Welcome can draw it where the splash leaves it (centered, lifted `moments.splash.exit.lift`). */
 export const SPLASH_MARK = { stoneWidth: STONE_WIDTH, wordSize: WORD_SIZE, gap: space.s24 } as const;
 
+/** Welcome draws its mark where the splash leaves it only on a tall screen at ordinary text sizes. */
+export function welcomeMatchesSplash(height: number, fontScale: number): boolean {
+  return height >= 800 && fontScale <= 1.2;
+}
+
 export function AnimatedSplash({ ready, returning, onDone, onExit }: Props) {
-  const { width, height } = useWindowDimensions();
+  const { width, height, fontScale } = useWindowDimensions();
   const [mounted, setMounted] = useState(false);
   const [phase, setPhase] = useState<'waiting' | 'playing' | 'leaving'>('waiting');
   const [reduced, setReduced] = useState<boolean | null>(null);
@@ -155,11 +160,16 @@ export function AnimatedSplash({ ready, returning, onDone, onExit }: Props) {
   const coverStyle = useAnimatedStyle(() => ({ opacity: cover.value }));
   const glowStyle = useAnimatedStyle(() => ({ opacity: glow.value * cover.value }));
   const markStyle = useAnimatedStyle(() => ({ transform: [{ translateY: lift.value }] }));
+  // With Reduce Motion, where Welcome's identical mark sits right under this one,
+  // the mark stays at full strength while the birch fades: fading both copies at
+  // once dimmed the stone and wordmark mid-crossfade. Welcome's copy takes over
+  // when the splash unmounts. (First launch only; returning users have no mark.)
+  const holdMark = reduced === true && !returning && welcomeMatchesSplash(height, fontScale);
   const stoneStyle = useAnimatedStyle(() => ({
-    opacity: stone.value * cover.value,
+    opacity: stone.value * (holdMark ? 1 : cover.value),
     transform: [{ scale: moments.splash.stone.fromScale + (1 - moments.splash.stone.fromScale) * stone.value }],
   }));
-  const wordStyle = useAnimatedStyle(() => ({ opacity: word.value * cover.value }));
+  const wordStyle = useAnimatedStyle(() => ({ opacity: word.value * (holdMark ? 1 : cover.value) }));
   const hazeStyle = useAnimatedStyle(() => ({ opacity: haze.value }));
 
   const showMark = !returning;
