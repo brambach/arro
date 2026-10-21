@@ -1,6 +1,6 @@
 {
   "expo": {
-    "name": "Arro",
+    "name": "Saunafam",
     "slug": "arro",
     "version": "1.0.0",
     "orientation": "portrait",
@@ -54,7 +54,7 @@
       [
         "expo-image-picker",
         {
-          "photosPermission": "Arro uses a photo only when you pick one for your profile or a workout. Your family sees it in Arro.",
+          "photosPermission": "Saunafam uses a photo only when you pick one for your profile or a session. Your family sees it in Saunafam.",
           "cameraPermission": "Saunafam uses the camera only when you take a photo for a session. Your family sees it in Saunafam.",
           "microphonePermission": false
         }
