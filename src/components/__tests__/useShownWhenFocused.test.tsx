@@ -1,7 +1,7 @@
 import { afterEach, beforeEach, describe, expect, it, jest } from '@jest/globals';
 import React from 'react';
 import { act, create, ReactTestRenderer } from 'react-test-renderer';
-import { SHEET_DISMISS_MS, useShownWhenFocused } from '../useShownWhenFocused';
+import { SHEET_DISMISS_MS, markSheetGone, useShownWhenFocused } from '../useShownWhenFocused';
 
 let mockFocused = true;
 jest.mock('@react-navigation/native', () => ({ useIsFocused: () => mockFocused }));
@@ -50,5 +50,22 @@ describe('useShownWhenFocused', () => {
     expect(out[out.length - 1].n).toBe(1);
     act(() => jest.advanceTimersByTime(SHEET_DISMISS_MS));
     expect(out[out.length - 1].n).toBe(3);
+  });
+
+  it('hands over at once when one of our own sheets has already slid away', () => {
+    const out: { n: number }[] = [];
+    let r: ReactTestRenderer | undefined;
+    act(() => {
+      r = create(<Probe value={{ n: 1 }} out={out} />);
+    });
+    mockFocused = false;
+    act(() => r?.update(<Probe value={{ n: 2 }} out={out} />));
+    act(() => jest.advanceTimersByTime(1000));
+    // The log sheet finishes its slide, then goes back: no page sheet left to wait for.
+    markSheetGone();
+    mockFocused = true;
+    act(() => r?.update(<Probe value={{ n: 2 }} out={out} />));
+    act(() => jest.advanceTimersByTime(1));
+    expect(out[out.length - 1].n).toBe(2);
   });
 });
