@@ -6,6 +6,7 @@ import { PreviewScenarioId, previewNow, setDevSharedPhoto } from '../data/previe
 import { isSaunaType } from '../data/saunas';
 import { sendDevCommand } from './capture';
 import type { RootStackParamList } from '../navigation/types';
+import type { PreviewBehavior } from '../state/purchases';
 
 /**
  * Dev builds only, and only with EXPO_PUBLIC_DEV_DRIVER=1: lets a script on the
@@ -40,7 +41,9 @@ type Command =
   /** A timer `ago` seconds in, as if it had been running (DevCapture's dev/timer). */
   | { op: 'timer'; ago: number; target?: number; type?: string }
   /** One of the screens' dev commands (form-pick, form-scroll, ...), as DevCapture sends them. */
-  | { op: 'dev'; command: string; args?: Record<string, string> };
+  | { op: 'dev'; command: string; args?: Record<string, string> }
+  | { op: 'plusStore'; behavior: PreviewBehavior; storeMs?: number; serverMs?: number }
+  | { op: 'emitArg'; event: string; arg: string | number };
 
 export function DevDriver({ navigation }: { navigation: NavigationContainerRefWithCurrent<RootStackParamList> }) {
   const app = useApp();
@@ -122,6 +125,12 @@ export function DevDriver({ navigation }: { navigation: NavigationContainerRefWi
         }
         case 'dev':
           sendDevCommand(c.command, c.args ?? {});
+          return;
+        case 'plusStore':
+          a.setPreviewPurchases(c.behavior, { storeMs: c.storeMs, serverMs: c.serverMs });
+          return;
+        case 'emitArg':
+          DeviceEventEmitter.emit(c.event, c.arg);
           return;
       }
     };

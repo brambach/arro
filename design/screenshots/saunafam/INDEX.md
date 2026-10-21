@@ -161,3 +161,63 @@ Captured with the dev-only capture driver (`src/dev/DevDriver.tsx`, Metro with
 - `camera-permission.png`: the camera permission prompt, from Take a photo
 - `camera-open.png`: the camera open (the simulator has no camera feed, so nothing can be taken)
 
+
+## Saunafam Plus (M15, iPhone 17 simulator, Debug build, Plus switched on in the preview)
+
+Captured with the capture driver (`EXPO_PUBLIC_DEV_DRIVER_URL` pointed at a
+driver of its own) and `PreviewPurchases`, so every sheet shows "Preview, no
+real purchase". Scenarios: `plusEnabled` (Plus on, the family doesn't have it,
+the quiet card due), `plusMine` (you pay yearly), `plusFounding` (Founding
+family, 40 weeks), `plusActive` (Plus, from Maya), `plusLapsed` (ended Oct 5).
+The sheet shots are scrolled to the part that changes; `plus-16-preview-label.png`
+and `plus-08-success-wall.png` show the top.
+
+### The Plus sheet, all 16 states
+
+- `plus-01-loading.png`: 1. Loading prices: skeleton tiles and button, the tip rows as skeletons too
+- `plus-02-unavailable.png`: 2. Prices failed or offline: "Can't reach the App Store right now", Try again
+- `plus-03-ready-yearly.png`: 3. Ready, yearly picked: the yearly tile in ember, "Get Plus for $24.99 a year", Not now, the small print, Restore purchases, Terms, Privacy
+- `plus-04-ready-founding.png`: 4. Ready, Founding family picked: "Get Plus for $59.99 once", "One payment. No renewal."
+- `plus-05-purchasing.png`: 5. Purchasing: "Waiting for the App Store" with the waiting dots; the close mark still works
+- `plus-06-pending.png`: 6. Pending, Ask to Buy: "Waiting for approval", Done
+- `plus-07-finishing.png`: 7. Finishing up: bought, waiting for the server
+- `plus-08-success.png`: 8. Success: "Thank you. The wall is yours." (`plus-08-success-wall.png`: the wall at the top after it re-grained)
+- `plus-09-cancelled.png`: 9. Cancelled by the user: back to ready, no message
+- `plus-10-failed.png`: 10. Failed: "The purchase didn't go through. You haven't been charged." and Try again
+- `plus-11-owned-by-me.png`: 11. The family has Plus and you pay yearly: "Renews on May 24.", Manage, Make it Founding family
+- `plus-11-owned-by-me-founding.png`: 11. The same for a Founding family: "Plus is yours for good"
+- `plus-12-owned-by-other.png`: 12. Plus from someone else: "Plus, from Maya. Thank you."
+- `plus-13-restoring.png`: 13. Restoring: the link reads "Restoring..."
+- `plus-14-restore-nothing.png`: 14. Restore found nothing: "No purchases found for this Apple ID."
+- `plus-15-lapsed.png`: 15. Lapsed: "Plus ended on Oct 5. The wall is back to birch..." over the price tiles
+- `plus-16-preview-label.png`: 16. Preview mode: "Preview, no real purchase" at the top, the wall in cedar with the four woods
+- `plus-focus-heat-log.png`: opened from the Heat log: that feature row highlighted with its line
+- `plus-tips.png`, `plus-tips-thanks.png`: the tip jar rows (A ladle, A bucket, An armful of birch), and after a tip
+
+### Try-on
+
+- `plus-wall.png`: Settings, The wall, with the three Plus woods to try
+- `plus-tryon-wood-cedar.png`, `plus-tryon-wood-charred-pine.png`: a wood tried on, "Keep this wood with Plus", Back to birch
+- `plus-wall-with-plus.png`: The wall for a family with Plus (alder picked)
+- `plus-timer-face.png`: Me, Timer face: Löyly picked, Coal and Brass to try
+- `plus-tryon-face-coal.png`, `plus-tryon-face-brass.png`: a face tried on in the small room, "Keep this face with Plus"
+- `plus-app-icon.png`: Me, App icon, on the try-on home screen
+- `plus-tryon-icon-night.png`, `plus-tryon-icon-lake.png`: an icon tried on, "Keep this icon with Plus"
+
+### With Plus
+
+- `plus-timer-coal.png`: the timer room with the Coal face, 12:43 of 15
+- `plus-timer-brass.png`: the timer room with the Brass face
+- `plus-every-week.png`: Every week: 40 weeks month by month in the family's wood
+- `plus-heat-log.png`, `plus-heat-log-2.png`: the Heat log: hours by month, best run, sessions by type, where, longest session by person (alphabetical)
+- `plus-heat-log-locked.png`: the Heat log without Plus: a blurred example and the way to the sheet
+- `plus-poster.png`: the wall poster (40 weeks, the Founding family nail on the first slat), Save or print
+- `plus-week-founding.png`, `plus-week-founding-rows.png`: Week for a Founding family: the brass nail on the bottom slat; See every week and Print the wall without the "Plus" marks
+
+### Quiet card, Settings and Me
+
+- `plus-quiet-card.png`: the one unprompted ask, at the bottom of Week: See Plus, Not now, Don't show this again
+- `plus-settings.png`: Settings with Plus switched on: The wall row, Saunafam Plus, Restore purchases, Leave a tip
+- `plus-settings-from-maya.png`: the Saunafam Plus row reads "Plus, from Maya"
+- `plus-settings-lapsed.png`: the quiet line after a plan ends
+- `plus-me-rows.png`, `plus-me-rows-plus.png`: Me's Heat log, Timer face and App icon rows, without and with Plus

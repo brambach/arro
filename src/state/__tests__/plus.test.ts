@@ -110,7 +110,7 @@ describe('PreviewPurchases', () => {
     const p = new PreviewPurchases();
     expect(await p.getOffering()).toEqual(PREVIEW_OFFERING);
     expect(await p.restore()).toEqual({ status: 'nothing' });
-    expect(await p.purchase('annual')).toEqual({ status: 'purchased' });
+    expect(await p.purchase('annual')).toEqual({ status: 'purchased', productId: 'saunafam.plus.annual' });
     expect(await p.restore()).toEqual({ status: 'restored' });
   });
 
@@ -149,7 +149,7 @@ describe('PreviewPurchases', () => {
     expect(await p.restore()).toEqual({ status: 'nothing' });
   });
 
-  it('is what this build uses until RevenueCat comes in M15', () => {
+  it('is the fake when nothing says Plus is on', () => {
     expect(createPurchases()).toBeInstanceOf(PreviewPurchases);
   });
 });

@@ -26,7 +26,8 @@ import { frost, grain } from './material';
  * Motion: when a slat goes from `current` to `kept` on screen, ember fills it
  * from the left edge to the right (`moments.weekKept.fill`) and `onFilled`
  * fires when it's full, for the week-kept haptic and sparks. When `wood`
- * changes, the new wood crossfades in over 400 ms after `woodDelay`.
+ * changes, the new wood crossfades in over 400 ms after `woodDelay`; when only
+ * `seed` changes (Plus landing), the new grain crossfades in over 900 ms.
  */
 export type SlatState = 'kept' | 'frozen' | 'paused' | 'current' | 'open';
 
@@ -65,15 +66,17 @@ export function Slat({
 }: Props) {
   // Remember what the slat looked like before a change, during render, so the
   // first frame of a transition already has the old look underneath.
-  const [shown, setShown] = useState({ state, wood, prevState: state, prevWood: wood });
-  if (shown.state !== state || shown.wood !== wood) {
-    setShown({ state, wood, prevState: shown.state, prevWood: shown.wood });
+  const [shown, setShown] = useState({ state, wood, seed, prevState: state, prevWood: wood, prevSeed: seed });
+  if (shown.state !== state || shown.wood !== wood || shown.seed !== seed) {
+    setShown({ state, wood, seed, prevState: shown.state, prevWood: shown.wood, prevSeed: shown.seed });
   }
 
   const big = height >= 40;
   const radius = big ? radii.slat : radii.slatSmall;
   const filling = state === 'kept' && shown.prevState !== 'kept';
   const woodChanged = shown.prevWood !== wood;
+  // A new grain on the same wood: Plus landing re-grains the wall, slowly.
+  const regrain = !woodChanged && shown.prevSeed !== seed;
 
   return (
     <View
@@ -82,13 +85,13 @@ export function Slat({
       accessibilityLabel={describe(state, dots, label)}
     >
       {/* What was there before, underneath the change. */}
-      {filling || woodChanged ? (
-        <Finish state={filling ? shown.prevState : state} wood={shown.prevWood} height={height} seed={seed} />
+      {filling || woodChanged || regrain ? (
+        <Finish state={filling ? shown.prevState : state} wood={shown.prevWood} height={height} seed={regrain ? shown.prevSeed : seed} />
       ) : null}
       {filling ? (
         <KeptFill wood={wood} height={height} seed={seed} onFilled={onFilled} />
       ) : (
-        <FadeLayer key={wood} fadeIn={woodChanged} delay={woodDelay}>
+        <FadeLayer key={`${wood}-${seed}`} fadeIn={woodChanged || regrain} slow={regrain} delay={woodDelay}>
           <Finish state={state} wood={wood} height={height} seed={seed} />
         </FadeLayer>
       )}
@@ -210,14 +213,14 @@ const Finish = memo(function Finish({ state, wood, height, seed }: { state: Slat
 });
 
 /** A layer that crossfades in when it replaces another look; still otherwise. */
-function FadeLayer({ children, fadeIn, delay }: { children: React.ReactNode; fadeIn: boolean; delay: number }) {
+function FadeLayer({ children, fadeIn, slow, delay }: { children: React.ReactNode; fadeIn: boolean; slow?: boolean; delay: number }) {
   const reduceMotion = useReduceMotion();
   const o = useSharedValue(fadeIn ? 0 : 1);
   useEffect(() => {
     if (!fadeIn) return;
-    const { duration, easing } = moments.plusWoodCrossfade;
+    const { duration, easing } = slow ? moments.plusLanded : moments.plusWoodCrossfade;
     o.set(withDelay(reduceMotion ? 0 : delay, withTiming(1, { duration, easing })));
-  }, [fadeIn, delay, reduceMotion, o]);
+  }, [fadeIn, slow, delay, reduceMotion, o]);
   const s = useAnimatedStyle(() => ({ opacity: o.value }));
   return <Animated.View style={[StyleSheet.absoluteFill, s]}>{children}</Animated.View>;
 }

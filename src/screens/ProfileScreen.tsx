@@ -4,6 +4,7 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { MainTabScreenProps } from '../navigation/types';
 import { useApp, useView } from '../state/AppState';
 import { ProfileView } from '../state/buildView';
+import { APP_ICONS, TIMER_FACES } from '../state/look';
 import { depth, gradients, layout, palette, radii, space } from '../theme/tokens';
 import { maxFontScale, type } from '../theme/typography';
 import { Arrive } from '../components/Arrive';
@@ -25,8 +26,12 @@ import { TextAction } from '../components/TextAction';
  */
 export function ProfileScreen({ navigation }: MainTabScreenProps<'Me'>) {
   const view = useView();
-  const { refresh } = useApp();
+  const { refresh, look } = useApp();
   const p = view.profile;
+  // With Plus the rows say what's picked; without it, they say these come with Plus.
+  const plusValue = view.plus.active ? undefined : 'Plus';
+  const faceName = view.plus.active ? TIMER_FACES.find((f) => f.id === look.timerFace)?.name : 'Plus';
+  const iconName = view.plus.active ? APP_ICONS.find((i) => i.id === look.appIcon)?.name : 'Plus';
   const loading = view.status === 'loading';
 
   return (
@@ -107,9 +112,9 @@ export function ProfileScreen({ navigation }: MainTabScreenProps<'Me'>) {
 
           {p.plusRows ? (
             <ListGroup inset="leading" style={styles.block}>
-              <ListRow title="Heat log" leading={<Mark name="thermometer" />} value="Plus" valueTone="quiet" onPress={() => navigation.navigate('Plus', { focus: 'heatLog' })} />
-              <ListRow title="Timer face" leading={<Mark name="timer" />} value="Plus" valueTone="quiet" onPress={() => navigation.navigate('Plus', { focus: 'timerFace' })} />
-              <ListRow title="App icon" leading={<Mark name="stone" />} value="Plus" valueTone="quiet" onPress={() => navigation.navigate('Plus', { focus: 'appIcon' })} />
+              <ListRow title="Heat log" leading={<Mark name="thermometer" />} value={plusValue} valueTone="quiet" onPress={() => navigation.navigate('HeatLog')} />
+              <ListRow title="Timer face" leading={<Mark name="timer" />} value={faceName} valueTone="quiet" onPress={() => navigation.navigate('TimerFace')} />
+              <ListRow title="App icon" leading={<Mark name="stone" />} value={iconName} valueTone="quiet" onPress={() => navigation.navigate('AppIcon')} />
             </ListGroup>
           ) : null}
         </Arrive>

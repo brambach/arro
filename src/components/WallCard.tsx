@@ -44,7 +44,7 @@ export function WallCard({ wall, numbers, headline, myDots, rollIn }: Props) {
     <Card padding={space.s24}>
       <View style={styles.row}>
         <View style={styles.wall} accessible accessibilityLabel={`The wall: ${weeks.length - 1} weeks, ${kept} kept, and this week`}>
-          <SlatWall weeks={weeks} wood={wall.wood as WoodName} />
+          <SlatWall weeks={weeks} wood={wall.wood as WoodName} nail={wall.nail} />
         </View>
         <View style={styles.numbers}>
           {headline ? (

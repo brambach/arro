@@ -1,5 +1,6 @@
 import React, { useMemo, useState } from 'react';
-import { StyleSheet, Text, View } from 'react-native';
+import { DeviceEventEmitter, StyleSheet, Text, View } from 'react-native';
+import { devDriverOn } from '../dev/DevDriver';
 import { palette, space } from '../theme/tokens';
 import { type } from '../theme/typography';
 import { Card } from '../components/Card';
@@ -53,9 +54,7 @@ export function wallWeeks(view: AppView): WallWeek[] {
  * alder and charred pine show only with app_config.plus_enabled; without Plus,
  * tapping one tries it on (the wall above turns that wood while you're here,
  * nothing saved) with "Keep this wood with Plus".
- *
- * Seam for M15: that button opens the Plus route with `{ focus: 'woods' }`.
- * M15 replaces src/screens/PlusSeamScreen.tsx with the real sheet.
+ * That button opens the Plus sheet at the woods, its wall in the same wood.
  */
 export function WallScreen({ navigation }: RootStackScreenProps<'Wall'>) {
   const view = useView();
@@ -84,6 +83,12 @@ export function WallScreen({ navigation }: RootStackScreenProps<'Wall'>) {
     }
   };
 
+  React.useEffect(() => {
+    if (!devDriverOn) return;
+    const sub = DeviceEventEmitter.addListener('pickWood', (w: WallWood) => void pick(w));
+    return () => sub.remove();
+  });
+
   return (
     <SubScreen
       title={WALL_COPY.title}
@@ -92,7 +97,7 @@ export function WallScreen({ navigation }: RootStackScreenProps<'Wall'>) {
       footer={
         tryOn ? (
           <>
-            <SolidButton title={WALL_COPY.keep} onPress={() => navigation.navigate('Plus', { focus: 'woods' })} />
+            <SolidButton title={WALL_COPY.keep} onPress={() => navigation.navigate('Plus', { focus: 'woods', wood: tryOn })} />
             <TextAction label={WALL_COPY.back(WOOD_NAMES[saved])} onPress={() => setTryOn(null)} style={styles.back} />
           </>
         ) : undefined

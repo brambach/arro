@@ -116,6 +116,13 @@ this file.
   with Plus off. If the app only configures RevenueCat when `plus_enabled` is
   true, Purchase History can wait for the Plus version. Either way it does no
   harm to add it with build 9.
+- **What build 9 does (M15):** it only configures RevenueCat when
+  `app_config.plus_enabled` is true and the build has
+  `EXPO_PUBLIC_REVENUECAT_IOS_KEY` (`PurchasesSwitch` in
+  `src/state/purchases.ts`; `react-native-purchases` isn't even loaded before
+  that). With Plus off, build 9 sends nothing to RevenueCat, so Purchase
+  History can wait for the Plus version. The SDK is still linked into the
+  binary, so its privacy manifest is in the build either way.
 - App Privacy answers apply to the app, not one version, and can be edited at
   any time. Edit them before build 9 goes to Beta App Review.
 

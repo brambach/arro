@@ -1,7 +1,8 @@
 import React, { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState } from 'react';
-import { AppState as RNAppState } from 'react-native';
+import { Platform, AppState as RNAppState } from 'react-native';
+import Constants, { ExecutionEnvironment } from 'expo-constants';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { AppConfig, FamilySnapshot, MemberId, SaunaType, SessionComment, WallWood, WeekStartsOn } from '../data/types';
+import { AppConfig, FamilySnapshot, MemberId, PastWeekRow, PlusProduct, SaunaType, SessionComment, WallWood, WeekStartsOn } from '../data/types';
 import { deviceTemperatureUnit } from '../data/saunas';
 import { paletteColor } from '../data/palette';
 import { PREVIEW_ME, PreviewScenario, PreviewScenarioId, buildPreviewScenario } from '../data/preview';
@@ -29,7 +30,11 @@ import {
 import { FlushResult, Outbox, OutboxEntry, SessionDraft } from './outbox';
 import { PhotoShape, photoForUpload } from './photos';
 import { EMPTY_NAG, NagMemory, dismissNag, loadNagMemory, recordNagShown, saveNagMemory, turnOffNag } from './plus';
-import { PackageId, PreviewBehavior, PreviewPurchases, PurchaseResult, RestoreResult, createPurchases } from './purchases';
+import { PackageId, PlusOffering, PreviewBehavior, PurchasesKind, PurchasesSwitch, loadRevenueCat } from './purchases';
+import { BuyOutcome, RestoreOutcome, SyncOutcome, buyWith, restoreWith } from './plusFlow';
+import { DEFAULT_LOOK, Look, effectiveLook, loadLooks, saveLooks } from './look';
+import { applyAppIcon, currentAppIcon } from './appIcon';
+import type { HeatSession } from './heatLog';
 import { DEFAULT_REMINDER_DAYS, DEFAULT_REMINDER_TIME, weeklyReminders } from './reminders';
 import {
   SavedSession,
@@ -219,8 +224,19 @@ interface AppContextValue {
   markMilestoneShown: () => void;
 
   // Plus
-  buyPlus: (pkg: PackageId) => Promise<PurchaseResult>;
-  restorePurchases: () => Promise<RestoreResult | { status: 'restoredElsewhere' }>;
+  /** 'preview' while the fake store is in use: the sheet says "Preview, no real purchase". */
+  purchasesKind: PurchasesKind;
+  /** Prices from the offering; null when the App Store can't be reached. */
+  loadOffering: () => Promise<PlusOffering | null>;
+  /** Buys, then asks the server (sync-plus, family_plus). Tips skip the server. */
+  buyPlus: (pkg: PackageId) => Promise<BuyOutcome>;
+  restorePurchases: () => Promise<RestoreOutcome>;
+  /** Every week and every session (Every week, the Heat log, the poster). */
+  loadArchive: () => Promise<Archive>;
+  /** Your own timer face and app icon pick, and what shows (the pick only while the family has Plus). */
+  myLook: Look;
+  look: Look;
+  setLook: (patch: Partial<Look>) => void;
   /** Throws backend.NeedsPlusError without Plus. */
   setWallWood: (wood: WallWood) => Promise<void>;
   recordNagShown: () => void;
@@ -230,8 +246,13 @@ interface AppContextValue {
   // Prototype preview
   preview: PreviewScenarioId | null;
   setPreview: (id: PreviewScenarioId | null) => void;
-  /** What the preview's fake App Store does next. */
-  setPreviewPurchases: (behavior: PreviewBehavior) => void;
+  /** What the preview's fake App Store does next, how long it takes, and how long the pretend server waits. */
+  setPreviewPurchases: (behavior: PreviewBehavior, timing?: { storeMs?: number; serverMs?: number }) => void;
+}
+
+export interface Archive {
+  history: PastWeekRow[];
+  sessions: HeatSession[];
 }
 
 const AppContext = createContext<AppContextValue | null>(null);
@@ -301,7 +322,11 @@ export function AppStateProvider({ children }: { children: React.ReactNode }) {
   const viewRef = useRef<AppView | null>(null);
 
   const [outbox] = useState(() => new Outbox({ store: asyncStore, send: backend.logSession, isRefusal: backend.isRefusal }));
-  const [purchases] = useState(createPurchases);
+  const [purchases] = useState(() => new PurchasesSwitch());
+  const [looks, setLooks] = useState<Record<MemberId, Look>>({});
+  const previewServerDelay = useRef(0);
+  /** Bumped each time a preview scenario is picked. */
+  const previewGen = useRef(0);
 
   const commitSession = useCallback((next: SavedSession | null) => {
     sessionRef.current = next;
@@ -517,11 +542,12 @@ export function AppStateProvider({ children }: { children: React.ReactNode }) {
     cancelLegacyNotifications();
     (async () => {
       let saved = await loadSession();
-      const [welcomed, lastType, memory, nag] = await Promise.all([
+      const [welcomed, lastType, memory, nag, savedLooks] = await Promise.all([
         loadWelcomed(),
         timerMath.loadLastSaunaType(),
         loadMilestones(),
         loadNagMemory(),
+        loadLooks(),
       ]);
       if (saved?.remote) {
         const remote = saved.remote;
@@ -553,6 +579,7 @@ export function AppStateProvider({ children }: { children: React.ReactNode }) {
       setLastSaunaType(lastType);
       setMilestones(memory);
       setNagMemory(nag);
+      setLooks(savedLooks);
       // Someone already signed in from Arro sees "Arro is now Saunafam" once.
       setWelcomeDue(!!saved && !welcomed);
       syncQueue();
@@ -1209,46 +1236,97 @@ export function AppStateProvider({ children }: { children: React.ReactNode }) {
 
   // ─── Plus ──────────────────────────────────────────────────────────────────
 
-  const previewPlusOn = useCallback(() => {
-    commitScenario((s) =>
-      s.family
-        ? { ...s, family: { ...s.family, plus: { ...s.family.plus, active: true, product: 'saunafam.plus.annual', status: 'active', payerIsMe: true, payerName: 'Sam' } } }
-        : s,
+  // RevenueCat only once app_config turns Plus on and the build has a key; the fake otherwise.
+  const remoteUserId = session?.remote?.userId ?? null;
+  // Decided during render on purpose: the sheet must never see the fake store's
+  // label for a moment when the real one is in use. update() is idempotent.
+  const purchasesKind = useMemo((): PurchasesKind => {
+    purchases.update(
+      {
+        plusEnabled: config.plusEnabled,
+        apiKey: process.env.EXPO_PUBLIC_REVENUECAT_IOS_KEY ?? null,
+        platform: Platform.OS,
+        expoGo: Constants.executionEnvironment === ExecutionEnvironment.StoreClient,
+        userId: remoteUserId,
+        loadSdk: loadRevenueCat,
+      },
+      !!previewId,
     );
-  }, [commitScenario]);
+    return purchases.kind;
+  }, [config.plusEnabled, remoteUserId, previewId, purchases]);
 
-  const buyPlus = useCallback(
-    async (pkg: PackageId) => {
+  /** The preview's pretend server: Plus turns on for the family after `previewServerDelay`. */
+  const previewPlusOn = useCallback(
+    (product: PlusProduct) => {
+      const on = () =>
+        commitScenario((s) =>
+          s.family
+            ? {
+                ...s,
+                family: {
+                  ...s.family,
+                  plus: {
+                    ...s.family.plus,
+                    active: true,
+                    product,
+                    status: 'active',
+                    expiresAt: product === 'saunafam.plus.lifetime' ? null : new Date(s.now.getTime() + 365 * 86_400_000).toISOString(),
+                    payerIsMe: true,
+                    payerName: 'Sam',
+                  },
+                },
+              }
+            : s,
+        );
+      if (previewServerDelay.current > 0) setTimeout(on, previewServerDelay.current);
+      else on();
+    },
+    [commitScenario],
+  );
+
+  /** sync-plus, then family_plus: the server decides, never this phone. */
+  const confirmPlus = useCallback(
+    async (product: PlusProduct | null): Promise<SyncOutcome> => {
       const remote = sessionRef.current?.remote;
-      const familyId = previewRef.current ? 'preview-family' : remote?.familyId;
-      if (familyId) await purchases.setFamily(familyId);
-      const result = await purchases.purchase(pkg);
-      if (result.status === 'purchased' && !pkg.startsWith('tip_')) {
-        if (previewRef.current || !remote) previewPlusOn();
-        else {
-          await backend.syncPlus(remote.familyId).catch(() => undefined);
-          await refresh();
-        }
+      if (previewRef.current || !remote) {
+        const fam = scenarioRef.current?.family;
+        if (fam?.plus.active && !fam.plus.payerIsMe) return 'alreadyHad';
+        const bought = product ?? purchases.preview.ownedPlus();
+        if (!bought) return 'nothing';
+        previewPlusOn(bought);
+        return 'applied';
       }
-      return result;
+      const r = await backend.syncPlus(remote.familyId);
+      await refresh();
+      if (!r.synced) return r.reason === 'no_purchase' ? 'nothing' : 'unconfirmed';
+      return r.applied ? 'applied' : 'alreadyHad';
     },
     [previewPlusOn, purchases, refresh],
   );
 
-  const restorePurchases = useCallback(async () => {
-    const result = await purchases.restore();
-    if (result.status !== 'restored') return result;
-    const remote = sessionRef.current?.remote;
-    if (previewRef.current || !remote) {
-      previewPlusOn();
-      return result;
-    }
-    const synced = await backend.syncPlus(remote.familyId).catch(() => null);
-    await refresh();
-    if (synced && !synced.synced && synced.reason === 'no_purchase') return { status: 'nothing' as const };
-    if (synced && synced.synced && !synced.applied) return { status: 'restoredElsewhere' as const };
-    return result;
-  }, [previewPlusOn, purchases, refresh]);
+  const familyIdNow = useCallback(() => (previewRef.current ? 'preview-family' : (sessionRef.current?.remote?.familyId ?? null)), []);
+
+  const loadOffering = useCallback(() => purchases.getOffering(), [purchases]);
+
+  /** A preview purchase that finishes after its scenario was swapped out changes nothing. */
+  const sameScenario = useCallback(() => {
+    const at = previewGen.current;
+    return () => previewGen.current === at;
+  }, []);
+
+  const buyPlus = useCallback(
+    (pkg: PackageId) => {
+      const still = sameScenario();
+      const product: PlusProduct = pkg === 'lifetime' ? 'saunafam.plus.lifetime' : 'saunafam.plus.annual';
+      return buyWith(purchases, pkg, familyIdNow(), () => (still() ? confirmPlus(product) : Promise.resolve<SyncOutcome>('unconfirmed')));
+    },
+    [confirmPlus, familyIdNow, purchases, sameScenario],
+  );
+
+  const restorePurchases = useCallback(() => {
+    const still = sameScenario();
+    return restoreWith(purchases, () => (still() ? confirmPlus(null) : Promise.resolve<SyncOutcome>('unconfirmed')));
+  }, [confirmPlus, purchases, sameScenario]);
 
   const setWallWood = useCallback(
     async (wood: WallWood) => {
@@ -1266,6 +1344,31 @@ export function AppStateProvider({ children }: { children: React.ReactNode }) {
     [commitScenario, refresh],
   );
 
+  /** Every week and every session, for Every week, the Heat log and the poster. */
+  const loadArchive = useCallback(async (): Promise<Archive> => {
+    const remote = sessionRef.current?.remote;
+    if (previewRef.current || !remote) {
+      const a = (scenarioRef.current ?? buildPreviewScenario('family', new Date())).archive;
+      return { history: a?.history ?? [], sessions: a?.sessions ?? [] };
+    }
+    const memberIds = familyRef.current?.members.map((m) => m.id) ?? [];
+    const [history, sessions] = await Promise.all([backend.fetchHistory(remote.familyId, 520), backend.fetchHeatSessions(memberIds)]);
+    return { history, sessions };
+  }, []);
+
+  const setLook = useCallback(
+    (patch: Partial<Look>) => {
+      const id = myIdNow();
+      setLooks((all) => {
+        const next = { ...all, [id]: { ...(all[id] ?? DEFAULT_LOOK), ...patch } };
+        saveLooks(next).catch(() => undefined);
+        return next;
+      });
+      if (patch.appIcon) applyAppIcon(patch.appIcon).catch(() => undefined);
+    },
+    [myIdNow],
+  );
+
   const changeNag = useCallback((change: (m: NagMemory, today: string) => NagMemory) => {
     const id = myIdNow();
     const today = dayKey(previewRef.current ? (scenarioRef.current?.now ?? new Date()) : new Date());
@@ -1281,6 +1384,7 @@ export function AppStateProvider({ children }: { children: React.ReactNode }) {
   const setPreview = useCallback(
     (id: PreviewScenarioId | null) => {
       previewRef.current = id;
+      previewGen.current += 1;
       setPreviewId(id);
       setPreviewLogged([]);
       setOptimistic(NO_OPTIMISTIC);
@@ -1303,8 +1407,10 @@ export function AppStateProvider({ children }: { children: React.ReactNode }) {
   );
 
   const setPreviewPurchases = useCallback(
-    (behavior: PreviewBehavior) => {
-      if (purchases instanceof PreviewPurchases) purchases.setBehavior(behavior);
+    (behavior: PreviewBehavior, t?: { storeMs?: number; serverMs?: number }) => {
+      purchases.preview.setBehavior(behavior);
+      if (t?.storeMs !== undefined) purchases.preview.setDelay(t.storeMs);
+      if (t?.serverMs !== undefined) previewServerDelay.current = Math.max(0, t.serverMs);
     },
     [purchases],
   );
@@ -1377,6 +1483,16 @@ export function AppStateProvider({ children }: { children: React.ReactNode }) {
 
   const view = builtView ?? frozenView;
 
+  const myLook = looks[view?.me.id ?? ''] ?? DEFAULT_LOOK;
+  const plusVisibleNow = !!view?.plus.visible;
+  const plusActiveNow = !!view?.plus.active;
+  const look = useMemo(() => effectiveLook(myLook, { visible: plusVisibleNow, active: plusActiveNow }), [myLook, plusVisibleNow, plusActiveNow]);
+  // A plan that ends takes the icon back to the default, like the wall goes back to birch.
+  useEffect(() => {
+    if (!view || view.status !== 'ready') return;
+    if (look.appIcon === 'default' && currentAppIcon() !== 'default') applyAppIcon('default').catch(() => undefined);
+  }, [look.appIcon, view]);
+
   useEffect(() => {
     viewRef.current = view;
     lastSaunaTypeRef.current = lastSaunaType;
@@ -1440,8 +1556,14 @@ export function AppStateProvider({ children }: { children: React.ReactNode }) {
       addInvite,
       removeMember,
       markMilestoneShown,
+      purchasesKind,
+      loadOffering,
       buyPlus,
       restorePurchases,
+      loadArchive,
+      myLook,
+      look,
+      setLook,
       setWallWood,
       recordNagShown: () => changeNag(recordNagShown),
       dismissNag: () => changeNag(dismissNag),
@@ -1456,7 +1578,7 @@ export function AppStateProvider({ children }: { children: React.ReactNode }) {
       syncHealth, logSession, resendDraft, discardDraft, draftFor, editSession, setSessionPhoto, deleteSession, removeMe, cheer, uncheer,
       comment, deleteComment, nudge, startTimer, coolOff, resumeTimer, setTimerTarget, setTimerSaunaType, finishTimer,
       discardTimer, devSetTimer, lastSaunaType, updateProfile, takeBreak, endBreak, setRules, setReminders, setWeekendCheckin,
-      turnOnNotifications, addInvite, removeMember, markMilestoneShown, buyPlus, restorePurchases, setWallWood, changeNag,
+      turnOnNotifications, addInvite, removeMember, markMilestoneShown, purchasesKind, loadOffering, buyPlus, restorePurchases, loadArchive, myLook, look, setLook, setWallWood, changeNag,
       previewId, setPreview, setPreviewPurchases,
     ],
   );

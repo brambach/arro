@@ -16,7 +16,12 @@ import { FamilyRulesScreen } from '../screens/FamilyRulesScreen';
 import { HealthSettingsScreen } from '../screens/HealthSettingsScreen';
 import { WallScreen } from '../screens/WallScreen';
 import { AboutScreen } from '../screens/AboutScreen';
-import { PlusSeamScreen } from '../screens/PlusSeamScreen';
+import { PlusSheetScreen } from '../screens/PlusSheetScreen';
+import { TimerFaceScreen } from '../screens/TimerFaceScreen';
+import { AppIconScreen } from '../screens/AppIconScreen';
+import { EveryWeekScreen } from '../screens/EveryWeekScreen';
+import { HeatLogScreen } from '../screens/HeatLogScreen';
+import { PosterScreen } from '../screens/PosterScreen';
 import { UpdateRequiredScreen } from '../screens/UpdateRequiredScreen';
 import { CantReachScreen } from '../screens/CantReachScreen';
 import { palette } from '../theme/tokens';
@@ -87,7 +92,12 @@ export function RootNavigator() {
           <Stack.Screen name="HealthSettings" component={HealthSettingsScreen} options={{ animation: 'slide_from_right' }} />
           <Stack.Screen name="Wall" component={WallScreen} options={{ animation: 'slide_from_right' }} />
           <Stack.Screen name="About" component={AboutScreen} options={{ animation: 'slide_from_right' }} />
-          <Stack.Screen name="Plus" component={PlusSeamScreen} options={{ presentation: 'modal' }} />
+          <Stack.Screen name="Plus" component={PlusSheetScreen} options={overScreen} />
+          <Stack.Screen name="TimerFace" component={TimerFaceScreen} options={{ animation: 'slide_from_right' }} />
+          <Stack.Screen name="AppIcon" component={AppIconScreen} options={{ animation: 'slide_from_right' }} />
+          <Stack.Screen name="EveryWeek" component={EveryWeekScreen} options={{ animation: 'slide_from_right' }} />
+          <Stack.Screen name="HeatLog" component={HeatLogScreen} options={{ animation: 'slide_from_right' }} />
+          <Stack.Screen name="Poster" component={PosterScreen} options={{ animation: 'slide_from_right' }} />
           <Stack.Screen name="TakeBreak" component={TakeBreakScreen} options={{ animation: 'slide_from_right' }} />
           <Stack.Screen name="Notifications" component={NotificationsScreen} options={{ animation: 'slide_from_right' }} />
           <Stack.Screen name="SessionDetail" component={SessionDetailScreen} options={{ animation: 'slide_from_right' }} />

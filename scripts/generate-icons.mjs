@@ -6,6 +6,8 @@
  *
  * Writes:
  * - assets/brand/out/icon-1024.png, icon-dark-1024.png, icon-tinted-1024.png
+ * - assets/brand/out/alt/icon-{night,cedar,lake}-1024.png (and -180), the Plus
+ *   app icons, plus icon-default-180.png for the in-app preview tile
  * - assets/brand/out/ios/icon-<size>.png for every legacy iOS size
  *   (21 to 60 px from icon-small.svg, 20 px and under from icon-tiny.svg)
  * - assets/brand/out/web/: favicon.ico (16, 32, 48), favicon.svg, favicon.png
@@ -116,6 +118,15 @@ write(join(out, 'icon-tinted-1024.png'), rgba(iconTinted, 1024));
 
 // Every legacy iOS size.
 for (const s of IOS_SIZES) write(join(out, 'ios', `icon-${s}.png`), rgb(s <= TINY ? iconTiny : s <= SMALL ? iconSmall : icon, s));
+
+// Saunafam Plus app icons: 1024 for iOS (expo-alternate-app-icons in app.json),
+// and 180 for the preview tile on Me > App icon.
+for (const name of ['night', 'cedar', 'lake']) {
+  const svg = master(`icon-${name}.svg`);
+  write(join(out, 'alt', `icon-${name}-1024.png`), rgb(svg, 1024));
+  write(join(out, 'alt', `icon-${name}-180.png`), rgb(svg, 180));
+}
+write(join(out, 'alt', 'icon-default-180.png'), rgb(icon, 180));
 
 // Web.
 const web = join(out, 'web');

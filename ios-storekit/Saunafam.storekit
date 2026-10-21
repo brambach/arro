@@ -1,0 +1,125 @@
+{
+  "appPolicies": {
+    "eula": "",
+    "policies": [
+      {
+        "locale": "en_US",
+        "policyText": "",
+        "policyURL": ""
+      }
+    ]
+  },
+  "identifier": "8403C3F7-690D-5ACC-B561-24B07AB0FAF7",
+  "nonRenewingSubscriptions": [],
+  "products": [
+    {
+      "displayPrice": "59.99",
+      "familyShareable": false,
+      "internalID": "B2CA32FC-4BEF-59FB-B74C-D78E0DF3C475",
+      "localizations": [
+        {
+          "description": "Saunafam Plus for your family, for good",
+          "displayName": "Founding family",
+          "locale": "en_US"
+        }
+      ],
+      "productID": "saunafam.plus.lifetime",
+      "referenceName": "Founding family",
+      "type": "NonConsumable"
+    },
+    {
+      "displayPrice": "1.99",
+      "familyShareable": false,
+      "internalID": "2F25CCA9-FF01-560C-9A0F-BB4947E088E5",
+      "localizations": [
+        {
+          "description": "A small thank you",
+          "displayName": "A ladle",
+          "locale": "en_US"
+        }
+      ],
+      "productID": "saunafam.tip.small",
+      "referenceName": "Tip small",
+      "type": "Consumable"
+    },
+    {
+      "displayPrice": "4.99",
+      "familyShareable": false,
+      "internalID": "D8489DFF-CBFA-57C8-8F05-446E2B7D47E3",
+      "localizations": [
+        {
+          "description": "A thank you",
+          "displayName": "A bucket",
+          "locale": "en_US"
+        }
+      ],
+      "productID": "saunafam.tip.medium",
+      "referenceName": "Tip medium",
+      "type": "Consumable"
+    },
+    {
+      "displayPrice": "9.99",
+      "familyShareable": false,
+      "internalID": "51FE6322-F8AD-58C1-8D4D-5E30D624F6F9",
+      "localizations": [
+        {
+          "description": "A big thank you",
+          "displayName": "An armful of birch",
+          "locale": "en_US"
+        }
+      ],
+      "productID": "saunafam.tip.large",
+      "referenceName": "Tip large",
+      "type": "Consumable"
+    }
+  ],
+  "settings": {
+    "_applicationInternalID": "",
+    "_askToBuyEnabled": false,
+    "_billingGracePeriodEnabled": false,
+    "_billingIssuesEnabled": false,
+    "_developerTeamID": "",
+    "_disableDialogs": false,
+    "_failTransactionsEnabled": false,
+    "_locale": "en_US",
+    "_renewalBillingIssuesEnabled": false,
+    "_storefront": "USA",
+    "_storeKitErrors": [],
+    "_timeRate": 0
+  },
+  "subscriptionGroups": [
+    {
+      "id": "EDD21BE7-1207-5BAE-B600-D2DBEC2B6B54",
+      "localizations": [],
+      "name": "Saunafam Plus",
+      "subscriptions": [
+        {
+          "adHocOffers": [],
+          "codeOffers": [],
+          "displayPrice": "24.99",
+          "familyShareable": false,
+          "groupNumber": 1,
+          "internalID": "EC7295C6-E59D-5E43-BE4A-F81CDC1C3608",
+          "introductoryOffer": null,
+          "localizations": [
+            {
+              "description": "Extras for your whole Saunafam family",
+              "displayName": "Saunafam Plus",
+              "locale": "en_US"
+            }
+          ],
+          "productID": "saunafam.plus.annual",
+          "recurringSubscriptionPeriod": "P1Y",
+          "referenceName": "Saunafam Plus yearly",
+          "subscriptionGroupID": "EDD21BE7-1207-5BAE-B600-D2DBEC2B6B54",
+          "type": "RecurringSubscription",
+          "winbackOffers": []
+        }
+      ]
+    }
+  ],
+  "version": {
+    "major": 4,
+    "minor": 0
+  }
+}

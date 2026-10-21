@@ -121,9 +121,9 @@ export function ThisWeekScreen({ navigation }: MainTabScreenProps<'ThisWeek'>) {
                             key="every"
                             title="See every week"
                             leading={<RowMark name="calendar" />}
-                            value="Plus"
+                            value={view.plus.active ? undefined : 'Plus'}
                             valueTone="quiet"
-                            onPress={() => navigation.navigate('Plus', { focus: 'everyWeek' })}
+                            onPress={() => (view.plus.active ? navigation.navigate('EveryWeek') : navigation.navigate('Plus', { focus: 'everyWeek' }))}
                           />,
                         ]
                       : []),
@@ -133,9 +133,9 @@ export function ThisWeekScreen({ navigation }: MainTabScreenProps<'ThisWeek'>) {
                             key="print"
                             title="Print the wall"
                             leading={<RowMark name="slat" />}
-                            value="Plus"
+                            value={view.plus.active ? undefined : 'Plus'}
                             valueTone="quiet"
-                            onPress={() => navigation.navigate('Plus', { focus: 'poster' })}
+                            onPress={() => (view.plus.active ? navigation.navigate('Poster') : navigation.navigate('Plus', { focus: 'poster' }))}
                           />,
                         ]
                       : []),

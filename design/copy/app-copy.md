@@ -565,53 +565,93 @@ Section 6 (`app.json`) and section 3 ("Apple Health").
 Spec, "Paid tier". None of this shows while `app_config.plus_enabled` is
 false. Never write "Only today", "Last chance", "X families joined this week",
 "Unlock your streak", or anything that ties Plus to the streak, and no
-confirmshaming.
+confirmshaming. Prices always come from the store (the RevenueCat offering,
+or `PreviewPurchases` in the preview); the prices below are the US ones, shown
+only as examples. Source of truth: `PLUS_COPY` in `src/state/plusFlow.ts`,
+`PLUS_CARD_COPY` in `src/state/plus.ts`, and the `*_COPY` objects at the top
+of each Plus screen.
 
 ### Plus sheet
 
+- Small caps tag, preview only: "Preview, no real purchase"
+- The wall at the top, in the wood picked, with its name in small caps ("Cedar"); four wood swatches, each read out by name
 - Title: "Saunafam Plus"
 - Lead: "The streak is free, for everyone, for good. Plus is for families who'd like a little more from the wall."
 - Covers: "One purchase covers everyone in Sunday sauna. Nobody else pays."
-- Family Sharing line (from "Family Sharing"): "One purchase covers everyone in your Saunafam family."
 - List: "Cedar, alder and charred pine walls", "Coal and Brass timer faces", "New app icons", "Every week you've kept", "Your family's heat log", "A poster of your wall"
-- Price choices: "Yearly: $24.99 a year", "Founding family: $59.99 once" (prices come from the store, never hard-coded)
-- Button: "Get Plus for $24.99 a year" (follows the choice)
-- Small print: "Renews every year until you cancel. Cancel anytime in Settings, Apple ID, Subscriptions."
+- Opened from one of them, that row says a little more:
+  - woods: "Pick the wood once and everyone's wall changes."
+  - timer faces: "Each person picks their own."
+  - app icons: "Night stone, Cedar and Lake."
+  - every week: "History back to your first week, not just the last 12."
+  - heat log: "Hours by month, where and how you sauna, your best run."
+  - poster: "Every week with your family's name, ready to print."
+- Price tiles: "Yearly" / "$24.99 a year", "Founding family" / "$59.99 once"
+- Button: "Get Plus for $24.99 a year", or "Get Plus for $59.99 once" (follows the tile)
+- **Not now** (plain text, closes the sheet)
+- Small print, yearly: "Renews every year until you cancel. Cancel anytime in Settings, Apple ID, Subscriptions."
+- Small print, Founding family: "One payment. No renewal."
 - Links: **Restore purchases**, **Terms**, **Privacy**
-- **Not now** (plain text)
 - Sign-off: "Saunafam is made by one person. Plus helps keep the heat on. Thank you. Bryce"
+- Close mark: "Close" (VoiceOver)
 
 ### Plus sheet states
 
-From "Every state of the Plus sheet" and "Edge cases".
+Every state in "Every state of the Plus sheet", in the order the spec lists
+them. Screenshots: `design/screenshots/saunafam/plus-01-*.png` to `plus-16-*.png`.
 
-| State | Copy |
-|---|---|
-| Loading prices | skeleton tiles, no text |
-| Prices failed or offline | "Can't reach the App Store right now", **Try again** |
-| Purchasing | _to write_ |
-| Pending (Ask to Buy) | "Waiting for approval" |
-| Finishing up | "Finishing up..." |
-| Success | "Thank you. The wall is yours." |
-| Cancelled by the user | back to ready, no message |
-| Failed | _to write: a plain error_, **Try again** |
-| Family has Plus, you're the payer | **Manage** |
-| Family has Plus from someone else | "Plus, from Maya. Thank you." |
-| Restoring | _to write_ |
-| Restore found nothing | "No purchases found for this Apple ID." |
-| Lapsed | _to write_ |
-| Preview mode | "Preview, no real purchase" |
+| # | State | Copy |
+|---|---|---|
+| 1 | Loading prices | skeleton tiles and a skeleton button, no text (VoiceOver: "Loading prices") |
+| 2 | Prices failed or offline | "Can't reach the App Store right now" / "Everything else in Saunafam works as normal." / **Try again** |
+| 3 | Ready, yearly picked | the sheet above, "Get Plus for $24.99 a year" |
+| 4 | Ready, Founding family picked | "Get Plus for $59.99 once", "One payment. No renewal." |
+| 5 | Purchasing | button: "Waiting for the App Store" with three dots lighting in turn; the sheet can still be closed |
+| 6 | Pending (Ask to Buy) | "Waiting for approval" / "Someone in your Apple family needs to approve this. Plus turns on for everyone once they do." / **Done** |
+| 7 | Finishing up | button: "Finishing up..." with the dots. After 20 seconds: "Still finishing up. Plus turns on for everyone as soon as Apple confirms it, so you can close this." |
+| 8 | Success | "Thank you. The wall is yours." / "Everyone in Sunday sauna has Plus now." / **Done**. After Founding family over yearly: "Founding family replaces your yearly plan. Cancel the yearly one in Settings, Apple ID, Subscriptions, so it doesn't renew." |
+| 9 | Cancelled by the user | back to ready, no message |
+| 10 | Failed | "The purchase didn't go through. You haven't been charged." / **Try again**. Offline: "Couldn't reach the App Store. You haven't been charged. Try again." Purchases off in Screen Time: "Purchases are turned off on this iPhone. You can allow them in Screen Time." |
+| 11 | Family has Plus, you're the payer | yearly: "Plus is on for Sunday sauna. You pay for it. Thank you." / "Renews on May 24." (or "Ends on May 24. It won't renew.") / **Manage** / **Make it Founding family, $59.99 once**. Founding family: "Sunday sauna is a Founding family. Plus is yours for good. Thank you." |
+| 12 | Family has Plus from someone else | "Plus, from Maya. Thank you." (payer left: "Sunday sauna has Plus. Thank you.") |
+| 13 | Restoring | the link reads "Restoring..." |
+| 14 | Restore found nothing | "No purchases found for this Apple ID." |
+| 15 | Lapsed | "Plus ended on Oct 3. The wall is back to birch. Everything you logged is still here." (no date: "Plus has ended. The wall is back to birch. Everything you logged is still here.") |
+| 16 | Preview mode | "Preview, no real purchase" |
+| | Two payers | "Your family already had Plus. You can cancel yours in Settings, Apple ID, Subscriptions, and ask Apple for a refund at reportaproblem.apple.com." / **Done** |
 
 ### Restore purchases
 
+On the sheet and in Settings, under Saunafam Plus.
+
+- While it runs: "Restoring..."
 - "Plus restored for Sunday sauna."
 - "No purchases found for this Apple ID."
 - "Couldn't reach the App Store. Try again."
+- Settings, when the family already had Plus from someone else: "Your family already had Plus, so nothing changed."
 
 ### Try-on
 
-- "Keep this wood with Plus"
-- Timer face and app icon try-on: _to write_
+Nothing is saved while trying on. Buying from a try-on keeps what was tried.
+
+- The wall: "Tap to try it on", "Trying it on. Nothing is saved.", **Keep this wood with Plus**, plain text **Back to birch**
+- Timer face (Me): title "Timer face", lead "How the timer looks for you. Everyone picks their own.", small caps "Faces"
+  - "Löyly": "Ember dots on char. Free, always"
+  - "Coal": "A glowing ring on soot"
+  - "Brass": "A brass clock in the dark room"
+  - each Plus face adds ". Tap to try it on" (or ". Included with Plus")
+  - "Trying it on. Nothing is saved.", **Keep this face with Plus**, **Back to Löyly**
+  - Saved: "Saved. Your timer is Coal now."
+  - The small room: "In the heat · Round 1", "12:40", "Traditional · 15 min"
+- App icon (Me): title "App icon", lead "The icon on your home screen. Everyone picks their own.", small caps "Icons"
+  - "Löyly": "The warm stone. Free, always"
+  - "Night stone": "The stone after dark"
+  - "Cedar": "The stone on cedar boards"
+  - "Lake": "The stone by cold water"
+  - "Trying it on. Nothing is saved.", **Keep this icon with Plus**, **Back to Löyly**
+  - Saved: "Your icon is Lake now. iOS will say so too."
+  - A build without the native module: "This build can't change the icon. It will once it's updated."
+  - The try-on home screen shows the icon with "Saunafam" under it
 
 ### Quiet card on Week
 
@@ -619,26 +659,59 @@ From "Every state of the Plus sheet" and "Edge cases".
 - **See Plus**
 - **Not now** (plain text)
 - "Don't show this again"
+- At most once every 60 days per person, 3 times ever, never again after "Don't show this again". Never after a missed week, on a break, next to a milestone, for a family that has Plus, or in anyone's first 4 weeks.
+
+### Week and Me rows
+
+- Week, under Past weeks: **See every week** and **Print the wall**, marked "Plus" until the family has it
+- Me: **Heat log** (marked "Plus" until the family has it), **Timer face** and **App icon** (marked "Plus", or the name of your pick with Plus: "Löyly", "Coal", "Lake")
 
 ### Settings lines
 
-- Family has Plus: "Plus, from Maya"
+- Group: "Saunafam Plus"; rows **Saunafam Plus** (value "Plus, from Maya", or "Plus" for the payer), **Restore purchases**, **Leave a tip**
+- The wall row: "Birch", "Cedar", "Alder", "Charred pine"
 - A plan ends: "Plus ended on Oct 3. The wall is back to birch. Everything you logged is still here."
 - Apple can't renew (payer only): "Apple couldn't renew Plus. You can update your payment in Settings."
 - A week before a yearly plan lapses after the payer left (others): "Plus ends on Oct 27. The wall goes back to birch then, and everything you logged stays."
-- Second payer: "Your family already had Plus. You can cancel yours in Settings, Apple ID, Subscriptions, and ask Apple for a refund at reportaproblem.apple.com."
-- Yearly, then Founding family: a reminder to cancel the yearly plan. _to write_
+- Delete account, the payer: "You pay for Saunafam Plus. Deleting your account doesn't cancel it. Cancel in Settings, Apple ID, Subscriptions first."
 
 ### Tip jar
 
-- "A ladle" ($1.99), "A bucket" ($4.99), "An armful of birch" ($9.99). Prices from the store.
-- _to write: the heading and thank-you line_
+At the bottom of the Plus sheet; **Leave a tip** in Settings opens the sheet there.
 
-### Heat log, every week, wall poster
+- Small caps: "Leave a tip"
+- "A thank you, nothing more. Tips don't unlock anything."
+- "A ladle" ($1.99), "A bucket" ($4.99), "An armful of birch" ($9.99). VoiceOver: "Tip a ladle, $1.99"
+- After a tip: "Thank you. That means a lot."
+- Ask to Buy: "Waiting for approval"
+- Failed: "That tip didn't go through. You haven't been charged."
 
-- Heat log (Me): a blurred preview with the Plus sheet below. _to write_
-- See every week (Week): opens the Plus sheet at "Every week"
-- Print the wall (Week): opens the Plus sheet at "The wall poster"
+### Every week
+
+- Title "Every week", lead "Sunday sauna's whole wall: 40 weeks since the first."
+- Each month: "October 2026", "2 of 2 kept"; small caps "Weeks" over the list ("Week of Oct 5", "Kept")
+- "Loading every week"; "Couldn't load every week. Check your connection and try again." **Try again**
+- Empty: "Your first week is on the wall. Once it closes, it shows here."
+
+### Heat log
+
+- Title "Heat log", lead "Sunday sauna in the heat, together."
+- "Hours in the heat", "132.9 hours this year", "The last 12 months" (bars, a letter per month)
+- "Your best run", "40", "weeks in a row"
+- "Sessions by type" ("Traditional 158")
+- "Where" ("Gym sauna", "96 sessions"); none yet: "Add a place when you log, and it shows here."
+- "Longest session", "Everyone's longest, in alphabetical order." ("Maya", "40 min", "Sep 12"; you read as "You")
+- Empty: "Your heat log fills in as your family logs sessions."
+- Failed: "Couldn't load the heat log. Check your connection and try again." **Try again**
+- Without Plus, under the blurred example: "Your family's heat log comes with Plus" / "Hours by month, where and how you sauna, and your best run. These numbers are an example." / **See Plus** / "One purchase covers everyone in Sunday sauna. Nobody else pays."
+
+### The wall poster
+
+- Title "The wall poster", lead "Every week your family has kept, ready to print at 6 by 8 inches or bigger."
+- **Save or print** (the share sheet has Save Image and Print); while it renders: "Getting it ready..."
+- On the poster: the family name, "Jan 12, 2026 to Oct 18, 2026", "40 weeks kept, together", "saunafam"
+- Errors: "Couldn't make the poster. Try again.", "Couldn't load your weeks. Check your connection and try again."
+- Empty: "The poster fills in as weeks close. Your first one is still on the wall."
 
 ## Prototype preview (dev only)
 

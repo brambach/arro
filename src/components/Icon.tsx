@@ -147,6 +147,8 @@ export const icons = {
     c(16.4, 9.6, 2.4),
     p('M15.6 14.5c2.4-.2 4.1 1.1 4.8 3.6'),
   ],
+  /** The wall poster: a frame with three slats on it. */
+  poster: [rect(4.5, 3.5, 15, 17, 1.8), rect(7.5, 7, 9, 2.4, 0.8), rect(7.5, 10.8, 9, 2.4, 0.8), rect(7.5, 14.6, 9, 2.4, 0.8)],
   calendar: [rect(4, 5.6, 16, 14.4, 2.6), p('M4 10.2h16'), p('M8.4 3.6v4'), p('M15.6 3.6v4')],
   pause: [p('M9 6.5v11'), p('M15 6.5v11')],
   pencil: [p('M5 19l1-4.1L15.7 5.2a1.9 1.9 0 0 1 2.7 0l.4.4a1.9 1.9 0 0 1 0 2.7L9.1 18z'), p('M14 6.9l3.1 3.1')],
@@ -229,6 +231,7 @@ export const iconGroups: { title: string; names: IconName[] }[] = [
       'bell',
       'family',
       'calendar',
+      'poster',
       'pause',
       'pencil',
       'share',
