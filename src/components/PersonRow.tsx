@@ -36,6 +36,7 @@ export function PersonRow({ row, onPress, compact = false, hint }: Props) {
   const subtitle = onBreak ? row.status : compact ? null : invited ? 'Hasn’t joined yet' : row.latest;
   const status = onBreak ? null : row.status;
   // At the accessibility text sizes the dots and status move under the name, so nothing truncates.
+  // Below that a shared session takes two lines, "Yesterday · 25 min" over "with Maya and Jo".
   const stacked = useWindowDimensions().fontScale > 1.5;
   const lines = stacked ? undefined : 1;
   const marks = (
@@ -65,8 +66,8 @@ export function PersonRow({ row, onPress, compact = false, hint }: Props) {
           {name}
         </Text>
         {subtitle ? (
-          <Text style={type.label} numberOfLines={lines}>
-            {subtitle}
+          <Text style={type.label} numberOfLines={stacked ? undefined : 2}>
+            {withOnItsOwnLine(subtitle)}
           </Text>
         ) : null}
         {stacked ? <View style={styles.marksStacked}>{marks}</View> : null}
@@ -99,6 +100,11 @@ export function PersonRow({ row, onPress, compact = false, hint }: Props) {
       {content}
     </Pressable>
   );
+}
+
+/** "Yesterday · 25 min with Maya and Jo" puts who they went with on its own line. */
+function withOnItsOwnLine(s: string): string {
+  return s.replace(' with ', '\nwith ');
 }
 
 /** What tapping a row does, for VoiceOver. */

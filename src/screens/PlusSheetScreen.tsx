@@ -72,7 +72,9 @@ const FEATURES: { key: FeatureKey; icon: IconName; focus: PlusFocus }[] = [
 export function PlusSheetScreen({ navigation, route }: RootStackScreenProps<'Plus'>) {
   const view = useView();
   const app = useApp();
-  const { height: H } = useWindowDimensions();
+  const { height: H, fontScale } = useWindowDimensions();
+  // At the larger text sizes the wall and its woods stack, so the wood's name never breaks.
+  const large = fontScale >= LARGE_TEXT;
   const insets = useSafeAreaInsets();
   const sheet = useRef<RouteSheetHandle>(null);
   const scroll = useRef<ScrollView>(null);
@@ -205,7 +207,10 @@ export function PlusSheetScreen({ navigation, route }: RootStackScreenProps<'Plu
       header={
         app.purchasesKind === 'preview' ? (
           <View style={styles.previewTag} accessibilityRole="text">
-            <Text style={[type.caption, styles.previewText]}>{PREVIEW_LABEL}</Text>
+            {/* The sheet's header row is one touch target tall, so the tag stops growing at 1.35. */}
+            <Text style={[type.caption, styles.previewText]} maxFontSizeMultiplier={LARGE_TEXT} numberOfLines={1}>
+              {PREVIEW_LABEL}
+            </Text>
           </View>
         ) : null
       }
@@ -217,11 +222,11 @@ export function PlusSheetScreen({ navigation, route }: RootStackScreenProps<'Plu
       >
         {/* The family's own wall, in the wood picked. */}
         <Card padding={space.s20} style={styles.wallCard}>
-          <View style={styles.wallRow}>
-            <View style={styles.wall} accessible accessibilityLabel={`Your wall in ${WOOD_NAMES[shownWood].toLowerCase()}`}>
+          <View style={[styles.wallRow, large && styles.wallRowLarge]}>
+            <View style={[styles.wall, large && styles.wallLarge]} accessible accessibilityLabel={`Your wall in ${WOOD_NAMES[shownWood].toLowerCase()}`}>
               <SlatWall weeks={weeks} wood={shownWood} slatHeight={14} grain={grain} onRegrained={haptics.plusLanded} />
             </View>
-            <View style={styles.woods}>
+            <View style={[styles.woods, large && styles.woodsLarge]}>
               <Text style={type.caption}>{WOOD_NAMES[shownWood]}</Text>
               <View style={styles.swatches} accessibilityRole="radiogroup" accessibilityLabel="Wall wood">
                 {WOODS.map((w) => (
@@ -302,12 +307,12 @@ export function PlusSheetScreen({ navigation, route }: RootStackScreenProps<'Plu
           <Card padding={0}>
             {offering && offering.tips.length ? (
               offering.tips.map((t, i) => (
-                <View key={t.id} style={[styles.tip, i > 0 && styles.featureRule]}>
+                <View key={t.id} style={[styles.tip, large && styles.tipLarge, i > 0 && styles.featureRule]}>
                   <View style={styles.mark}>
                     <Icon name="ladle" size={20} color={palette.smoke} />
                   </View>
-                  <Text style={[type.body, styles.tipName]}>{PLUS_COPY.tips[t.id as 'tip_small' | 'tip_medium' | 'tip_large']}</Text>
-                  <PriceChip label={tipBusy === t.id ? '...' : t.priceString} onPress={() => void tip(t.id)} disabled={!!tipBusy} accessibilityLabel={`Tip ${PLUS_COPY.tips[t.id as 'tip_small' | 'tip_medium' | 'tip_large'].toLowerCase()}, ${t.priceString}`} />
+                  <Text style={[type.body, styles.tipName, large && styles.tipNameLarge]}>{PLUS_COPY.tips[t.id as 'tip_small' | 'tip_medium' | 'tip_large']}</Text>
+                  <PriceChip style={large ? styles.chipLarge : undefined} label={tipBusy === t.id ? '...' : t.priceString} onPress={() => void tip(t.id)} disabled={!!tipBusy} accessibilityLabel={`Tip ${PLUS_COPY.tips[t.id as 'tip_small' | 'tip_medium' | 'tip_large'].toLowerCase()}, ${t.priceString}`} />
                 </View>
               ))
             ) : (
@@ -353,15 +358,18 @@ function StateBlock({
 }) {
   const view = useView();
   const plus = view.plus;
+  // At the larger text sizes the two prices stack, full width, so "Founding family" fits.
+  const large = useWindowDimensions().fontScale >= LARGE_TEXT;
+  const tiles = [styles.tiles, large && styles.tilesLarge];
   const price = (p: PlusPick) => (p === 'annual' ? offering?.annual?.priceString : offering?.lifetime?.priceString) ?? '';
 
   switch (state) {
     case 'loading':
       return (
         <View accessible accessibilityLabel="Loading prices">
-          <View style={styles.tiles}>
-            <Bone width="48%" height={88} radius={radii.tile} />
-            <Bone width="48%" height={88} radius={radii.tile} />
+          <View style={tiles}>
+            <Bone width={large ? '100%' : '48%'} height={88} radius={radii.tile} />
+            <Bone width={large ? '100%' : '48%'} height={88} radius={radii.tile} />
           </View>
           <Bone width="100%" height={layout.button} radius={radii.button} style={styles.gap16} />
         </View>
@@ -443,7 +451,7 @@ function StateBlock({
               <Text style={type.bodySmall}>{lapsedLine(plus)}</Text>
             </Tray>
           ) : null}
-          <View style={styles.tiles} accessibilityRole="radiogroup" accessibilityLabel="Choose a plan">
+          <View style={tiles} accessibilityRole="radiogroup" accessibilityLabel="Choose a plan">
             <PriceTile name={PLUS_COPY.yearlyName} price={PLUS_COPY.yearlyPrice(price('annual'))} picked={p === 'annual'} onPress={() => onPick('annual')} disabled={busy} />
             <PriceTile name={PLUS_COPY.foundingName} price={PLUS_COPY.foundingPrice(price('lifetime'))} picked={p === 'lifetime'} onPress={() => onPick('lifetime')} disabled={busy} />
           </View>
@@ -495,9 +503,21 @@ function PriceTile({ name, price, picked, onPress, disabled }: { name: string; p
 }
 
 /** A tip's price: a small flat aspen tile. */
-function PriceChip({ label, onPress, disabled, accessibilityLabel }: { label: string; onPress: () => void; disabled?: boolean; accessibilityLabel: string }) {
+function PriceChip({
+  label,
+  onPress,
+  disabled,
+  accessibilityLabel,
+  style,
+}: {
+  label: string;
+  onPress: () => void;
+  disabled?: boolean;
+  accessibilityLabel: string;
+  style?: object;
+}) {
   return (
-    <Pressable onPress={onPress} disabled={disabled} style={({ pressed }) => [styles.chip, pressed && styles.chipPressed]} accessibilityRole="button" accessibilityLabel={accessibilityLabel}>
+    <Pressable onPress={onPress} disabled={disabled} style={({ pressed }) => [styles.chip, style, pressed && styles.chipPressed]} accessibilityRole="button" accessibilityLabel={accessibilityLabel}>
       <Text style={type.bodySmallStrong}>{label}</Text>
     </Pressable>
   );
@@ -517,14 +537,20 @@ function Arrive({ children }: { children: React.ReactNode }) {
   return <Animated.View style={s}>{children}</Animated.View>;
 }
 
+/** The font scale where the sheet's side by side parts stack. */
+const LARGE_TEXT = 1.35;
+
 const styles = StyleSheet.create({
   content: { paddingHorizontal: layout.inset, paddingTop: space.s4 },
   previewTag: { alignSelf: 'flex-start', backgroundColor: palette.aspen, borderRadius: radii.slatSmall, paddingHorizontal: space.s8, paddingVertical: space.s4 },
   previewText: { color: palette.smoke },
   wallCard: {},
   wallRow: { flexDirection: 'row', alignItems: 'flex-end', gap: space.s20 },
+  wallRowLarge: { flexDirection: 'column', alignItems: 'stretch' },
   wall: { flex: 9 },
   woods: { flex: 8, gap: space.s8 },
+  wallLarge: { flex: 0 },
+  woodsLarge: { flex: 0 },
   swatches: { flexDirection: 'row', flexWrap: 'wrap', gap: space.s8, width: 88 },
   swatch: { width: 40, padding: space.s4, borderRadius: radii.slatSmall },
   swatchOn: { backgroundColor: palette.aspen },
@@ -540,6 +566,7 @@ const styles = StyleSheet.create({
   mark: { width: 32, height: 32, borderRadius: radii.round, backgroundColor: palette.birch, alignItems: 'center', justifyContent: 'center' },
   block: { marginTop: space.s24 },
   tiles: { flexDirection: 'row', justifyContent: 'space-between', gap: space.s12 },
+  tilesLarge: { flexDirection: 'column' },
   tile: { flex: 1, minHeight: 88, borderRadius: radii.tile, borderCurve: 'continuous', padding: space.s16, justifyContent: 'center', overflow: 'hidden' },
   tileOff: { backgroundColor: palette.birch, borderWidth: StyleSheet.hairlineWidth, borderColor: palette.char },
   tilePicked: { borderWidth: StyleSheet.hairlineWidth, borderColor: palette.ember },
@@ -557,6 +584,10 @@ const styles = StyleSheet.create({
   tipsBody: { paddingHorizontal: space.s8, marginBottom: space.s12 },
   tip: { flexDirection: 'row', alignItems: 'center', gap: space.s12, paddingHorizontal: space.s16, paddingVertical: space.s12 },
   tipName: { flex: 1 },
+  // Larger text: the price goes under the tip's name, lined up with it.
+  tipLarge: { flexWrap: 'wrap', rowGap: space.s8 },
+  tipNameLarge: { flexBasis: '75%' },
+  chipLarge: { marginLeft: 32 + space.s12 },
   tipSkeleton: { padding: space.s16, gap: space.s12 },
   chip: { minWidth: 72, minHeight: layout.touch, paddingHorizontal: space.s12, borderRadius: radii.slatSmall, backgroundColor: palette.aspen, alignItems: 'center', justifyContent: 'center' },
   chipPressed: { backgroundColor: palette.grain },

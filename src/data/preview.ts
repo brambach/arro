@@ -148,7 +148,7 @@ interface Plan {
   extras?: boolean;
 }
 
-const PLACES = ['Home', 'The Y', 'Lake cabin', 'Gym sauna'];
+const PLACES = ['Home', 'Bathhouse', 'Lake cabin', 'Gym sauna'];
 const TYPES: SaunaType[] = ['traditional', 'traditional', 'wood_fired', 'infrared', 'steam', 'traditional', 'smoke'];
 
 function iso(day: string, hour: number, minute: number): string {
