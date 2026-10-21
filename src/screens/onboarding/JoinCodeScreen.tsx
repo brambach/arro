@@ -1,11 +1,12 @@
-import React, { useState } from 'react';
-import { StyleSheet } from 'react-native';
+import React, { useEffect, useState } from 'react';
+import { DeviceEventEmitter, StyleSheet } from 'react-native';
 import { palette, space } from '../../theme/tokens';
 import { type } from '../../theme/typography';
 import { Field } from '../../components/Field';
 import { StepScreen } from '../../components/StepScreen';
 import { useApp } from '../../state/AppState';
 import { InviteError } from '../../state/backend';
+import { devDriverOn } from '../../dev/DevDriver';
 import { RootStackScreenProps } from '../../navigation/types';
 import { nextAfter, stepOf } from './steps';
 
@@ -41,6 +42,13 @@ export function JoinCodeScreen({ navigation }: RootStackScreenProps<'JoinCode'>)
       setBusy(false);
     }
   };
+
+  // Dev builds with the capture driver: the error an expired code gets, which the preview family never does.
+  useEffect(() => {
+    if (!devDriverOn) return;
+    const sub = DeviceEventEmitter.addListener('inviteExpired', () => setError(new InviteError('notFound').message));
+    return () => sub.remove();
+  }, []);
 
   return (
     <StepScreen

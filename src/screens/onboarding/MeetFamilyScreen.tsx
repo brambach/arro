@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { StyleSheet, Text, View } from 'react-native';
+import { DeviceEventEmitter, StyleSheet, Text, View } from 'react-native';
 import { alpha, palette, space } from '../../theme/tokens';
 import { maxFontScale, type } from '../../theme/typography';
 import { Avatar } from '../../components/Avatar';
@@ -10,6 +10,7 @@ import { useApp } from '../../state/AppState';
 import { InviteError } from '../../state/backend';
 import { rhythmSummary } from '../../state/buildView';
 import { PREVIEW_FAMILY_NAME, PREVIEW_MEMBERS } from '../../data/preview';
+import { devDriverOn } from '../../dev/DevDriver';
 import { RootStackScreenProps } from '../../navigation/types';
 import { nextAfter, stepOf } from './steps';
 
@@ -23,6 +24,12 @@ export const MEET_FAMILY_COPY = {
   newCode: 'Ask them for a new code.',
   offline: 'Couldn’t join yet. Check your connection and try again.',
 };
+
+/** What Join the family says when joining fails. */
+function joinError(e: unknown): string {
+  if (!(e instanceof InviteError)) return MEET_FAMILY_COPY.offline;
+  return e.kind === 'notFound' ? `${e.message} ${MEET_FAMILY_COPY.newCode}` : e.message;
+}
 
 /**
  * Invitee, Meet the family: who's in, who invited you, the family streak in
@@ -50,13 +57,18 @@ export function MeetFamilyScreen({ navigation }: RootStackScreenProps<'MeetFamil
       const next = nextAfter('invitee', 'MeetFamily');
       if (next) navigation.navigate(next as 'OnboardingPhoto');
     } catch (e) {
-      setError(
-        e instanceof InviteError ? (e.kind === 'notFound' ? `${e.message} ${MEET_FAMILY_COPY.newCode}` : e.message) : MEET_FAMILY_COPY.offline,
-      );
+      setError(joinError(e));
     } finally {
       setBusy(false);
     }
   };
+
+  // Dev builds with the capture driver: the error an expired code gets, which the preview family never does.
+  useEffect(() => {
+    if (!devDriverOn) return;
+    const sub = DeviceEventEmitter.addListener('inviteExpired', () => setError(joinError(new InviteError('notFound'))));
+    return () => sub.remove();
+  }, []);
 
   // The preview family: Maya invited you to Sunday sauna, where Jo is too.
   const members = invite ? invite.members : PREVIEW_MEMBERS.slice(1);

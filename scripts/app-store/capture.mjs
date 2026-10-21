@@ -80,8 +80,8 @@ function shoot(name) {
  * Feed starts at the shared session with the photo.
  */
 const SCROLL = {
-  '6.9': { today: 0, log: 1000, feed: 372 },
-  '6.3': { today: 128, log: 1000, feed: 372 },
+  '6.9': { today: 100, log: 1000, feed: 372 },
+  '6.3': { today: 150, log: 1000, feed: 372 },
 };
 if (!SCROLL[size]) throw new Error(`size must be ${Object.keys(SCROLL).join(' or ')}`);
 
@@ -207,7 +207,13 @@ try {
   ]) {
     simctl('spawn', udid, 'defaults', 'write', 'com.arrofamily.arro', key, '-bool', on);
   }
-  simctl('status_bar', udid, 'override', '--time', '9:41', '--batteryState', 'charged', '--batteryLevel', '100', '--cellularBars', '4', '--wifiBars', '3');
+  // Discharging at 100%: a plain, full battery. "charged" draws it green with a bolt.
+  simctl('status_bar', udid, 'clear');
+  simctl(
+    'status_bar', udid, 'override',
+    '--time', '9:41', '--dataNetwork', 'wifi', '--wifiMode', 'active', '--wifiBars', '3',
+    '--cellularMode', 'active', '--cellularBars', '4', '--batteryState', 'discharging', '--batteryLevel', '100',
+  );
   const names = Object.keys(shots).filter((n) => !only || n === only);
   if (names.some((n) => n !== '1-timer')) {
     await launch();

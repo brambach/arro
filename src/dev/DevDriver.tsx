@@ -24,6 +24,8 @@ const driverUrl = process.env.EXPO_PUBLIC_DEV_DRIVER_URL || 'http://localhost:80
 
 type Command =
   | { op: 'onboard' }
+  /** Before onboarding: start the invitee path as Sam, with this join code typed in. */
+  | { op: 'invitee'; code: string }
   | { op: 'scenario'; id: PreviewScenarioId | null }
   | { op: 'nav'; route: keyof RootStackParamList; params?: object }
   | { op: 'tab'; tab: 'Today' | 'ThisWeek' | 'Feed' | 'Me' }
@@ -64,6 +66,11 @@ export function DevDriver({ navigation }: { navigation: NavigationContainerRefWi
           // updateDraft commits through a ref; give it a frame.
           await new Promise((r) => setTimeout(r, 50));
           await appRef.current.completeOnboarding(false);
+          return;
+        case 'invitee':
+          if (a.session) return;
+          a.startFlow('invitee');
+          a.updateDraft({ joinCode: c.code, name: 'Sam' });
           return;
         case 'scenario':
           a.setPreview(c.id);
