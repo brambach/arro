@@ -45,8 +45,6 @@ export const fonts = {
   display: Platform.select({ web: web('FrauncesSoft-Regular'), default: 'FrauncesSoft-Regular' }),
   /** Fraunces Soft 600. */
   displaySemibold: Platform.select({ web: web('FrauncesSoft-SemiBold'), default: 'FrauncesSoft-SemiBold' }),
-  /** @deprecated Arro's name for the display face. Use display. */
-  serif: Platform.select({ web: web('FrauncesSoft-Regular'), default: 'FrauncesSoft-Regular' }),
 } as const;
 
 const scale = {
@@ -110,17 +108,6 @@ export const type = {
   /** Heading in Fraunces 600, for a number set beside a heading. */
   headingStrong: { ...scale.heading, fontFamily: fonts.displaySemibold },
 
-  // Arro's old names (deprecated), mapped onto the scale so old screens compile.
-  /** @deprecated use title */
-  greeting: scale.title,
-  /** @deprecated use title */
-  bigNumber: scale.title,
-  /** @deprecated use heading */
-  stat: scale.heading,
-  /** @deprecated use bodyStrong */
-  name: { ...scale.body, fontWeight: weights.semibold },
-  /** @deprecated use label */
-  meta: scale.label,
 } satisfies Record<string, TextStyle>;
 
 export type TypeStyle = keyof typeof scale;

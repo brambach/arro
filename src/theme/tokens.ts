@@ -460,12 +460,6 @@ export const radii = {
   sheet: 28,
   /** Avatars and dots only. */
   round: 999,
-  /** @deprecated no capsules; use button or round */
-  pill: 999,
-  /** @deprecated use slat */
-  icon: 9,
-  /** @deprecated use card */
-  cardLg: 22,
 } as const;
 
 /**
@@ -502,109 +496,15 @@ export const depth = {
   thumb: '0px 0px 0px 0.5px rgba(34,31,28,0.08), 0px 2px 4px 0px rgba(34,31,28,0.18)',
   /** The tab bar's top edge. */
   tabBar: '0px -0.5px 0px 0px rgba(211,193,166,1)',
-  /** @deprecated use card */
-  lift: '0px 0px 0px 0.5px rgba(34,31,28,0.10), 0px 1px 1.5px 0px rgba(34,31,28,0.05), 0px 10px 28px -12px rgba(34,31,28,0.20)',
-  /** @deprecated the light top edge of Arro's cards */
-  sheen: 'inset 0px 1px 0px 0px rgba(255,255,255,0.5)',
-} as const;
-
-/** Old Arro names, so the screens still compile until they're rebuilt. Don't use in new code. */
-export const shadows = {
-  card: { boxShadow: depth.card },
-  float: { boxShadow: depth.float },
-  button: { boxShadow: depth.button },
-  sunk: { boxShadow: depth.sunk },
 } as const;
 
 /**
  * Semantic colors. New code can use these or the palette names; both are fine.
- * The second half maps Arro's old names onto Löyly so the old screens compile
- * and look coherent until they're rebuilt. Don't use the old names in new code.
  */
 export const colors = {
   ...palette,
   ...alpha,
   onMember,
 
-  // Arro's old names (deprecated).
-  /** @deprecated use birch */
-  screen: palette.birch,
-  /** @deprecated use steam */
-  card: palette.steam,
-  /** @deprecated use birch */
-  cardAlt: palette.birch,
-  /** @deprecated use aspen */
-  sunk: palette.aspen,
-  /** @deprecated glass is gone; this is steam */
-  glass: palette.steam,
-  /** @deprecated glass is gone; this is steam */
-  glassStrong: palette.steam,
-  /** @deprecated use grain */
-  border: palette.grain,
-  /** @deprecated use grain */
-  borderStrong: palette.grain,
-  /** @deprecated use alpha.hairline */
-  divider: alpha.hairline,
-  /** @deprecated use alpha.hairline */
-  dividerSoft: alpha.hairline,
-  /** @deprecated use aspen */
-  track: palette.aspen,
-  /** @deprecated use char */
-  ink: palette.char,
-  /** @deprecated use smoke */
-  inkSoft: palette.smoke,
-  /** @deprecated use smoke */
-  muted: palette.smoke,
-  /** @deprecated use stone */
-  faint: palette.stone,
-  /** @deprecated use stone */
-  faint2: palette.stone,
-  /** @deprecated use stone */
-  faint3: palette.stone,
-  /** @deprecated rows have no chevrons */
-  chevron: palette.pebble,
-  /** @deprecated use ember (fills) or coal (text) */
-  primary: palette.ember,
-  /** @deprecated use coal */
-  primaryPress: palette.coal,
-  /** @deprecated use aspen */
-  accentTint: palette.aspen,
-  /** @deprecated use moss */
-  kept: palette.moss,
-  /** @deprecated use aspen */
-  keptBg: palette.aspen,
-  /** @deprecated use moss */
-  keptCheck: palette.moss,
-  /** @deprecated use lake */
-  freeze: palette.lake,
-  /** @deprecated use aspen */
-  freezeBg: palette.aspen,
-  /** @deprecated use lake */
-  freezeIcon: palette.lake,
-  /** @deprecated use aspen */
-  todayPillBg: palette.aspen,
-  /** @deprecated use smoke */
-  todayPillText: palette.smoke,
-  /** @deprecated use stone */
-  tabInactive: palette.stone,
-  /** @deprecated use birch */
-  tabBarBg: palette.birch,
-  /** @deprecated use grain */
-  tabBarBorder: palette.grain,
-  /** @deprecated use aspen */
-  photoPlaceholder: palette.aspen,
-  /** @deprecated use steam (on ember or char) or onMember (on an avatar) */
-  white: palette.steam,
-  /** @deprecated use char */
-  shadowWarm: palette.char,
 } as const;
 
-/** Old Arro spacing names, mapped onto the 4 pt scale. Don't use in new code. */
-export const spacing = {
-  xs: 4,
-  sm: 8,
-  md: 12,
-  card: 20,
-  gutter: 20,
-  section: 32,
-} as const;

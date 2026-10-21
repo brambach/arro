@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { AccessibilityInfo, Easing as RNEasing } from 'react-native';
+import { AccessibilityInfo } from 'react-native';
 import { Easing } from 'react-native-reanimated';
 import { curves, durations, loopTokens, momentSummary, springs, stagger } from './motionTokens';
 
@@ -221,19 +221,6 @@ export function springTouchdownMs(config: { damping: number; stiffness: number; 
 
 /** Ms into an ember move when it peaks: when its success haptic fires. */
 export const emberPeakMs = Math.round(durations.ember * peakFraction('ember'));
-
-/**
- * Arro's old names, for React Native's Animated in screens that haven't been
- * rebuilt yet. Mapped onto settle, ember and utility. Don't use in new code.
- */
-export const motion = {
-  /** @deprecated use timing.settle with Reanimated */
-  statement: { duration: durations.settle, easing: RNEasing.bezier(...curves.settle) },
-  /** @deprecated use timing.ember with Reanimated */
-  signature: { duration: durations.ember, easing: RNEasing.bezier(...curves.ember) },
-  /** @deprecated use timing.utility with Reanimated */
-  utility: { duration: durations.utility, easing: RNEasing.bezier(...curves.utility) },
-} as const;
 
 let cached: boolean | null = null;
 

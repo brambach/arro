@@ -126,7 +126,7 @@ export function PosterScreen({ navigation }: RootStackScreenProps<'Poster'>) {
 
 const styles = StyleSheet.create({
   frame: { alignItems: 'center' },
-  paper: { boxShadow: depth.lift },
+  paper: { boxShadow: depth.card },
   retry: { alignSelf: 'flex-start', marginTop: space.s12 },
   line: { color: palette.coal, marginTop: space.s12, marginHorizontal: space.s8 },
 });
