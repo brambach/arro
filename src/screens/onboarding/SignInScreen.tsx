@@ -1,187 +1,142 @@
 import React, { useEffect, useState } from 'react';
-import { Pressable, StyleSheet, Text, View } from 'react-native';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { StyleSheet, Text, View } from 'react-native';
 import * as AppleAuthentication from 'expo-apple-authentication';
-import { colors } from '../../theme/tokens';
-import { motion } from '../../theme/motion';
-import { type, weights } from '../../theme/typography';
-import { OnboardingFrame } from '../../components/OnboardingFrame';
-import { ArroMark, ChevronLeft } from '../../components/Icons';
-import { FadeInView } from '../../components/FadeInView';
-import { Glass } from '../../components/Glass';
-import { Backdrop } from '../../components/Backdrop';
-import { PrimaryButton } from '../../components/PrimaryButton';
-import { TextField } from '../../components/TextField';
+import { layout, palette, radii, space } from '../../theme/tokens';
+import { type } from '../../theme/typography';
+import { Field } from '../../components/Field';
+import { SolidButton } from '../../components/SolidButton';
+import { StepScreen } from '../../components/StepScreen';
 import { useApp } from '../../state/AppState';
 import { appleSignInAvailable } from '../../state/backend';
-import { showError } from '../../state/confirm';
+import { useDevOverrides } from '../../state/devTools';
 import { RootStackScreenProps } from '../../navigation/types';
 import { nextAfter, stepOf } from './steps';
 
+export const SIGN_IN_COPY = {
+  title: 'Sign in',
+  subtitle: 'Your family sees your first name, nothing else.',
+  nameLabel: 'Your first name',
+  namePlaceholder: 'First name',
+  continue: 'Continue',
+  appleNote: 'Saunafam only uses your Apple ID to sign you in. Your email isn’t shared with your family.',
+  signedIn: 'Signed in with Apple.',
+  previewNote: 'Preview sign-in. Nothing is made on a server, and Sign in with Apple needs the iPhone app.',
+  backTitle: 'Welcome back',
+  backSubtitle: 'Sign in with the Apple ID you use for Saunafam and you’ll go straight to your family.',
+  backPreview: 'Sign in with Apple needs the iPhone app.',
+  noAccountTitle: 'No Saunafam account yet',
+  noAccount: 'This Apple ID isn’t in a family. Go back to start one, or use an invite.',
+  offline: 'Saunafam couldn’t reach the server. Check your connection and try again.',
+};
+
 /**
- * Sign in with Apple. Apple only shares the name the first time, and people can
- * hide it, so the first-name field stays: it's what the family sees.
- * Where Apple sign-in isn't available (web preview, no Supabase config) it's the
- * phase 1 preview sign-in and nothing is created on a server.
+ * Sign in with Apple. Apple shares a name only the first time, and people can
+ * hide it, so the first-name field stays: it's what the family sees. Without a
+ * server (the preview, the web build) it's a preview sign-in and nothing is
+ * made.
+ *
+ * `returning` (Welcome's "Sign in"): someone with an account. No name, no
+ * steps; it goes straight to the family.
  */
 export function SignInScreen({ navigation, route }: RootStackScreenProps<'SignIn'>) {
   const returning = !!route.params?.returning;
   const { draft, updateDraft, signIn } = useApp();
+  const dev = useDevOverrides();
   const next = nextAfter(draft.role, 'SignIn');
-  const [apple, setApple] = useState<boolean | null>(null);
+  const [available, setAvailable] = useState<boolean | null>(null);
   const [busy, setBusy] = useState(false);
+  const [error, setError] = useState<string | null>(null);
   const signedIn = !!draft.userId;
+  const apple = available || dev.appleButton;
 
   useEffect(() => {
-    appleSignInAvailable().then(setApple);
+    appleSignInAvailable().then(setAvailable);
   }, []);
 
-  const goNext = () => next && navigation.navigate(next as 'NameFamily');
+  const goNext = () => {
+    if (next) navigation.navigate(next as 'NameFamily');
+  };
 
   const onApple = async () => {
+    if (busy || !available) return;
     setBusy(true);
+    setError(null);
     try {
       const result = await signIn();
       // 'done': an existing account went straight to its family and the stack changes by itself.
-      if (result === 'continue' && returning) {
-        // Signed in with Apple, but this Apple ID isn't in a family yet.
-        showError('No Arro account yet', 'This Apple ID isn’t in a family. Go back to start a family or use an invite.');
-      } else if (result === 'continue' && draft.name.trim()) goNext();
+      if (result === 'continue' && returning) setError(`${SIGN_IN_COPY.noAccountTitle}. ${SIGN_IN_COPY.noAccount}`);
+      else if (result === 'continue' && (draft.name.trim() || returning)) goNext();
       if (result === 'ask') navigation.navigate('NotificationsPrompt', { returning: true });
     } catch (e) {
-      // Raw fetch errors read like a crash; anything network-shaped gets a plain sentence.
       const message = e instanceof Error ? e.message : '';
-      showError(
-        'Couldn’t sign in',
-        !message || /fetch failed|network/i.test(message)
-          ? 'Arro couldn’t reach the server. Check your connection and try again.'
-          : message,
-      );
+      setError(!message || /fetch failed|network/i.test(message) ? SIGN_IN_COPY.offline : message);
     } finally {
       setBusy(false);
     }
   };
 
-  const needsApple = apple && !signedIn;
+  const appleButton = (
+    <View style={busy && styles.busy} pointerEvents={busy ? 'none' : 'auto'}>
+      <AppleAuthentication.AppleAuthenticationButton
+        buttonType={AppleAuthentication.AppleAuthenticationButtonType.SIGN_IN}
+        buttonStyle={AppleAuthentication.AppleAuthenticationButtonStyle.BLACK}
+        cornerRadius={radii.button}
+        style={styles.apple}
+        onPress={onApple}
+      />
+    </View>
+  );
 
   if (returning) {
     return (
-      <WelcomeBack
-        apple={apple}
-        busy={busy}
-        onApple={onApple}
+      <StepScreen
+        title={SIGN_IN_COPY.backTitle}
+        subtitle={SIGN_IN_COPY.backSubtitle}
         onBack={() => navigation.goBack()}
-      />
+        primaryLabel=""
+        onPrimary={onApple}
+        footer={apple ? appleButton : <SolidButton title="Sign in with Apple" disabled />}
+      >
+        <Text style={type.label}>{apple ? 'Your email isn’t shared with your family.' : SIGN_IN_COPY.backPreview}</Text>
+        {error ? <Text style={[type.bodySmall, styles.error]}>{error}</Text> : null}
+      </StepScreen>
     );
   }
 
+  const needsApple = apple && !signedIn;
   return (
-    <OnboardingFrame
-      title="Sign in"
-      subtitle="Your family will see this name."
+    <StepScreen
+      title={SIGN_IN_COPY.title}
+      subtitle={SIGN_IN_COPY.subtitle}
       step={stepOf(draft.role, 'SignIn')}
       onBack={() => navigation.goBack()}
-      primaryLabel={apple ? 'Continue' : 'Continue with Apple'}
-      primaryDisabled={!draft.name.trim() || !!needsApple || apple === null}
+      primaryLabel={SIGN_IN_COPY.continue}
+      primaryDisabled={!draft.name.trim() || available === null}
       onPrimary={goNext}
+      footer={needsApple ? appleButton : undefined}
     >
-      <TextField
-        label="Your first name"
+      <Field
+        label={SIGN_IN_COPY.nameLabel}
         value={draft.name}
         onChangeText={(name) => updateDraft({ name })}
         autoCapitalize="words"
         autoComplete="given-name"
+        textContentType="givenName"
         maxLength={24}
-        placeholder="First name"
+        placeholder={SIGN_IN_COPY.namePlaceholder}
         returnKeyType="done"
       />
-      {needsApple ? (
-        <AppleAuthentication.AppleAuthenticationButton
-          buttonType={AppleAuthentication.AppleAuthenticationButtonType.SIGN_IN}
-          buttonStyle={AppleAuthentication.AppleAuthenticationButtonStyle.BLACK}
-          cornerRadius={14}
-          style={[styles.apple, busy && styles.busy]}
-          onPress={busy ? () => undefined : onApple}
-        />
-      ) : null}
-      <Text style={styles.note}>
-        {apple
-          ? signedIn
-            ? 'Signed in with Apple.'
-            : 'Arro only uses your Apple ID to sign you in. Your email isn’t shared with your family.'
-          : 'Preview sign-in: no account is created. Sign in with Apple needs the iPhone app.'}
+      <Text style={[type.label, styles.note]}>
+        {apple ? (signedIn ? SIGN_IN_COPY.signedIn : SIGN_IN_COPY.appleNote) : SIGN_IN_COPY.previewNote}
       </Text>
-    </OnboardingFrame>
-  );
-}
-
-/**
- * From Welcome's "Sign in": the same map and glass panel as Welcome, so coming
- * back feels like the front door rather than a step in setting up.
- */
-function WelcomeBack({
-  apple,
-  busy,
-  onApple,
-  onBack,
-}: {
-  apple: boolean | null;
-  busy: boolean;
-  onApple: () => void;
-  onBack: () => void;
-}) {
-  const insets = useSafeAreaInsets();
-  return (
-    <View style={[styles.back, { paddingTop: insets.top, paddingBottom: insets.bottom + 24 }]}>
-      <Backdrop map />
-      <Pressable onPress={onBack} hitSlop={10} accessibilityLabel="Back" style={styles.backButton}>
-        <ChevronLeft />
-      </Pressable>
-      <FadeInView rise={14} {...motion.statement} style={styles.hero}>
-        <ArroMark size={60} />
-        <Text style={styles.heading}>Welcome back</Text>
-        <Text style={styles.tagline}>Your family’s been moving.</Text>
-      </FadeInView>
-
-      <View style={styles.space} />
-
-      <FadeInView delay={380} rise={10} {...motion.statement}>
-        <Glass radius={24} padding={18} style={styles.panel}>
-          <Text style={styles.line}>Sign in with the Apple ID you use for Arro and you’ll go straight to your family.</Text>
-          {apple ? (
-            <AppleAuthentication.AppleAuthenticationButton
-              buttonType={AppleAuthentication.AppleAuthenticationButtonType.SIGN_IN}
-              buttonStyle={AppleAuthentication.AppleAuthenticationButtonStyle.BLACK}
-              cornerRadius={14}
-              style={[styles.appleBig, busy && styles.busy]}
-              onPress={busy ? () => undefined : onApple}
-            />
-          ) : (
-            <PrimaryButton title="Sign in with Apple" onPress={onApple} disabled style={styles.cta} />
-          )}
-          <Text style={styles.panelNote}>
-            {apple === false ? 'Sign in with Apple needs the iPhone app.' : 'Your email isn’t shared with your family.'}
-          </Text>
-        </Glass>
-      </FadeInView>
-    </View>
+      {error ? <Text style={[type.bodySmall, styles.error]}>{error}</Text> : null}
+    </StepScreen>
   );
 }
 
 const styles = StyleSheet.create({
-  apple: { height: 52, marginTop: 18 },
+  apple: { height: layout.button, width: '100%' },
   busy: { opacity: 0.5 },
-  note: { ...type.meta, marginTop: 14 },
-  // Welcome back, laid out like Welcome.
-  back: { flex: 1, backgroundColor: colors.screen, paddingHorizontal: 26 },
-  backButton: { width: 28, height: 40, justifyContent: 'center', marginLeft: -10 },
-  hero: { alignItems: 'center', paddingTop: 32 },
-  heading: { ...type.display, fontSize: 46, lineHeight: 50, color: colors.ink, marginTop: 18 },
-  tagline: { ...type.body, marginTop: 6 },
-  space: { flex: 1 },
-  panel: { marginHorizontal: -8, paddingTop: 22 },
-  line: { fontSize: 17, lineHeight: 25, fontWeight: weights.regular, color: colors.inkSoft, textAlign: 'center', paddingHorizontal: 6 },
-  appleBig: { height: 52, marginTop: 22 },
-  cta: { marginTop: 22 },
-  panelNote: { ...type.meta, textAlign: 'center', marginTop: 16 },
+  note: { marginTop: space.s16 },
+  error: { color: palette.coal, marginTop: space.s16 },
 });

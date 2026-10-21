@@ -1,34 +1,32 @@
-# Arro on the App Store: phase 6 prep
+# Saunafam on the App Store
 
-Everything for App Store Connect and TestFlight that isn't app code. Phase 6 of
-`design/refactor-plan.md`. Nothing here has been bought, deployed, uploaded or
-done in the Apple account.
+Everything for App Store Connect and TestFlight that isn't app code, for
+Saunafam build 9 and the later version that turns Plus on. Source:
+`design/saunafam-spec.md`, sections 5 to 7 and "Paid tier". Nothing here has
+been entered in App Store Connect, RevenueCat or the hosted Supabase project.
+Each of those is Bryce's step, on his go.
 
 | File | What it's for |
 | --- | --- |
-| `testflight.md` | The route to the first TestFlight build (Xcode Archive, recommended, vs EAS), the app.json changes, and what you do in App Store Connect |
-| `listing.md` | Name, subtitle, promotional text, description, keywords, category, age rating |
-| `privacy-policy.md` | Privacy policy, ready to host |
-| `support.md` | Support page, ready to host |
-| `hosting.md` | Where those two pages live (recommendation: buy arrofamily.com) |
-| `app-privacy.md` | App Store Connect App Privacy answers, checked against the code |
-| `review-notes.md` | Review notes, the demo family the server needs, and what to fix before review |
-| `screenshots.md` | The four screenshots, their order, captions and how to capture them |
-| `icon-options.md`, `icon-options/` | Three Paper and clay icon options with previews |
+| `listing.md` | Name, subtitle, promotional text, description, keywords, categories, URLs, age rating answers, screenshot captions, the five in-app purchases |
+| `app-privacy.md` | App Store Connect App Privacy answers, with what RevenueCat collects |
+| `privacy-policy.md` | The privacy policy, the same text as `https://saunafam.com/privacy` |
+| `support.md` | The support page, the same text as `https://saunafam.com/support` |
+| `hosting.md` | Where those pages live, and the URLs for App Store Connect |
+| `review-notes.md` | Review notes, the demo family the server needs, and what App Review checks |
+| `screenshots.md` | Apple's current screenshot sizes, the six screenshots and their captions |
+| `testflight.md` | The build 9 rollout, in order, and the tester note |
+| `icon-options.md`, `icon-options/` | Arro's icon options, kept for the record |
 
-## Open items
+## Open items for Bryce
 
-1. **Buy arrofamily.com** and choose a host for the two pages (`hosting.md`).
-   Then replace `{{SUPPORT_EMAIL}}` and `{{DATE}}` in the pages.
-2. **Demo family** on the server for App Review (`review-notes.md`), made on
-   the day you submit for external testing.
-3. **Re-check `app-privacy.md`** when photos start uploading. Push tokens from
-   phase 4 are already covered there and in the privacy policy; if a build
-   ships without notifications, the policy's notifications paragraph can stay,
-   since it only applies "if you allow them".
-
-Done by the phase 4 thread: the placeholder comment bar is gone from Workout
-detail, and app.json has the build number, encryption flag and photo text from
-`testflight.md`.
-
-Done: icon A (clay tile, paper "a") is in `assets/`; see `icon-options.md`.
+1. **Deploy saunafam.com**, DNS and email routing (`site/README.md`).
+2. **Rename the app** in App Store Connect and paste `listing.md`.
+3. **Confirm the age rating answers** in `listing.md`, especially under 13,
+   Social Media and Health or Wellness Topics.
+4. **App Privacy:** update from `app-privacy.md` before build 9's Beta App
+   Review.
+5. **Demo family** on the server, made on the day you submit
+   (`review-notes.md`).
+6. **Plus, after build 9 ships:** the App Store Connect and RevenueCat steps in
+   the spec's "Paid tier", then the Plus parts of `listing.md`.

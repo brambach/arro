@@ -1,43 +1,65 @@
 import React, { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState } from 'react';
-import { AppState as RNAppState } from 'react-native';
-import { MoveMethod, ReminderSlot, WorkoutType } from '../data/types';
-import { memberColor } from '../theme/tokens';
+import { Platform, AppState as RNAppState } from 'react-native';
+import Constants, { ExecutionEnvironment } from 'expo-constants';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import { AppConfig, FamilySnapshot, MemberId, PastWeekRow, PlusProduct, SaunaType, SessionComment, WallWood, WeekStartsOn } from '../data/types';
+import { deviceTemperatureUnit } from '../data/saunas';
+import { paletteColor } from '../data/palette';
+import { PREVIEW_ME, PreviewScenario, PreviewScenarioId, buildPreviewScenario } from '../data/preview';
 import * as backend from './backend';
+import { InvitePreview, LogSessionInput, SessionChanges } from './backend';
+import { APP_BUILD } from './appBuild';
+import { AppView, NO_OPTIMISTIC, Optimistic, buildView, placeholderFamily, startingLabel } from './buildView';
 import { showError } from './confirm';
-import { InvitePreview, RemoteFamily } from './backend';
-import { AppView, Preview, buildView } from './buildView';
-import { dayKey, addDays, deviceTimezone, inWakingHours, yesterdayOpen } from './dates';
-import { connectHealth, onHealthWorkoutsChanged, readRecentHealthWorkouts } from './health';
-import { syncHealthWorkouts } from './healthSync';
+import { addDays, dayKey, deviceTimezone, weekStart, yesterdayOpen } from './dates';
+import { saveMindfulMinutes } from './health';
 import { makeJoinCode } from './joinCode';
-import { PhotoShape, photoForUpload } from './photos';
-import { LatLng, decodePolyline, routeLength } from './routes';
+import { MilestoneMemory, loadMilestones, markShown, saveMilestones } from './milestones';
 import {
   NotificationPermission,
+  cancelAllLocalNotifications,
+  cancelLegacyNotifications,
+  cancelTimerNotifications,
   expoPushToken,
-  notificationPermission,
-  notifyWorkoutSaved,
   requestNotificationPermission,
-  scheduleReminders,
+  notificationPermission,
+  scheduleTimerNotifications,
+  scheduleWeeklyReminders,
   showNotificationsInForeground,
 } from './notifications';
+import { FlushResult, Outbox, OutboxEntry, SessionDraft } from './outbox';
+import { PhotoShape, photoForUpload } from './photos';
+import { EMPTY_NAG, NagMemory, dismissNag, loadNagMemory, recordNagShown, saveNagMemory, turnOffNag } from './plus';
+import { PackageId, PlusOffering, PreviewBehavior, PurchasesKind, PurchasesSwitch, loadRevenueCat } from './purchases';
+import { BuyOutcome, RestoreOutcome, SyncOutcome, buyWith, restoreWith } from './plusFlow';
+import { DEFAULT_LOOK, Look, effectiveLook, loadLooks, saveLooks } from './look';
+import { applyAppIcon, currentAppIcon } from './appIcon';
+import type { HeatSession } from './heatLog';
+import { DEFAULT_REMINDER_DAYS, DEFAULT_REMINDER_TIME, weeklyReminders } from './reminders';
 import {
-  LoggedWorkout,
   SavedSession,
-  clearMoveMethod,
+  clearLegacyStorage,
   clearSession,
   loadCachedFamily,
-  loadMoveMethod,
   loadSession,
+  loadWelcomed,
   saveCachedFamily,
-  saveMoveMethod,
   saveSession,
+  saveWelcomed,
 } from './session';
+import * as timerMath from './timer';
+import { TimerResult, TimerState } from './timer';
+import { uuid } from './uuid';
 
 /**
- * Everything the screens share: the saved session, the half-finished onboarding
- * answers, and the view the screens read. With Supabase configured and signed in,
- * the family lives on the server (backend.ts); otherwise it's local, as in phase 1.
+ * Everything the screens share: the saved session, the cached family, the
+ * outbox, the timer, optimistic changes, the onboarding answers and the view the
+ * screens read (buildView). docs/saunafam/DATA-LAYER.md is the guide.
+ *
+ * With Supabase configured and signed in, the family comes from the server and
+ * is cached (arro.family.v2). Without Supabase, or with a Prototype preview
+ * scenario on, it's the preview family "Sunday sauna" (src/data/preview.ts) and
+ * every action works in memory.
  */
 
 /** What onboarding collects before it's saved as a session. */
@@ -46,58 +68,59 @@ export interface Draft {
   name: string;
   familyName: string;
   photoUri: string | null;
-  moveMethod: MoveMethod;
-  reminder: ReminderSlot;
+  goal: number;
+  minMinutes: number;
+  weekStartsOn: WeekStartsOn;
+  reminderDays: number[];
+  reminderTime: string;
+  /** "Remind me if I'm behind", or "No reminders" (the Reminders step). */
+  remindersWanted: boolean;
   joinCode: string;
   invited: { id: string; name: string }[];
   /** Signed in with Apple (server mode only). */
   userId: string | null;
-  /**
-   * The family on the server: the founder's, made once it's named so the invite has
-   * a real code; the invitee's, joined when they tap "Join the family".
-   */
+  /** The family on the server, once made or joined. */
   remote: { memberId: string; familyId: string } | null;
   /** What the invitee's code opened (server mode only). */
   invite: InvitePreview | null;
 }
 
-export interface LogInput {
-  day: 'today' | 'yesterday';
-  type: WorkoutType;
-  minutes?: number;
-  note?: string;
+/** The log form's answers. The form converts °F to °C before this. */
+export interface SessionForm {
+  startedAt: string;
+  durationMinutes: number;
+  saunaType: SaunaType;
+  rounds?: number;
+  tempC?: number | null;
+  humidityPct?: number | null;
+  coldPlunge?: boolean;
+  coldMinutes?: number | null;
+  place?: string | null;
+  note?: string | null;
+  source?: 'timer' | 'manual';
+  withIds?: MemberId[];
   photoUri?: string | null;
 }
 
-/** How far back a member's map goes. */
-export type MapRange = 'month' | 'year' | 'all';
+/** What happened to a logged session after the first try to send it. It shows on Today either way. */
+export type LogOutcome =
+  | { status: 'saved'; skippedNames: string[] }
+  | { status: 'waiting' }
+  | { status: 'refused'; message: string };
 
-/** What a member's map shows: their routes and the distance they add up to. */
-export interface MemberRoutes {
-  routes: LatLng[][];
-  meters: number;
-}
-
-/** The first day a map range covers, or null for all time. */
-function rangeStart(range: MapRange): string | null {
-  const today = dayKey();
-  if (range === 'month') return `${today.slice(0, 7)}-01`;
-  if (range === 'year') return `${today.slice(0, 4)}-01-01`;
-  return null;
-}
-
-/** The family people join with any code in the local preview. */
-export const DEMO_FAMILY_NAME = 'Home crew';
-const DEMO_MEMBER_COUNT = 3;
+export type ScreenStatus = AppView['status'];
 
 const emptyDraft = (role: Draft['role']): Draft => ({
   role,
   name: '',
-  familyName: role === 'invitee' && !backend.backendEnabled ? DEMO_FAMILY_NAME : '',
+  familyName: '',
   photoUri: null,
-  moveMethod: 'manual',
-  reminder: 'evening',
-  // Signed in, saveFamilyName swaps this for the real code from the invites table.
+  goal: 3,
+  minMinutes: 10,
+  weekStartsOn: 1,
+  reminderDays: [...DEFAULT_REMINDER_DAYS],
+  reminderTime: DEFAULT_REMINDER_TIME,
+  remindersWanted: true,
   joinCode: role === 'founder' ? makeJoinCode() : '',
   invited: [],
   userId: null,
@@ -108,227 +131,398 @@ const emptyDraft = (role: Draft['role']): Draft => ({
 interface AppContextValue {
   /** False until the saved session has been read. */
   ready: boolean;
-  /** True when the app talks to Supabase; false runs everything on this phone. */
+  /** True when the app talks to Supabase. */
   online: boolean;
   session: SavedSession | null;
-  /** The screens' data. null before anyone has signed in; after sign-out it's the last view, until the screens are gone. */
+  /** The screens' data; null before anyone has signed in. */
   view: AppView | null;
+  /** A quiet message after an optimistic change was rolled back. */
+  notice: string | null;
+  clearNotice: () => void;
+  /** Show a quiet message the same way ("Jo already logged this one", after a save). */
+  showNotice: (message: string) => void;
+  /** Build 8 testers, once: "Arro is now Saunafam". */
+  welcomeDue: boolean;
+  dismissWelcome: () => void;
+
+  // Onboarding and account
   draft: Draft;
   startFlow: (role: Draft['role']) => void;
   updateDraft: (patch: Partial<Draft>) => void;
-  /**
-   * Sign in with Apple. 'done' when an existing account went straight to its family;
-   * 'ask' when it's on a phone that hasn't been asked about notifications yet, and
-   * finishSignIn takes it to the family after the ask.
-   */
   signIn: () => Promise<'cancelled' | 'continue' | 'done' | 'ask'>;
   finishSignIn: () => Promise<void>;
-  /** Founder, server mode: make (or rename) the family so the invite step has a real code. */
   saveFamilyName: () => Promise<void>;
-  /** Invitee: look up the code on the server. Throws backend.InviteError. */
+  /**
+   * Founder onboarding, Your rhythm: makes the family on the server with its
+   * name and rhythm (the week start is fixed from then on). Going back and
+   * changing the goal or minimum afterwards saves it as the family's rules.
+   */
+  saveRhythm: () => Promise<void>;
   lookUpInvite: () => Promise<void>;
-  /** Invitee, server mode: join the family now, at "Join the family". Throws backend.InviteError. */
   joinInvitedFamily: () => Promise<void>;
   completeOnboarding: (remindersWanted: boolean) => Promise<void>;
-  /** Throws backend.WorkoutDateError when the server refuses the date. */
-  logWorkout: (input: LogInput) => Promise<void>;
-  /** "Send a cheer" for someone who hasn't moved yet. 'already' if they've been nudged today. */
-  nudge: (memberId: string) => Promise<'sent' | 'already'>;
-  /** A heart on someone's finished workout. */
-  cheer: (workoutId: string) => Promise<void>;
-  /** A short comment on a workout. Throws when it couldn't be saved. */
-  comment: (workoutId: string, body: string) => Promise<void>;
-  deleteComment: (commentId: string) => Promise<void>;
-  /** Takes one of your workouts off. A Health workout stays off, even though Health still has it. */
-  removeWorkout: (workoutId: string) => Promise<void>;
-  /** Corrects the kind of one of your workouts. */
-  changeWorkoutType: (workoutId: string, type: WorkoutType) => Promise<void>;
-  /** Pull to refresh: Apple Health first, then the family. */
-  syncNow: () => Promise<void>;
-  updateProfile: (patch: { name?: string; photoUri?: string | null }) => Promise<void>;
-  /** Adds, replaces (a local uri) or removes (null) the photo on one of your workouts. */
-  setWorkoutPhoto: (workoutId: string, photoUri: string | null) => Promise<void>;
-  /** A member's routes for their map. */
-  loadRoutes: (memberId: string, range: MapRange) => Promise<MemberRoutes>;
-  /** Settings: switch how moving counts. Apple Health shows Apple's sheet, then syncs. */
-  setMoveMethod: (method: MoveMethod) => Promise<void>;
-  /** Settings: the daily reminder on or off, and its time. Turning it on asks iOS first. */
-  setReminder: (patch: { wanted?: boolean; slot?: ReminderSlot }) => Promise<NotificationPermission | null>;
-  /** Asks iOS for notifications (the sheet shows only the first time) and registers this phone for pushes. */
-  turnOnNotifications: () => Promise<NotificationPermission>;
-  /** Invite someone (name optional). Works during onboarding and afterwards. */
-  addInvite: (name: string) => Promise<void>;
-  refresh: () => Promise<void>;
   signOut: () => Promise<void>;
-  /** "Pause me": a break of `days` days from today (or a new length for the current one). */
-  takeBreak: (days: number) => Promise<void>;
-  /** Ends the current break; today counts as normal again. */
-  endBreak: () => Promise<void>;
-  /** Deletes the account on the server (or the local family) and signs out. 'cancelled' if Apple's sheet was closed. */
+  /** delete-account's dry run: whether to warn about a Plus subscription first. */
+  checkBeforeDelete: () => Promise<{ paysForPlus: boolean }>;
   deleteAccount: () => Promise<'deleted' | 'cancelled'>;
-  /** For the person who started the family: removes someone, with their workouts. */
+  refresh: () => Promise<void>;
+  /** Apple Health: saves your saved sessions that aren't there yet, if it's on (after turning it on). */
+  syncHealth: () => void;
+
+  // Sessions
+  /** Shows at once (outbox), then sends. Resolves after the first try. */
+  logSession: (form: SessionForm) => Promise<LogOutcome>;
+  /** A refused draft, fixed: back into the outbox with the same client id. */
+  resendDraft: (clientId: string, form: SessionForm) => Promise<LogOutcome>;
+  discardDraft: (clientId: string) => Promise<void>;
+  /** The refused draft, for the form to prefill. */
+  draftFor: (clientId: string) => SessionDraft | null;
+  /** The logger changes shared details. Throws backend errors (the form shows them). */
+  editSession: (anchorId: string, changes: SessionChanges) => Promise<void>;
+  /** Adds, replaces (a local uri) or removes (null) the photo on your session. */
+  setSessionPhoto: (anchorId: string, photoUri: string | null) => Promise<void>;
+  /** The logger deletes the whole session. Optimistic. */
+  deleteSession: (anchorId: string) => Promise<void>;
+  /** Remove me from this session. Optimistic. */
+  removeMe: (anchorId: string) => Promise<void>;
+  cheer: (anchorId: string) => Promise<void>;
+  uncheer: (anchorId: string) => Promise<void>;
+  comment: (anchorId: string, body: string) => Promise<void>;
+  deleteComment: (commentId: string) => Promise<void>;
+  nudge: (memberId: string) => Promise<'sent' | 'already'>;
+
+  // Timer
+  /** One timer at a time: starting again returns the running one. */
+  /** `at`: when it started (the tap), if that was a moment ago; now by default. */
+  startTimer: (opts?: { targetMinutes?: number; saunaType?: SaunaType; at?: Date }) => Promise<TimerState>;
+  coolOff: () => Promise<void>;
+  resumeTimer: () => Promise<void>;
+  setTimerTarget: (minutes: number) => Promise<void>;
+  setTimerSaunaType: (type: SaunaType) => Promise<void>;
+  /** Done: clears the timer and hands back what the log form prefills. */
+  finishTimer: () => Promise<TimerResult | null>;
+  discardTimer: () => Promise<void>;
+  /**
+   * Dev builds only (captures): put a timer in place as if it had been running,
+   * such as 12:40 into a 15 minute target. Does nothing in a release build.
+   */
+  devSetTimer: (state: TimerState | null) => void;
+  /** The last sauna type used, for the timer's default. */
+  lastSaunaType: SaunaType;
+
+  // Me, family, settings
+  updateProfile: (patch: { name?: string; photoUri?: string | null }) => Promise<void>;
+  takeBreak: (days: number) => Promise<void>;
+  endBreak: () => Promise<void>;
+  /** Founder only. Returns "Starting Monday, Oct 26". */
+  setRules: (goal: number, minMinutes: number) => Promise<string>;
+  setReminders: (patch: { wanted?: boolean; days?: number[]; time?: string }) => Promise<NotificationPermission | null>;
+  setWeekendCheckin: (on: boolean) => Promise<void>;
+  turnOnNotifications: () => Promise<NotificationPermission>;
+  addInvite: (name: string) => Promise<void>;
   removeMember: (memberId: string) => Promise<void>;
-  preview: Preview | null;
-  setPreview: (preview: Preview | null) => void;
+  markMilestoneShown: () => void;
+
+  // Plus
+  /** 'preview' while the fake store is in use: the sheet says "Preview, no real purchase". */
+  purchasesKind: PurchasesKind;
+  /** Prices from the offering; null when the App Store can't be reached. */
+  loadOffering: () => Promise<PlusOffering | null>;
+  /** Buys, then asks the server (sync-plus, family_plus). Tips skip the server. */
+  buyPlus: (pkg: PackageId) => Promise<BuyOutcome>;
+  restorePurchases: () => Promise<RestoreOutcome>;
+  /** Every week and every session (Every week, the Heat log, the poster). */
+  loadArchive: () => Promise<Archive>;
+  /** Your own timer face and app icon pick, and what shows (the pick only while the family has Plus). */
+  myLook: Look;
+  look: Look;
+  setLook: (patch: Partial<Look>) => void;
+  /** Throws backend.NeedsPlusError without Plus. */
+  setWallWood: (wood: WallWood) => Promise<void>;
+  recordNagShown: () => void;
+  dismissNag: () => void;
+  turnOffNag: () => void;
+
+  // Prototype preview
+  preview: PreviewScenarioId | null;
+  setPreview: (id: PreviewScenarioId | null) => void;
+  /** What the preview's fake App Store does next, how long it takes, and how long the pretend server waits. */
+  setPreviewPurchases: (behavior: PreviewBehavior, timing?: { storeMs?: number; serverMs?: number }) => void;
 }
 
-/** "Your run is in Arro", "Your gym session is in Arro". */
-const SAVED_NOUN: Record<WorkoutType, string> = {
-  walk: 'walk',
-  run: 'run',
-  gym: 'gym session',
-  yoga: 'yoga',
-  swim: 'swim',
-  ride: 'ride',
-  other: 'workout',
-};
-const SAVED_BODY = 'Your family can see it now. Tap to add a photo.';
+export interface Archive {
+  history: PastWeekRow[];
+  sessions: HeatSession[];
+}
 
 const AppContext = createContext<AppContextValue | null>(null);
+
+/** Reads the outbox and drafts from AsyncStorage. */
+const asyncStore = {
+  getItem: (k: string) => AsyncStorage.getItem(k),
+  setItem: (k: string, v: string) => AsyncStorage.setItem(k, v),
+  removeItem: (k: string) => AsyncStorage.removeItem(k),
+};
+
+function toInput(familyId: string, clientId: string, form: SessionForm): LogSessionInput {
+  return {
+    familyId,
+    clientId,
+    startedAt: form.startedAt,
+    durationMinutes: form.durationMinutes,
+    saunaType: form.saunaType,
+    rounds: form.rounds ?? 1,
+    tempC: form.tempC ?? null,
+    humidityPct: form.humidityPct ?? null,
+    coldPlunge: form.coldPlunge ?? false,
+    coldMinutes: form.coldPlunge ? (form.coldMinutes ?? null) : null,
+    place: form.place?.trim() || null,
+    note: form.note?.trim() || null,
+    source: form.source ?? 'manual',
+    withIds: form.withIds ?? [],
+  };
+}
 
 export function AppStateProvider({ children }: { children: React.ReactNode }) {
   const [ready, setReady] = useState(false);
   const [session, setSession] = useState<SavedSession | null>(null);
-  const [family, setFamily] = useState<RemoteFamily | null>(null);
-  const [draft, setDraft] = useState<Draft>(emptyDraft('founder'));
-  const [preview, setPreview] = useState<Preview | null>(null);
-  /** The family's name, once the server says this person has been removed from it. */
-  const [removedFrom, setRemovedFrom] = useState<string | null>(null);
-  const draftRef = useRef(draft);
-  draftRef.current = draft;
-  const sessionRef = useRef(session);
-  sessionRef.current = session;
-  const familyRef = useRef(family);
-  familyRef.current = family;
-  /** The push token registered for whoever is signed in, so signing out can remove it. */
-  const pushTokenRef = useRef<string | null>(null);
-  const healthSyncQueue = useRef<Promise<void>>(Promise.resolve());
+  const [family, setFamily] = useState<FamilySnapshot | null>(null);
+  const [status, setStatus] = useState<ScreenStatus>('loading');
+  const [offline, setOffline] = useState(false);
+  const [config, setConfig] = useState<AppConfig>(backend.DEFAULT_APP_CONFIG);
+  const [queue, setQueue] = useState<{ entries: OutboxEntry[]; drafts: SessionDraft[] }>({ entries: [], drafts: [] });
+  const [optimistic, setOptimistic] = useState<Optimistic>(NO_OPTIMISTIC);
+  const [timer, setTimer] = useState<TimerState | null>(null);
+  const [lastSaunaType, setLastSaunaType] = useState<SaunaType>('traditional');
+  const [milestones, setMilestones] = useState<MilestoneMemory>({});
+  const [nagMemory, setNagMemory] = useState<Record<MemberId, NagMemory>>({});
+  const [draft, setDraft] = useState<Draft>(() => emptyDraft('founder'));
+  const [notice, setNotice] = useState<string | null>(null);
+  const [welcomeDue, setWelcomeDue] = useState(false);
+  const [clock, setClock] = useState(() => new Date());
+  const [unit] = useState(deviceTemperatureUnit);
+  const [frozenView, setFrozenView] = useState<AppView | null>(null);
 
-  const persist = useCallback(async (next: SavedSession) => {
+  // Prototype preview: a scenario, plus what you've done inside it.
+  const [previewId, setPreviewId] = useState<PreviewScenarioId | null>(null);
+  const [scenario, setScenario] = useState<PreviewScenario | null>(null);
+  const [previewLogged, setPreviewLogged] = useState<OutboxEntry[]>([]);
+
+  // Latest values for callbacks. Written only from event handlers and effects.
+  const sessionRef = useRef<SavedSession | null>(null);
+  const familyRef = useRef<FamilySnapshot | null>(null);
+  const draftRef = useRef<Draft>(draft);
+  const timerRef = useRef<TimerState | null>(null);
+  const previewRef = useRef<PreviewScenarioId | null>(null);
+  const pushTokenRef = useRef<string | null>(null);
+  const retryTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const pendingSignInRef = useRef<SavedSession | null>(null);
+  const scenarioRef = useRef<PreviewScenario | null>(null);
+  const lastSaunaTypeRef = useRef<SaunaType>('traditional');
+  const viewRef = useRef<AppView | null>(null);
+
+  const [outbox] = useState(() => new Outbox({ store: asyncStore, send: backend.logSession, isRefusal: backend.isRefusal }));
+  const [purchases] = useState(() => new PurchasesSwitch());
+  const [looks, setLooks] = useState<Record<MemberId, Look>>({});
+  const previewServerDelay = useRef(0);
+  /** Bumped each time a preview scenario is picked. */
+  const previewGen = useRef(0);
+
+  const commitSession = useCallback((next: SavedSession | null) => {
+    sessionRef.current = next;
     setSession(next);
-    try {
-      await saveSession(next);
-      await saveMoveMethod(next.me.moveMethod);
-    } catch {
-      // Storage full or unavailable: the app keeps working for this launch.
-    }
+    if (next) saveSession(next).catch(() => undefined);
   }, []);
 
-  /**
-   * Shrinks a picked photo and uploads it to your folder on the server, returning
-   * its path. Each upload gets a new name, so nobody's phone shows a cached old one.
-   */
-  const uploadMine = useCallback(
-    async (remote: NonNullable<SavedSession['remote']>, uri: string, shape: PhotoShape, prefix: string) => {
-      const jpeg = await photoForUpload(uri, shape);
-      return backend.uploadPhoto(remote.familyId, remote.memberId, `${prefix}-${Date.now()}`, jpeg);
-    },
+  const commitFamily = useCallback((next: FamilySnapshot | null) => {
+    familyRef.current = next;
+    setFamily(next);
+  }, []);
+
+  const commitScenario = useCallback((update: (s: PreviewScenario) => PreviewScenario) => {
+    const current = scenarioRef.current;
+    if (!current) return;
+    const next = update(current);
+    scenarioRef.current = next;
+    setScenario(next);
+  }, []);
+
+  /** Preview or no server: actions change what's on screen and nothing else. */
+  const inPreview = useCallback(() => !!previewRef.current || !sessionRef.current?.remote, []);
+  const myIdNow = useCallback(
+    () => (previewRef.current ? PREVIEW_ME : (sessionRef.current?.remote?.memberId ?? sessionRef.current?.me.id ?? '')),
     [],
   );
 
-  /** Fetch the family again. Keeps the last one if the phone is offline. */
+  const commitDraft = useCallback((update: (d: Draft) => Draft) => {
+    const next = update(draftRef.current);
+    draftRef.current = next;
+    setDraft(next);
+  }, []);
+
+  const commitTimer = useCallback((next: TimerState | null) => {
+    timerRef.current = next;
+    setTimer(next);
+    // A Prototype preview scenario's timer stays in memory. Your own timer, with or
+    // without a server, is stored, so it survives the app being killed.
+    if (!previewRef.current) timerMath.saveTimer(next).catch(() => undefined);
+  }, []);
+
+  const syncQueue = useCallback(() => setQueue({ entries: outbox.pending(), drafts: outbox.refusedDrafts() }), [outbox]);
+  const tick = useCallback(() => setClock(new Date()), []);
+
+  // The clock buildView reads: each 30 s, and on every return to the app.
+  useEffect(() => {
+    const id = setInterval(tick, 30_000);
+    return () => clearInterval(id);
+  }, [tick]);
+
+  /** Shrinks a picked photo and uploads it to your folder, returning its path. */
+  const uploadMine = useCallback(async (remote: NonNullable<SavedSession['remote']>, uri: string, shape: PhotoShape, prefix: string) => {
+    const jpeg = await photoForUpload(uri, shape);
+    return backend.uploadPhoto(remote.familyId, remote.memberId, `${prefix}-${Date.now()}`, jpeg);
+  }, []);
+
+  // ─── Sign out (needed by refresh, for someone removed from the family) ──────
+
+  const clearAll = useCallback(async () => {
+    setPreviewId(null);
+    previewRef.current = null;
+    setScenario(null);
+    commitSession(null);
+    commitFamily(null);
+    commitTimer(null);
+    setOptimistic(NO_OPTIMISTIC);
+    commitDraft(() => emptyDraft('founder'));
+    await Promise.all([
+      clearSession().catch(() => undefined),
+      timerMath.saveTimer(null).catch(() => undefined),
+      outbox.clear().catch(() => undefined),
+      cancelAllLocalNotifications(),
+    ]);
+    syncQueue();
+  }, [commitDraft, commitFamily, commitSession, commitTimer, outbox, syncQueue]);
+
+  const signOutNow = useCallback(async () => {
+    const token = pushTokenRef.current;
+    if (token) await backend.forgetPushToken(token).catch(() => undefined);
+    pushTokenRef.current = null;
+    await purchases.logOut().catch(() => undefined);
+    await backend.signOut().catch(() => undefined);
+    await clearAll();
+  }, [clearAll, purchases]);
+
+  // ─── Refresh and the outbox ────────────────────────────────────────────────
+
+  const flushOutbox = useRef<(force?: boolean) => Promise<FlushResult | null>>(async () => null);
+
+  /** Fetch the family again. Keeps the cached one if the phone is offline. */
   const refresh = useCallback(async () => {
     const remote = sessionRef.current?.remote;
-    if (!remote) return;
+    if (!remote || previewRef.current) return;
+    backend.fetchAppConfig().then(setConfig).catch(() => undefined);
     try {
       const next = await backend.fetchFamily(remote.familyId, remote.memberId);
-      setFamily(next);
+      commitFamily(next);
+      saveMindfulMinutes(...mySessions(next, remote.memberId));
+      setStatus('ready');
+      setOffline(false);
       saveCachedFamily(next).catch(() => undefined);
-      // "Today" on the server follows the member's timezone, so keep it on this phone's.
-      const tz = deviceTimezone();
+      tick();
+      // A request that worked: anything waiting goes now.
+      flushOutbox.current().catch(() => undefined);
       const mine = next.members.find((m) => m.id === remote.memberId);
-      if (mine && mine.timezone !== tz) {
-        await backend.updateMember(remote.memberId, { timezone: tz });
-      }
-    } catch {
-      // Offline or the server is down: the cached family stays on screen. If the
-      // server answers but has no membership for this person, they were removed.
+      const tz = deviceTimezone();
+      if (mine && mine.timezone !== tz) await backend.updateMember(remote.memberId, { timezone: tz }).catch(() => undefined);
+    } catch (error) {
+      if (backend.isNetworkError(error)) setOffline(true);
+      setStatus(familyRef.current ? 'ready' : 'error');
       const membership = await backend.myMembership(remote.userId).catch(() => undefined);
-      if (membership === null) setRemovedFrom(familyRef.current?.name ?? 'your family');
-    }
-  }, []);
-
-  /**
-   * Sends today's and yesterday's Apple Health workouts to the server, for people
-   * who chose Apple Health. Reads the session from storage when it hasn't loaded
-   * yet, because iOS can wake Arro in the background for a new workout.
-   */
-  const syncHealth = useCallback(() => {
-    // One at a time: launch, coming back, pull to refresh and Health's own wake-ups
-    // can all ask at once, and two syncs could both swap or remove the same row.
-    const run = healthSyncQueue.current.then(async () => {
-      const current = sessionRef.current ?? (await loadSession());
-      if (!current?.remote || current.me.moveMethod !== 'health') return;
-      try {
-        const now = new Date();
-        const today = dayKey(now);
-        const since = yesterdayOpen(now) ? addDays(today, -1) : today;
-        const [workouts, saved] = await Promise.all([
-          readRecentHealthWorkouts(now),
-          backend.fetchMyHealthWorkouts(current.remote.memberId, since),
-        ]);
-        const active = RNAppState.currentState === 'active';
-        const result = await syncHealthWorkouts(current.remote.memberId, workouts, saved, now, {
-          dismissed: new Set(current.dismissedHealth ?? []),
-          // Open on screen means unlocked, so Health read in full: a workout missing
-          // from it was deleted (or fixed) in the app that recorded it.
-          canRemove: active,
-        });
-        if (result.added > 0) {
-          // The family hears "Dad went for a run" (migration 20261017000004).
-          await backend.sendQueuedPushes().catch(() => undefined);
-        }
-        if (result.added > 0 && inWakingHours(now)) {
-          // Say it's in, so it never feels like a workout went missing: from the
-          // background it brings them into Arro, in the foreground it's the moment it arrives.
-          // Not overnight: a strap can save a workout at any hour.
-          const newest = result.addedWorkouts[result.addedWorkouts.length - 1];
-          await notifyWorkoutSaved(
-            newest.id,
-            `Your ${SAVED_NOUN[newest.type]} is in Arro`,
-            newest.sourceName ? `From ${newest.sourceName}. ${SAVED_BODY}` : SAVED_BODY,
-          );
-        }
-        if (result.added + result.updated + result.replaced + result.removed > 0) await refresh();
-      } catch {
-        // Offline, or the phone is locked so Health can't be read: the next launch,
-        // Health update or pull to refresh tries again.
+      if (membership === null) {
+        const name = familyRef.current?.name ?? 'your family';
+        await signOutNow();
+        showError(`You’re no longer in ${name}`, 'To join again, ask someone in the family for a new code.');
       }
-    });
-    healthSyncQueue.current = run;
-    return run;
-  }, [refresh]);
+    }
+  }, [commitFamily, signOutNow, tick]);
 
-  // Register early: on a background relaunch, iOS's queued Health update waits for this listener.
   useEffect(() => {
-    const sub = onHealthWorkoutsChanged(syncHealth);
-    return () => sub.remove();
-  }, [syncHealth]);
+    flushOutbox.current = async (force = false) => {
+      const current = sessionRef.current;
+      if (!current?.remote || previewRef.current) return null;
+      if (retryTimer.current) clearTimeout(retryTimer.current);
+      retryTimer.current = null;
+      const result = await outbox.flush(force);
+      syncQueue();
+      if (result.sent.length) {
+        setOffline(false);
+        backend.sendQueuedPushes().catch(() => undefined);
+        for (const { entry, rows } of result.sent) {
+          const anchorId = rows[0]?.sessionId;
+          if (!anchorId) continue;
+          saveMindfulMinutes({ id: anchorId, startedAt: entry.input.startedAt, durationMinutes: entry.input.durationMinutes });
+          if (entry.photoUri) {
+            try {
+              const path = await uploadMine(current.remote, entry.photoUri, 'landscape', `session-${anchorId}`);
+              await backend.setSessionPhoto(anchorId, path);
+              const s = sessionRef.current;
+              if (s?.photos?.[entry.input.clientId]) {
+                const photos = { ...s.photos };
+                delete photos[entry.input.clientId];
+                commitSession({ ...s, photos });
+              }
+            } catch {
+              // Saved without it; the photo stays on this phone and can be added again from the session.
+              const s = sessionRef.current;
+              if (s) commitSession({ ...s, photos: { ...s.photos, [anchorId]: entry.photoUri } });
+            }
+          }
+        }
+        refresh().catch(() => undefined);
+      }
+      if (result.error && backend.isNetworkError(result.error)) setOffline(true);
+      const due = outbox.nextDueAt();
+      if (due !== null) {
+        retryTimer.current = setTimeout(() => {
+          flushOutbox.current().catch(() => undefined);
+        }, Math.max(1000, due - Date.now()));
+      }
+      return result;
+    };
+  }, [commitSession, outbox, refresh, syncQueue, uploadMine]);
 
-  /**
-   * Schedules the daily reminder from the session and today's workouts: two weeks
-   * ahead, without today's once this person has moved. Clears it when reminders are off.
-   */
-  const rescheduleReminders = useCallback(() => {
-    const current = sessionRef.current;
-    if (!current?.me.remindersWanted) return scheduleReminders(null, false);
-    const today = dayKey();
+  const syncHealth = useCallback(() => {
+    const remote = sessionRef.current?.remote;
     const fam = familyRef.current;
-    const movedToday = current.remote
-      ? (fam?.memberStreaks[current.remote.memberId]?.movedToday ??
-        !!fam?.workouts.some((w) => w.memberId === current.remote!.memberId && w.localDate === today))
-      : current.workouts.some((w) => w.localDate === today);
-    return scheduleReminders(current.me.reminder, movedToday);
+    if (!remote || previewRef.current || !fam) return;
+    saveMindfulMinutes(...mySessions(fam, remote.memberId));
   }, []);
 
-  useEffect(() => {
-    rescheduleReminders();
-  }, [session, family, rescheduleReminders]);
+  // ─── Reminders ─────────────────────────────────────────────────────────────
 
-  /** Gives the server this phone's push token, once there's permission and a family on the server. */
+  useEffect(() => {
+    if (!session?.remote || previewId || !family) return;
+    if (!session.me.remindersWanted) {
+      scheduleWeeklyReminders([]);
+      return;
+    }
+    const week = family.memberWeeks[session.remote.memberId];
+    scheduleWeeklyReminders(
+      weeklyReminders({
+        days: session.me.reminderDays,
+        time: session.me.reminderTime,
+        weekStartsOn: family.weekStartsOn,
+        goal: week?.goal ?? family.goalPerWeek,
+        countedDays: week?.countedDays ?? 0,
+        minMinutes: week?.minMinutes ?? family.minMinutes,
+        pauses: family.pauses.filter((p) => p.memberId === session.remote?.memberId),
+      }),
+    );
+  }, [session, family, previewId]);
+
+  /** Gives the server this phone's push token, once there's permission and a family. */
   const registerPush = useCallback(async () => {
-    const current = sessionRef.current;
-    if (!current?.remote) return;
+    if (!sessionRef.current?.remote) return;
     const token = await expoPushToken();
     if (!token) return;
     try {
@@ -339,112 +533,115 @@ export function AppStateProvider({ children }: { children: React.ReactNode }) {
     }
   }, []);
 
-  useEffect(() => {
-    showNotificationsInForeground();
-  }, []);
-
-  const clearAll = useCallback(async () => {
-    setPreview(null);
-    setSession(null);
-    setFamily(null);
-    setDraft(emptyDraft('founder'));
-    try {
-      await clearSession();
-    } catch {
-      // Nothing to clear.
-    }
-  }, []);
+  // ─── Launch ────────────────────────────────────────────────────────────────
 
   useEffect(() => {
     let alive = true;
+    showNotificationsInForeground();
+    clearLegacyStorage().catch(() => undefined);
+    cancelLegacyNotifications();
     (async () => {
       let saved = await loadSession();
+      const [welcomed, lastType, memory, nag, savedLooks] = await Promise.all([
+        loadWelcomed(),
+        timerMath.loadLastSaunaType(),
+        loadMilestones(),
+        loadNagMemory(),
+        loadLooks(),
+      ]);
       if (saved?.remote) {
+        const remote = saved.remote;
         // The Supabase login is gone (signed out elsewhere, account deleted): back to onboarding.
-        const userId = await backend.currentUserId().catch(() => saved!.remote!.userId);
-        if (userId !== saved.remote.userId) {
+        const userId = await backend.currentUserId().catch(() => remote.userId);
+        if (userId !== remote.userId) {
           await clearSession().catch(() => undefined);
           saved = null;
         } else {
           const cached = await loadCachedFamily();
-          if (alive && cached?.id === saved.remote.familyId) setFamily(cached);
+          if (alive && cached?.id === remote.familyId) {
+            commitFamily(cached);
+            setStatus('ready');
+          }
+          const storedTimer = await timerMath.loadTimer();
+          if (alive && storedTimer) commitTimer(storedTimer);
+          await outbox.load();
+          purchases.logIn(remote.userId).catch(() => undefined);
         }
       }
+      if (saved && !saved.remote) {
+        // No server (a dev build without .env.local): the timer is still yours.
+        const storedTimer = await timerMath.loadTimer();
+        if (alive && storedTimer) commitTimer(storedTimer);
+      }
       if (!alive) return;
-      setSession(saved);
       sessionRef.current = saved;
+      setSession(saved);
+      setLastSaunaType(lastType);
+      setMilestones(memory);
+      setNagMemory(nag);
+      setLooks(savedLooks);
+      // Someone already signed in from Arro sees "Arro is now Saunafam" once.
+      setWelcomeDue(!!saved && !welcomed);
+      syncQueue();
       setReady(true);
       if (saved?.remote) {
         refresh();
         registerPush();
-      }
-      if (saved?.remote && saved.me.moveMethod === 'health') {
-        // Asks once for people who chose Apple Health before it connected; iOS skips the sheet after that.
-        connectHealth()
-          .catch(() => undefined)
-          .then(() => syncHealth());
+        flushOutbox.current(true).catch(() => undefined);
       }
     })();
     return () => {
       alive = false;
     };
-  }, [refresh, registerPush, syncHealth]);
+  }, [commitFamily, commitTimer, outbox, purchases, refresh, registerPush, syncQueue]);
 
-  // Coming back to the app picks up what the family did meanwhile, and any new Health workouts.
+  // Coming back to the app: a new clock, the family, and anything waiting to send.
   useEffect(() => {
     const sub = RNAppState.addEventListener('change', (state) => {
-      if (state === 'active') {
-        refresh();
-        syncHealth();
-        // A new day may have started since the last schedule.
-        rescheduleReminders();
-      }
+      if (state !== 'active') return;
+      tick();
+      refresh();
+      flushOutbox.current(true).catch(() => undefined);
     });
     return () => sub.remove();
-  }, [refresh, rescheduleReminders, syncHealth]);
+  }, [refresh, tick]);
 
-  const startFlow = useCallback((role: Draft['role']) => setDraft(emptyDraft(role)), []);
-  const updateDraft = useCallback((patch: Partial<Draft>) => setDraft((d) => ({ ...d, ...patch })), []);
+  // ─── Onboarding ────────────────────────────────────────────────────────────
 
-  /** The session for someone in a family on the server. */
+  const startFlow = useCallback((role: Draft['role']) => commitDraft(() => emptyDraft(role)), [commitDraft]);
+  const updateDraft = useCallback((patch: Partial<Draft>) => commitDraft((d) => ({ ...d, ...patch })), [commitDraft]);
+
   const remoteSession = useCallback(
-    (d: Draft, remote: SavedSession['remote'] & {}, remindersWanted: boolean, familyName: string): SavedSession => ({
+    (d: Draft, remote: NonNullable<SavedSession['remote']>, remindersWanted: boolean, familyName: string): SavedSession => ({
       version: 1,
       role: d.role,
       me: {
         id: remote.memberId,
         name: d.name.trim() || 'You',
-        color: memberColor(0), // the server's colour replaces this once the family loads
+        color: paletteColor(0),
         photoUri: d.photoUri,
-        moveMethod: d.moveMethod,
-        reminder: d.reminder,
+        reminderDays: d.reminderDays,
+        reminderTime: d.reminderTime,
         remindersWanted,
         joinedOn: dayKey(),
       },
       family: { name: familyName, joinCode: '', invited: d.invited },
-      workouts: [],
       remote,
       photos: {},
     }),
     [],
   );
 
-  /** An existing account's session, held while a new phone is asked about notifications. */
-  const pendingSignInRef = useRef<SavedSession | null>(null);
-
   const openExisting = useCallback(
     async (next: SavedSession) => {
-      sessionRef.current = next;
-      await persist(next);
+      commitSession(next);
+      // Signing in on a new phone isn't the Arro-to-Saunafam moment.
+      saveWelcomed().catch(() => undefined);
+      if (next.remote) purchases.logIn(next.remote.userId).catch(() => undefined);
       await refresh();
       registerPush();
-      if (next.me.moveMethod === 'health') {
-        connectHealth()
-          .catch(() => undefined)
-          .then(() => syncHealth());
-      }
     },
-    [persist, refresh, registerPush, syncHealth],
+    [commitSession, purchases, refresh, registerPush],
   );
 
   const signIn = useCallback(async (): Promise<'cancelled' | 'continue' | 'done' | 'ask'> => {
@@ -453,16 +650,7 @@ export function AppStateProvider({ children }: { children: React.ReactNode }) {
     const d = draftRef.current;
     const existing = await backend.myMembership(result.userId);
     if (existing) {
-      // Signed in before, on this phone or another: straight to the family.
-      // Onboarding's "How you move" was skipped, so keep what this phone chose last.
-      const moveMethod = (await loadMoveMethod()) ?? d.moveMethod;
-      const next = remoteSession(
-        { ...d, name: d.name || result.givenName || '', moveMethod },
-        { userId: result.userId, ...existing },
-        false,
-        '',
-      );
-      // A new phone hasn't been asked yet: without it, cheers and nudges never arrive.
+      const next = remoteSession({ ...d, name: d.name || result.givenName || '' }, { userId: result.userId, ...existing }, false, '');
       if ((await notificationPermission()) === 'undetermined') {
         pendingSignInRef.current = next;
         return 'ask';
@@ -470,9 +658,9 @@ export function AppStateProvider({ children }: { children: React.ReactNode }) {
       await openExisting(next);
       return 'done';
     }
-    setDraft((cur) => ({ ...cur, userId: result.userId, name: cur.name || result.givenName || '' }));
+    commitDraft((cur) => ({ ...cur, userId: result.userId, name: cur.name || result.givenName || '' }));
     return 'continue';
-  }, [openExisting, remoteSession]);
+  }, [commitDraft, openExisting, remoteSession]);
 
   const finishSignIn = useCallback(async () => {
     const next = pendingSignInRef.current;
@@ -481,339 +669,533 @@ export function AppStateProvider({ children }: { children: React.ReactNode }) {
     await openExisting(next);
   }, [openExisting]);
 
+  /** Name your family: only a rename once the family exists. It's made at Your rhythm (saveRhythm). */
   const saveFamilyName = useCallback(async () => {
     const d = draftRef.current;
+    if (!backend.backendEnabled || !d.userId || !d.remote) return;
+    await backend.renameFamily(d.remote.familyId, d.familyName.trim());
+  }, []);
+
+  const saveRhythm = useCallback(async () => {
+    const d = draftRef.current;
     if (!backend.backendEnabled || !d.userId) return;
-    const name = d.familyName.trim();
     if (d.remote) {
-      await backend.renameFamily(d.remote.familyId, name);
+      await backend.setFamilyRules(d.remote.familyId, d.goal, d.minMinutes);
       return;
     }
-    const remote = await backend.createFamily(name, d.name.trim() || 'Me', deviceTimezone(), d.reminder);
+    const remote = await backend.createFamily({
+      familyName: d.familyName.trim(),
+      displayName: d.name.trim() || 'Me',
+      timezone: deviceTimezone(),
+      reminderTime: d.reminderTime,
+      goal: d.goal,
+      minMinutes: d.minMinutes,
+      weekStartsOn: d.weekStartsOn,
+    });
     const code = await backend.ensureInviteCode(remote.familyId, remote.memberId);
-    setDraft((cur) => ({ ...cur, remote, joinCode: code }));
-  }, []);
+    commitDraft((cur) => ({ ...cur, remote, joinCode: code }));
+  }, [commitDraft]);
 
   const lookUpInvite = useCallback(async () => {
     if (!backend.backendEnabled) return;
     const invite = await backend.previewInvite(draftRef.current.joinCode);
-    setDraft((cur) => ({ ...cur, invite, familyName: invite.familyName }));
-  }, []);
+    commitDraft((cur) => ({ ...cur, invite, familyName: invite.familyName }));
+  }, [commitDraft]);
 
-  // Joining at "Join the family" rather than on the last step means someone who
-  // stops partway is still in the family; signing in again takes them to it.
   const joinInvitedFamily = useCallback(async () => {
     const d = draftRef.current;
     if (!backend.backendEnabled || !d.userId || d.remote) return;
-    const remote = await backend.joinFamily(d.joinCode, d.name.trim() || 'Me', deviceTimezone(), d.reminder);
-    draftRef.current = { ...draftRef.current, remote };
-    setDraft((cur) => ({ ...cur, remote }));
-    // Joining queued "<name> joined" for everyone already in the family.
+    const remote = await backend.joinFamily(d.joinCode, d.name.trim() || 'Me', deviceTimezone(), d.reminderTime);
+    commitDraft((cur) => ({ ...cur, remote }));
     backend.sendQueuedPushes().catch(() => undefined);
-  }, []);
+  }, [commitDraft]);
 
   const completeOnboarding = useCallback(
     async (remindersWanted: boolean) => {
       const d = draftRef.current;
-      const founder = d.role === 'founder';
-
+      saveWelcomed().catch(() => undefined);
       if (backend.backendEnabled && d.userId) {
         let remote = d.remote;
         if (remote) {
-          // Made or joined earlier in onboarding, before the reminder time was picked.
-          await backend.updateMember(remote.memberId, { reminder: d.reminder });
-        } else if (!founder) {
-          // Not joined yet (an older path into this screen): join now.
-          remote = await backend.joinFamily(d.joinCode, d.name.trim() || 'Me', deviceTimezone(), d.reminder);
+          await backend.updateMember(remote.memberId, { reminderTime: d.reminderTime });
+        } else if (d.role === 'invitee') {
+          remote = await backend.joinFamily(d.joinCode, d.name.trim() || 'Me', deviceTimezone(), d.reminderTime);
           backend.sendQueuedPushes().catch(() => undefined);
         }
         if (!remote) throw new Error('No family yet');
-        const next = remoteSession(d, { userId: d.userId, ...remote }, remindersWanted, d.familyName.trim());
-        sessionRef.current = next;
-        await persist(next);
+        const fullRemote = { userId: d.userId, ...remote };
+        const next = remoteSession(d, fullRemote, remindersWanted, d.familyName.trim());
+        commitSession(next);
+        purchases.logIn(d.userId).catch(() => undefined);
         if (d.photoUri) {
-          // The photo from onboarding. If it doesn't upload, it stays on this phone and can be added again later.
           try {
-            const path = await uploadMine(next.remote!, d.photoUri, 'square', 'avatar');
+            const path = await uploadMine(fullRemote, d.photoUri, 'square', 'avatar');
             await backend.setMemberPhoto(remote.memberId, path);
           } catch {
-            // Offline or Storage isn't set up yet.
+            // Offline or Storage isn't set up yet: it stays on this phone.
           }
         }
         await refresh();
         registerPush();
-        // Health access was asked for at "How you move"; a workout from today counts straight away.
-        if (d.moveMethod === 'health') await syncHealth();
         return;
       }
-
-      await persist({
+      // No server: the preview family, with you as Sam.
+      commitSession({
         version: 1,
         role: d.role,
         me: {
-          id: 'me',
-          name: d.name.trim() || 'You',
-          color: memberColor(founder ? 0 : DEMO_MEMBER_COUNT), // join order: founder first, invitee after the three already in
+          id: PREVIEW_ME,
+          name: d.name.trim() || 'Sam',
+          color: paletteColor(0),
           photoUri: d.photoUri,
-          moveMethod: d.moveMethod,
-          reminder: d.reminder,
+          reminderDays: d.reminderDays,
+          reminderTime: d.reminderTime,
           remindersWanted,
           joinedOn: dayKey(),
         },
-        family: {
-          name: founder ? d.familyName.trim() || 'Our family' : d.familyName,
-          joinCode: d.joinCode,
-          invited: d.invited,
-        },
-        workouts: [],
+        family: { name: d.familyName.trim() || 'Sunday sauna', joinCode: d.joinCode, invited: d.invited },
       });
     },
-    [persist, refresh, registerPush, remoteSession, syncHealth, uploadMine],
+    [commitSession, purchases, refresh, registerPush, remoteSession, uploadMine],
   );
 
-  const logWorkout = useCallback(
-    async (input: LogInput) => {
-      const current = sessionRef.current;
-      if (!current) return;
-      const now = new Date();
-      const localDate = input.day === 'today' ? dayKey(now) : addDays(dayKey(now), -1);
+  const signOut = useCallback(async () => {
+    setFrozenView(viewRef.current);
+    await signOutNow();
+  }, [signOutNow]);
 
-      if (current.remote) {
-        const id = await backend.insertWorkout(current.remote.memberId, {
-          localDate,
-          type: input.type,
-          minutes: input.minutes,
-          note: input.note?.trim() || undefined,
-        });
-        backend.sendQueuedPushes().catch(() => undefined);
-        if (input.photoUri) {
-          try {
-            const path = await uploadMine(current.remote, input.photoUri, 'landscape', `workout-${id}`);
-            await backend.setWorkoutPhoto(id, path);
-          } catch {
-            // The workout is saved; the photo stays on this phone, and can be added again from the workout.
-            await persist({ ...current, photos: { ...current.photos, [id]: input.photoUri } });
-          }
-        }
-        await refresh();
+  const checkBeforeDelete = useCallback(async () => {
+    if (!sessionRef.current?.remote || previewRef.current) return { paysForPlus: false };
+    return backend.deleteAccountDryRun().catch(() => ({ paysForPlus: false }));
+  }, []);
+
+  const deleteAccount = useCallback(async () => {
+    const remote = sessionRef.current?.remote;
+    if (remote && (await backend.deleteAccount(remote)) === 'cancelled') return 'cancelled';
+    setFrozenView(viewRef.current);
+    pushTokenRef.current = null;
+    await purchases.logOut().catch(() => undefined);
+    await clearAll();
+    return 'deleted';
+  }, [clearAll, purchases]);
+
+  // ─── Sessions ──────────────────────────────────────────────────────────────
+
+  /** Roll an optimistic change back and say so quietly. */
+  const rollBack = useCallback((undo: (o: Optimistic) => Optimistic, message: string) => {
+    setOptimistic(undo);
+    setNotice(message);
+  }, []);
+
+  const outcomeFor = useCallback(
+    async (clientId: string): Promise<LogOutcome> => {
+      const result = await flushOutbox.current(true);
+      const draftHit = outbox.refusedDrafts().find((d) => d.input.clientId === clientId);
+      if (draftHit) return { status: 'refused', message: draftHit.message };
+      if (outbox.pending().some((e) => e.input.clientId === clientId)) return { status: 'waiting' };
+      // "Jo already logged this one" for anyone the server skipped.
+      const rows = result?.sent.find((x) => x.entry.input.clientId === clientId)?.rows ?? [];
+      const names = familyRef.current?.members ?? [];
+      return {
+        status: 'saved',
+        skippedNames: rows.filter((r) => r.skipped).map((r) => names.find((m) => m.id === r.memberId)?.name ?? 'Someone'),
+      };
+    },
+    [outbox],
+  );
+
+  const enqueue = useCallback(
+    async (clientId: string, form: SessionForm): Promise<LogOutcome> => {
+      const current = sessionRef.current;
+      if (!current) return { status: 'waiting' };
+      timerMath.saveLastSaunaType(form.saunaType).catch(() => undefined);
+      setLastSaunaType(form.saunaType);
+      if (inPreview()) {
+        const input = toInput('preview-family', clientId, form);
+        setPreviewLogged((list) => [
+          ...list,
+          {
+            input,
+            memberId: previewRef.current ? PREVIEW_ME : current.me.id,
+            photoUri: form.photoUri ?? null,
+            createdAt: new Date().toISOString(),
+            attempts: 0,
+            nextAttemptAt: 0,
+            lastError: null,
+          },
+        ]);
+        tick();
+        return { status: 'saved', skippedNames: [] };
+      }
+      const remote = current.remote as NonNullable<SavedSession['remote']>;
+      // The photo shows from this phone until the uploaded copy loads.
+      if (form.photoUri) commitSession({ ...current, photos: { ...current.photos, [clientId]: form.photoUri } });
+      await outbox.enqueue(toInput(remote.familyId, clientId, form), remote.memberId, form.photoUri ?? null);
+      syncQueue();
+      tick();
+      const outcome = await outcomeFor(clientId);
+      return outcome;
+    },
+    [commitSession, inPreview, outbox, outcomeFor, syncQueue, tick],
+  );
+
+  const logSession = useCallback((form: SessionForm) => enqueue(uuid(), form), [enqueue]);
+
+  const resendDraft = useCallback(
+    async (clientId: string, form: SessionForm) => {
+      if (inPreview()) commitScenario((s) => ({ ...s, drafts: s.drafts.filter((d) => d.input.clientId !== clientId) }));
+      return enqueue(clientId, form);
+    },
+    [commitScenario, enqueue, inPreview],
+  );
+
+  const discardDraft = useCallback(
+    async (clientId: string) => {
+      if (previewRef.current) {
+        commitScenario((s) => ({ ...s, drafts: s.drafts.filter((d) => d.input.clientId !== clientId) }));
         return;
       }
-
-      const workout: LoggedWorkout = {
-        id: `w-${now.getTime()}`,
-        localDate,
-        loggedAt: now.toISOString(),
-        type: input.type,
-        minutes: input.minutes,
-        note: input.note?.trim() || undefined,
-        photoUri: input.photoUri ?? null,
-      };
-      await persist({ ...current, workouts: [...current.workouts, workout] });
+      await outbox.discardDraft(clientId);
+      syncQueue();
     },
-    [persist, refresh, uploadMine],
+    [commitScenario, outbox, syncQueue],
+  );
+
+  const draftFor = useCallback(
+    (clientId: string) =>
+      [...outbox.refusedDrafts(), ...(scenarioRef.current?.drafts ?? [])].find((d) => d.input.clientId === clientId) ?? null,
+    [outbox],
+  );
+
+  const editSession = useCallback(
+    async (anchorId: string, changes: SessionChanges) => {
+      if (inPreview()) return;
+      await backend.updateSession(anchorId, changes);
+      await refresh();
+    },
+    [inPreview, refresh],
+  );
+
+  const setSessionPhoto = useCallback(
+    async (anchorId: string, photoUri: string | null) => {
+      const current = sessionRef.current;
+      if (!current?.remote || previewRef.current) return;
+      const oldPath = familyRef.current?.sessions.find((s) => s.id === anchorId)?.photoPath;
+      const path = photoUri ? await uploadMine(current.remote, photoUri, 'landscape', `session-${anchorId}`) : null;
+      await backend.setSessionPhoto(anchorId, path);
+      if (oldPath) backend.removePhoto(oldPath).catch(() => undefined);
+      if (current.photos?.[anchorId]) {
+        const photos = { ...current.photos };
+        delete photos[anchorId];
+        commitSession({ ...current, photos });
+      }
+      await refresh();
+    },
+    [commitSession, refresh, uploadMine],
+  );
+
+  const deleteSession = useCallback(
+    async (anchorId: string) => {
+      setOptimistic((o) => ({ ...o, removedSessions: [...o.removedSessions, anchorId] }));
+      if (inPreview()) return;
+      try {
+        const photo = familyRef.current?.sessions.find((s) => s.id === anchorId)?.photoPath;
+        await backend.deleteSession(anchorId);
+        if (photo) backend.removePhoto(photo).catch(() => undefined);
+        await refresh();
+      } catch {
+        rollBack((o) => ({ ...o, removedSessions: o.removedSessions.filter((id) => id !== anchorId) }), 'Couldn’t delete that session. Try again.');
+      }
+    },
+    [inPreview, refresh, rollBack],
+  );
+
+  const removeMe = useCallback(
+    async (anchorId: string) => {
+      const myId = myIdNow();
+      const fam = previewRef.current ? scenarioRef.current?.family : familyRef.current;
+      const row = fam?.sessions.find((s) => (s.sharedId ?? s.id) === anchorId && s.memberId === myId);
+      if (!row) return;
+      setOptimistic((o) => ({ ...o, removedRows: [...o.removedRows, row.id] }));
+      if (inPreview()) return;
+      try {
+        await backend.removeMeFromSession(row.id);
+        await refresh();
+      } catch {
+        rollBack((o) => ({ ...o, removedRows: o.removedRows.filter((id) => id !== row.id) }), 'Couldn’t take you off that session. Try again.');
+      }
+    },
+    [inPreview, myIdNow, refresh, rollBack],
+  );
+
+  const setCheer = useCallback(
+    async (anchorId: string, on: boolean) => {
+      setOptimistic((o) => ({ ...o, cheers: { ...o.cheers, [anchorId]: on } }));
+      if (inPreview()) return;
+      const myId = myIdNow();
+      try {
+        if (on) await backend.cheerSession(myId, anchorId);
+        else await backend.uncheerSession(myId, anchorId);
+        backend.sendQueuedPushes().catch(() => undefined);
+      } catch {
+        rollBack((o) => {
+          const cheers = { ...o.cheers };
+          delete cheers[anchorId];
+          return { ...o, cheers };
+        }, on ? 'Couldn’t send that cheer. Try again.' : 'Couldn’t take that cheer back. Try again.');
+      }
+    },
+    [inPreview, myIdNow, rollBack],
+  );
+  const cheer = useCallback((anchorId: string) => setCheer(anchorId, true), [setCheer]);
+  const uncheer = useCallback((anchorId: string) => setCheer(anchorId, false), [setCheer]);
+
+  const comment = useCallback(
+    async (anchorId: string, body: string) => {
+      const text = body.trim();
+      if (!text) return;
+      const pendingComment: SessionComment = {
+        id: `pending-comment-${uuid()}`,
+        sessionId: anchorId,
+        memberId: myIdNow(),
+        body: text,
+        createdAt: new Date().toISOString(),
+        pending: !inPreview(),
+      };
+      setOptimistic((o) => ({ ...o, comments: [...o.comments, pendingComment] }));
+      if (inPreview()) return;
+      try {
+        await backend.addComment(pendingComment.memberId, anchorId, text);
+        backend.sendQueuedPushes().catch(() => undefined);
+        await refresh();
+        setOptimistic((o) => ({ ...o, comments: o.comments.filter((c) => c.id !== pendingComment.id) }));
+      } catch (error) {
+        const tooMany = (error as { code?: string })?.code === 'P0001';
+        rollBack(
+          (o) => ({ ...o, comments: o.comments.filter((c) => c.id !== pendingComment.id) }),
+          tooMany ? 'That’s 20 comments today. Try again tomorrow.' : 'Couldn’t send that comment. Try again.',
+        );
+      }
+    },
+    [inPreview, myIdNow, refresh, rollBack],
+  );
+
+  const deleteComment = useCallback(
+    async (commentId: string) => {
+      setOptimistic((o) => ({ ...o, deletedComments: [...o.deletedComments, commentId] }));
+      if (inPreview() || commentId.startsWith('pending-')) return;
+      try {
+        await backend.deleteComment(commentId);
+        await refresh();
+      } catch {
+        rollBack((o) => ({ ...o, deletedComments: o.deletedComments.filter((id) => id !== commentId) }), 'Couldn’t delete that comment. Try again.');
+      }
+    },
+    [inPreview, refresh, rollBack],
   );
 
   const nudge = useCallback(async (memberId: string): Promise<'sent' | 'already'> => {
     const current = sessionRef.current;
-    // The local demo family has no server to tell.
-    if (!current?.remote) return 'sent';
+    if (!current?.remote || previewRef.current) return 'sent';
     const result = await backend.sendNudge(current.remote.memberId, memberId);
     if (result === 'sent') backend.sendQueuedPushes().catch(() => undefined);
     return result;
   }, []);
 
-  const takeBreak = useCallback(
-    async (days: number) => {
-      const remote = sessionRef.current?.remote;
-      if (!remote) return;
-      await backend.pauseMe(remote.memberId, days);
-      await refresh();
+  // ─── Timer ─────────────────────────────────────────────────────────────────
+
+  const familyMin = useCallback(() => {
+    const fam = previewRef.current ? scenarioRef.current?.family : familyRef.current;
+    const id = myIdNow();
+    return fam?.memberWeeks[id]?.minMinutes ?? fam?.minMinutes ?? 10;
+  }, [myIdNow]);
+
+  const startTimer = useCallback(
+    async (opts: { targetMinutes?: number; saunaType?: SaunaType; at?: Date } = {}) => {
+      if (timerRef.current) return timerRef.current;
+      const now = new Date();
+      const next = timerMath.startTimer(opts.at && opts.at.getTime() <= now.getTime() ? opts.at : now, {
+        targetMinutes: opts.targetMinutes ?? timerMath.defaultTargetMinutes(familyMin()),
+        saunaType: opts.saunaType ?? lastSaunaTypeRef.current,
+      });
+      commitTimer(next);
+      scheduleTimerNotifications(timerMath.notificationTimes(next, now), next.targetMinutes);
+      return next;
     },
-    [refresh],
+    [commitTimer, familyMin],
   );
 
-  const endBreak = useCallback(async () => {
-    const remote = sessionRef.current?.remote;
-    if (!remote) return;
-    await backend.endMyPause(remote.memberId);
-    await refresh();
-  }, [refresh]);
-
-  const cheer = useCallback(
-    async (workoutId: string) => {
-      const current = sessionRef.current;
-      if (!current?.remote) return;
-      await backend.cheerWorkout(current.remote.memberId, workoutId);
-      backend.sendQueuedPushes().catch(() => undefined);
-      await refresh();
-    },
-    [refresh],
-  );
-
-  const comment = useCallback(
-    async (workoutId: string, body: string) => {
-      const current = sessionRef.current;
-      const text = body.trim();
-      if (!current?.remote || !text) return;
-      await backend.addComment(current.remote.memberId, workoutId, text);
-      backend.sendQueuedPushes().catch(() => undefined);
-      await refresh();
-    },
-    [refresh],
-  );
-
-  const deleteComment = useCallback(
-    async (commentId: string) => {
-      if (!sessionRef.current?.remote) return;
-      await backend.deleteComment(commentId);
-      await refresh();
-    },
-    [refresh],
-  );
-
-  const removeWorkout = useCallback(
-    async (workoutId: string) => {
-      const current = sessionRef.current;
+  const changeTimer = useCallback(
+    async (change: (t: TimerState, now: Date) => TimerState) => {
+      const current = timerRef.current;
       if (!current) return;
-      if (!current.remote) {
-        await persist({ ...current, workouts: current.workouts.filter((w) => w.id !== workoutId) });
-        return;
-      }
-      const healthId = familyRef.current?.workouts.find((w) => w.id === workoutId)?.healthWorkoutId;
-      if (healthId) {
-        // Remembered on this phone so the next sync doesn't bring it straight back.
-        const dismissed = [...(current.dismissedHealth ?? []), healthId].slice(-200);
-        const next = { ...current, dismissedHealth: dismissed };
-        sessionRef.current = next;
-        await persist(next);
-      }
-      await backend.deleteWorkout(workoutId);
-      await refresh();
+      const now = new Date();
+      const next = change(current, now);
+      commitTimer(next);
+      tick();
+      if (timerMath.phase(next) === 'heat') scheduleTimerNotifications(timerMath.notificationTimes(next, now), next.targetMinutes);
+      else cancelTimerNotifications();
     },
-    [persist, refresh],
+    [commitTimer, tick],
   );
 
-  const changeWorkoutType = useCallback(
-    async (workoutId: string, type: WorkoutType) => {
-      const current = sessionRef.current;
-      if (!current) return;
-      if (!current.remote) {
-        await persist({ ...current, workouts: current.workouts.map((w) => (w.id === workoutId ? { ...w, type } : w)) });
-        return;
-      }
-      await backend.setWorkoutType(workoutId, type);
-      await refresh();
+  const coolOff = useCallback(() => changeTimer(timerMath.coolOff), [changeTimer]);
+  const resumeTimer = useCallback(() => changeTimer(timerMath.resume), [changeTimer]);
+  const setTimerTarget = useCallback((m: number) => changeTimer((t) => timerMath.setTarget(t, m)), [changeTimer]);
+  const setTimerSaunaType = useCallback((s: SaunaType) => changeTimer((t) => timerMath.setSaunaType(t, s)), [changeTimer]);
+
+  const finishTimer = useCallback(async () => {
+    const current = timerRef.current;
+    if (!current) return null;
+    const result = timerMath.finish(current, new Date());
+    commitTimer(null);
+    cancelTimerNotifications();
+    return result;
+  }, [commitTimer]);
+
+  const discardTimer = useCallback(async () => {
+    commitTimer(null);
+    cancelTimerNotifications();
+  }, [commitTimer]);
+
+  const devSetTimer = useCallback(
+    (state: TimerState | null) => {
+      if (!__DEV__) return;
+      commitTimer(state);
+      tick();
     },
-    [persist, refresh],
+    [commitTimer, tick],
   );
 
-  const syncNow = useCallback(async () => {
-    await syncHealth();
-    await refresh();
-  }, [refresh, syncHealth]);
+  // ─── Me, family, settings ──────────────────────────────────────────────────
 
   const updateProfile = useCallback(
     async (patch: { name?: string; photoUri?: string | null }) => {
       const current = sessionRef.current;
       if (!current) return;
-      const name = patch.name?.trim();
-      if (current.remote && name && name !== current.me.name) {
-        await backend.updateMember(current.remote.memberId, { name });
-      }
-      // A new or removed photo goes to the server, so the family sees it.
-      const remote = current.remote;
-      const oldPath = remote ? familyRef.current?.members.find((m) => m.id === remote.memberId)?.photoPath : null;
-      const changed = patch.photoUri !== undefined && patch.photoUri !== current.me.photoUri;
-      if (remote && changed) {
-        if (patch.photoUri) {
-          const path = await uploadMine(remote, patch.photoUri, 'square', 'avatar');
+      const name = patch.name?.trim() || undefined;
+      const before = current;
+      setOptimistic((o) => ({ ...o, profile: { ...o.profile, ...(name ? { name } : {}), ...(patch.photoUri !== undefined ? { photoUri: patch.photoUri } : {}) } }));
+      commitSession({ ...current, me: { ...current.me, name: name ?? current.me.name, photoUri: patch.photoUri === undefined ? current.me.photoUri : patch.photoUri } });
+      if (inPreview()) return;
+      const remote = current.remote as NonNullable<SavedSession['remote']>;
+      try {
+        if (name && name !== before.me.name) await backend.updateMember(remote.memberId, { name });
+        if (patch.photoUri !== undefined && patch.photoUri !== before.me.photoUri) {
+          const oldPath = familyRef.current?.members.find((m) => m.id === remote.memberId)?.photoPath;
+          const path = patch.photoUri ? await uploadMine(remote, patch.photoUri, 'square', 'avatar') : null;
           await backend.setMemberPhoto(remote.memberId, path);
-        } else {
-          await backend.setMemberPhoto(remote.memberId, null);
+          if (oldPath) backend.removePhoto(oldPath).catch(() => undefined);
         }
-        if (oldPath) backend.removePhoto(oldPath).catch(() => undefined);
+        await refresh();
+        setOptimistic((o) => ({ ...o, profile: null }));
+      } catch {
+        commitSession(before);
+        rollBack((o) => ({ ...o, profile: null }), 'Couldn’t save your profile. Try again.');
       }
-      await persist({
-        ...current,
-        me: {
-          ...current.me,
-          name: name || current.me.name,
-          photoUri: patch.photoUri === undefined ? current.me.photoUri : patch.photoUri,
-        },
-      });
-      if (current.remote) await refresh();
     },
-    [persist, refresh, uploadMine],
+    [commitSession, inPreview, refresh, rollBack, uploadMine],
   );
 
-  const setWorkoutPhoto = useCallback(
-    async (workoutId: string, photoUri: string | null) => {
-      const current = sessionRef.current;
-      if (!current) return;
-      if (!current.remote) {
-        // A family on this phone: the photo stays here.
-        await persist({
-          ...current,
-          workouts: current.workouts.map((w) => (w.id === workoutId ? { ...w, photoUri } : w)),
+  /** Prototype preview: Settings' writes change the scenario's family in memory. */
+  const changePreviewFamily = useCallback(
+    (update: (f: FamilySnapshot, today: string) => FamilySnapshot) =>
+      commitScenario((s) => (s.family ? { ...s, family: update(s.family, dayKey(s.now)) } : s)),
+    [commitScenario],
+  );
+
+  const takeBreak = useCallback(
+    async (days: number) => {
+      const remote = sessionRef.current?.remote;
+      if (previewRef.current) {
+        changePreviewFamily((f, today) => {
+          const current = f.pauses.find((p) => p.memberId === PREVIEW_ME && p.startsOn <= today && today <= p.endsOn);
+          const others = f.pauses.filter((p) => p !== current);
+          return { ...f, pauses: [...others, { memberId: PREVIEW_ME, startsOn: current?.startsOn ?? today, endsOn: addDays(today, days - 1) }] };
         });
         return;
       }
-      const oldPath = familyRef.current?.workouts.find((w) => w.id === workoutId)?.photoPath;
-      const path = photoUri ? await uploadMine(current.remote, photoUri, 'landscape', `workout-${workoutId}`) : null;
-      await backend.setWorkoutPhoto(workoutId, path);
-      if (oldPath) backend.removePhoto(oldPath).catch(() => undefined);
-      if (current.photos?.[workoutId]) {
-        const { [workoutId]: _dropped, ...photos } = current.photos;
-        await persist({ ...current, photos });
-      }
+      if (!remote) return;
+      await backend.pauseMe(remote.memberId, days);
       await refresh();
     },
-    [persist, refresh, uploadMine],
+    [changePreviewFamily, refresh],
   );
 
-  const setMoveMethod = useCallback(
-    async (method: MoveMethod) => {
-      const current = sessionRef.current;
-      if (!current) return;
-      const next = { ...current, me: { ...current.me, moveMethod: method } };
-      sessionRef.current = next;
-      await persist(next);
-      if (method !== 'health') return;
-      // iOS shows the sheet only the first time; after that this just starts watching.
-      await connectHealth().catch(() => false);
-      await syncHealth();
+  const endBreak = useCallback(async () => {
+    const remote = sessionRef.current?.remote;
+    if (previewRef.current) {
+      changePreviewFamily((f, today) => ({
+        ...f,
+        pauses: f.pauses
+          .filter((p) => !(p.memberId === PREVIEW_ME && p.startsOn >= today))
+          .map((p) => (p.memberId === PREVIEW_ME && p.startsOn < today && today <= p.endsOn ? { ...p, endsOn: addDays(today, -1) } : p)),
+      }));
+      return;
+    }
+    if (!remote) return;
+    await backend.endMyPause(remote.memberId);
+    await refresh();
+  }, [changePreviewFamily, refresh]);
+
+  const setRules = useCallback(
+    async (goal: number, minMinutes: number) => {
+      const remote = sessionRef.current?.remote;
+      if (previewRef.current) {
+        const today = dayKey(scenarioRef.current?.now ?? new Date());
+        const next = addDays(weekStart(today, scenarioRef.current?.family?.weekStartsOn ?? 1), 7);
+        changePreviewFamily((f) => ({
+          ...f,
+          goalPerWeek: goal,
+          minMinutes,
+          rules: [...f.rules.filter((r) => r.effectiveFrom < next), { effectiveFrom: next, goalPerWeek: goal, minMinutes }],
+        }));
+        return startingLabel(next);
+      }
+      if (!remote) return startingLabel(dayKey());
+      const from = await backend.setFamilyRules(remote.familyId, goal, minMinutes);
+      await refresh();
+      return startingLabel(from);
     },
-    [persist, syncHealth],
+    [changePreviewFamily, refresh],
   );
 
-  const setReminder = useCallback(
-    async (patch: { wanted?: boolean; slot?: ReminderSlot }): Promise<NotificationPermission | null> => {
+  const setReminders = useCallback(
+    async (patch: { wanted?: boolean; days?: number[]; time?: string }): Promise<NotificationPermission | null> => {
       const current = sessionRef.current;
       if (!current) return null;
-      const slot = patch.slot ?? current.me.reminder;
-      if (current.remote && slot !== current.me.reminder) {
-        await backend.updateMember(current.remote.memberId, { reminder: slot });
+      const time = patch.time ?? current.me.reminderTime;
+      if (current.remote && time !== current.me.reminderTime) {
+        await backend.updateMember(current.remote.memberId, { reminderTime: time });
       }
       const wanted = patch.wanted ?? current.me.remindersWanted;
-      // iOS shows its sheet only the first time; after that this just reads the answer.
       const permission = wanted ? await requestNotificationPermission() : null;
-      const next = { ...current, me: { ...current.me, reminder: slot, remindersWanted: wanted } };
-      sessionRef.current = next;
-      await persist(next);
+      commitSession({ ...current, me: { ...current.me, reminderTime: time, reminderDays: patch.days ?? current.me.reminderDays, remindersWanted: wanted } });
       if (permission === 'granted') registerPush();
       return permission;
     },
-    [persist, registerPush],
+    [commitSession, registerPush],
+  );
+
+  const setWeekendCheckin = useCallback(
+    async (on: boolean) => {
+      const remote = sessionRef.current?.remote;
+      if (previewRef.current) {
+        changePreviewFamily((f) => ({ ...f, members: f.members.map((m) => (m.id === PREVIEW_ME ? { ...m, weekendCheckin: on } : m)) }));
+        return;
+      }
+      if (!remote) return;
+      await backend.updateMember(remote.memberId, { weekendCheckin: on });
+      await refresh();
+    },
+    [changePreviewFamily, refresh],
   );
 
   const turnOnNotifications = useCallback(async () => {
     const permission = await requestNotificationPermission();
-    if (permission === 'granted') {
-      registerPush();
-      rescheduleReminders();
-    }
+    if (permission === 'granted') registerPush();
     return permission;
-  }, [registerPush, rescheduleReminders]);
+  }, [registerPush]);
 
   const addInvite = useCallback(
     async (name: string) => {
@@ -821,81 +1203,300 @@ export function AppStateProvider({ children }: { children: React.ReactNode }) {
       if (!person.name) return;
       const current = sessionRef.current;
       if (!current) {
-        setDraft((d) => ({ ...d, invited: [...d.invited, person] }));
+        commitDraft((d) => ({ ...d, invited: [...d.invited, person] }));
         return;
       }
-      await persist({ ...current, family: { ...current.family, invited: [...current.family.invited, person] } });
+      commitSession({ ...current, family: { ...current.family, invited: [...current.family.invited, person] } });
     },
-    [persist],
+    [commitDraft, commitSession],
   );
-
-  const signOut = useCallback(async () => {
-    // While still signed in: RLS only lets you delete your own token.
-    const token = pushTokenRef.current;
-    if (token) await backend.forgetPushToken(token).catch(() => undefined);
-    pushTokenRef.current = null;
-    await scheduleReminders(null, false);
-    await backend.signOut().catch(() => undefined);
-    await clearAll();
-  }, [clearAll]);
-
-  useEffect(() => {
-    if (!removedFrom) return;
-    setRemovedFrom(null);
-    showError(`You’re no longer in ${removedFrom}`, 'To join again, ask someone in the family for a new code.');
-    signOut();
-  }, [removedFrom, signOut]);
 
   const removeMember = useCallback(
     async (memberId: string) => {
-      if (!sessionRef.current?.remote) return;
+      if (inPreview()) return;
       await backend.removeMember(memberId);
       await refresh();
     },
-    [refresh],
+    [inPreview, refresh],
   );
 
-  const deleteAccount = useCallback(async () => {
-    const remote = sessionRef.current?.remote;
-    // Deleting the account removes its photos and push tokens on the server too.
-    if (remote && (await backend.deleteAccount(remote)) === 'cancelled') return 'cancelled';
-    pushTokenRef.current = null;
-    await scheduleReminders(null, false);
-    await clearMoveMethod().catch(() => undefined);
-    await clearAll();
-    return 'deleted';
-  }, [clearAll]);
+  const markMilestoneShown = useCallback(() => {
+    const due = viewRef.current?.milestone;
+    if (!due) return;
+    if (previewRef.current) {
+      commitScenario((s) => ({ ...s, milestonesShown: true }));
+      return;
+    }
+    setMilestones((m) => {
+      const next = markShown(m, myIdNow(), due);
+      saveMilestones(next).catch(() => undefined);
+      return next;
+    });
+  }, [commitScenario, myIdNow]);
 
-  const builtView = useMemo(() => (session ? buildView(session, preview, family) : null), [session, preview, family]);
-  // Keep the last view while signed out so screens that are animating away don't read null.
-  const lastView = useRef<AppView | null>(null);
-  if (builtView) lastView.current = builtView;
-  const view = builtView ?? lastView.current;
+  // ─── Plus ──────────────────────────────────────────────────────────────────
 
-  const loadRoutes = useCallback(
-    async (memberId: string, range: MapRange): Promise<MemberRoutes> => {
-      const since = rangeStart(range);
-      const remote = sessionRef.current?.remote;
-      // A real family: the server has every route. The preview and a family on this phone: what's in the view.
-      if (remote && !preview) {
-        const rows = await backend.fetchRoutes(memberId, since);
-        const routes: LatLng[][] = [];
-        let meters = 0;
-        for (const r of rows) {
-          const points = decodePolyline(r.route);
-          if (points.length < 2) continue;
-          routes.push(points);
-          meters += r.distanceMeters ?? routeLength(points);
-        }
-        return { routes, meters };
-      }
-      const routes = Object.values(lastView.current?.workouts ?? {})
-        .filter((w) => w.memberId === memberId && w.route)
-        .map((w) => w.route!);
-      return { routes, meters: routes.reduce((sum, r) => sum + routeLength(r), 0) };
+  // RevenueCat only once app_config turns Plus on and the build has a key; the fake otherwise.
+  const remoteUserId = session?.remote?.userId ?? null;
+  // Decided during render on purpose: the sheet must never see the fake store's
+  // label for a moment when the real one is in use. update() is idempotent.
+  const purchasesKind = useMemo((): PurchasesKind => {
+    purchases.update(
+      {
+        plusEnabled: config.plusEnabled,
+        apiKey: process.env.EXPO_PUBLIC_REVENUECAT_IOS_KEY ?? null,
+        platform: Platform.OS,
+        expoGo: Constants.executionEnvironment === ExecutionEnvironment.StoreClient,
+        userId: remoteUserId,
+        loadSdk: loadRevenueCat,
+      },
+      !!previewId,
+    );
+    return purchases.kind;
+  }, [config.plusEnabled, remoteUserId, previewId, purchases]);
+
+  /** The preview's pretend server: Plus turns on for the family after `previewServerDelay`. */
+  const previewPlusOn = useCallback(
+    (product: PlusProduct) => {
+      const on = () =>
+        commitScenario((s) =>
+          s.family
+            ? {
+                ...s,
+                family: {
+                  ...s.family,
+                  plus: {
+                    ...s.family.plus,
+                    active: true,
+                    product,
+                    status: 'active',
+                    expiresAt: product === 'saunafam.plus.lifetime' ? null : new Date(s.now.getTime() + 365 * 86_400_000).toISOString(),
+                    payerIsMe: true,
+                    payerName: 'Sam',
+                  },
+                },
+              }
+            : s,
+        );
+      if (previewServerDelay.current > 0) setTimeout(on, previewServerDelay.current);
+      else on();
     },
-    [preview],
+    [commitScenario],
   );
+
+  /** sync-plus, then family_plus: the server decides, never this phone. */
+  const confirmPlus = useCallback(
+    async (product: PlusProduct | null): Promise<SyncOutcome> => {
+      const remote = sessionRef.current?.remote;
+      if (previewRef.current || !remote) {
+        const fam = scenarioRef.current?.family;
+        if (fam?.plus.active && !fam.plus.payerIsMe) return 'alreadyHad';
+        const bought = product ?? purchases.preview.ownedPlus();
+        if (!bought) return 'nothing';
+        previewPlusOn(bought);
+        return 'applied';
+      }
+      const r = await backend.syncPlus(remote.familyId);
+      await refresh();
+      if (!r.synced) return r.reason === 'no_purchase' ? 'nothing' : 'unconfirmed';
+      return r.applied ? 'applied' : 'alreadyHad';
+    },
+    [previewPlusOn, purchases, refresh],
+  );
+
+  const familyIdNow = useCallback(() => (previewRef.current ? 'preview-family' : (sessionRef.current?.remote?.familyId ?? null)), []);
+
+  const loadOffering = useCallback(() => purchases.getOffering(), [purchases]);
+
+  /** A preview purchase that finishes after its scenario was swapped out changes nothing. */
+  const sameScenario = useCallback(() => {
+    const at = previewGen.current;
+    return () => previewGen.current === at;
+  }, []);
+
+  const buyPlus = useCallback(
+    (pkg: PackageId) => {
+      const still = sameScenario();
+      const product: PlusProduct = pkg === 'lifetime' ? 'saunafam.plus.lifetime' : 'saunafam.plus.annual';
+      return buyWith(purchases, pkg, familyIdNow(), () => (still() ? confirmPlus(product) : Promise.resolve<SyncOutcome>('unconfirmed')));
+    },
+    [confirmPlus, familyIdNow, purchases, sameScenario],
+  );
+
+  const restorePurchases = useCallback(() => {
+    const still = sameScenario();
+    return restoreWith(purchases, () => (still() ? confirmPlus(null) : Promise.resolve<SyncOutcome>('unconfirmed')));
+  }, [confirmPlus, purchases, sameScenario]);
+
+  const setWallWood = useCallback(
+    async (wood: WallWood) => {
+      const remote = sessionRef.current?.remote;
+      if (previewRef.current || !remote) {
+        const fam = scenarioRef.current?.family;
+        if (!fam) return;
+        if (wood !== 'birch' && !fam.plus.active) throw new backend.NeedsPlusError('that wood needs Saunafam Plus');
+        commitScenario((s) => (s.family ? { ...s, family: { ...s.family, plus: { ...s.family.plus, wallWood: wood } } } : s));
+        return;
+      }
+      await backend.setWallWood(remote.familyId, wood);
+      await refresh();
+    },
+    [commitScenario, refresh],
+  );
+
+  /** Every week and every session, for Every week, the Heat log and the poster. */
+  const loadArchive = useCallback(async (): Promise<Archive> => {
+    const remote = sessionRef.current?.remote;
+    if (previewRef.current || !remote) {
+      const a = (scenarioRef.current ?? buildPreviewScenario('family', new Date())).archive;
+      return { history: a?.history ?? [], sessions: a?.sessions ?? [] };
+    }
+    const memberIds = familyRef.current?.members.map((m) => m.id) ?? [];
+    const [history, sessions] = await Promise.all([backend.fetchHistory(remote.familyId, 520), backend.fetchHeatSessions(memberIds)]);
+    return { history, sessions };
+  }, []);
+
+  const setLook = useCallback(
+    (patch: Partial<Look>) => {
+      const id = myIdNow();
+      setLooks((all) => {
+        const next = { ...all, [id]: { ...(all[id] ?? DEFAULT_LOOK), ...patch } };
+        saveLooks(next).catch(() => undefined);
+        return next;
+      });
+      if (patch.appIcon) applyAppIcon(patch.appIcon).catch(() => undefined);
+    },
+    [myIdNow],
+  );
+
+  const changeNag = useCallback((change: (m: NagMemory, today: string) => NagMemory) => {
+    const id = myIdNow();
+    const today = dayKey(previewRef.current ? (scenarioRef.current?.now ?? new Date()) : new Date());
+    setNagMemory((all) => {
+      const next = { ...all, [id]: change(all[id] ?? EMPTY_NAG, today) };
+      if (!previewRef.current) saveNagMemory(next).catch(() => undefined);
+      return next;
+    });
+  }, [myIdNow]);
+
+  // ─── Preview ───────────────────────────────────────────────────────────────
+
+  const setPreview = useCallback(
+    (id: PreviewScenarioId | null) => {
+      previewRef.current = id;
+      previewGen.current += 1;
+      setPreviewId(id);
+      setPreviewLogged([]);
+      setOptimistic(NO_OPTIMISTIC);
+      if (id) {
+        const next = buildPreviewScenario(id, new Date());
+        scenarioRef.current = next;
+        setScenario(next);
+        timerRef.current = next.timer;
+        setTimer(next.timer);
+      } else {
+        scenarioRef.current = null;
+        setScenario(null);
+        timerMath.loadTimer().then((t) => {
+          timerRef.current = t;
+          setTimer(t);
+        });
+      }
+    },
+    [],
+  );
+
+  const setPreviewPurchases = useCallback(
+    (behavior: PreviewBehavior, t?: { storeMs?: number; serverMs?: number }) => {
+      purchases.preview.setBehavior(behavior);
+      if (t?.storeMs !== undefined) purchases.preview.setDelay(t.storeMs);
+      if (t?.serverMs !== undefined) previewServerDelay.current = Math.max(0, t.serverMs);
+    },
+    [purchases],
+  );
+
+  const clearNotice = useCallback(() => setNotice(null), []);
+  const showNotice = useCallback((message: string) => setNotice(message), []);
+  const dismissWelcome = useCallback(() => {
+    setWelcomeDue(false);
+    saveWelcomed().catch(() => undefined);
+  }, []);
+
+  // ─── The view ──────────────────────────────────────────────────────────────
+
+  // No server (a dev build without .env.local, the web preview): the preview family, always.
+  const localOnly = !!session && !session.remote;
+  const [localScenario] = useState(() => buildPreviewScenario('family', new Date()));
+  const activeScenario = scenario ?? (localOnly ? localScenario : null);
+
+  const builtView = useMemo((): AppView | null => {
+    if (!session) return null;
+    const meName = session.me.name;
+    if (activeScenario) {
+      const fam =
+        activeScenario.family ??
+        placeholderFamily({ id: PREVIEW_ME, name: 'Sam', color: paletteColor(0), joinedOn: dayKey(activeScenario.now) }, 'Sunday sauna', activeScenario.now);
+      return buildView({
+        myId: PREVIEW_ME,
+        family: localOnly && !scenario ? { ...fam, name: session.family.name || fam.name, members: fam.members.map((m) => (m.id === PREVIEW_ME ? { ...m, name: meName } : m)) } : fam,
+        now: activeScenario.now,
+        status: activeScenario.status,
+        offline: activeScenario.offline,
+        outbox: [...activeScenario.outbox],
+        previewSent: previewLogged,
+        drafts: activeScenario.drafts,
+        optimistic,
+        invited: [...activeScenario.invited, ...(localOnly ? session.family.invited : [])],
+        timer,
+        config: activeScenario.config,
+        appBuild: APP_BUILD,
+        unit,
+        yesterdayOpen: yesterdayOpen(activeScenario.now),
+        milestones: activeScenario.milestonesShown ? undefined : {},
+        nag: nagMemory[PREVIEW_ME],
+      });
+    }
+    const remote = session.remote as NonNullable<SavedSession['remote']>;
+    const fam =
+      family ?? placeholderFamily({ id: remote.memberId, name: meName, color: session.me.color, joinedOn: session.me.joinedOn }, session.family.name, clock);
+    return buildView({
+      myId: remote.memberId,
+      family: fam,
+      now: clock,
+      status: family ? 'ready' : status,
+      offline,
+      outbox: queue.entries,
+      drafts: queue.drafts,
+      optimistic,
+      invited: session.family.invited,
+      myPhotoUri: session.me.photoUri,
+      localPhotos: session.photos,
+      timer,
+      config,
+      appBuild: APP_BUILD,
+      unit,
+      yesterdayOpen: yesterdayOpen(clock),
+      milestones,
+      nag: nagMemory[remote.memberId],
+    });
+  }, [session, activeScenario, scenario, localOnly, previewLogged, optimistic, timer, unit, nagMemory, family, clock, status, offline, queue, config, milestones]);
+
+  const view = builtView ?? frozenView;
+
+  const myLook = looks[view?.me.id ?? ''] ?? DEFAULT_LOOK;
+  const plusVisibleNow = !!view?.plus.visible;
+  const plusActiveNow = !!view?.plus.active;
+  const look = useMemo(() => effectiveLook(myLook, { visible: plusVisibleNow, active: plusActiveNow }), [myLook, plusVisibleNow, plusActiveNow]);
+  // A plan that ends takes the icon back to the default, like the wall goes back to birch.
+  useEffect(() => {
+    if (!view || view.status !== 'ready') return;
+    if (look.appIcon === 'default' && currentAppIcon() !== 'default') applyAppIcon('default').catch(() => undefined);
+  }, [look.appIcon, view]);
+
+  useEffect(() => {
+    viewRef.current = view;
+    lastSaunaTypeRef.current = lastSaunaType;
+  }, [view, lastSaunaType]);
 
   const value = useMemo<AppContextValue>(
     () => ({
@@ -903,74 +1504,82 @@ export function AppStateProvider({ children }: { children: React.ReactNode }) {
       online: backend.backendEnabled,
       session,
       view,
+      notice,
+      clearNotice,
+      showNotice,
+      welcomeDue,
+      dismissWelcome,
       draft,
       startFlow,
       updateDraft,
       signIn,
       finishSignIn,
       saveFamilyName,
+      saveRhythm,
       lookUpInvite,
       joinInvitedFamily,
       completeOnboarding,
-      logWorkout,
-      nudge,
+      signOut,
+      checkBeforeDelete,
+      deleteAccount,
+      refresh,
+      syncHealth,
+      logSession,
+      resendDraft,
+      discardDraft,
+      draftFor,
+      editSession,
+      setSessionPhoto,
+      deleteSession,
+      removeMe,
       cheer,
+      uncheer,
       comment,
       deleteComment,
-      removeWorkout,
-      changeWorkoutType,
-      syncNow,
+      nudge,
+      startTimer,
+      coolOff,
+      resumeTimer,
+      setTimerTarget,
+      setTimerSaunaType,
+      finishTimer,
+      discardTimer,
+      devSetTimer,
+      lastSaunaType,
       updateProfile,
-      setWorkoutPhoto,
-      loadRoutes,
-      setMoveMethod,
-      setReminder,
-      turnOnNotifications,
-      addInvite,
-      refresh,
-      signOut,
       takeBreak,
       endBreak,
-      deleteAccount,
+      setRules,
+      setReminders,
+      setWeekendCheckin,
+      turnOnNotifications,
+      addInvite,
       removeMember,
-      preview,
+      markMilestoneShown,
+      purchasesKind,
+      loadOffering,
+      buyPlus,
+      restorePurchases,
+      loadArchive,
+      myLook,
+      look,
+      setLook,
+      setWallWood,
+      recordNagShown: () => changeNag(recordNagShown),
+      dismissNag: () => changeNag(dismissNag),
+      turnOffNag: () => changeNag(turnOffNag),
+      preview: previewId,
       setPreview,
+      setPreviewPurchases,
     }),
     [
-      ready,
-      session,
-      view,
-      draft,
-      startFlow,
-      updateDraft,
-      signIn,
-      finishSignIn,
-      saveFamilyName,
-      lookUpInvite,
-      joinInvitedFamily,
-      completeOnboarding,
-      logWorkout,
-      nudge,
-      cheer,
-      comment,
-      deleteComment,
-      removeWorkout,
-      changeWorkoutType,
-      syncNow,
-      updateProfile,
-      setWorkoutPhoto,
-      loadRoutes,
-      setMoveMethod,
-      setReminder,
-      turnOnNotifications,
-      addInvite,
-      refresh,
-      signOut,
-      takeBreak,
-      endBreak,
-      deleteAccount,
-      removeMember,
-      preview,
+      ready, session, view, notice, clearNotice, showNotice, welcomeDue, dismissWelcome, draft, startFlow, updateDraft, signIn, finishSignIn,
+      saveFamilyName, saveRhythm, lookUpInvite, joinInvitedFamily, completeOnboarding, signOut, checkBeforeDelete, deleteAccount, refresh,
+      syncHealth, logSession, resendDraft, discardDraft, draftFor, editSession, setSessionPhoto, deleteSession, removeMe, cheer, uncheer,
+      comment, deleteComment, nudge, startTimer, coolOff, resumeTimer, setTimerTarget, setTimerSaunaType, finishTimer,
+      discardTimer, devSetTimer, lastSaunaType, updateProfile, takeBreak, endBreak, setRules, setReminders, setWeekendCheckin,
+      turnOnNotifications, addInvite, removeMember, markMilestoneShown, purchasesKind, loadOffering, buyPlus, restorePurchases, loadArchive, myLook, look, setLook, setWallWood, changeNag,
+      previewId, setPreview, setPreviewPurchases,
     ],
   );
 
@@ -988,4 +1597,9 @@ export function useView(): AppView {
   const { view } = useApp();
   if (!view) throw new Error('useView needs a saved session');
   return view;
+}
+
+/** Your own sessions on the server (ones others logged with you included), for Apple Health. */
+function mySessions(family: FamilySnapshot, memberId: string) {
+  return [...family.myRecent, ...family.sessions].filter((s) => s.memberId === memberId);
 }

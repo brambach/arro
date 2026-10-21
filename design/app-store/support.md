@@ -1,61 +1,93 @@
-# Arro support
+# Saunafam support
 
-Arro is a daily ritual for families: everyone moves a little, everyone sees it,
-and you keep one streak together.
+The same text is live on the site at https://saunafam.com/support
+(`site/public/support/index.html`, written in M13). Change both together. The
+site is the source: this file was copied from it on 20 October 2026.
 
-Need help? Email {{SUPPORT_EMAIL}}. We usually answer within two days.
+Saunafam is a weekly sauna streak for your family or your sauna crew. Everyone
+goes when they can, and you keep it together.
+
+Need a hand? Email support@saunafam.com. Bryce reads every one and usually
+answers within two days.
+
+## Questions
+
+**Does it work with Apple Watch?** No. Saunafam has its own timer on your
+iPhone, because the Watch isn't made for sauna heat.
+
+**Do I need a home sauna?** No. Any sauna counts: the gym, a spa, a lake
+sauna, a friend's.
+
+**Can friends join?** Yes. Family means whoever you sauna with, up to 12
+people.
+
+**What does it cost?** It's free for now.
+
+**Does it read my Health data?** No. If you turn it on, Saunafam saves your
+sessions to Apple Health as mindful minutes. It never reads from Health.
+
+**I used Arro. How do I turn off its old Health access?** iOS keeps the read
+permission Arro had, and the app can't remove it for you. Open the Settings
+app, then Health, then Data Access & Devices, choose Saunafam and turn
+everything off.
 
 ## Getting started
 
-**How do I start a family?** Open Arro, sign in with Apple, name your family,
-then send the invite to your family from the app.
+**How do I start a family?** Open Saunafam, tap Start a family, sign in with
+Apple, name your family and pick your rhythm. Then send the invite from the
+app.
 
-**How do I join my family?** Ask whoever started it for the invite. Open Arro,
-sign in and enter the code from the invite. Codes last 14 days; ask for
-a new one if yours has run out.
+**How do I join a family?** Ask whoever started it for an invite. Open
+Saunafam, tap I have an invite, sign in and enter the code. Codes last 14
+days, so ask for a new one if yours has run out.
 
-**Does everyone need an iPhone?** For now, yes. Arro is iPhone-only.
+**Does everyone need an iPhone?** For now, yes. Saunafam is iPhone only.
 
 ## The streak
 
-**When does the family streak go up?** On each day that everyone in the family
-moved, or was covered by a freeze.
+**When does the family streak go up?** When everyone in the family keeps their
+week. By default that's three sessions of ten minutes or more, Monday to
+Sunday. The person who started the family can change the rhythm.
 
-**What's a freeze?** Everyone has one. If you miss a day, it's used
-automatically so the family streak keeps going. It comes back 7 days after it
-was used.
+**What's a freeze?** Everyone has one. If your week slips, it's used for you,
+so the family streak keeps going.
 
-**Can I log a workout I forgot?** Yes, for today or yesterday. Nothing older,
-so nobody can backdate to rescue a streak. In time zones behind UTC, yesterday
-closes in the evening (around 8pm in New York, 5pm in Los Angeles).
+**I'm going away. What do I do?** Take a break in Settings, for the rest of
+the week or up to two weeks. Your family sees you're on a break and when
+you're back, and nobody asks why.
 
-**Does a short walk count?** Yes. Any movement counts the same. Duration is
-optional and never compared.
+**We sat together. Do we all log it?** No. One of you logs it and adds the
+others, up to four people, and it counts for everyone in the room. Anyone
+added can remove themselves.
 
-## Apple Health
-
-**How do I connect Apple Health?** In Arro, open Settings > How you move and
-choose Apple Health, then allow Arro to read workouts.
-
-**My workouts aren't showing up.** Check that Arro is allowed to read workouts
-in the iPhone's Settings app, under Health > Data Access & Devices > Arro. Only
-workouts from today and yesterday count. Opening Arro makes it check again.
-
-**I record runs with Strava, or with my watch.** If that app saves workouts to
-Apple Health, Arro picks them up from there. Strava can do this: turn on its
-Health connection in Strava's settings.
-
-**What does Arro read from Health?** Only workouts, only today's and
-yesterday's, and it never writes to Health. See the privacy policy.
+**I forgot to log one.** Log it for today or yesterday with Log one I already
+did. Nothing older, so nobody can backdate a week.
 
 ## Your account
 
-**How do I leave or delete my account?** Settings > Delete account. It removes
-your account and your workouts, cheers and nudges. See the privacy policy.
+**How do I delete my account?** Settings, Delete account. It removes your
+account, your sessions, photos, cheers and comments. See the privacy policy.
 
-**I got a new phone.** Install Arro and sign in with the same Apple ID. You'll be
-back in your family.
+**I got a new phone.** Install Saunafam and sign in with the same Apple ID.
+You'll be back in your family.
 
 ## Privacy
 
-Read the privacy policy: https://arrofamily.com/privacy
+Read the privacy policy: https://saunafam.com/privacy
+
+## To add when Plus goes live
+
+The live page says "It's free for now", which is true while Plus is off. When
+Plus is turned on, change that answer on both the page and here, and add these
+(drafts, not on the site yet):
+
+**What does it cost?** Saunafam is free, and the streak stays free for
+everyone. Saunafam Plus is optional: $24.99 a year or $59.99 once, and one
+purchase covers your whole family.
+
+**How do I cancel Plus?** In the Settings app, tap your name, then
+Subscriptions, then Saunafam. Plus stays on until the end of the year you've
+paid for. Deleting your account doesn't cancel it.
+
+**I bought Plus on another phone.** Open Settings in Saunafam, then Saunafam
+Plus, then Restore purchases.

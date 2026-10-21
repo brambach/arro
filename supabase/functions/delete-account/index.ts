@@ -4,8 +4,22 @@
 //   2. their Sign in with Apple token, revoked with Apple, when the app sent a fresh
 //      authorization code and the Apple settings below are set (App Review
 //      Guideline 5.1.1(v) expects this for apps that use Sign in with Apple);
-//   3. the auth user, which cascades to their member rows, workouts, cheers, nudges
-//      and push tokens, and to any family they leave empty.
+//   3. the auth user, which cascades to their member rows and from there to their
+//      sessions, session cheers and comments, nudges, breaks and push tokens (and
+//      Arro's workouts, cheers and comments until build 10), and to any family
+//      they leave empty. A shared session they logged goes with them; the others'
+//      rows in it stay as solo sessions.
+// Photos live flat in <family id>/<member id>/, so step 1 covers profile photos,
+// session photos and Arro's workout photos alike.
+//
+// Before deleting, the app calls it with { "dryRun": true }. That deletes
+// nothing and answers whether the person pays for a Saunafam Plus yearly plan
+// that will renew, because deleting the account doesn't cancel it with Apple:
+//   { deleted: false, paysForPlus: boolean,
+//     plans: [{ familyId, familyName, product, status, expiresAt }] }
+// The app then shows "You pay for Saunafam Plus. Deleting your account doesn't
+// cancel it. Cancel in Settings, Apple ID, Subscriptions first." The family keeps
+// Plus until the period ends. A real delete answers with paysForPlus too.
 //
 // Called by the app with the person's own JWT; it only ever deletes that person.
 // SUPABASE_URL and SUPABASE_SERVICE_ROLE_KEY are provided by the edge runtime.
@@ -17,6 +31,7 @@
 import { createClient } from 'npm:@supabase/supabase-js@2';
 import { importPKCS8, SignJWT } from 'npm:jose@5';
 import { removePhotoFolder } from '../_shared/photos.ts';
+import { type Plan, type PlanStatus, renewingPlans } from '../_shared/plus.ts';
 
 Deno.serve(async (req) => {
   if (req.method !== 'POST') return Response.json({ error: 'POST only' }, { status: 405 });
@@ -28,14 +43,46 @@ Deno.serve(async (req) => {
   const { data: who, error: whoError } = await db.auth.getUser(jwt);
   if (whoError || !who.user) return Response.json({ error: 'sign in first' }, { status: 401 });
   const userId = who.user.id;
-  const body = (await req.json().catch(() => ({}))) as { appleAuthorizationCode?: unknown };
+  const body = (await req.json().catch(() => ({}))) as { appleAuthorizationCode?: unknown; dryRun?: unknown };
 
-  // 1. Photos -------------------------------------------------------------------
   const { data: memberships, error: membersError } = await db
     .from('members')
     .select('id, family_id')
     .eq('user_id', userId);
   if (membersError) return Response.json({ error: membersError.message }, { status: 500 });
+
+  // 0. Plus ---------------------------------------------------------------------
+  const memberIds = (memberships ?? []).map((m) => m.id as string);
+  let plans: Array<{ familyId: string; familyName: string | null; product: string; status: PlanStatus; expiresAt: string | null }> = [];
+  if (memberIds.length > 0) {
+    const { data: rows, error: plansError } = await db
+      .from('family_plans')
+      .select('family_id, payer_member_id, product, status, expires_at, last_event, last_event_at, families(name)')
+      .in('payer_member_id', memberIds);
+    if (plansError) return Response.json({ error: plansError.message }, { status: 500 });
+    const renewing = renewingPlans(
+      (rows ?? []).map((r): Plan => ({
+        familyId: r.family_id,
+        payerMemberId: r.payer_member_id,
+        product: r.product,
+        status: r.status,
+        expiresAt: r.expires_at,
+        lastEvent: r.last_event,
+        lastEventAt: r.last_event_at,
+      })),
+      memberIds,
+    );
+    plans = renewing.map((p) => {
+      const row = (rows ?? []).find((r) => r.family_id === p.familyId);
+      const fam = row?.families as { name?: string } | { name?: string }[] | null | undefined;
+      const familyName = (Array.isArray(fam) ? fam[0]?.name : fam?.name) ?? null;
+      return { familyId: p.familyId, familyName, product: p.product, status: p.status, expiresAt: p.expiresAt };
+    });
+  }
+  const paysForPlus = plans.length > 0;
+  if (body.dryRun === true) return Response.json({ deleted: false, paysForPlus, plans });
+
+  // 1. Photos -------------------------------------------------------------------
 
   for (const m of memberships ?? []) {
     const photoError = await removePhotoFolder(db, `${m.family_id}/${m.id}`);
@@ -60,7 +107,7 @@ Deno.serve(async (req) => {
   const { error: deleteError } = await db.auth.admin.deleteUser(userId);
   if (deleteError) return Response.json({ error: deleteError.message }, { status: 500 });
 
-  return Response.json({ deleted: true, appleRevoked });
+  return Response.json({ deleted: true, appleRevoked, paysForPlus });
 });
 
 function appleConfigured(): boolean {

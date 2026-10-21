@@ -1,3 +1,5 @@
+Written for Arro, before it became Saunafam.
+
 # Launcher icon options
 
 **Picked: A** (Oct 2026). `assets/` now has the clay tile with the paper "a",

@@ -1,109 +1,120 @@
 # Review notes and demo family
 
-For App Store Connect > the version > App Review Information, and for the
-TestFlight Beta App Review (external testers need one for the first build, and
-it asks the same questions).
+For App Store Connect, the version's App Review Information, and for the
+TestFlight Beta App Review (external testers need one, and it asks the same
+questions). Build 9 renames the app and changes what it collects, so expect a
+fresh Beta App Review.
+
+Nothing here has been created on the server or entered in App Store Connect.
 
 ## The demo account problem
 
-Arro's only sign-in is Sign in with Apple (`signInWithApple()` in
-`src/state/backend.ts`). There's no email and password to hand the reviewer,
-and a shared demo Apple ID doesn't work in practice (two-factor codes go to a
-device you hold). So "a demo account already in a family" can't be a login.
+Sign in with Apple is still the only sign-in. There's no email and password to
+give the reviewer, and a shared demo Apple ID doesn't work in practice (the
+two-factor codes go to a device Bryce holds). So the "demo account" is **a
+demo family full of sessions, plus a join code**. The reviewer taps "I have an
+invite", enters the code, signs in with their own Apple ID and joins a family
+with a weekly streak, sessions, cheers and comments.
 
-What works: **a demo family that's already full of life, plus a join code.**
-The reviewer taps "I have an invite", enters the code, signs in with their own
-Apple ID and lands in a family with a streak, workouts and cheers. That gets
-them past the invite step without anyone having to accept anything. In App
-Store Connect, leave "Sign-in required" ticked, and where it asks for a
-username and password write "Sign in with Apple, join code in the notes".
+In App Store Connect leave "Sign-in required" ticked. For username and password
+write "Sign in with Apple, join code in the notes".
 
 ## What has to exist on the server (not created)
 
-In the hosted `arro` project (ref mvbphoguqaipuqmdbuir):
+In the hosted project (`project_id = "arro"` in `supabase/config.toml`, still
+named arro):
 
-1. **Three demo users in `auth.users`**, because `members.user_id` must point
-   at a real auth user. Create them with the Auth admin API or the dashboard
-   (Authentication > Add user, email like `demo-mum@arrofamily.com`, no
-   password needed). Nobody signs in as them.
-2. **One family**, for example "The Demo Family", time zone
-   `America/Los_Angeles` (Cupertino reviewers).
-3. **Three `members` rows** in it: "Mum", "Dad", "Sam", each with a palette
-   colour, the family's time zone, and `joined_on` about 30 days back.
-4. **About 22 days of `workouts`** spread across them, a mix of walk, run,
-   yoga and swim, some with short notes ("Loop round the park with the dog").
-   A streak in the low 20s shows "Your first 30 days together" in progress.
-   Don't aim for the milestone card: it only shows while the current streak is
-   30 or 31 and equals the longest (`buildView.ts`, goal status `done`), so it
-   would be gone again two days into the review.
-   The `workouts_check_date` trigger refuses dates before yesterday, so
-   backfilling needs it bypassed for that one session, for example
-   `set session_replication_role = replica;` run as the postgres role in the
-   SQL editor, then reset. Don't disable the trigger on the table.
-5. **Some `cheers`** on recent workouts from the other demo members.
-6. **An `invites` row** for the family. Codes expire after 14 days
-   (`invites.expires_at`), so make it, or push `expires_at` out to about 60 days,
-   on the day you submit. Put the code in the notes.
-7. **Keep it alive during review.** A review can take a few days, and the demo
-   members won't move by themselves, so the family streak will break while the
-   reviewer looks. Either accept that (Arro handles a broken streak gently,
-   which is fine to show), or add a scheduled job (pg_cron) that inserts one
-   workout per demo member each day for the review window and is removed
-   afterwards.
+1. **Three demo users in `auth.users`,** because `members.user_id` must point
+   at a real auth user. Create them with the Auth admin API or the dashboard,
+   with an address like `demo-maya@saunafam.com` and no password. Nobody signs
+   in as them.
+2. **One family,** "Sunday sauna", time zone `America/Los_Angeles`, rhythm
+   left at the defaults (3 a week, 10 minutes, week starts Monday). Set
+   `saunafam_started_on` about five weeks back so the streak has history.
+3. **Three `members` rows:** Sam, Maya and Jo, each with a color, the family's
+   time zone and `joined_on` about five weeks back.
+4. **About five weeks of `sessions`,** three or four per person per week, a mix
+   of Traditional, Wood-fired and Infrared, 12 to 25 minutes, a few with a
+   place ("Home", "Gym sauna") and a short note, and at least one shared session
+   for two people. Use `log_session` where you can. Dates older than
+   yesterday are refused by the `sessions_20_check_date` trigger, so
+   backfilling needs it bypassed for that one SQL editor session
+   (`set session_replication_role = replica;` as the postgres role, then
+   reset). Don't disable the trigger on the table.
+5. **Some `session_cheers` and `session_comments`** from the other demo
+   members on recent sessions.
+6. **An `invites` row.** Codes expire after 14 days, so make it, or push
+   `expires_at` out to about 60 days, on the day you submit. Put the code in
+   the notes.
+7. **Keep the week alive during review.** The demo members won't take a sauna
+   by themselves. A review that crosses a Sunday will see the family week
+   break. Either accept that (Saunafam handles it quietly: "Back at it,
+   together", nobody named), or add a pg_cron job that logs one session per
+   demo member every other day for the review window and remove it after.
 
-Also worth doing: delete the reviewer's member row after review if they leave
-it behind, so the demo family stays tidy for the next version.
+Afterwards, remove the reviewer's member row so the demo family stays tidy.
 
-## Review notes text (4000 characters max)
+## Review notes text (4000 bytes max)
 
-> Arro is a daily ritual for families who live apart: each person logs that they moved today, and the family keeps one shared streak. Families are private and invite-only.
+> Saunafam (formerly Arro) is a weekly sauna streak for families and friend groups: each person logs their sauna sessions, and the group keeps one shared weekly streak. Families are private and joined by invite code only.
 >
 > HOW TO SIGN IN AND REACH A FAMILY
 > 1. On the welcome screen tap "I have an invite" and enter the join code: {{DEMO_CODE}}
-> 2. Sign in with your own Apple ID when asked (Sign in with Apple is the only sign-in).
-> 3. You join "The Demo Family", which has three members, a family streak of about three weeks, recent workouts and cheers. Its time zone is Pacific Time.
+> 2. Sign in with your own Apple ID when asked. Sign in with Apple is the only sign-in.
+> 3. You join "Sunday sauna", which has three members, a streak of a few weeks, recent sessions, cheers and comments. Its time zone is Pacific Time.
 >
 > WHAT TO TRY
-> - Today: who in the family has moved today.
-> - Log today: tap "I moved today", pick a kind of workout. Duration, note and photo are optional.
-> - Feed: tap a workout to see it and cheer it.
-> - Settings > How you move: switch between "I moved today" and Apple Health.
+> - Today: this week's progress for you and the family.
+> - Start a session: a timer for time in the sauna. Tap Done to log it. Or tap "Log one I already did".
+> - Log session: minutes and sauna type are required. Temperature, place, photo, note and "Sat with someone?" are optional.
+> - Feed: tap a session to see it, cheer it or comment.
+> - Week: the family streak and past weeks.
 > - Settings > Delete account: deletes your account and data in the app.
 >
 > APPLE HEALTH
-> Apple Health is optional. Arro only reads workouts (read-only, never writes), and only today's and yesterday's, to count them toward the family streak. If the review device has no workouts in Health, "I moved today" covers everything. Health data is never used for advertising or marketing and isn't stored in iCloud. Privacy policy: https://arrofamily.com/privacy
+> Optional and write only. If you turn on "Save sessions to Apple Health", each session is saved as mindful minutes. Saunafam never reads Health data. Health data is never used for advertising or marketing and isn't stored in iCloud. Privacy policy: https://saunafam.com/privacy
 >
 > PHOTOS
-> Photos are optional. A photo you add to your profile or a workout is resized and uploaded to private storage that only signed-in members of your family can open. Deleting your account deletes your photos.
+> Optional. A photo added to a profile or a session is resized and uploaded to private storage that only signed-in members of that family can open. Deleting your account deletes your photos.
 >
-> COMMENTS
-> Members can leave short comments (up to 200 characters) on workouts in their own family, which is private and joined only by invite code. The person who wrote a comment can delete it, and the owner of a workout can delete any comment on it (touch and hold the comment). The person who started a family can remove a member (Settings > Family members, touch and hold a name), which deletes that member's workouts, comments and photos. Comment notifications are not sent between 9 p.m. and 7 a.m. in the recipient's time zone.
+> COMMENTS AND SHARED SESSIONS
+> Members can comment (up to 200 characters) on sessions in their own family. The person who wrote a comment can delete it, and the person whose session it is can delete any comment on it. A member can log a session for up to three others in the family who sat with them; anyone added gets a notification and can remove themselves from it. The person who started a family can remove a member (Settings > Family members), which deletes that member's sessions, comments and photos. Notifications are not sent between 9 p.m. and 7 a.m. in the recipient's time zone.
 >
-> ROUTES
-> If a Health workout has a route, Arro shares it with the family after cutting off the first and last 200 metres, so where you start and finish isn't shown. Arro never asks for or reads your current location.
+> LOCATION
+> Saunafam never asks for or reads your location. A place is text you type.
 >
-> No in-app purchases. iPhone only.
+> {{PLUS_PARAGRAPH}}
 >
-> Contact: Bryce Rambach, {{SUPPORT_EMAIL}}, {{PHONE}}
+> iPhone only.
+>
+> Contact: Bryce Rambach, support@saunafam.com, {{PHONE}}
 
-The labels match `WelcomeScreen.tsx` ("I have an invite") and
-`JoinCodeScreen.tsx` ("Enter your code") today. Check them against the build
-you submit, since phase 4 may add onboarding steps.
+`{{PLUS_PARAGRAPH}}`:
 
-## Fix before submitting: things App Review flags
+- **Build 9 (Plus off):** "No in-app purchases are offered in this version."
+- **The version that turns Plus on:** the spec's draft, word for word, with
+  "Demo account" pointing at the code above:
 
-Found while checking the code. These are app changes, outside this thread.
+> Saunafam is free. Logging, the timer, the weekly family streak and everything social are free for everyone and never locked. Saunafam Plus is optional and adds extras: wall woods, timer faces, app icons, full weekly history, family stats and a printable wall poster. One purchase, by any member, covers everyone in that Saunafam family (a group of up to 12 people that members join by invite), whether or not they share an Apple family. This is handled on our server, and Apple Family Sharing is off for these products. To see the purchase screen: Settings, Saunafam Plus. Restore purchases is on that screen and in Settings. The tips (A ladle, A bucket, An armful of birch) are optional thank-yous with no features attached. Demo account: [Bryce adds one, with a family that has a few weeks of sessions].
 
-1. **Done: the placeholder comment bar is gone.** The phase 4 thread removed
-   the "Add a comment…" bar from `src/screens/WorkoutDetailScreen.tsx`, so
-   there's no visible feature that does nothing (Guideline 2.1).
-2. **Done: photo, camera and microphone purpose strings.** app.json now sets a
-   specific photo text and turns camera and microphone off. Check the
-   generated `Info.plist` before archiving (`testflight.md`, step 3).
-3. **Done: no dead invite link.** The invite message carries only the join
-   code until arrofamily.com exists. See `hosting.md`.
+The labels above come from the spec (section 3). Check each against the build
+you submit: "I have an invite", "Log one I already did", "Sat with someone?",
+"Save sessions to Apple Health", Settings > Family members and how a comment is
+deleted (Arro used touch and hold).
 
-Already fine: in-app account deletion (Settings > Delete account, Guideline
-5.1.1(v)), Sign in with Apple as the only login (4.8 is satisfied), the
-"Prototype preview" switch in Settings is behind `__DEV__` so it's absent from
-release builds, and the Health purpose string is specific.
+## Before submitting: things App Review checks
+
+Not verified against build 9's code, which other agents are writing now.
+
+- **Account deletion** in the app (Guideline 5.1.1(v)): Settings > Delete
+  account, which also warns a Plus payer that deleting doesn't cancel the
+  subscription.
+- **Sign in with Apple** as the only login (4.8 is satisfied).
+- **Purpose strings** match what the app does: photos, camera, Health write
+  only, no location (5.1.1(ii)). Check the generated `Info.plist` after
+  `npx expo prebuild`.
+- **No visible feature that does nothing** (2.1). With `plus_enabled` false,
+  no Plus rows, locks, woods or faces appear anywhere.
+- **The dev-only Prototype preview** stays behind `__DEV__`.
+- **Restore purchases** on the Plus sheet and in Settings (3.1.1), and Terms
+  and Privacy links on the sheet (3.1.2), for the Plus version.

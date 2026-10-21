@@ -1,6 +1,6 @@
 {
   "expo": {
-    "name": "Arro",
+    "name": "Saunafam",
     "slug": "arro",
     "version": "1.0.0",
     "orientation": "portrait",
@@ -9,15 +9,20 @@
     "ios": {
       "supportsTablet": false,
       "bundleIdentifier": "com.arrofamily.arro",
-      "buildNumber": "8",
+      "buildNumber": "9",
       "usesAppleSignIn": true,
       "config": {
         "usesNonExemptEncryption": false
+      },
+      "icon": {
+        "light": "./assets/brand/out/icon-1024.png",
+        "dark": "./assets/brand/out/icon-dark-1024.png",
+        "tinted": "./assets/brand/out/icon-tinted-1024.png"
       }
     },
     "android": {
       "adaptiveIcon": {
-        "backgroundColor": "#A65A3C",
+        "backgroundColor": "#EFE6D8",
         "foregroundImage": "./assets/android-icon-foreground.png",
         "backgroundImage": "./assets/android-icon-background.png",
         "monochromeImage": "./assets/android-icon-monochrome.png"
@@ -31,25 +36,46 @@
       [
         "expo-font",
         {
-          "fonts": ["./assets/fonts/InstrumentSerif-Regular.ttf"]
+          "fonts": [
+            "./assets/fonts/FrauncesSoft-Regular.ttf",
+            "./assets/fonts/FrauncesSoft-SemiBold.ttf"
+          ]
         }
       ],
       "expo-apple-authentication",
       [
         "@appeeky/expo-healthkit",
         {
-          "healthSharePermission": "Arro reads your workouts from Apple Health, including distance and route, so moving counts toward your family streak and your family can see what you did. Routes are shared only with your family, with the start and end left off. Arro only reads today's and yesterday's workouts.",
-          "healthUpdatePermission": "Arro never writes to Apple Health. It only reads your workouts so moving counts toward your family streak.",
-          "isBackgroundDeliveryEnabled": true
+          "healthSharePermission": false,
+          "healthUpdatePermission": "Saunafam saves your sauna sessions to Apple Health as mindful minutes, if you turn it on. It never reads your Health data.",
+          "isBackgroundDeliveryEnabled": false
         }
       ],
       [
         "expo-image-picker",
         {
-          "photosPermission": "Arro uses a photo only when you pick one for your profile or a workout. Your family sees it in Arro.",
-          "cameraPermission": false,
+          "photosPermission": "Saunafam uses a photo only when you pick one for your profile or a session. Your family sees it in Saunafam.",
+          "cameraPermission": "Saunafam uses the camera only when you take a photo for a session. Your family sees it in Saunafam.",
           "microphonePermission": false
         }
+      ],
+      "expo-localization",
+      [
+        "expo-splash-screen",
+        {
+          "backgroundColor": "#EFE6D8",
+          "image": "./assets/brand/out/splash-transparent.png",
+          "imageWidth": 64,
+          "resizeMode": "contain"
+        }
+      ],
+      [
+        "expo-alternate-app-icons",
+        [
+          { "name": "NightStone", "ios": "./assets/brand/out/alt/icon-night-1024.png" },
+          { "name": "Cedar", "ios": "./assets/brand/out/alt/icon-cedar-1024.png" },
+          { "name": "Lake", "ios": "./assets/brand/out/alt/icon-lake-1024.png" }
+        ]
       ]
     ],
     "extra": {

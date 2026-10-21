@@ -1,50 +1,50 @@
 # Hosting the privacy and support pages
 
-App Store Connect needs a privacy policy URL (App Privacy, and the TestFlight
+App Store Connect needs a privacy policy URL (App Privacy, and TestFlight's
 Test Information page for external testers) and a support URL (each version).
-The text is ready in `privacy-policy.md` and `support.md`. Nothing has been
-bought or deployed.
+Both live on saunafam.com, served by the Cloudflare Worker in `site/`.
 
-## The options
+## Where things are
 
-| | Free subdomain now | Buy arrofamily.com first |
-| --- | --- | --- |
-| Cost | $0 | About $10-15 a year for a .com |
-| URLs | `arro-family.vercel.app/privacy` or `<github-user>.github.io/arro/privacy` | `arrofamily.com/privacy`, `arrofamily.com/support` |
-| Support email | Your own address, shown publicly on the support page | `support@arrofamily.com`, forwarded free to your inbox |
-| Later | Swap URLs in App Store Connect when the domain exists. The privacy URL can be edited any time; the support URL changes with a new version | Nothing to swap |
-| Risk | A public personal email address on the support page; a URL that looks temporary to reviewers and family | Someone else could still take the domain until it's bought |
+| Page | Live URL | Source | Markdown copy |
+|---|---|---|---|
+| Home | `https://saunafam.com` | `site/public/index.html` | |
+| Privacy | `https://saunafam.com/privacy` | `site/public/privacy/index.html` | `privacy-policy.md` |
+| Support | `https://saunafam.com/support` | `site/public/support/index.html` | `support.md` |
+| Join | `https://saunafam.com/join/<code>` | `site/worker.js` writes the code into `site/public/join/` | |
 
-## Recommendation: buy the domain now
+Change a page and its markdown copy together.
 
-Yes, buy it. It's already agreed, it's cheap, and it removes three things at
-once: a URL swap later, putting a personal email address on a public page, and
-the chance the name goes while you wait. TestFlight external testing asks for
-the privacy URL anyway, so you need a real one before your family can install.
+## Status (20 October 2026)
 
-One way that keeps it all in one free account:
+- **saunafam.com is registered** in Bryce's Cloudflare account, the same one
+  that runs the arrofamily.com Worker. Nothing to buy.
+- **Not deployed yet.** The Worker, routes and redirects are written and
+  tested locally (`docs/saunafam/PROGRESS.md`, M13). Deploying, DNS and email
+  routing are Bryce's steps, in `site/README.md`.
+- **arrofamily.com redirects.** `site/worker.js` sends any arrofamily.com
+  request to the same path on `https://saunafam.com` with a 301, so build 8
+  invite links and Arro's App Store privacy URL keep working. Keep it for at
+  least 12 months (spec Default).
+- **Support email** `support@saunafam.com`, forwarded with Cloudflare Email
+  Routing once Bryce sets it up. Until then mail to it bounces.
 
-1. **Register** `arrofamily.com` at Cloudflare Registrar (sells at cost, no
-   markup on renewal). Any registrar works; Namecheap or Porkbun are fine too.
-2. **Host** the two pages on Cloudflare Pages or Vercel (both free for a static
-   site) and attach the domain. Either needs the pages as HTML; I can turn the
-   two markdown files into small Paper-and-clay HTML pages once you say which.
-3. **Email**: Cloudflare Email Routing (free) forwards `support@arrofamily.com`
-   to your own inbox. Replace `{{SUPPORT_EMAIL}}` in both pages with it.
+## URLs for App Store Connect
 
-Each of these is a purchase or deploy, so it's yours to do or to ask for
-explicitly. Until then, the pages use `{{SUPPORT_EMAIL}}` as a placeholder.
+- Privacy Policy URL: `https://saunafam.com/privacy`
+- Support URL: `https://saunafam.com/support`
+- Marketing URL: `https://saunafam.com`
 
-## Invites don't link here yet
+Deploy the site before changing them, then check:
 
-Invites the app sends today carry only the code: "Open Arro, tap “I have an
-invite” and enter the code XXXXXX" (`src/state/invite.ts`). The
-`https://arrofamily.com/join/<code>` link was taken out of the message because
-the domain doesn't exist yet, so it would open a Safari error. `inviteLink()`
-still builds it; put it back in the message once the domain is up with a
-`/join/*` page, or with universal links in phase 5.
+```
+for p in / /privacy/ /support/ /join/ABC23456; do curl -s -o /dev/null -w "%{http_code} $p\n" https://saunafam.com$p; done
+curl -s -o /dev/null -w "%{http_code} %{redirect_url}\n" https://arrofamily.com/privacy/
+```
 
-## URLs to put in App Store Connect
+## Invites
 
-- Privacy Policy URL: `https://arrofamily.com/privacy`
-- Support URL: `https://arrofamily.com/support`
+The invite message carries the code and, once the site is live, the link
+`https://saunafam.com/join/<code>` (spec, section 3, "Invites"). The join page
+shows the code and a Get the app button. Its og:title and og:image make it
+show as a card in iMessage (`design/screenshots/saunafam/invite-link-preview.png`).

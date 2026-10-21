@@ -1,82 +1,111 @@
-import React, { useState } from 'react';
-import { Pressable, StyleSheet, Text, View } from 'react-native';
-import { colors, shadows } from '../theme/tokens';
-import { type, weights } from '../theme/typography';
-import { AvatarRing } from '../components/AvatarRing';
-import { PrimaryButton } from '../components/PrimaryButton';
-import { useApp, useView } from '../state/AppState';
+import React, { useEffect, useRef, useState } from 'react';
+import { DeviceEventEmitter, StyleSheet, Text, View } from 'react-native';
 import { RootStackScreenProps } from '../navigation/types';
+import { useApp, useView } from '../state/AppState';
+import { palette, space } from '../theme/tokens';
+import { haptics } from '../theme/haptics';
+import { maxFontScale, type } from '../theme/typography';
+import { Avatar } from '../components/Avatar';
+import { EmberDots } from '../components/EmberDots';
+import { RouteSheet, RouteSheetHandle } from '../components/RouteSheet';
+import { SolidButton } from '../components/SolidButton';
+import { TextAction } from '../components/TextAction';
+import { devDriverOn } from '../dev/DevDriver';
+
+/**
+ * Cheering someone on who hasn't kept this week yet: a sheet with their face,
+ * their dots and one button. Nudges are capped on the server (one a day from
+ * anyone, and only two pushes a week reach a person); "already" reads as a
+ * kind no, and any other failure as a quiet try-again. Never anything about Plus.
+ */
+type State = 'idle' | 'sending' | 'sent' | 'already' | 'failed';
+
+const SENT_HOLD_MS = 1200;
 
 export function NudgeModalScreen({ navigation, route }: RootStackScreenProps<'Nudge'>) {
   const view = useView();
   const { nudge } = useApp();
-  const [state, setState] = useState<'idle' | 'sending' | 'sent' | 'failed'>('idle');
-  const member = (route.params?.memberId && view.members[route.params.memberId]) || view.nudgeTarget;
-  const close = () => navigation.goBack();
-  if (!member || member.invited) return null;
+  const sheet = useRef<RouteSheetHandle>(null);
+  const [state, setState] = useState<State>('idle');
+  const id = route.params?.memberId;
+  const member = id ? view.members[id] : undefined;
+  const row = view.today.family.find((r) => r.member.id === id);
 
-  // One nudge per person per day, whoever sends it, so "already" reads as sent too.
+  useEffect(() => {
+    if (state !== 'sent') return;
+    const t = setTimeout(() => sheet.current?.close(), SENT_HOLD_MS);
+    return () => clearTimeout(t);
+  }, [state]);
+
   const send = () => {
+    if (!member) return;
     setState('sending');
     nudge(member.id)
-      .then(() => {
-        setState('sent');
-        setTimeout(close, 700);
-      })
-      .catch(() => setState('failed'));
+      .then((r) => setState(r === 'sent' ? 'sent' : 'already'))
+      .catch(() => {
+        haptics.error();
+        setState('failed');
+      });
   };
 
+  // Dev captures only: the driver can press Send a nudge (no taps in the Simulator here).
+  const sendRef = useRef(send);
+  useEffect(() => {
+    sendRef.current = send;
+  });
+  useEffect(() => {
+    if (!devDriverOn) return;
+    const sub = DeviceEventEmitter.addListener('devNudge', () => sendRef.current());
+    return () => sub.remove();
+  }, []);
+
+  const name = member?.name ?? 'them';
+  const line =
+    state === 'sent'
+      ? `Sent. ${name} will see it soon.`
+      : state === 'already'
+        ? `${name} has already had a nudge today. Try again tomorrow.`
+        : state === 'failed'
+          ? 'Couldn’t send it just now. Try again in a moment.'
+          : row?.state === 'kept'
+            ? `${name} has kept this week. A nudge says you’re thinking of them.`
+            : row?.state === 'progress'
+              ? `${name}’s on ${row.status} this week. A nudge says you’re thinking of them.`
+              : `A nudge says you’re thinking of ${name}.`;
+
   return (
-    <View style={styles.root}>
-      <Pressable style={StyleSheet.absoluteFill} onPress={close} accessibilityLabel="Dismiss" />
-      <View style={styles.card}>
-        <AvatarRing member={member} size={70} />
-        <Text style={styles.title}>{member.name} still has today.</Text>
-        <Text style={styles.sub}>It’s still today for them.</Text>
-        <View style={styles.divider} />
-        <Text style={styles.prompt}>A little nudge?</Text>
-        <Text style={styles.promptSub}>It’s never too late.</Text>
-        <PrimaryButton
-          title={state === 'sent' ? 'Sent' : state === 'sending' ? 'Sending…' : 'Send a cheer'}
-          onPress={send}
-          disabled={state === 'sending' || state === 'sent'}
-          style={styles.cta}
-        />
-        {state === 'failed' ? <Text style={styles.failed}>Couldn’t send it. Try again.</Text> : null}
-        <Pressable onPress={close} style={styles.notNow} hitSlop={6}>
-          <Text style={styles.notNowText}>Not now</Text>
-        </Pressable>
-      </View>
-    </View>
+    <RouteSheet ref={sheet} onClosed={() => navigation.goBack()} accessibilityLabel={`Cheer ${name} on`}>
+      {member ? (
+        <View style={styles.body}>
+          <Avatar name={member.name} color={member.color} photoUri={typeof member.photoUri === 'string' ? member.photoUri : null} size={64} />
+          <Text style={[type.title, styles.title]} maxFontSizeMultiplier={maxFontScale.title} accessibilityRole="header">
+            Cheer {member.name} on
+          </Text>
+          {row?.dots.length ? <EmberDots count={row.dots.length} filled={row.dots.filter(Boolean).length} size="small" style={styles.dots} /> : null}
+          <Text style={[type.bodySmall, styles.line]} accessibilityLiveRegion="polite">
+            {line}
+          </Text>
+          {/* The same two controls in every state, so the sheet never changes height. */}
+          <SolidButton
+            title={state === 'sending' ? 'Sending' : state === 'sent' ? 'Sent' : 'Send a nudge'}
+            onPress={send}
+            disabled={state !== 'idle' && state !== 'failed'}
+            style={styles.button}
+          />
+          <TextAction label={state === 'sent' || state === 'already' ? 'Done' : 'Not now'} onPress={() => sheet.current?.close()} size="bodySmall" style={styles.done} />
+        </View>
+      ) : (
+        <Text style={type.body}>They’re not in the family anymore.</Text>
+      )}
+    </RouteSheet>
   );
 }
 
 const styles = StyleSheet.create({
-  root: {
-    flex: 1,
-    backgroundColor: 'rgba(28,20,12,0.5)',
-    alignItems: 'center',
-    justifyContent: 'center',
-    padding: 26,
-  },
-  card: {
-    width: '100%',
-    backgroundColor: colors.screen,
-    borderRadius: 22,
-    paddingHorizontal: 24,
-    paddingTop: 28,
-    paddingBottom: 18,
-    alignItems: 'center',
-    // A sheet over a dimmed screen: the highest surface in the app.
-    ...shadows.float,
-  },
-  title: { ...type.greeting, textAlign: 'center', marginTop: 16 },
-  sub: { ...type.body, marginTop: 4 },
-  divider: { height: 1, backgroundColor: colors.divider, alignSelf: 'stretch', marginVertical: 20 },
-  prompt: { ...type.name },
-  promptSub: { ...type.meta, marginTop: 4 },
-  cta: { alignSelf: 'stretch', marginTop: 20 },
-  failed: { ...type.meta, color: colors.muted, marginTop: 10 },
-  notNow: { paddingVertical: 13, marginTop: 2 },
-  notNowText: { fontSize: 15, fontWeight: weights.semibold, color: colors.muted },
+  body: { alignItems: 'center' },
+  title: { marginTop: space.s16, textAlign: 'center' },
+  dots: { marginTop: space.s16 },
+  line: { marginTop: space.s12, textAlign: 'center', color: palette.smoke },
+  button: { marginTop: space.s24 },
+  done: { marginTop: space.s12 },
 });

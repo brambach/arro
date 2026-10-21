@@ -1,104 +1,103 @@
 import React from 'react';
 import { StyleSheet, Text, View } from 'react-native';
-import { colors, radii, spacing } from '../theme/tokens';
-import { type } from '../theme/typography';
-import { Card } from '../components/Card';
-import { FadeInView } from '../components/FadeInView';
-import { TextButton } from '../components/TextButton';
-import { WorkoutCard } from '../components/WorkoutCard';
-import { Screen } from '../components/Screen';
-import { joinNames } from '../data/workouts';
-import { useApp, useView } from '../state/AppState';
 import { MainTabScreenProps } from '../navigation/types';
+import { useApp, useView } from '../state/AppState';
+import { layout, palette, space } from '../theme/tokens';
+import { maxFontScale, type } from '../theme/typography';
+import { Arrive } from '../components/Arrive';
+import { Card } from '../components/Card';
+import { Icon } from '../components/Icon';
+import { NoticeToast } from '../components/NoticeToast';
+import { Screen } from '../components/Screen';
+import { SessionCard } from '../components/SessionCard';
+import { CardSkeleton } from '../components/Skeleton';
+import { StatusNote } from '../components/StatusNote';
+import { TextAction } from '../components/TextAction';
 
-const COUNT_WORDS = ['zero', 'one', 'two', 'three', 'four', 'five', 'six', 'seven'];
-
+/**
+ * The feed (spec, section 3): this week's and last week's sessions, newest
+ * first, one card per session (a shared one is one card). Cheers and comments
+ * are optimistic and roll back quietly (NoticeToast).
+ */
 export function FeedScreen({ navigation }: MainTabScreenProps<'Feed'>) {
   const view = useView();
-  const { nudge, syncNow } = useApp();
-  const joined = view.joinedCount;
-  const count = COUNT_WORDS[joined] ?? joined;
-  const subtitle =
-    joined === 1
-      ? view.invitedList.length
-        ? `Just you so far. ${joinNames(view.invitedList.map((m) => m.name))} ${view.invitedList.length === 1 ? 'hasn’t' : 'haven’t'} joined yet.`
-        : 'Just you so far.'
-      : `Just the ${count} of you, one day at a time.`;
-  const waiting = joined === 1;
+  const { refresh, cheer, uncheer } = useApp();
+  const open = (id: string, reply = false) => navigation.navigate('SessionDetail', { sessionId: id, reply });
 
   return (
-    <Screen onRefresh={syncNow}>
-      <FadeInView style={styles.header}>
-        <View style={{ flex: 1 }}>
-          <Text style={type.title}>Family feed</Text>
-          <Text style={styles.subtitle}>{subtitle}</Text>
-        </View>
-      </FadeInView>
-
-      <View style={styles.list}>
-        {view.feed.map((item, i) => {
-          const workoutId = item.workoutId;
-          return (
-            <FadeInView key={item.id} delay={60 + i * 40} style={{ marginBottom: 12 }}>
-              <WorkoutCard
-                item={item}
-                member={view.members[item.memberId]}
-                onPress={workoutId ? () => navigation.navigate('WorkoutDetail', { workoutId }) : undefined}
-                onCheer={item.kind === 'still' ? () => nudge(item.memberId) : undefined}
-              />
-            </FadeInView>
-          );
-        })}
-
-        {view.feed.length === 0 ? (
-          <FadeInView delay={60}>
-            <Card radius={radii.card} padding={20}>
-              <Text style={styles.emptyTitle}>Nothing here yet</Text>
-              <Text style={styles.emptyBody}>
-                {view.iKeptToday
-                  ? 'Your family’s days will show up here.'
-                  : 'When you or your family log a day, it shows up here. Tap “I moved today” on Today to be first.'}
-              </Text>
-            </Card>
-          </FadeInView>
+    <View style={styles.root}>
+      <Screen onRefresh={refresh} contentStyle={styles.content}>
+        <Arrive index={0}>
+          <Text style={[type.title, styles.title]} maxFontSizeMultiplier={maxFontScale.title} accessibilityRole="header">
+            Feed
+          </Text>
+        </Arrive>
+        {view.offline && view.status === 'ready' ? (
+          <View style={styles.note}>
+            <StatusNote icon="pause" text="You’re offline. Cheers and comments wait until you’re back." />
+          </View>
         ) : null}
 
-        {waiting ? (
-          <FadeInView delay={120} style={{ marginTop: view.feed.length ? 0 : 12 }}>
-            <Card radius={radii.card} padding={20} background={colors.cardAlt}>
-              <Text style={styles.emptyTitle}>
-                {view.invitedList.length ? 'Waiting for your family' : 'It’s just you for now'}
+        {view.status === 'loading' ? (
+          <View style={styles.list} accessible accessibilityLabel="Loading the feed">
+            <Text style={[type.caption, styles.label]}>This week</Text>
+            <View style={styles.cards}>
+              <CardSkeleton />
+              <CardSkeleton />
+            </View>
+          </View>
+        ) : view.status === 'error' ? (
+          <Card style={styles.list}>
+            <Text style={type.heading}>Couldn’t load the feed</Text>
+            <Text style={[type.bodySmall, styles.gap8]}>Check your connection and try again.</Text>
+            <TextAction label="Try again" onPress={() => void refresh()} tone="coal" size="bodySmall" style={styles.retry} />
+          </Card>
+        ) : view.feed.empty ? (
+          <Arrive index={1}>
+            <Card style={styles.list}>
+              <Icon name="feed" size={28} color={palette.pebble} />
+              <Text style={[type.heading, styles.gap8]}>Quiet so far</Text>
+              <Text style={[type.bodySmall, styles.gap8]}>
+                Sessions from this week and last show here, yours and everyone’s. Log one and it’s the first.
               </Text>
-              <Text style={styles.emptyBody}>
-                {view.invitedList.length
-                  ? 'Once they join, their days appear here, and the family streak begins.'
-                  : 'Invite someone and their days will appear here. The family streak begins when the second person joins.'}
+              <TextAction label="Log a session" onPress={() => navigation.navigate('LogSession')} tone="coal" size="bodySmall" style={styles.retry} />
+            </Card>
+          </Arrive>
+        ) : (
+          view.feed.sections.map((section, s) => (
+            <Arrive key={section.key} index={s + 1}>
+              <Text style={[type.caption, styles.label]} accessibilityRole="header">
+                {section.title}
               </Text>
-              <View style={{ marginTop: 12, alignSelf: 'flex-start' }}>
-                <TextButton
-                  label={view.invitedList.length ? 'Send the invite again' : 'Invite a family member'}
-                  onPress={() => navigation.navigate('Invite')}
-                />
+              <View style={styles.cards}>
+                {section.cards.map((c) => (
+                  <SessionCard
+                    key={c.id}
+                    card={c}
+                    onOpen={() => open(c.id)}
+                    onReply={() => open(c.id, true)}
+                    onCheer={() => void cheer(c.id)}
+                    onUncheer={() => void uncheer(c.id)}
+                  />
+                ))}
               </View>
-            </Card>
-          </FadeInView>
-        ) : null}
-      </View>
-    </Screen>
+            </Arrive>
+          ))
+        )}
+      </Screen>
+      <NoticeToast />
+    </View>
   );
 }
 
 const styles = StyleSheet.create({
-  header: {
-    flexDirection: 'row',
-    alignItems: 'flex-start',
-    gap: 10,
-    paddingHorizontal: spacing.gutter,
-    paddingTop: 6,
-    paddingBottom: 14,
-  },
-  subtitle: { ...type.body, marginTop: 4 },
-  list: { paddingHorizontal: spacing.gutter },
-  emptyTitle: { ...type.name },
-  emptyBody: { ...type.body, marginTop: 6 },
+  root: { flex: 1 },
+  content: { paddingHorizontal: layout.gutter, paddingBottom: space.s40 },
+  title: { paddingHorizontal: space.s8, paddingTop: space.s12 },
+  note: { paddingHorizontal: space.s8, marginTop: space.s12 },
+  list: { marginTop: space.s20 },
+  label: { marginTop: space.s24, marginBottom: space.s8, paddingHorizontal: space.s8 },
+  cards: { gap: space.s12 },
+  gap8: { marginTop: space.s8 },
+  retry: { alignSelf: 'flex-start', marginTop: space.s12 },
 });

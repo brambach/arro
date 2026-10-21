@@ -1,21 +1,32 @@
 import React, { useState } from 'react';
-import { KeyboardAvoidingView, Platform, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { colors, spacing } from '../theme/tokens';
-import { type, weights } from '../theme/typography';
-import { AvatarRing } from '../components/AvatarRing';
-import { PrimaryButton } from '../components/PrimaryButton';
-import { TextButton } from '../components/TextButton';
-import { TextField } from '../components/TextField';
+import { StyleSheet, Text, View } from 'react-native';
+import { palette, radii, space } from '../theme/tokens';
+import { type } from '../theme/typography';
+import { Avatar } from '../components/Avatar';
+import { Field } from '../components/Field';
+import { SolidButton } from '../components/SolidButton';
+import { SubScreen } from '../components/SubScreen';
+import { TextAction } from '../components/TextAction';
 import { useApp, useView } from '../state/AppState';
-import { showError } from '../state/confirm';
 import { PHOTOS_ON, pickPhoto } from '../state/photos';
 import { RootStackScreenProps } from '../navigation/types';
-import { Backdrop } from '../components/Backdrop';
 
-/** Edit profile: the name and photo your family sees. The colour is automatic and stays. */
+export const EDIT_PROFILE_COPY = {
+  title: 'Edit profile',
+  choose: 'Choose a photo',
+  change: 'Choose a different photo',
+  remove: 'Remove photo',
+  name: 'Name',
+  nameHint: 'Your first name is plenty. It’s what your family sees.',
+  color: 'Your color is picked for you, so everyone in the family has a different one.',
+  save: 'Save',
+};
+
+/**
+ * Edit profile: the name and photo your family sees. Saves optimistically and
+ * rolls back quietly (app.notice) if the server says no. The color stays.
+ */
 export function EditProfileScreen({ navigation }: RootStackScreenProps<'EditProfile'>) {
-  const insets = useSafeAreaInsets();
   const { me } = useView();
   const { updateProfile } = useApp();
   const [name, setName] = useState(me.name);
@@ -24,71 +35,70 @@ export function EditProfileScreen({ navigation }: RootStackScreenProps<'EditProf
   const [photoChanged, setPhotoChanged] = useState(false);
 
   return (
-    <KeyboardAvoidingView
-      style={[styles.root, { paddingTop: Platform.OS === 'ios' ? 12 : insets.top }]}
-      behavior={Platform.OS === 'ios' ? 'padding' : undefined}
-    >
-      <Backdrop />
-      <View style={styles.topBar}>
-        <Pressable onPress={() => navigation.goBack()} hitSlop={10} accessibilityLabel="Cancel">
-          <Text style={styles.cancel}>Cancel</Text>
-        </Pressable>
-      </View>
-      <ScrollView keyboardShouldPersistTaps="handled" showsVerticalScrollIndicator={false} contentContainerStyle={styles.body}>
-        <Text style={type.title}>Edit profile</Text>
-        <View style={styles.avatarWrap}>
-          <AvatarRing name={name || me.name} color={me.color} photoUri={photoUri} size={96} />
-          {PHOTOS_ON ? (
-            <TextButton
-              label={photoUri ? 'Choose a different photo' : 'Choose a photo'}
-              onPress={async () => {
-                const uri = await pickPhoto('square');
-                if (uri) {
-                  setPhotoUri(uri);
-                  setPhotoChanged(true);
-                }
-              }}
-              style={{ marginTop: 14 }}
-            />
-          ) : null}
-          {photoUri ? (
-            <TextButton
-              label="Remove photo"
-              onPress={() => {
-                setPhotoUri(null);
-                setPhotoChanged(true);
-              }}
-              style={{ fontSize: 15, marginTop: 10, color: colors.muted }}
-            />
-          ) : null}
-        </View>
-        <TextField label="Name" value={name} onChangeText={setName} autoCapitalize="words" maxLength={24} />
-        <Text style={styles.note}>Your colour is picked for you, so everyone in the family has a different one.</Text>
-      </ScrollView>
-      <View style={[styles.footer, { paddingBottom: insets.bottom + 14 }]}>
-        <PrimaryButton
-          title="Save"
+    <SubScreen
+      modal
+      title={EDIT_PROFILE_COPY.title}
+      onBack={() => navigation.goBack()}
+      footer={
+        <SolidButton
+          title={EDIT_PROFILE_COPY.save}
           disabled={!name.trim()}
-          onPress={async () => {
-            try {
-              await updateProfile(photoChanged ? { name, photoUri } : { name });
-              navigation.goBack();
-            } catch {
-              showError('Couldn’t save', 'Check your connection and try again.');
-            }
+          onPress={() => {
+            // Optimistic: the change shows at once and the sheet closes.
+            updateProfile(photoChanged ? { name, photoUri } : { name }).catch(() => undefined);
+            navigation.goBack();
           }}
         />
+      }
+    >
+      <View style={styles.avatar}>
+        <Avatar name={name || me.name} color={me.color} photoUri={photoUri} size={112} accessible />
+        {PHOTOS_ON ? (
+          <TextAction
+            label={photoUri ? EDIT_PROFILE_COPY.change : EDIT_PROFILE_COPY.choose}
+            onPress={async () => {
+              const uri = await pickPhoto('square');
+              if (uri) {
+                setPhotoUri(uri);
+                setPhotoChanged(true);
+              }
+            }}
+            style={styles.choose}
+          />
+        ) : null}
+        {photoUri ? (
+          <TextAction
+            label={EDIT_PROFILE_COPY.remove}
+            size="bodySmall"
+            tone="coal"
+            onPress={() => {
+              setPhotoUri(null);
+              setPhotoChanged(true);
+            }}
+          />
+        ) : null}
       </View>
-    </KeyboardAvoidingView>
+      <Field
+        label={EDIT_PROFILE_COPY.name}
+        value={name}
+        onChangeText={setName}
+        autoCapitalize="words"
+        textContentType="givenName"
+        maxLength={24}
+        hint={EDIT_PROFILE_COPY.nameHint}
+      />
+      <View style={styles.colorRow}>
+        <View style={[styles.dot, { backgroundColor: me.color }]} />
+        <Text style={[type.label, styles.colorText]}>{EDIT_PROFILE_COPY.color}</Text>
+      </View>
+    </SubScreen>
   );
 }
 
 const styles = StyleSheet.create({
-  footer: { paddingHorizontal: spacing.gutter, paddingTop: 10 },
-  root: { flex: 1, backgroundColor: colors.screen },
-  topBar: { height: 40, paddingHorizontal: spacing.gutter, justifyContent: 'center' },
-  cancel: { fontSize: 16, color: colors.muted, fontWeight: weights.medium },
-  body: { paddingHorizontal: spacing.gutter, paddingTop: 14, paddingBottom: 24 },
-  avatarWrap: { alignItems: 'center', marginVertical: 24 },
-  note: { ...type.meta, marginTop: 12 },
+  avatar: { alignItems: 'center', marginBottom: space.s24 },
+  choose: { marginTop: space.s16 },
+  colorRow: { flexDirection: 'row', alignItems: 'center', gap: space.s8, marginTop: space.s24, marginHorizontal: space.s8 },
+  dot: { width: 12, height: 12, borderRadius: radii.round, borderColor: palette.steam },
+  colorText: { flexShrink: 1 },
 });

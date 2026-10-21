@@ -1,54 +1,84 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { StyleSheet, Text } from 'react-native';
-import { colors } from '../../theme/tokens';
-import { OnboardingFrame } from '../../components/OnboardingFrame';
-import { TextField } from '../../components/TextField';
+import { palette, space } from '../../theme/tokens';
+import { type } from '../../theme/typography';
+import { Field } from '../../components/Field';
+import { StepScreen } from '../../components/StepScreen';
 import { useApp } from '../../state/AppState';
-import { showError } from '../../state/confirm';
 import { RootStackScreenProps } from '../../navigation/types';
-import { stepOf } from './steps';
+import { FAMILY_NAME_PLACEHOLDERS, nextAfter, stepOf } from './steps';
 
+export const NAME_FAMILY_COPY = {
+  title: 'Name your family',
+  subtitle: 'Only the people you invite will see it. Your group chat’s name works fine.',
+  label: 'Family name',
+  hint: 'You can change it later in Settings.',
+  continue: 'Continue',
+  error: 'Couldn’t save the name. Check your connection and try again.',
+};
+
+/** How long each placeholder shows before the next. */
+const PLACEHOLDER_MS = 2600;
+
+/**
+ * Name your family. The family itself is made one step later, at Your rhythm,
+ * because its week start can't change once it exists. Coming back here after
+ * that renames it.
+ */
 export function NameFamilyScreen({ navigation }: RootStackScreenProps<'NameFamily'>) {
   const { draft, updateDraft, saveFamilyName } = useApp();
   const [saving, setSaving] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [n, setN] = useState(0);
 
-  // Signed in, the family is made on the server here, so the invite step has a real code.
+  // The placeholders take turns while the field is empty.
+  const empty = !draft.familyName;
+  useEffect(() => {
+    if (!empty) return;
+    const id = setInterval(() => setN((i) => (i + 1) % FAMILY_NAME_PLACEHOLDERS.length), PLACEHOLDER_MS);
+    return () => clearInterval(id);
+  }, [empty]);
+
   const onContinue = async () => {
     setSaving(true);
+    setError(null);
     try {
       await saveFamilyName();
-      navigation.navigate('HowItWorks');
+      const next = nextAfter('founder', 'NameFamily');
+      if (next) navigation.navigate(next as 'Rhythm');
     } catch {
-      showError('Couldn’t save your family', 'Check your connection and try again.');
+      setError(NAME_FAMILY_COPY.error);
     } finally {
       setSaving(false);
     }
   };
 
   return (
-    <OnboardingFrame
-      title="Name your family"
-      subtitle="Only the people you invite will ever see it."
+    <StepScreen
+      title={NAME_FAMILY_COPY.title}
+      subtitle={NAME_FAMILY_COPY.subtitle}
       step={stepOf('founder', 'NameFamily')}
       onBack={() => navigation.goBack()}
-      primaryLabel="Continue"
+      primaryLabel={NAME_FAMILY_COPY.continue}
       primaryDisabled={!draft.familyName.trim() || saving}
       onPrimary={onContinue}
     >
-      <TextField
-        label="Family name"
+      <Field
+        label={NAME_FAMILY_COPY.label}
         value={draft.familyName}
         onChangeText={(familyName) => updateDraft({ familyName })}
         autoCapitalize="words"
         maxLength={32}
-        placeholder="The Parkers"
+        placeholder={FAMILY_NAME_PLACEHOLDERS[n]}
         returnKeyType="done"
+        onSubmitEditing={() => draft.familyName.trim() && onContinue()}
+        hint={NAME_FAMILY_COPY.hint}
       />
-      <Text style={styles.note}>A group chat name works. You can change it later.</Text>
-    </OnboardingFrame>
+      {error ? <Text style={[type.bodySmall, styles.error]}>{error}</Text> : null}
+    </StepScreen>
   );
 }
 
 const styles = StyleSheet.create({
-  note: { fontSize: 13, lineHeight: 18, color: colors.faint, marginTop: 12 },
+  error: { color: palette.coal, marginTop: space.s16 },
 });

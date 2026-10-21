@@ -1,254 +1,261 @@
-import React, { useEffect, useState } from 'react';
-import { AppState as RNAppState, Linking, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { colors, radii, spacing, shadows } from '../theme/tokens';
-import { type, weights } from '../theme/typography';
-import { AvatarRing } from '../components/AvatarRing';
-import { BellIcon, ChevronLeft, ChevronRight, LockIcon, PauseIcon, PulseIcon, TargetIcon, UsersIcon } from '../components/Icons';
-import { settings } from '../data/family';
-import { Preview } from '../state/buildView';
-import { confirmAction, showError } from '../state/confirm';
-import { useApp, useView } from '../state/AppState';
-import { NotificationPermission, notificationPermission } from '../state/notifications';
+import React, { useState } from 'react';
+import { Linking, StyleSheet, Text, View } from 'react-native';
+import { palette, space } from '../theme/tokens';
+import { type } from '../theme/typography';
+import { ConfirmSheet } from '../components/ConfirmSheet';
+import { ListGroup, ListRow } from '../components/ListRow';
+import { GroupLabel, GroupNote, SubScreen } from '../components/SubScreen';
+import { TextAction } from '../components/TextAction';
+import { PREVIEW_SCENARIOS } from '../data/preview';
 import { RootStackScreenProps } from '../navigation/types';
-import { REMINDER_SLOTS } from './onboarding/ReminderTimeScreen';
-import { Backdrop } from '../components/Backdrop';
+import { useApp, useView } from '../state/AppState';
+import { setDevOverrides, useDevOverrides } from '../state/devTools';
+import { HEALTH_COPY, useHealthSetting } from '../state/healthSettings';
+import { PreviewBehavior } from '../state/purchases';
+import type { RestoreOutcome } from '../state/plusFlow';
+import { PLUS_PAYER_WARNING, plusNotice, remindersValue, signOutBody } from '../state/settingsCopy';
+import { WOOD_NAMES } from './WallScreen';
 
-// Ink icons on a paper tile: one quiet set instead of five bright hues.
-const ICONS: Record<string, React.ReactNode> = {
-  pulse: <PulseIcon color={colors.inkSoft} />,
-  users: <UsersIcon size={18} color={colors.inkSoft} strokeWidth={1.9} />,
-  target: <TargetIcon color={colors.inkSoft} />,
-  bell: <BellIcon color={colors.inkSoft} />,
-  pause: <PauseIcon color={colors.inkSoft} />,
-  lock: <LockIcon color={colors.inkSoft} />,
+export const LINKS = { privacy: 'https://saunafam.com/privacy', help: 'https://saunafam.com/support' };
+
+export const SETTINGS_COPY = {
+  title: 'Settings',
+  family: 'Family',
+  you: 'You',
+  plus: 'Saunafam Plus',
+  help: 'Help',
+  familyRules: 'Family rules',
+  familyRulesValue: (goal: number) => `${goal} a week`,
+  members: 'Family members',
+  streakRules: 'Streak rules',
+  wall: 'The wall',
+  takeBreak: 'Take a break',
+  onBreak: (until: string) => `Until ${until}`,
+  notifications: 'Notifications',
+  health: 'Apple Health',
+  plusRow: 'Saunafam Plus',
+  restore: 'Restore purchases',
+  tip: 'Leave a tip',
+  privacy: 'Privacy',
+  helpFaq: 'Help & FAQ',
+  about: 'About',
+  signOut: 'Sign out',
+  signOutTitle: 'Sign out?',
+  deleteAccount: 'Delete account',
+  deleteTitle: 'Delete your account?',
+  deleteBody:
+    'This deletes your account, every session you’ve logged and your photos. Your family keeps going without you. You can’t undo it.',
+  deleteFailed: 'Couldn’t delete your account. It’s still here. Check your connection and try again.',
+  linkFailed: (url: string) => `Couldn’t open the page. It’s at ${url.replace('https://', '')}.`,
+  restored: (family: string) => `Plus restored for ${family}.`,
+  nothingToRestore: 'No purchases found for this Apple ID.',
+  restoreOffline: 'Couldn’t reach the App Store. Try again.',
+  restoredElsewhere: 'Your family already had Plus, so nothing changed.',
+  restoring: 'Restoring...',
 };
 
-// The live pages on arrofamily.com, the same ones the App Store listing links to.
-const LINKS: Record<string, string> = {
-  privacy: 'https://arrofamily.com/privacy',
-  help: 'https://arrofamily.com/support',
-};
+/** Restore's three results (spec, "Restore purchases"), and the two-payers case. */
+export function restoreLine(outcome: RestoreOutcome, family: string): string {
+  if (outcome === 'restored') return SETTINGS_COPY.restored(family);
+  if (outcome === 'alreadyHad') return SETTINGS_COPY.restoredElsewhere;
+  if (outcome === 'nothing') return SETTINGS_COPY.nothingToRestore;
+  return SETTINGS_COPY.restoreOffline;
+}
 
-const openLink = (url: string) =>
-  Linking.openURL(url).catch(() => showError('Couldn’t open the page', `It’s at ${url.replace('https://', '')}.`));
+const PURCHASE_BEHAVIORS: PreviewBehavior[] = ['succeed', 'fail', 'cancel', 'pending', 'nothingToRestore', 'offline'];
 
-/** Prototype only: look at the fake family in different moments. Gone from release builds. */
-const PREVIEWS: { label: string; value: Preview | null }[] = [
-  { label: 'My family', value: null },
-  { label: 'Demo family', value: 'demo' },
-  { label: 'Day 1 after a break', value: 'afterBreak' },
-  { label: 'First 30 days done', value: 'goalDone' },
-];
-
+/**
+ * Settings (spec, section 3): designed rows, each tappable across its whole
+ * width, a value on the right only when there is one. Plus rows appear only
+ * with app_config.plus_enabled. Sign out and Delete account confirm in a sheet
+ * first; signing out says so when it throws away a running timer.
+ *
+ * The dev-only Prototype preview and Design sheet stay at the bottom, so every
+ * state can be reached without a server.
+ */
 export function SettingsScreen({ navigation }: RootStackScreenProps<'Settings'>) {
-  const insets = useSafeAreaInsets();
-  const { session, signOut, deleteAccount, preview, setPreview } = useApp();
-  const onServer = !!session?.remote;
   const view = useView();
-  const [permission, setPermission] = useState<NotificationPermission | null>(null);
+  const app = useApp();
+  const dev = useDevOverrides();
+  const health = useHealthSetting();
+  const [confirm, setConfirm] = useState<null | 'signOut' | { kind: 'delete'; paysForPlus: boolean }>(null);
+  const [busy, setBusy] = useState(false);
+  const [line, setLine] = useState<string | null>(null);
+  const me = app.session?.me;
 
-  // Back from Settings > Notifications or the iPhone's Settings app picks up a change.
-  useEffect(() => {
-    const check = () => notificationPermission().then(setPermission);
-    check();
-    const unfocus = navigation.addListener('focus', check);
-    const sub = RNAppState.addEventListener('change', (state) => {
-      if (state === 'active') check();
-    });
-    return () => {
-      unfocus();
-      sub.remove();
-    };
-  }, [navigation]);
-
-  const notificationsOff = permission === 'denied' || permission === 'undetermined';
-  // A break needs the family on the server; the local family has nobody to carry on.
-  const rows = [
-    ...settings.connection.slice(0, 1),
-    ...(onServer ? [{ key: 'break', label: 'Take a break', value: '', icon: 'pause' }] : []),
-    ...settings.connection.slice(1),
-  ].map((row) =>
-    row.key === 'break' ? { ...row, value: view.myBreak ? `Until ${view.myBreak.until}` : '' }
-    : row.key === 'moving' ? { ...row, value: session?.me.moveMethod === 'health' ? 'Apple Health' : 'I moved today' }
-    : row.key === 'members' ? { ...row, value: `${view.allMembers.length} ${view.allMembers.length === 1 ? 'member' : 'members'}` }
-    : row.key === 'notifications'
-      ? {
-          ...row,
-          value:
-            !notificationsOff && session?.me.remindersWanted
-              ? (REMINDER_SLOTS.find((s) => s.slot === session.me.reminder)?.time ?? '')
-              : permission === 'granted' ? 'On' : 'Off',
-        }
-    : row,
-  );
-  const onSignOut = async () => {
-    const ok = await confirmAction(
-      'Sign out?',
-      onServer
-        ? 'Your family and streak stay safe. Sign in with Apple again to come back.'
-        : 'This preview keeps your family on this phone only, so signing out clears it.',
-      'Sign out',
-    );
-    if (ok) await signOut();
+  // Dev builds: a deep link can open a confirm for captures (src/navigation/DevLinks.tsx).
+  const devConfirm =
+    __DEV__ && dev.settingsConfirm
+      ? dev.settingsConfirm === 'signOut'
+        ? ('signOut' as const)
+        : { kind: 'delete' as const, paysForPlus: dev.paysForPlus }
+      : null;
+  const shown = confirm ?? devConfirm;
+  const closeConfirm = () => {
+    setConfirm(null);
+    setDevOverrides({ settingsConfirm: null });
   };
-  // App Store rule: an app with accounts lets people delete theirs from inside it.
-  const onDelete = async () => {
-    const ok = await confirmAction(
-      'Delete your account?',
-      onServer
-        ? 'This deletes your account, every workout you’ve logged and your photos. Your family keeps going without you. If you’re the last one in it, the family is deleted too. Apple will ask you to confirm. You can’t undo this.'
-        : 'This deletes the family and workouts saved on this phone. You can’t undo this.',
-      'Delete account',
-    );
-    if (!ok) return;
+
+  const open = (url: string) => Linking.openURL(url).catch(() => setLine(SETTINGS_COPY.linkFailed(url)));
+
+  const askDelete = async () => {
+    const { paysForPlus } = await app.checkBeforeDelete();
+    setConfirm({ kind: 'delete', paysForPlus: paysForPlus || dev.paysForPlus });
+  };
+
+  const doSignOut = async () => {
+    setBusy(true);
     try {
-      await deleteAccount();
-    } catch {
-      showError(
-        'Couldn’t delete your account',
-        'Your account is still here, though some of your photos may already be gone. Check your connection and try again.',
-      );
+      await app.signOut();
+    } finally {
+      setBusy(false);
+      closeConfirm();
     }
   };
 
+  const doDelete = async () => {
+    setBusy(true);
+    try {
+      await app.deleteAccount();
+      closeConfirm();
+    } catch {
+      closeConfirm();
+      setLine(SETTINGS_COPY.deleteFailed);
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  const restore = async () => {
+    setLine(SETTINGS_COPY.restoring);
+    setLine(restoreLine(await app.restorePurchases(), view.familyName));
+  };
+
+  const notice = view.plus.visible ? plusNotice(view.plus, view.todayKey) : null;
+
   return (
-    <View style={[styles.root, { paddingTop: insets.top }]}>
-      <Backdrop />
-      <View style={styles.topBar}>
-        <Pressable onPress={() => navigation.goBack()} hitSlop={10} accessibilityLabel="Back">
-          <ChevronLeft />
-        </Pressable>
+    <SubScreen title={SETTINGS_COPY.title} onBack={() => navigation.goBack()}>
+      <GroupLabel first>{SETTINGS_COPY.family}</GroupLabel>
+      <ListGroup>
+        <ListRow
+          title={SETTINGS_COPY.familyRules}
+          value={SETTINGS_COPY.familyRulesValue(view.rules.goal)}
+          onPress={() => navigation.navigate('FamilyRules')}
+        />
+        <ListRow title={SETTINGS_COPY.members} value={String(view.allMembers.length)} onPress={() => navigation.navigate('FamilyMembers')} />
+        <ListRow title={SETTINGS_COPY.streakRules} onPress={() => navigation.navigate('StreakRules')} />
+        {view.plus.visible ? (
+          <ListRow title={SETTINGS_COPY.wall} value={WOOD_NAMES[view.plus.wood]} onPress={() => navigation.navigate('Wall')} />
+        ) : null}
+      </ListGroup>
+
+      <GroupLabel>{SETTINGS_COPY.you}</GroupLabel>
+      <ListGroup>
+        <ListRow
+          title={SETTINGS_COPY.takeBreak}
+          value={view.myBreak ? SETTINGS_COPY.onBreak(view.myBreak.until) : undefined}
+          onPress={() => navigation.navigate('TakeBreak')}
+        />
+        <ListRow
+          title={SETTINGS_COPY.notifications}
+          value={me ? remindersValue(me.remindersWanted, me.reminderDays, me.reminderTime) : undefined}
+          onPress={() => navigation.navigate('Notifications')}
+        />
+        <ListRow
+          title={SETTINGS_COPY.health}
+          value={health.state ? HEALTH_COPY.row[health.state] : undefined}
+          onPress={() => navigation.navigate('HealthSettings')}
+        />
+      </ListGroup>
+
+      {view.plus.visible ? (
+        <>
+          <GroupLabel>{SETTINGS_COPY.plus}</GroupLabel>
+          <ListGroup>
+            <ListRow title={SETTINGS_COPY.plusRow} value={view.plus.rowLabel ?? undefined} onPress={() => navigation.navigate('Plus')} />
+            <ListRow title={SETTINGS_COPY.restore} onPress={restore} />
+            <ListRow title={SETTINGS_COPY.tip} onPress={() => navigation.navigate('Plus', { focus: 'tips' })} />
+          </ListGroup>
+          {notice ? <GroupNote>{notice}</GroupNote> : null}
+        </>
+      ) : null}
+
+      <GroupLabel>{SETTINGS_COPY.help}</GroupLabel>
+      <ListGroup>
+        <ListRow title={SETTINGS_COPY.privacy} onPress={() => open(LINKS.privacy)} accessibilityHint="Opens saunafam.com" />
+        <ListRow title={SETTINGS_COPY.helpFaq} onPress={() => open(LINKS.help)} accessibilityHint="Opens saunafam.com" />
+        <ListRow title={SETTINGS_COPY.about} onPress={() => navigation.navigate('About')} />
+      </ListGroup>
+
+      {line ? <Text style={[type.bodySmall, styles.line]}>{line}</Text> : null}
+
+      <View style={styles.account}>
+        <TextAction label={SETTINGS_COPY.signOut} onPress={() => setConfirm('signOut')} />
+        <TextAction label={SETTINGS_COPY.deleteAccount} tone="coal" onPress={askDelete} style={styles.delete} />
       </View>
 
-      <ScrollView
-        showsVerticalScrollIndicator={false}
-        contentContainerStyle={{ paddingHorizontal: spacing.gutter, paddingBottom: insets.bottom + 24 }}
-      >
-        <View style={styles.titleRow}>
-          <Text style={type.title}>Settings</Text>
-          <AvatarRing member={view.me} size={36} />
-        </View>
+      {__DEV__ ? <DevSection navigation={navigation} /> : null}
 
-        <View style={[styles.card, { marginTop: 16 }]}>
-          {rows.map((row, i) => (
-            <Pressable
-              key={row.key}
-              onPress={
-                row.key === 'moving'
-                  ? () => navigation.navigate('MoveMethod')
-                  : row.key === 'break'
-                    ? () => navigation.navigate('TakeBreak')
-                  : row.key === 'members'
-                    ? () => navigation.navigate('FamilyMembers')
-                    : row.key === 'rules'
-                      ? () => navigation.navigate('StreakRules')
-                      : row.key === 'notifications'
-                        ? () => navigation.navigate('Notifications')
-                        : LINKS[row.key]
-                          ? () => openLink(LINKS[row.key])
-                          : undefined
-              }
-              accessibilityRole="button"
-              accessibilityLabel={row.label}
-              style={[styles.row, i < rows.length - 1 && styles.rowBorder]}
-            >
-              <View style={styles.iconTile}>{ICONS[row.icon]}</View>
-              <Text style={styles.label}>{row.label}</Text>
-              {row.value ? <Text style={styles.value}>{row.value}</Text> : null}
-              <ChevronRight />
-            </Pressable>
-          ))}
-        </View>
+      <ConfirmSheet
+        visible={shown === 'signOut'}
+        title={SETTINGS_COPY.signOutTitle}
+        body={signOutBody(!!view.timer, view.today.waiting)}
+        confirmLabel={SETTINGS_COPY.signOut}
+        onConfirm={doSignOut}
+        onCancel={closeConfirm}
+        busy={busy}
+      />
+      <ConfirmSheet
+        visible={typeof shown === 'object' && shown !== null}
+        title={SETTINGS_COPY.deleteTitle}
+        warning={typeof shown === 'object' && shown?.paysForPlus ? PLUS_PAYER_WARNING : undefined}
+        body={SETTINGS_COPY.deleteBody}
+        confirmLabel={SETTINGS_COPY.deleteAccount}
+        onConfirm={doDelete}
+        onCancel={closeConfirm}
+        busy={busy}
+      />
+    </SubScreen>
+  );
+}
 
-        <View style={[styles.card, { marginTop: 14 }]}>
-          {settings.about.map((row, i) => {
-            // About Arro only shows the version, so it has no arrow.
-            const link = LINKS[row.key];
-            return (
-              <Pressable
-                key={row.key}
-                onPress={link ? () => openLink(link) : undefined}
-                disabled={!link}
-                accessibilityRole={link ? 'link' : 'text'}
-                accessibilityLabel={row.value ? `${row.label}, ${row.value}` : row.label}
-                style={[styles.row, i < settings.about.length - 1 && styles.rowBorder]}
-              >
-                <View style={styles.iconTile}>
-                  <Text style={styles.glyph}>{row.glyph}</Text>
-                </View>
-                <Text style={styles.label}>{row.label}</Text>
-                {row.value ? <Text style={styles.value}>{row.value}</Text> : null}
-                {link ? <ChevronRight /> : null}
-              </Pressable>
-            );
-          })}
-        </View>
-
-        {__DEV__ ? (
-          <>
-            <Text style={styles.previewLabel}>Prototype preview</Text>
-            <View style={styles.card}>
-              {PREVIEWS.map((p, i) => (
-                <Pressable
-                  key={p.label}
-                  onPress={() => setPreview(p.value)}
-                  accessibilityRole="button"
-                  accessibilityLabel={p.label}
-                  style={[styles.row, i < PREVIEWS.length - 1 && styles.rowBorder]}
-                >
-                  <Text style={styles.label}>{p.label}</Text>
-                  {preview === p.value ? <Text style={styles.value}>Showing</Text> : null}
-                </Pressable>
-              ))}
-            </View>
-          </>
-        ) : null}
-
-        <Pressable onPress={onSignOut} accessibilityRole="button" accessibilityLabel="Sign out" style={styles.signOut}>
-          <Text style={styles.signOutText}>Sign out</Text>
-        </Pressable>
-        <Pressable onPress={onDelete} accessibilityRole="button" accessibilityLabel="Delete account" style={styles.delete}>
-          <Text style={styles.deleteText}>Delete account</Text>
-        </Pressable>
-      </ScrollView>
-    </View>
+/** Dev builds only: the preview scenarios, the fake App Store, the Design sheet. */
+function DevSection({ navigation }: { navigation: RootStackScreenProps<'Settings'>['navigation'] }) {
+  const { preview, setPreview, setPreviewPurchases } = useApp();
+  const [behavior, setBehavior] = useState<PreviewBehavior>('succeed');
+  return (
+    <>
+      <GroupLabel>Prototype preview</GroupLabel>
+      <ListGroup>
+        <ListRow title="My family" value={preview === null ? 'On' : undefined} onPress={() => setPreview(null)} />
+        {PREVIEW_SCENARIOS.map((s) => (
+          <ListRow key={s.id} title={s.label} value={preview === s.id ? 'On' : undefined} onPress={() => setPreview(s.id)} />
+        ))}
+      </ListGroup>
+      <GroupLabel>Preview App Store</GroupLabel>
+      <ListGroup>
+        {PURCHASE_BEHAVIORS.map((b) => (
+          <ListRow
+            key={b}
+            title={b}
+            value={behavior === b ? 'Next' : undefined}
+            onPress={() => {
+              setBehavior(b);
+              setPreviewPurchases(b);
+            }}
+          />
+        ))}
+      </ListGroup>
+      <GroupLabel>Design</GroupLabel>
+      <ListGroup>
+        <ListRow title="Design sheet" onPress={() => navigation.navigate('DesignSheet')} />
+      </ListGroup>
+    </>
   );
 }
 
 const styles = StyleSheet.create({
-  root: { flex: 1, backgroundColor: colors.screen },
-  topBar: { paddingHorizontal: 16, paddingVertical: 6 },
-  titleRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingTop: 4 },
-  card: {
-    backgroundColor: colors.card,
-    borderRadius: radii.card,
-    ...shadows.card,
-    paddingHorizontal: 15,
-  },
-  row: { flexDirection: 'row', alignItems: 'center', gap: 13, paddingVertical: 11 },
-  rowBorder: { borderBottomWidth: 1, borderBottomColor: colors.divider },
-  iconTile: {
-    width: 30,
-    height: 30,
-    borderRadius: radii.icon,
-    backgroundColor: colors.screen,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  glyph: { color: colors.inkSoft, fontSize: 15, fontWeight: weights.semibold },
-  label: { flex: 1, fontSize: 16, fontWeight: weights.regular, color: colors.ink },
-  value: { ...type.meta, color: colors.faint2 },
-  previewLabel: { ...type.label, color: colors.muted, marginTop: 20, marginBottom: 6 },
-  signOut: {
-    marginTop: 14,
-    backgroundColor: colors.card,
-    borderRadius: radii.button,
-    ...shadows.card,
-    paddingVertical: 14,
-    alignItems: 'center',
-  },
-  signOutText: { fontSize: 16, fontWeight: weights.semibold, color: colors.ink },
-  delete: { marginTop: 6, paddingVertical: 14, alignItems: 'center' },
-  deleteText: { fontSize: 15, fontWeight: weights.medium, color: colors.muted },
+  line: { color: palette.smoke, marginTop: space.s16, marginHorizontal: space.s8 },
+  account: { marginTop: space.s40, alignItems: 'center' },
+  delete: { marginTop: space.s8 },
 });

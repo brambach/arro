@@ -1,123 +1,91 @@
-import React from 'react';
-import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { colors, radii, shadows, spacing } from '../theme/tokens';
+import React, { useState } from 'react';
+import { StyleSheet, Text } from 'react-native';
+import { palette, space } from '../theme/tokens';
 import { type } from '../theme/typography';
-import { AvatarRing } from '../components/AvatarRing';
-import { ChevronLeft, ChevronRight, PlusIcon, UserPlusIcon } from '../components/Icons';
-import { useApp, useView } from '../state/AppState';
-import { confirmAction, showError } from '../state/confirm';
-import { Member } from '../data/types';
+import { Avatar } from '../components/Avatar';
+import { ConfirmSheet } from '../components/ConfirmSheet';
+import { ListGroup, ListRow } from '../components/ListRow';
+import { SolidButton } from '../components/SolidButton';
+import { GroupNote, SubScreen } from '../components/SubScreen';
 import { RootStackScreenProps } from '../navigation/types';
-import { Backdrop } from '../components/Backdrop';
+import { useApp, useView } from '../state/AppState';
+import { MemberView } from '../state/buildView';
 
+export const MEMBERS_COPY = {
+  title: 'Family members',
+  lead: (family: string, n: number) => `${n === 1 ? 'Just you' : `${n} people`} in ${family}. Up to 12 can join.`,
+  you: 'You',
+  invited: 'Invited',
+  founder: 'Started the family',
+  remove: 'Remove',
+  removeTitle: (name: string) => `Remove ${name}?`,
+  removeBody: (name: string) =>
+    `${name} leaves the family, and their sessions go with them. Your family’s code changes, so they’d need a new one to join again.`,
+  removeFailed: (name: string) => `Couldn’t remove ${name}. Check your connection and try again.`,
+  founderNote: 'You started the family, so you can remove someone. Tap their name.',
+  invite: 'Invite someone',
+};
+
+/** Settings > Family members (unchanged from Arro, in Löyly): everyone in join order, then people invited by name. */
 export function FamilyMembersScreen({ navigation }: RootStackScreenProps<'FamilyMembers'>) {
-  const insets = useSafeAreaInsets();
-  const { allMembers, me, canRemoveMembers } = useView();
+  const view = useView();
   const { removeMember } = useApp();
+  const [removing, setRemoving] = useState<MemberView | null>(null);
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const joined = view.allMembers.filter((m) => !m.invited);
+  const canRemove = (m: MemberView) => view.isFounder && !m.invited && !m.isMe;
 
-  // Only the person who started the family can remove someone, and never themselves.
-  const canRemove = (m: Member) => canRemoveMembers && !m.invited && m.id !== me.id;
-
-  const askToRemove = async (m: Member) => {
-    const ok = await confirmAction(
-      `Remove ${m.name}?`,
-      `${m.name} leaves the family and their workouts go with them. Your family’s code changes, so they’d need a new one to join again.`,
-      'Remove',
-    );
-    if (!ok) return;
+  const confirmRemove = async () => {
+    if (!removing) return;
+    setBusy(true);
+    setError(null);
     try {
-      await removeMember(m.id);
+      await removeMember(removing.id);
     } catch {
-      showError(`Couldn’t remove ${m.name}`, 'Check your connection and try again.');
+      setError(MEMBERS_COPY.removeFailed(removing.name));
+    } finally {
+      setBusy(false);
+      setRemoving(null);
     }
   };
 
   return (
-    <View style={[styles.root, { paddingTop: insets.top }]}>
-      <Backdrop />
-      <View style={styles.header}>
-        <Pressable onPress={() => navigation.goBack()} hitSlop={10} accessibilityLabel="Back">
-          <ChevronLeft />
-        </Pressable>
-        <Text style={styles.headerTitle}>Family members</Text>
-        <Pressable onPress={() => navigation.navigate('Invite')} hitSlop={10} accessibilityRole="button" accessibilityLabel="Add member">
-          <PlusIcon color={colors.ink} />
-        </Pressable>
-      </View>
-
-      <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{ padding: spacing.gutter, paddingBottom: insets.bottom + 24 }}>
-        <Text style={styles.groupLabel}>The crew</Text>
-        <View style={styles.card}>
-          {allMembers.map((m, i) => (
-            <Pressable
-              key={m.id}
-              // People who've joined have a map; someone only invited doesn't yet.
-              onPress={m.invited ? undefined : () => navigation.navigate('Map', { memberId: m.id })}
-              onLongPress={canRemove(m) ? () => askToRemove(m) : undefined}
-              disabled={m.invited}
-              accessibilityRole={m.invited ? undefined : 'button'}
-              accessibilityLabel={m.invited ? m.name : `${m.name}, open their map`}
-              accessibilityActions={canRemove(m) ? [{ name: 'remove', label: `Remove ${m.name} from the family` }] : undefined}
-              onAccessibilityAction={(e) => e.nativeEvent.actionName === 'remove' && askToRemove(m)}
-              style={[styles.row, i < allMembers.length - 1 && styles.rowBorder]}
-            >
-              <AvatarRing member={m} size={40} />
-              <View style={{ flex: 1 }}>
-                <Text style={styles.name}>{m.name}</Text>
-                {m.relationship ? <Text style={styles.rel}>{m.relationship}</Text> : null}
-              </View>
-              {m.invited ? null : <ChevronRight />}
-            </Pressable>
-          ))}
-        </View>
-        {canRemoveMembers && allMembers.some(canRemove) ? (
-          <Text style={styles.hint}>To remove someone, touch and hold their name.</Text>
-        ) : null}
-
-        <Pressable
-          onPress={() => navigation.navigate('Invite')}
-          accessibilityRole="button"
-          accessibilityLabel="Invite a family member"
-          style={[styles.card, styles.inviteRow]}
-        >
-          <View style={styles.inviteIcon}>
-            <UserPlusIcon size={21} color={colors.inkSoft} />
-          </View>
-          <View style={{ flex: 1 }}>
-            <Text style={styles.name}>Invite a family member</Text>
-            <Text style={styles.rel}>Send your family’s code</Text>
-          </View>
-          <ChevronRight />
-        </Pressable>
-      </ScrollView>
-    </View>
+    <SubScreen
+      title={MEMBERS_COPY.title}
+      lead={MEMBERS_COPY.lead(view.familyName, joined.length)}
+      onBack={() => navigation.goBack()}
+      footer={<SolidButton title={MEMBERS_COPY.invite} onPress={() => navigation.navigate('Invite')} />}
+    >
+      <ListGroup inset="leading">
+        {view.allMembers.map((m, i) => (
+          <ListRow
+            key={m.id}
+            title={m.isMe ? `${m.name} (${MEMBERS_COPY.you.toLowerCase()})` : m.name}
+            subtitle={i === 0 && !m.invited ? MEMBERS_COPY.founder : undefined}
+            value={m.invited ? MEMBERS_COPY.invited : canRemove(m) ? MEMBERS_COPY.remove : undefined}
+            valueTone={m.invited ? 'quiet' : 'default'}
+            leading={<Avatar name={m.name} color={m.color} photoUri={typeof m.photoUri === 'string' ? m.photoUri : null} size={38} />}
+            onPress={canRemove(m) ? () => setRemoving(m) : undefined}
+            accessibilityHint={canRemove(m) ? MEMBERS_COPY.removeTitle(m.name) : undefined}
+          />
+        ))}
+      </ListGroup>
+      {view.isFounder && joined.length > 1 ? <GroupNote>{MEMBERS_COPY.founderNote}</GroupNote> : null}
+      {error ? <Text style={[type.bodySmall, styles.error]}>{error}</Text> : null}
+      <ConfirmSheet
+        visible={!!removing}
+        title={removing ? MEMBERS_COPY.removeTitle(removing.name) : ''}
+        body={removing ? MEMBERS_COPY.removeBody(removing.name) : ''}
+        confirmLabel={MEMBERS_COPY.remove}
+        onConfirm={confirmRemove}
+        onCancel={() => setRemoving(null)}
+        busy={busy}
+      />
+    </SubScreen>
   );
 }
 
 const styles = StyleSheet.create({
-  root: { flex: 1, backgroundColor: colors.screen },
-  header: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', height: 40, paddingHorizontal: 16 },
-  headerTitle: { ...type.name },
-  groupLabel: { ...type.label, color: colors.muted, marginBottom: 6 },
-  card: {
-    backgroundColor: colors.card,
-    borderRadius: radii.card,
-    paddingHorizontal: 16,
-    ...shadows.card,
-  },
-  row: { flexDirection: 'row', alignItems: 'center', gap: 13, paddingVertical: 12 },
-  rowBorder: { borderBottomWidth: 1, borderBottomColor: colors.divider },
-  name: { ...type.name },
-  rel: { ...type.meta, marginTop: 1 },
-  hint: { ...type.meta, marginTop: 8, marginHorizontal: 4 },
-  inviteRow: { flexDirection: 'row', alignItems: 'center', gap: 13, paddingVertical: 14, marginTop: 16 },
-  inviteIcon: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
-    backgroundColor: colors.screen,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
+  error: { color: palette.coal, marginTop: space.s16, marginHorizontal: space.s8 },
 });

@@ -1,452 +1,340 @@
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
-import { colors, radii, spacing } from '../theme/tokens';
-import { type, weights } from '../theme/typography';
-import { AvatarRing } from '../components/AvatarRing';
-import { AvatarStack } from '../components/AvatarStack';
-import { Card } from '../components/Card';
-import { CheckInPop } from '../components/CheckInPop';
-import { CheerButton } from '../components/CheerButton';
-import { FadeInView } from '../components/FadeInView';
-import { Check } from '../components/Icons';
-import { PrimaryButton } from '../components/PrimaryButton';
-import { RollingText } from '../components/RollingText';
-import { Screen } from '../components/Screen';
-import { SectionHeader } from '../components/SectionHeader';
-import { StreakRing } from '../components/StreakRing';
-import { TextButton } from '../components/TextButton';
-import { joinNames } from '../data/workouts';
-import { Member } from '../data/types';
-import { AppView, GoalView, StreakView, keptSummary } from '../state/buildView';
-import { useApp, useView } from '../state/AppState';
-import { useYesterdayOpen } from '../state/useYesterdayOpen';
+import { useIsFocused } from '@react-navigation/native';
 import { MainTabScreenProps } from '../navigation/types';
+import { useApp, useView } from '../state/AppState';
+import { FamilyRow, PersonTap, TodayView } from '../state/buildView';
+import { healthAvailable } from '../state/health';
+import { setHealthEnabled } from '../state/healthSettings';
+import { HEALTH_OFFER_COPY, HealthOfferAnswer, healthOfferDue, loadHealthOffer, saveHealthOffer } from '../state/healthOffer';
+import { layout, palette, radii, space } from '../theme/tokens';
+import { moments } from '../theme/motion';
+import { maxFontScale, type } from '../theme/typography';
+import { Arrive } from '../components/Arrive';
+import { AvatarProgress } from '../components/AvatarProgress';
+import { Card } from '../components/Card';
+import { Icon } from '../components/Icon';
+import { ListGroup, ListRow } from '../components/ListRow';
+import { NoticeToast } from '../components/NoticeToast';
+import { PersonRow, rowHint } from '../components/PersonRow';
+import { Screen } from '../components/Screen';
+import { Bone, RowsSkeleton } from '../components/Skeleton';
+import { SolidButton } from '../components/SolidButton';
+import { StartSessionButton } from '../components/StartSessionButton';
+import { StatusNote } from '../components/StatusNote';
+import { TextAction } from '../components/TextAction';
+import { TimerBar } from '../components/TimerBar';
+import { WeekHero } from '../components/WeekHero';
+import { useShownWhenFocused } from '../components/useShownWhenFocused';
 
+/**
+ * Today (spec, section 3): the date and greeting with your avatar, the This
+ * week hero (the family streak, your slat, "2 of 3 this week", the family
+ * line), Start a session and Log one I already did, Forgot one?, and the
+ * family list. Everything comes from view.today, cache first.
+ *
+ * Arrival (Key motion moment 2): one settle, 70 ms apart, in order: greeting,
+ * this week's slat, the Start button, the family list; the streak number rolls
+ * in. A save plays the check-in on the hero when the sheet has closed.
+ */
 export function TodayScreen({ navigation }: MainTabScreenProps<'Today'>) {
   const view = useView();
-  const { nudge, syncNow } = useApp();
-  const { streak, goal } = view;
-  const afterBreak = streak.restartDay;
-  let delay = 0;
-  const next = () => (delay += 60);
+  const { refresh } = useApp();
+  // Changes made while the log sheet covers Today arrive once it's gone, so the moment is seen.
+  const t = useShownWhenFocused(view.today);
 
-  // The moment you come back from logging: your tick, your row and the count
-  // all land together. Only for the change itself, never on a normal visit.
-  const wasKept = useRef(view.iKeptToday);
-  const [justKept, setJustKept] = useState(false);
-  useEffect(() => {
-    if (!wasKept.current && view.iKeptToday) setJustKept(true);
-    wasKept.current = view.iKeptToday;
-  }, [view.iKeptToday]);
+  const tap = (target: PersonTap) => {
+    if (target.kind === 'nudge') navigation.navigate('Nudge', { memberId: target.memberId });
+    else if (target.kind === 'session') navigation.navigate('SessionDetail', { sessionId: target.sessionId });
+    else if (target.kind === 'invite') navigation.navigate('Invite');
+  };
 
-  const streakCard = <StreakCard streak={streak} />;
+  useMilestoneWhenDue(view.milestone !== null, () => navigation.navigate('Milestone'));
+
+  const ready = view.status === 'ready';
+  const meProgress = t.you.goal ? Math.min(1, t.you.countedDays / t.you.goal) : 0;
 
   return (
-    <Screen onRefresh={syncNow}>
-      <FadeInView delay={0} style={styles.header}>
-        <View style={{ flex: 1 }}>
-          <Text style={styles.date}>{view.today.dateLabel}</Text>
-          <Text style={[type.greeting, { marginTop: 4 }]}>{view.today.greeting}</Text>
-        </View>
-        <AvatarRing member={view.me} size={40} />
-      </FadeInView>
+    <View style={styles.root}>
+      <Screen onRefresh={refresh} contentStyle={styles.content}>
+        {view.timer ? (
+          <View style={styles.timerBar}>
+            <TimerBar />
+          </View>
+        ) : null}
 
-      {/* After a break, Today leads with the number that can't break. */}
-      {afterBreak ? (
-        <FadeInView delay={next()} style={styles.section}>
-          {streakCard}
-        </FadeInView>
-      ) : null}
-      {afterBreak ? (
-        <FadeInView delay={next()} style={styles.section}>
-          <BackAtItCard />
-        </FadeInView>
-      ) : null}
+        <Arrive index={0}>
+          <View style={styles.header}>
+            <View style={styles.headerText}>
+              <Text style={type.caption}>{t.dateLabel}</Text>
+              <Text style={[type.title, styles.greeting]} maxFontSizeMultiplier={maxFontScale.title} accessibilityRole="header">
+                {t.greeting}
+              </Text>
+            </View>
+            <Pressable
+              onPress={() => navigation.navigate('Me')}
+              accessibilityRole="button"
+              accessibilityLabel={`You, ${t.you.label}`}
+              accessibilityHint="Opens Me"
+              hitSlop={space.s8}
+            >
+              <AvatarProgress
+                name={view.me.name}
+                color={view.me.color}
+                photoUri={typeof view.me.photoUri === 'string' ? view.me.photoUri : null}
+                progress={t.you.kept ? 1 : meProgress}
+              />
+            </Pressable>
+          </View>
+        </Arrive>
 
-      <FadeInView delay={next()} style={styles.section}>
-        <MoveSection view={view} justKept={justKept} onLog={(day) => navigation.navigate('LogToday', { day })} />
-      </FadeInView>
+        <Notes offline={view.offline && ready} waiting={t.waiting} />
 
-      <FadeInView delay={next()} style={styles.section}>
-        <SummaryCard view={view} onInvite={() => navigation.navigate('Invite')} onCheer={nudge} />
-      </FadeInView>
-
-      {!afterBreak ? (
-        <FadeInView delay={next()} style={styles.section}>
-          {streakCard}
-        </FadeInView>
-      ) : null}
-
-      {goal.status !== 'none' ? (
-        <FadeInView delay={next()} style={styles.section}>
-          <GoalCard goal={goal} onOpenMilestone={() => navigation.navigate('Milestone', { kind: 'family' })} />
-        </FadeInView>
-      ) : null}
-
-      <FadeInView delay={next()} style={styles.section}>
-        <SectionHeader
-          title="Family today"
-          action={view.nudgeTarget ? 'Nudge' : undefined}
-          onAction={() => navigation.navigate('Nudge', { memberId: view.nudgeTarget?.id })}
-          style={{ marginBottom: 2 }}
-        />
-        <View>
-          {[...view.familyList, ...view.invitedList].map((m, i, all) => {
-            const nudgeable = !m.invited && m.id !== view.me.id && m.today === 'still';
-            return (
-              <FadeInView key={m.id} delay={delay + i * 40}>
-                <MemberRow
-                  member={m}
-                  justKept={justKept && m.id === view.me.id}
-                  last={i === all.length - 1}
-                  onPress={
-                    m.invited
-                      ? () => navigation.navigate('Invite')
-                      : nudgeable
-                        ? () => navigation.navigate('Nudge', { memberId: m.id })
-                        : m.todayWorkoutId
-                          ? () => navigation.navigate('WorkoutDetail', { workoutId: m.todayWorkoutId! })
-                          : undefined
-                  }
-                />
-              </FadeInView>
-            );
-          })}
-        </View>
-      </FadeInView>
-    </Screen>
-  );
-}
-
-// ─── Move: the biggest thing on the screen ───────────────────────────────────
-
-function MoveSection({
-  view,
-  justKept,
-  onLog,
-}: {
-  view: AppView;
-  justKept: boolean;
-  onLog: (day: 'today' | 'yesterday') => void;
-}) {
-  const yesterdayOk = useYesterdayOpen();
-  if (view.iKeptToday) {
-    return (
-      <Card radius={radii.cardLg} padding={16} background={colors.keptBg} style={styles.keptCard}>
-        <CheckInPop play={justKept} delay={120} style={styles.keptTick}>
-          <Check size={18} color={colors.white} strokeWidth={2.6} />
-        </CheckInPop>
-        <View style={{ flex: 1 }}>
-          <Text style={styles.keptTitle}>You moved today</Text>
-          <Text style={styles.keptMeta} numberOfLines={1}>
-            {view.me.meta}
-          </Text>
-        </View>
-        <TextButton label="Add another" onPress={() => onLog('today')} />
-      </Card>
-    );
-  }
-  return (
-    <View>
-      <PrimaryButton
-        title="I moved today"
-        size="large"
-        icon={<Check size={22} color={colors.white} strokeWidth={2.6} />}
-        onPress={() => onLog('today')}
-      />
-      {yesterdayOk && (
-        <View style={styles.yesterday}>
-          <Text style={styles.yesterdayText}>Forgot yesterday? </Text>
-          <TextButton label="Log yesterday" onPress={() => onLog('yesterday')} />
-        </View>
-      )}
+        {view.status === 'loading' ? (
+          <TodaySkeleton />
+        ) : view.status === 'error' ? (
+          <LoadError onRetry={refresh} />
+        ) : (
+          <TodayBody
+            today={t}
+            wood={view.plus.wood}
+            onTap={tap}
+            onInvite={() => navigation.navigate('Invite')}
+            onLog={(day) => navigation.navigate('LogSession', day ? { day } : undefined)}
+            onDraft={(id) => navigation.navigate('LogSession', { draftId: id })}
+            savedSessions={view.profile.recent.filter((c) => !c.pending).length}
+          />
+        )}
+      </Screen>
+      <NoticeToast />
     </View>
   );
 }
 
-// ─── "x of y kept it today", including a family of one ───────────────────────
-
-function SummaryCard({
-  view,
+function TodayBody({
+  today: t,
+  wood,
+  onTap,
   onInvite,
-  onCheer,
+  onLog,
+  onDraft,
+  savedSessions,
 }: {
-  view: AppView;
+  today: TodayView;
+  wood: Parameters<typeof WeekHero>[0]['wood'];
+  onTap: (tap: PersonTap) => void;
   onInvite: () => void;
-  onCheer: (memberId: string) => Promise<unknown>;
+  onLog: (day?: 'yesterday') => void;
+  onDraft: (clientId: string) => void;
+  savedSessions: number;
 }) {
-  const { joinedCount, keptCount, awayCount, invitedList, today } = view;
-  const solo = joinedCount === 1;
-  const summary = keptSummary(keptCount, joinedCount, awayCount);
-  const everyone = joinedCount > 1 && summary.expected > 0 && keptCount === summary.expected;
-  const pendingId = today.pending?.id;
-
   return (
-    <Card radius={radii.cardLg} padding={18} glass>
-      <View style={styles.summaryRow}>
-        <View>
-          <RollingText value={summary.value} style={type.bigNumber} />
-          <Text style={styles.keptLabel}>{summary.label}</Text>
-          <AvatarStack members={view.familyList.filter((m) => m.today !== 'away')} size={28} overlap={8} style={{ marginTop: 14 }} />
-        </View>
-        <StreakRing value={keptCount} goal={Math.max(1, summary.expected)} size={84} strokeWidth={9} />
+    <>
+      <View style={styles.hero}>
+        <WeekHero today={t} wood={wood} arrive onInvite={onInvite} />
       </View>
 
-      {solo ? (
-        <View style={styles.footer}>
-          <Text style={styles.footerText}>
-            {invitedList.length
-              ? `Waiting for ${joinNames(invitedList.map((m) => m.name))} to join.`
-              : 'Your family starts when someone joins.'}
-          </Text>
-          <TextButton label={invitedList.length ? 'Send the invite again' : 'Invite a family member'} onPress={onInvite} />
-        </View>
-      ) : today.pending ? (
-        <View style={styles.footer}>
-          <Text style={styles.footerText}>{today.pending.prompt} — </Text>
-          {today.pending.cta && pendingId ? (
-            <CheerButton
-              key={pendingId}
-              variant="link"
-              label={today.pending.cta}
-              cheeredLabel="Cheered"
-              onCheer={() => onCheer(pendingId)}
-            />
-          ) : null}
-        </View>
-      ) : everyone ? (
-        <View style={styles.footer}>
-          <Text style={styles.footerText}>Everyone’s kept today.</Text>
-        </View>
+      {t.backAtIt ? (
+        <Arrive index={1}>
+          <Card style={styles.backAtIt}>
+            <Text style={type.heading} maxFontSizeMultiplier={maxFontScale.heading}>
+              {t.backAtIt.title}
+            </Text>
+            <Text style={[type.bodySmall, styles.backAtItBody]}>{t.backAtIt.body}</Text>
+          </Card>
+        </Arrive>
       ) : null}
-    </Card>
-  );
-}
 
-// ─── Streak that can break, and the number that can't ────────────────────────
+      <Arrive index={2} style={styles.start}>
+        <StartSessionButton />
+        <TextAction label="Log one I already did" onPress={() => onLog()} size="bodySmall" style={styles.logOne} />
+      </Arrive>
 
-function StreakCard({ streak }: { streak: StreakView }) {
-  if (streak.kind === 'solo') {
-    return (
-      <Card radius={radii.cardLg} padding={18} glass>
-        <Text style={styles.cardLabel}>Your streak</Text>
-        <Text style={styles.streakBig}>{streak.current > 0 ? `Day ${streak.current}` : 'Start today'}</Text>
-        <Text style={styles.cardNote}>
-          The family streak and your days together start counting when the second person joins.
-        </Text>
-      </Card>
-    );
-  }
-
-  // After a break there's no zero: lead with days together and the longest streak.
-  const leadsWithTogether = streak.kind === 'afterBreak';
-  return (
-    <Card radius={radii.cardLg} padding={18} glass>
-      {leadsWithTogether ? (
-        <>
-          <Text style={styles.cardLabel}>Days together this year</Text>
-          <Text style={styles.streakBig}>{streak.daysTogether}</Text>
-          <Text style={styles.cardNote}>This number never goes back to zero.</Text>
-        </>
-      ) : (
-        <>
-          <Text style={styles.cardLabel}>Family streak</Text>
-          <RollingText value={`Day ${streak.current}`} style={styles.streakBig} />
-        </>
-      )}
-      <View style={styles.statRow}>
-        {!leadsWithTogether ? (
-          <View style={styles.stat}>
-            <Text style={styles.statValue}>{streak.daysTogether}</Text>
-            <Text style={styles.statLabel}>days together this year</Text>
-          </View>
-        ) : null}
-        <View style={styles.stat}>
-          <Text style={styles.statValue}>{streak.longest}</Text>
-          <Text style={styles.statLabel}>{leadsWithTogether ? 'longest streak, in days' : 'longest streak'}</Text>
-        </View>
-      </View>
-    </Card>
-  );
-}
-
-/** Day 1 after a break. Says nothing about who missed. */
-function BackAtItCard() {
-  return (
-    <Card radius={radii.cardLg} padding={18} background={colors.todayPillBg}>
-      <Text style={styles.backTitle}>Back at it, together</Text>
-      <Text style={styles.backBody}>
-        A fresh start today. Every day you’ve spent together still counts, and a new streak begins when everyone moves.
-      </Text>
-    </Card>
-  );
-}
-
-// ─── Your first 30 days together ─────────────────────────────────────────────
-
-function GoalCard({ goal, onOpenMilestone }: { goal: GoalView; onOpenMilestone: () => void }) {
-  if (goal.status === 'done') {
-    return (
-      <Card radius={radii.cardLg} padding={18} background={colors.keptBg} onPress={onOpenMilestone}>
-        <Text style={[styles.cardLabel, { color: colors.kept }]}>Your first 30 days together</Text>
-        <Text style={styles.goalDone}>You did it. 30 days together.</Text>
-        <Text style={styles.cardNote}>See your milestone</Text>
-      </Card>
-    );
-  }
-  const waiting = goal.status === 'waiting';
-  return (
-    <Card radius={radii.cardLg} padding={18}>
-      <View style={styles.goalHead}>
-        <Text style={styles.cardLabel}>Your first 30 days together</Text>
-        <Text style={styles.goalCount}>{waiting ? '0' : goal.day} of {goal.total}</Text>
-      </View>
-      <View style={styles.track}>
-        <View style={[styles.fill, { width: `${(goal.day / goal.total) * 100}%` }]} />
-      </View>
-      <Text style={styles.cardNote}>
-        {waiting ? 'Starts when your first family member joins.' : 'A milestone card waits at the end.'}
-      </Text>
-    </Card>
-  );
-}
-
-// ─── Family list ─────────────────────────────────────────────────────────────
-
-function MemberRow({
-  member,
-  last,
-  justKept = false,
-  onPress,
-}: {
-  member: Member;
-  last: boolean;
-  justKept?: boolean;
-  onPress?: () => void;
-}) {
-  const kept = member.today === 'kept';
-  // Invited and on a break share the quiet grey pill.
-  const quiet = member.invited || member.today === 'away';
-  const Wrapper: any = onPress ? Pressable : View;
-  return (
-    <Wrapper
-      onPress={onPress}
-      accessibilityRole={onPress ? 'button' : undefined}
-      accessibilityLabel={
-        onPress
-          ? member.invited
-            ? `Invite ${member.name} again`
-            : kept
-              ? `See ${member.name}’s workout`
-              : `Nudge ${member.name}`
-          : undefined
-      }
-      style={[styles.row, !last && styles.rowBorder]}
-    >
-      <AvatarRing member={member} size={40} />
-      <View style={styles.rowMiddle}>
-        <Text style={styles.name}>{member.name}</Text>
-        <Text style={styles.meta} numberOfLines={1}>
-          {member.meta}
-        </Text>
-      </View>
-      <View style={styles.rowRight}>
-        <CheckInPop
-          play={justKept}
-          delay={260}
-          style={[
-            styles.pill,
-            { backgroundColor: quiet ? colors.divider : kept ? colors.keptBg : colors.todayPillBg },
-          ]}
-        >
-          <Text
-            style={[
-              styles.pillText,
-              { color: quiet ? colors.muted : kept ? colors.kept : colors.todayPillText },
+      {t.forgot || t.drafts.length ? (
+        <Arrive index={2} style={styles.block}>
+          <ListGroup inset="leading">
+            {[
+              ...(t.forgot
+                ? [
+                    <ListRow
+                      key="forgot"
+                      title={t.forgot.label}
+                      subtitle={t.forgot.kind === 'lastDay' ? 'It still counts toward last week' : 'Forgot one? It still counts'}
+                      leading={<RowIcon name="calendar" />}
+                      onPress={() => onLog('yesterday')}
+                    />,
+                  ]
+                : []),
+              ...t.drafts.map((d) => {
+                const [title, rest] = splitSentence(d.label);
+                return (
+                  <ListRow
+                    key={d.clientId}
+                    title={title}
+                    subtitle={rest ?? undefined}
+                    leading={<RowIcon name="pencil" tone="coal" />}
+                    onPress={() => onDraft(d.clientId)}
+                  />
+                );
+              }),
             ]}
-          >
-            {member.invited ? 'Invited' : kept ? 'Kept' : member.today === 'away' ? 'Away' : 'Today'}
-          </Text>
-        </CheckInPop>
-        <Text style={styles.streak}>{member.streak > 0 ? member.streak : ''}</Text>
+          </ListGroup>
+        </Arrive>
+      ) : null}
+
+      <Arrive index={3}>
+        <Text style={[type.caption, styles.label]} accessibilityRole="header">
+          Family
+        </Text>
+        <ListGroup inset="leading">
+          {t.family.map((r: FamilyRow) => (
+            <PersonRow key={r.member.id} row={r} onPress={r.tap.kind === 'none' ? undefined : () => onTap(r.tap)} hint={rowHint(r)} />
+          ))}
+        </ListGroup>
+      </Arrive>
+
+      <HealthOffer savedSessions={savedSessions} />
+    </>
+  );
+}
+
+/** "Couldn’t save this one. Tap to fix it" as a title and a second line. */
+function splitSentence(s: string): [string, string | null] {
+  const at = s.indexOf('. ');
+  return at < 0 ? [s, null] : [s.slice(0, at), s.slice(at + 2)];
+}
+
+function RowIcon({ name, tone = 'stone' }: { name: 'calendar' | 'pencil'; tone?: 'stone' | 'coal' }) {
+  return (
+    <View style={styles.rowIcon}>
+      <Icon name={name} size={22} color={tone === 'coal' ? palette.coal : palette.smoke} />
+    </View>
+  );
+}
+
+function Notes({ offline, waiting }: { offline: boolean; waiting: number }) {
+  if (!offline && !waiting) return null;
+  const text = offline
+    ? waiting
+      ? `You’re offline. ${waiting === 1 ? 'One session is' : `${waiting} sessions are`} saved here and will send when you’re back.`
+      : 'You’re offline. Anything you log is saved here and sends when you’re back.'
+    : waiting === 1
+      ? 'One session is waiting to send.'
+      : `${waiting} sessions are waiting to send.`;
+  return (
+    <View style={styles.notes}>
+      <StatusNote icon={offline ? 'pause' : 'timer'} text={text} />
+    </View>
+  );
+}
+
+/** "Save sessions to Apple Health?" once, after your first saved session. Turn on asks iOS and writes (health.ts). */
+function HealthOffer({ savedSessions }: { savedSessions: number }) {
+  const { syncHealth } = useApp();
+  const [answer, setAnswer] = useState<HealthOfferAnswer | null | 'unknown'>('unknown');
+  useEffect(() => {
+    let alive = true;
+    loadHealthOffer().then((a) => alive && setAnswer(a));
+    return () => {
+      alive = false;
+    };
+  }, []);
+  if (answer === 'unknown') return null;
+  if (!healthOfferDue({ answer, savedSessions, available: healthAvailable() })) return null;
+  const answerWith = (a: HealthOfferAnswer) => {
+    setAnswer(a);
+    saveHealthOffer(a).catch(() => undefined);
+    // Turn on: the same switch as Settings, then iOS's Health sheet, then the session that earned the card.
+    if (a === 'on') {
+      setHealthEnabled(true)
+        .then((p) => p === 'granted' && syncHealth())
+        .catch(() => undefined);
+    }
+  };
+  return (
+    <Arrive index={3} style={styles.health}>
+      <Card>
+        <View style={styles.healthHead}>
+          <Icon name="droplet" size={22} color={palette.coal} />
+          <Text style={[type.bodyStrong, styles.healthTitle]}>{HEALTH_OFFER_COPY.title}</Text>
+        </View>
+        <Text style={[type.bodySmall, styles.healthBody]}>{HEALTH_OFFER_COPY.body}</Text>
+        <View style={styles.healthActions}>
+          <SolidButton title={HEALTH_OFFER_COPY.turnOn} onPress={() => answerWith('on')} fill={false} />
+          <TextAction label={HEALTH_OFFER_COPY.notNow} onPress={() => answerWith('notNow')} size="bodySmall" />
+        </View>
+      </Card>
+    </Arrive>
+  );
+}
+
+/** The milestone card, once, a beat after Today has arrived. */
+function useMilestoneWhenDue(due: boolean, open: () => void) {
+  const focused = useIsFocused();
+  useEffect(() => {
+    if (!due || !focused) return;
+    const wait = moments.todayArrival.duration + moments.todayArrival.stagger * 3;
+    const timer = setTimeout(open, wait);
+    return () => clearTimeout(timer);
+    // `open` is a new function each render; the due milestone and focus are what matter.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [due, focused]);
+}
+
+function TodaySkeleton() {
+  return (
+    <View accessible accessibilityLabel="Loading your family">
+      <Card style={styles.hero}>
+        <Bone width={160} height={48} />
+        <Bone width="100%" height={54} radius={radii.slat} style={styles.skeletonSlat} />
+        <Bone width={150} height={16} style={styles.skeletonLine} />
+        <Bone width="80%" height={12} style={styles.skeletonLine} />
+      </Card>
+      <View style={styles.start}>
+        <Bone width="100%" height={layout.buttonTall} radius={radii.button} />
       </View>
-    </Wrapper>
+      <Text style={[type.caption, styles.label]}>Family</Text>
+      <RowsSkeleton rows={3} />
+    </View>
+  );
+}
+
+function LoadError({ onRetry }: { onRetry: () => Promise<unknown> }) {
+  return (
+    <Card style={styles.hero}>
+      <Text style={type.heading} maxFontSizeMultiplier={maxFontScale.heading}>
+        Couldn’t load your family
+      </Text>
+      <Text style={[type.bodySmall, styles.backAtItBody]}>
+        Check your connection and try again. Anything you log now is saved on this phone and sends later.
+      </Text>
+      <TextAction label="Try again" onPress={() => void onRetry()} tone="coal" size="bodySmall" style={styles.retry} />
+    </Card>
   );
 }
 
 const styles = StyleSheet.create({
-  header: {
-    flexDirection: 'row',
-    alignItems: 'flex-start',
-    gap: 12,
-    paddingHorizontal: spacing.gutter,
-    paddingTop: 6,
-  },
-  date: { ...type.meta, color: colors.muted },
-  section: { paddingHorizontal: spacing.gutter, marginTop: 20 },
-  keptCard: { flexDirection: 'row', alignItems: 'center', gap: 12 },
-  keptTick: {
-    width: 32,
-    height: 32,
-    borderRadius: 16,
-    backgroundColor: colors.kept,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  keptTitle: { ...type.name },
-  keptMeta: { ...type.meta, color: colors.inkSoft, marginTop: 1 },
-  yesterday: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', marginTop: 12 },
-  yesterdayText: { ...type.body },
-  summaryRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
-  keptLabel: { ...type.body, marginTop: 2 },
-  footer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    flexWrap: 'wrap',
-    columnGap: 6,
-    rowGap: 4,
-    marginTop: 16,
-    paddingTop: 14,
-    borderTopWidth: 1,
-    borderTopColor: colors.dividerSoft,
-  },
-  footerText: { ...type.body },
-  cardLabel: { ...type.label, color: colors.muted },
-  cardNote: { ...type.body, marginTop: 6 },
-  streakBig: { ...type.bigNumber, fontSize: 42, lineHeight: 44, marginTop: 4 },
-  statRow: {
-    flexDirection: 'row',
-    gap: 24,
-    marginTop: 14,
-    paddingTop: 14,
-    borderTopWidth: 1,
-    borderTopColor: colors.dividerSoft,
-  },
-  stat: { flex: 1 },
-  statValue: { ...type.stat },
-  statLabel: { ...type.meta, color: colors.muted, marginTop: 1 },
-  backTitle: { ...type.greeting },
-  backBody: { ...type.body, color: colors.inkSoft, marginTop: 6 },
-  goalHead: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
-  goalCount: { ...type.meta, fontWeight: weights.semibold, color: colors.ink, fontVariant: ['tabular-nums'] },
-  goalDone: { ...type.greeting, marginTop: 4 },
-  track: { height: 6, borderRadius: 3, backgroundColor: colors.track, marginTop: 12, overflow: 'hidden' },
-  // Days kept together, so it takes the "kept" colour, not the accent.
-  fill: { height: 6, borderRadius: 3, backgroundColor: colors.kept },
-  row: { flexDirection: 'row', alignItems: 'center', gap: 12, paddingVertical: 11 },
-  rowBorder: { borderBottomWidth: 1, borderBottomColor: colors.divider },
-  rowMiddle: { flex: 1, minWidth: 0 },
-  name: { ...type.name },
-  meta: { ...type.meta, marginTop: 1 },
-  rowRight: { flexDirection: 'row', alignItems: 'center', gap: 10 },
-  pill: { borderRadius: radii.pill, paddingVertical: 3, paddingHorizontal: 9 },
-  pillText: { fontSize: 12, fontWeight: weights.semibold },
-  streak: {
-    fontSize: 17,
-    fontWeight: weights.semibold,
-    color: colors.faint2,
-    fontVariant: ['tabular-nums'],
-    minWidth: 20,
-    textAlign: 'right',
-  },
+  root: { flex: 1 },
+  content: { paddingHorizontal: layout.gutter, paddingBottom: space.s40 },
+  timerBar: { marginBottom: space.s12 },
+  header: { flexDirection: 'row', alignItems: 'flex-end', gap: space.s12, paddingHorizontal: space.s8, paddingTop: space.s8 },
+  headerText: { flex: 1 },
+  greeting: { marginTop: space.s4 },
+  notes: { paddingHorizontal: space.s8, marginTop: space.s12 },
+  hero: { marginTop: space.s20 },
+  backAtIt: { marginTop: space.s12 },
+  backAtItBody: { marginTop: space.s8 },
+  start: { marginTop: space.s20 },
+  logOne: { marginTop: space.s8 },
+  block: { marginTop: space.s16 },
+  rowIcon: { width: 38, height: 38, borderRadius: radii.round, backgroundColor: palette.aspen, alignItems: 'center', justifyContent: 'center' },
+  label: { marginTop: space.s32, marginBottom: space.s8, paddingHorizontal: space.s8 },
+  health: { marginTop: space.s24 },
+  healthHead: { flexDirection: 'row', alignItems: 'center', gap: space.s12 },
+  healthTitle: { flex: 1 },
+  healthBody: { marginTop: space.s8 },
+  healthActions: { flexDirection: 'row', alignItems: 'center', gap: space.s24, marginTop: space.s16 },
+  skeletonSlat: { marginTop: space.s20 },
+  skeletonLine: { marginTop: space.s12 },
+  retry: { alignSelf: 'flex-start', marginTop: space.s12 },
 });

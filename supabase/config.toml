@@ -370,6 +370,11 @@ authorization_url_path = "/oauth/consent"
 # Allow dynamic client registration
 allow_dynamic_registration = false
 
+# RevenueCat sends its own Authorization value, not a Supabase JWT, so the
+# gateway mustn't check one. The function checks REVENUECAT_WEBHOOK_SECRET itself.
+[functions.revenuecat-webhook]
+verify_jwt = false
+
 [edge_runtime]
 enabled = true
 # Supported request policies: `oneshot`, `per_worker`.

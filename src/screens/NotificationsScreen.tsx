@@ -1,37 +1,57 @@
 import React, { useCallback, useEffect, useState } from 'react';
-import { AppState as RNAppState, Linking, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { colors, spacing } from '../theme/tokens';
-import { type, weights } from '../theme/typography';
-import { ChoiceRow } from '../components/ChoiceRow';
-import { ChevronLeft } from '../components/Icons';
-import { ReminderSlot } from '../data/types';
-import { useApp } from '../state/AppState';
-import { showError } from '../state/confirm';
-import { NotificationPermission, notificationPermission } from '../state/notifications';
+import { AppState as RNAppState, Linking, StyleSheet, Text, View } from 'react-native';
+import { palette, space } from '../theme/tokens';
+import { type } from '../theme/typography';
+import { Card } from '../components/Card';
+import { DayPicker } from '../components/DayPicker';
+import { ListGroup } from '../components/ListRow';
+import { SolidButton } from '../components/SolidButton';
+import { GroupLabel, GroupNote, SubScreen } from '../components/SubScreen';
+import { TextAction } from '../components/TextAction';
+import { TimeStepper } from '../components/TimeStepper';
+import { ToggleRow } from '../components/ToggleRow';
 import { RootStackScreenProps } from '../navigation/types';
-import { REMINDER_SLOTS } from './onboarding/ReminderTimeScreen';
-import { Backdrop } from '../components/Backdrop';
+import { useApp, useView } from '../state/AppState';
+import { NotificationPermission, notificationPermission } from '../state/notifications';
+import { reminderSentence } from '../state/settingsCopy';
+
+export const NOTIFICATIONS_COPY = {
+  title: 'Notifications',
+  lead: 'Sessions, cheers, comments and nudges from your family come as notifications. These are the ones you choose.',
+  offTitle: 'Notifications are off for Saunafam.',
+  offBody: 'Nothing from your family reaches you, reminders included. Turn them on in the Settings app.',
+  openSettings: 'Open Settings',
+  askTitle: 'Saunafam hasn’t asked yet.',
+  askBody: 'Turn them on to hear when someone has a sauna, cheers you on or joins.',
+  turnOn: 'Turn on notifications',
+  reminders: 'Reminders',
+  remindMe: 'Remind me if I’m behind',
+  remindersOff: 'No reminders. Turn this on to pick days and a time.',
+  days: 'Days',
+  time: 'Time',
+  family: 'From your family',
+  weekend: 'Weekend check-in',
+  weekendSub: 'Saturday evening, who could use a cheer',
+  weekendNote:
+    'Sent once, on Saturday between 5 and 6 PM, if you’ve kept your week and someone else can still make theirs. It never says who missed.',
+  failed: 'Couldn’t change that. Check your connection and try again.',
+};
 
 /**
- * Settings > Notifications: the daily reminder's time, or none, and whether
- * notifications are on at all. Picking a time or "Turn on notifications" asks iOS
- * the first time; after a "Don't Allow" only the iPhone's Settings app can turn it
- * back on, so the screen says so and links there.
+ * Settings > Notifications: "Remind me if I'm behind" with its days and time
+ * (kept on this phone; the server keeps the time), and the "Weekend check-in"
+ * switch, which the server reads from members.weekend_checkin.
  */
 export function NotificationsScreen({ navigation }: RootStackScreenProps<'Notifications'>) {
-  const insets = useSafeAreaInsets();
-  const { session, setReminder, turnOnNotifications } = useApp();
+  const { session, setReminders, setWeekendCheckin, turnOnNotifications } = useApp();
+  const view = useView();
   const [permission, setPermission] = useState<NotificationPermission | null>(null);
-  const [busy, setBusy] = useState(false);
-  const wanted = !!session?.me.remindersWanted;
-  const current = session?.me.reminder ?? 'evening';
+  const [error, setError] = useState<string | null>(null);
+  const [weekend, setWeekend] = useState(view.weekendCheckin);
 
   const check = useCallback(() => {
     notificationPermission().then(setPermission);
   }, []);
-
-  // Coming back from the iPhone's Settings app picks up a change made there.
   useEffect(() => {
     check();
     const sub = RNAppState.addEventListener('change', (state) => {
@@ -40,92 +60,87 @@ export function NotificationsScreen({ navigation }: RootStackScreenProps<'Notifi
     return () => sub.remove();
   }, [check]);
 
-  const choose = async (slot: ReminderSlot | null) => {
-    if (busy) return;
-    if (slot === null ? !wanted : wanted && slot === current) return;
-    setBusy(true);
+  if (!session) return null;
+  const me = session.me;
+
+  const change = async (patch: Parameters<typeof setReminders>[0]) => {
+    setError(null);
     try {
-      const result = await setReminder(slot === null ? { wanted: false } : { wanted: true, slot });
+      const result = await setReminders(patch);
       if (result) setPermission(result);
     } catch {
-      showError('Couldn’t change your reminder', 'Check your connection and try again.');
-    } finally {
-      setBusy(false);
+      setError(NOTIFICATIONS_COPY.failed);
     }
   };
 
-  const turnOn = async () => {
-    if (busy) return;
-    setBusy(true);
+  const toggleWeekend = async (on: boolean) => {
+    setWeekend(on);
+    setError(null);
     try {
-      setPermission(await turnOnNotifications());
-    } finally {
-      setBusy(false);
+      await setWeekendCheckin(on);
+    } catch {
+      setWeekend(!on);
+      setError(NOTIFICATIONS_COPY.failed);
     }
   };
-
-  const blocked = permission === 'denied';
 
   return (
-    <View style={[styles.root, { paddingTop: insets.top }]}>
-      <Backdrop />
-      <View style={styles.topBar}>
-        <Pressable onPress={() => navigation.goBack()} hitSlop={10} accessibilityLabel="Back">
-          <ChevronLeft />
-        </Pressable>
-      </View>
-      <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{ paddingHorizontal: spacing.gutter, paddingBottom: insets.bottom + 24 }}>
-        <Text style={type.title}>Notifications</Text>
-        <Text style={styles.sub}>One reminder a day, only if you haven’t moved yet.</Text>
-        <View style={{ marginTop: 18 }}>
-          {REMINDER_SLOTS.map((s) => (
-            <ChoiceRow
-              key={s.slot}
-              title={s.title}
-              body={`Reminder at ${s.time}`}
-              selected={wanted && current === s.slot}
-              onPress={() => choose(s.slot)}
-            />
-          ))}
-          <ChoiceRow title="No reminder" selected={!wanted} onPress={() => choose(null)} />
+    <SubScreen title={NOTIFICATIONS_COPY.title} lead={NOTIFICATIONS_COPY.lead} onBack={() => navigation.goBack()}>
+      {permission === 'denied' ? (
+        <Card padding={20} style={styles.banner}>
+          <Text style={type.bodyStrong}>{NOTIFICATIONS_COPY.offTitle}</Text>
+          <Text style={[type.bodySmall, styles.bannerBody]}>{NOTIFICATIONS_COPY.offBody}</Text>
+          <TextAction label={NOTIFICATIONS_COPY.openSettings} tone="coal" onPress={() => Linking.openSettings()} style={styles.bannerAction} />
+        </Card>
+      ) : null}
+      {permission === 'undetermined' ? (
+        <Card padding={20} style={styles.banner}>
+          <Text style={type.bodyStrong}>{NOTIFICATIONS_COPY.askTitle}</Text>
+          <Text style={[type.bodySmall, styles.bannerBody]}>{NOTIFICATIONS_COPY.askBody}</Text>
+          <SolidButton title={NOTIFICATIONS_COPY.turnOn} onPress={async () => setPermission(await turnOnNotifications())} style={styles.bannerButton} />
+        </Card>
+      ) : null}
+
+      <GroupLabel first>{NOTIFICATIONS_COPY.reminders}</GroupLabel>
+      <ListGroup>
+        <ToggleRow title={NOTIFICATIONS_COPY.remindMe} value={me.remindersWanted} onValueChange={(wanted) => change({ wanted })} />
+      </ListGroup>
+      {me.remindersWanted ? (
+        <>
+          <Card padding={20} style={styles.picker}>
+            <Text style={[type.caption, styles.label]}>{NOTIFICATIONS_COPY.days}</Text>
+            <DayPicker days={me.reminderDays} onChange={(days) => change({ days })} weekStartsOn={view.rules.weekStartsOn} />
+            <Text style={[type.caption, styles.label, styles.second]}>{NOTIFICATIONS_COPY.time}</Text>
+            <TimeStepper time={me.reminderTime} onChange={(time) => change({ time })} />
+          </Card>
+          <GroupNote>{reminderSentence(me.reminderDays, me.reminderTime)}</GroupNote>
+        </>
+      ) : (
+        <GroupNote>{NOTIFICATIONS_COPY.remindersOff}</GroupNote>
+      )}
+
+      <GroupLabel>{NOTIFICATIONS_COPY.family}</GroupLabel>
+      <ListGroup>
+        <ToggleRow title={NOTIFICATIONS_COPY.weekend} subtitle={NOTIFICATIONS_COPY.weekendSub} value={weekend} onValueChange={toggleWeekend} />
+      </ListGroup>
+      <GroupNote>{NOTIFICATIONS_COPY.weekendNote}</GroupNote>
+      {error ? (
+        <View style={styles.errorWrap}>
+          <Text style={[type.bodySmall, styles.error]}>{error}</Text>
         </View>
-        {permission === 'unavailable' ? (
-          <Text style={styles.note}>Notifications aren’t available in this version of Arro.</Text>
-        ) : permission === 'undetermined' ? (
-          <>
-            <Text style={styles.note}>
-              Notifications are off, so cheers and nudges from your family don’t reach you yet.
-            </Text>
-            <Pressable onPress={turnOn} disabled={busy} accessibilityRole="button" hitSlop={8} style={styles.link}>
-              <Text style={styles.linkText}>Turn on notifications</Text>
-            </Pressable>
-          </>
-        ) : blocked ? (
-          <>
-            <Text style={styles.note}>
-              Notifications for Arro are off in the iPhone’s Settings, so cheers, nudges and reminders don’t arrive yet. Turn
-              on Allow Notifications there.
-            </Text>
-            <Pressable onPress={() => Linking.openSettings()} accessibilityRole="button" hitSlop={8} style={styles.link}>
-              <Text style={styles.linkText}>Open iPhone Settings</Text>
-            </Pressable>
-          </>
-        ) : (
-          <Text style={styles.note}>
-            Arro also lets you know when someone in your family moves, cheers or comments on your workout, or joins, and at most once an evening who
-            still has today. No red badges.
-          </Text>
-        )}
-      </ScrollView>
-    </View>
+      ) : null}
+    </SubScreen>
   );
 }
 
 const styles = StyleSheet.create({
-  root: { flex: 1, backgroundColor: colors.screen },
-  topBar: { paddingHorizontal: 16, paddingVertical: 6 },
-  sub: { ...type.body, marginTop: 6 },
-  note: { fontSize: 13, lineHeight: 18, color: colors.faint, marginTop: 2 },
-  link: { marginTop: 10, alignSelf: 'flex-start' },
-  linkText: { fontSize: 15, fontWeight: weights.semibold, color: colors.ink, textDecorationLine: 'underline' },
+  banner: { marginBottom: space.s32 },
+  bannerBody: { marginTop: space.s4 },
+  bannerAction: { alignSelf: 'flex-start', marginTop: space.s8 },
+  bannerButton: { marginTop: space.s16 },
+  picker: { marginTop: space.s12 },
+  label: { marginBottom: space.s12 },
+  second: { marginTop: space.s24 },
+  errorWrap: { marginTop: space.s16, marginHorizontal: space.s8 },
+  error: { color: palette.coal },
 });

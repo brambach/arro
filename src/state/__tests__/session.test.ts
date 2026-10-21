@@ -1,66 +1,101 @@
-import { beforeEach, describe, expect, it, jest } from '@jest/globals';
+import { beforeEach, describe, expect, it } from '@jest/globals';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { loadCachedFamily } from '../session';
+import {
+  FAMILY_KEY,
+  SESSION_KEY,
+  clearLegacyStorage,
+  clearSession,
+  loadCachedFamily,
+  loadSession,
+  normalizeSession,
+  saveCachedFamily,
+} from '../session';
+import { previewFamily } from '../../data/preview';
 
-jest.mock('@react-native-async-storage/async-storage', () =>
-  require('@react-native-async-storage/async-storage/jest/async-storage-mock'),
-);
-
-// What build 6 wrote under arro.family.v1: workouts without comments, no pauses.
-const build6Family = {
-  id: 'fam',
-  name: 'Home crew',
-  joinCode: 'K7P4QX9M',
-  members: [],
-  workouts: [
-    {
-      id: 'w1',
-      memberId: 'me',
-      localDate: '2026-10-12',
-      type: 'walk',
-      minutes: 30,
-      source: 'manual',
-      createdAt: '2026-10-12T14:00:00.000Z',
-      cheeredBy: ['mum'],
-    },
-  ],
-  streak: { current: 1, longest: 1, daysTogetherThisYear: 1, startedOn: '2026-10-12' },
-  memberStreaks: {},
+// What build 8 wrote under arro.session.v1.
+const build8Session = {
+  version: 1,
+  role: 'founder',
+  me: {
+    id: 'm1',
+    name: 'Sam',
+    color: '#4F97CF',
+    photoUri: null,
+    moveMethod: 'health',
+    reminder: 'morning',
+    remindersWanted: true,
+    joinedOn: '2026-10-01',
+  },
+  family: { name: 'Sunday sauna', joinCode: '', invited: [{ id: 'i1', name: 'Jo' }] },
+  workouts: [{ id: 'w1', localDate: '2026-10-12', loggedAt: '2026-10-12T14:00:00.000Z', type: 'walk' }],
+  remote: { userId: 'u1', memberId: 'm1', familyId: 'f1' },
+  photos: { w1: 'file:///w1.jpg' },
+  dismissedHealth: ['abc'],
 };
 
-describe('loadCachedFamily', () => {
+// What build 8 wrote under arro.family.v1.
+const build8Family = { id: 'f1', name: 'Sunday sauna', joinCode: 'K7P4QX9M', members: [], workouts: [], streak: {}, memberStreaks: {} };
+
+describe('stored data on the phone', () => {
   beforeEach(async () => {
     await AsyncStorage.clear();
   });
 
-  it('fills in the fields a family cached by build 6 lacks', async () => {
-    await AsyncStorage.setItem('arro.family.v1', JSON.stringify(build6Family));
-    const family = await loadCachedFamily();
-    expect(family?.pauses).toEqual([]);
-    expect(family?.workouts[0].comments).toEqual([]);
-    expect(family?.workouts[0].cheeredBy).toEqual(['mum']);
-    expect(family?.workouts[0].minutes).toBe(30);
+  it('keeps a build 8 tester signed in: their session reads in today’s shape', async () => {
+    await AsyncStorage.setItem(SESSION_KEY, JSON.stringify(build8Session));
+    const s = await loadSession();
+    expect(s?.remote).toEqual({ userId: 'u1', memberId: 'm1', familyId: 'f1' });
+    expect(s?.me).toEqual({
+      id: 'm1',
+      name: 'Sam',
+      color: '#4F97CF',
+      photoUri: null,
+      reminderDays: [4, 6],
+      reminderTime: '08:00',
+      remindersWanted: true,
+      joinedOn: '2026-10-01',
+    });
+    expect(s?.family.invited).toEqual([{ id: 'i1', name: 'Jo' }]);
+    expect(s && 'workouts' in s).toBe(false);
+    expect(s && 'dismissedHealth' in s).toBe(false);
   });
 
-  it('defaults cheers too, for anything older', async () => {
-    const { cheeredBy, ...noCheers } = build6Family.workouts[0];
-    await AsyncStorage.setItem('arro.family.v1', JSON.stringify({ ...build6Family, workouts: [noCheers] }));
-    const family = await loadCachedFamily();
-    expect(family?.workouts[0].cheeredBy).toEqual([]);
+  it('rejects anything that isn’t a session', () => {
+    expect(normalizeSession(null)).toBeNull();
+    expect(normalizeSession({ version: 2 })).toBeNull();
+    expect(normalizeSession({ version: 1, me: {} })).toBeNull();
   });
 
-  it('keeps what a current build cached', async () => {
-    const current = {
-      ...build6Family,
-      pauses: [{ memberId: 'me', startsOn: '2026-10-20', endsOn: '2026-10-22' }],
-      workouts: [{ ...build6Family.workouts[0], comments: [{ id: 'c1', memberId: 'mum', body: 'Nice', createdAt: '2026-10-12T15:00:00.000Z' }] }],
-    };
-    await AsyncStorage.setItem('arro.family.v1', JSON.stringify(current));
-    expect(await loadCachedFamily()).toEqual(current);
+  it('caches the family under arro.family.v2 and reads it back', async () => {
+    const family = previewFamily(new Date(2026, 9, 22, 16, 10));
+    await saveCachedFamily(family);
+    expect(await AsyncStorage.getItem(FAMILY_KEY)).not.toBeNull();
+    expect(await loadCachedFamily()).toEqual(family);
   });
 
-  it('drops a cache that is not a family', async () => {
-    await AsyncStorage.setItem('arro.family.v1', JSON.stringify({ id: 'fam' }));
+  it('never reads Arro’s family shape as a cached family', async () => {
+    await AsyncStorage.setItem(FAMILY_KEY, JSON.stringify(build8Family));
     expect(await loadCachedFamily()).toBeNull();
+  });
+
+  it('deletes arro.family.v1 and arro.moveMethod.v1, and keeps arro.session.v1 and the Supabase login', async () => {
+    await AsyncStorage.multiSet([
+      ['arro.family.v1', JSON.stringify(build8Family)],
+      ['arro.moveMethod.v1', 'health'],
+      [SESSION_KEY, JSON.stringify(build8Session)],
+      ['sb-project-auth-token', '{}'],
+    ]);
+    await clearLegacyStorage();
+    const keys = await AsyncStorage.getAllKeys();
+    expect([...keys].sort()).toEqual(['arro.session.v1', 'sb-project-auth-token']);
+  });
+
+  it('signing out clears the session and the cached family', async () => {
+    await AsyncStorage.multiSet([
+      [SESSION_KEY, JSON.stringify(build8Session)],
+      [FAMILY_KEY, '{}'],
+    ]);
+    await clearSession();
+    expect(await AsyncStorage.getAllKeys()).toEqual([]);
   });
 });

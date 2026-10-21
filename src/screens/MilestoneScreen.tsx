@@ -1,144 +1,226 @@
-import React from 'react';
-import { Pressable, StyleSheet, Text, View, useWindowDimensions } from 'react-native';
-import { LinearGradient } from 'expo-linear-gradient';
+import React, { useEffect, useRef, useState } from 'react';
+import { DeviceEventEmitter, Share, StyleSheet, Text, View, useWindowDimensions } from 'react-native';
+import Animated, { useAnimatedStyle, useSharedValue, withTiming } from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { colors, radii, spacing } from '../theme/tokens';
-import { motion } from '../theme/motion';
-import { type, weights } from '../theme/typography';
-import { AvatarStack } from '../components/AvatarStack';
-import { ChevronLeft } from '../components/Icons';
-import { Backdrop } from '../components/Backdrop';
-import { PhotoSlot } from '../components/PhotoSlot';
-import { FadeInView } from '../components/FadeInView';
-import { MilestoneData } from '../data/types';
-import { joinNames } from '../data/workouts';
-import { useView } from '../state/AppState';
 import { RootStackScreenProps } from '../navigation/types';
+import { useApp, useView } from '../state/AppState';
+import { milestoneView } from '../state/buildView';
+import { layout, palette, space } from '../theme/tokens';
+import { emberPeakMs, moments, springTouchdownMs, timing, useReduceMotion } from '../theme/motion';
+import { haptics } from '../theme/haptics';
+import { maxFontScale, type } from '../theme/typography';
+import { Backdrop } from '../components/Backdrop';
+import { Card } from '../components/Card';
+import { FixedDigits } from '../components/FixedDigits';
+import { MilestoneShareImage, ShareImageHandle } from '../components/MilestoneShareImage';
+import { SlatWall } from '../components/SlatWall';
+import { SolidButton } from '../components/SolidButton';
+import { SteamWisps } from '../components/SteamWisps';
+import { TextAction } from '../components/TextAction';
+import { milestoneColumns, milestoneSlatHeight } from '../components/milestoneLayout';
+import { devDriverOn } from '../dev/DevDriver';
 
+/**
+ * A streak milestone, 4, 8, 12, 26 or 52 weeks, family or personal (Key
+ * motion moment 6). Shown once when due (Today opens it), or from a badge on
+ * Me. A full-screen card: the wall builds up from the bottom one slat every
+ * 50 ms, each dropping onto it on a spring; then the number arrives in large Fraunces
+ * with the ember overshoot (heavy, then success haptic at its peak) as steam
+ * rises behind it. Share renders a 1080 x 1350 image. Never anything about Plus.
+ */
 export function MilestoneScreen({ navigation, route }: RootStackScreenProps<'Milestone'>) {
-  const insets = useSafeAreaInsets();
-  // On short phones (SE) the caption sits under the numeral, so nothing overlaps.
-  const short = useWindowDimensions().height < 740;
   const view = useView();
-  // "Your first 30 days together" ends on the family card; the Me tab shows your own runs.
-  const params = route.params;
-  const milestone: MilestoneData =
-    params.kind === 'family'
-      ? view.milestone
-      : {
-          memberId: view.me.id,
-          day: params.days,
-          title: `${params.days} days\nin a row`,
-          subtitle: 'One day at a time, every one of them counted.',
-          motto: 'Every day forward, together.',
-          dateLine: '',
-          cheeredBy: [],
-        };
-  const cheerers = milestone.cheeredBy.map((id) => view.members[id]).filter(Boolean);
-  // Without a photo the top is plain paper with ink type, not a grey stand-in under a dark gradient.
-  const hasPhoto = !!milestone.photoUri;
+  const { markMilestoneShown } = useApp();
+  const insets = useSafeAreaInsets();
+  const { width } = useWindowDimensions();
+  const reduceMotion = useReduceMotion();
+  const share = useRef<ShareImageHandle>(null);
+  // The due milestone is read once: marking it shown must not blank the card as it closes.
+  const [m] = useState(() => (route.params ? milestoneView(route.params, view.familyName) : view.milestone));
+  const [built, setBuilt] = useState(false);
+  // The wall waits for the card to finish fading in, so the first slats aren't lost
+  // under the fade: cardFade after the transition starts, or its end if that's sooner.
+  const [arrived, setArrived] = useState(false);
+  useEffect(() => {
+    let t: ReturnType<typeof setTimeout> | undefined;
+    const offStart = navigation.addListener('transitionStart', () => {
+      t = setTimeout(() => setArrived(true), moments.milestoneWall.cardFade);
+    });
+    const offEnd = navigation.addListener('transitionEnd', () => setArrived(true));
+    return () => {
+      offStart();
+      offEnd();
+      if (t) clearTimeout(t);
+    };
+  }, [navigation]);
+  const [sharing, setSharing] = useState(false);
+  const n = useSharedValue(0);
+
+  const close = () => {
+    if (!route.params) markMilestoneShown();
+    navigation.goBack();
+  };
+
+  // The number arrives once the wall is up.
+  useEffect(() => {
+    if (!built) return;
+    if (reduceMotion !== false) {
+      n.set(withTiming(1, timing.utility));
+      return;
+    }
+    n.set(withTiming(1, moments.milestoneWall.number));
+    const t = setTimeout(haptics.milestone, emberPeakMs);
+    return () => clearTimeout(t);
+  }, [built, reduceMotion, n]);
+
+  // The number arrives as the top slat touches down (not when its spring has fully
+  // settled, which left a dead pause). With Reduce Motion the wall is simply there.
+  const weeksForWall = m?.weeks ?? 0;
+  useEffect(() => {
+    // With Reduce Motion the wall is there from the first frame, fading in with the card.
+    if (reduceMotion === null || (!arrived && !reduceMotion)) return;
+    const wait = reduceMotion ? 0 : (weeksForWall - 1) * moments.milestoneWall.perSlat + springTouchdownMs(moments.milestoneWall.slat);
+    const t = setTimeout(() => setBuilt(true), wait);
+    return () => clearTimeout(t);
+  }, [arrived, reduceMotion, weeksForWall]);
+
+  // Dev captures only: the driver can press Share, or pull the rendered image onto the Mac.
+  useEffect(() => {
+    if (!devDriverOn || !m) return;
+    const a = DeviceEventEmitter.addListener('devShare', () => {
+      share.current
+        ?.toPng()
+        .then((b64) => Share.share({ url: `data:image/png;base64,${b64}` }))
+        .catch(() => undefined);
+    });
+    const b = DeviceEventEmitter.addListener('devShareImage', () => {
+      share.current
+        ?.toPng()
+        .then((b64) => fetch('http://localhost:8099/upload', { method: 'POST', body: b64 }))
+        .catch(() => undefined);
+    });
+    return () => {
+      a.remove();
+      b.remove();
+    };
+  }, [m]);
+
+  const numberStyle = useAnimatedStyle(() => ({
+    opacity: Math.min(1, n.value * 2),
+    transform: [{ scale: reduceMotion === true ? 1 : 0.6 + 0.4 * n.value }],
+  }));
+
+  if (!m) {
+    return (
+      <View style={[styles.root, { paddingTop: insets.top + space.s40 }]}>
+        <Backdrop />
+        <Text style={[type.heading, styles.center]}>Nothing to celebrate just now</Text>
+        <TextAction label="Close" onPress={() => navigation.goBack()} style={styles.done} />
+      </View>
+    );
+  }
+
+  const cols = milestoneColumns(m.weeks);
+  const slatHeight = milestoneSlatHeight(m.weeks);
+  const inner = width - layout.gutter * 2 - space.s24 * 2;
+  // One column stays wall-sized; side by side they share the card.
+  const colWidth = cols.length === 1 ? Math.min(inner, 240) : (inner - space.s16 * (cols.length - 1)) / cols.length;
+
+  const onShare = async () => {
+    setSharing(true);
+    try {
+      const b64 = await share.current?.toPng();
+      // The image alone: with a message too, iOS leads the sheet with the text instead of the picture.
+      if (b64) await Share.share({ url: `data:image/png;base64,${b64}` });
+    } catch {
+      haptics.error();
+    } finally {
+      setSharing(false);
+    }
+  };
 
   return (
-    <View style={styles.root}>
-      {/* The end of a day: the same moving map, under the evening light. */}
-      <Backdrop light="dusk" />
-      <View style={styles.photo}>
-        {hasPhoto ? (
-          <>
-            <PhotoSlot uri={milestone.photoUri} style={StyleSheet.absoluteFill} />
-            <LinearGradient
-              colors={['rgba(22,15,8,0.42)', 'rgba(22,15,8,0)', 'rgba(22,15,8,0.06)', 'rgba(22,15,8,0.84)']}
-              locations={[0, 0.26, 0.5, 1]}
-              style={StyleSheet.absoluteFill}
-              pointerEvents="none"
-            />
-          </>
-        ) : (
-          <>
-            <FadeInView delay={80} rise={14} {...motion.statement} style={[styles.numeralWrap, { top: insets.top + 56 }]}>
-              <Text style={styles.numeral} accessibilityElementsHidden importantForAccessibility="no">
-                {milestone.day}
-              </Text>
-            </FadeInView>
-          </>
-        )}
-        <Pressable
-          onPress={() => navigation.goBack()}
-          style={[styles.back, !hasPhoto && styles.backPaper, { top: insets.top + 8 }]}
-          accessibilityLabel="Back"
-          hitSlop={8}
-        >
-          <ChevronLeft size={20} color={hasPhoto ? colors.white : colors.ink} strokeWidth={2.2} />
-        </Pressable>
-        <FadeInView
-          delay={220}
-          rise={12}
-          {...motion.statement}
-          style={[styles.caption, !hasPhoto && (short ? { top: insets.top + 200, bottom: undefined } : styles.captionPaper)]}
-        >
-          <View style={[styles.dayPill, !hasPhoto && styles.dayPillPaper]}>
-            <Text style={[styles.dayPillText, !hasPhoto && { color: colors.todayPillText }]}>Day {milestone.day}</Text>
+    <View style={[styles.root, { paddingTop: insets.top + space.s8, paddingBottom: insets.bottom + space.s8 }]}>
+      <Backdrop />
+      <Card float style={styles.card} padding={space.s24}>
+        <Text style={[type.caption, styles.center]}>{m.kind === 'family' ? 'Together' : 'Your streak'}</Text>
+        <View style={styles.wallArea}>
+          <View style={styles.columns} accessible accessibilityLabel={`A wall of ${m.weeks} kept weeks`}>
+            {cols.map((c, i) => (
+              <WallColumn
+                key={i}
+                slats={c.slats}
+                startIndex={c.startIndex}
+                slatHeight={slatHeight}
+                width={colWidth}
+                go={arrived || reduceMotion === true}
+              />
+            ))}
           </View>
-          <Text style={[styles.title, !hasPhoto && { color: colors.ink }]}>{milestone.title}</Text>
-          <Text style={[styles.subtitle, !hasPhoto && { color: colors.inkSoft }]}>{milestone.subtitle}</Text>
-        </FadeInView>
-      </View>
+        </View>
+        <View style={styles.numberArea}>
+          {built ? (
+            <SteamWisps width={inner} height={140} rise={0.9} base={0.92} columns={[0.38, 0.5, 0.62]} draw drawDuration={moments.splash.wisps.duration * 2} />
+          ) : null}
+          <Animated.View style={numberStyle}>
+            <FixedDigits value={String(m.weeks)} variant="display" color={palette.coal} accessibilityLabel={m.title} />
+          </Animated.View>
+        </View>
+        <Text style={[type.heading, styles.center]} maxFontSizeMultiplier={maxFontScale.heading} accessibilityRole="header">
+          {m.title.replace(/^\d+\s/, '')}
+        </Text>
+        <Text style={[type.bodySmall, styles.center, styles.sub]}>{m.subtitle}</Text>
+        <SolidButton title={sharing ? 'Getting it ready' : 'Share'} onPress={onShare} disabled={sharing} style={styles.share} />
+        <TextAction label="Done" onPress={close} style={styles.done} />
+      </Card>
+      <MilestoneShareImage ref={share} weeks={m.weeks} title={m.title} familyName={view.familyName} />
+    </View>
+  );
+}
 
-      <View style={[styles.panel, { paddingBottom: insets.bottom + 22 }]}>
-        <Text style={styles.motto}>{milestone.motto}</Text>
-        {milestone.dateLine ? <Text style={styles.dateLine}>{milestone.dateLine}</Text> : null}
-        {/* Cheers and "Send a cheer" come back once milestones live on the server. */}
-        {cheerers.length ? (
-          <View style={styles.cheered}>
-            <AvatarStack members={cheerers} size={26} overlap={6} borderColor={colors.screen} />
-            <Text style={styles.cheeredText}>Cheered on by {joinNames(cheerers.map((c) => c.name))}</Text>
-          </View>
-        ) : null}
-      </View>
+/** One column of the wall; it mounts (and starts building) when its first slat's turn comes. */
+function WallColumn({
+  slats,
+  startIndex,
+  slatHeight,
+  width,
+  go,
+}: {
+  slats: number;
+  startIndex: number;
+  slatHeight: number;
+  width: number;
+  go: boolean;
+}) {
+  const reduceMotion = useReduceMotion();
+  const [on, setOn] = useState(false);
+  useEffect(() => {
+    if (on || !go) return;
+    const t = setTimeout(() => setOn(true), reduceMotion ? 0 : startIndex * moments.milestoneWall.perSlat);
+    return () => clearTimeout(t);
+  }, [on, go, startIndex, reduceMotion]);
+  return (
+    <View style={{ width }}>
+      {on ? (
+        <SlatWall
+          weeks={Array.from({ length: slats }, () => ({ state: 'kept' as const }))}
+          slatHeight={slatHeight}
+          build
+        />
+      ) : null}
     </View>
   );
 }
 
 const styles = StyleSheet.create({
-  root: { flex: 1, backgroundColor: colors.screen },
-  photo: { flex: 1, overflow: 'hidden' },
-  numeralWrap: { position: 'absolute', left: spacing.gutter },
-  numeral: {
-    fontFamily: type.display.fontFamily,
-    fontSize: 150,
-    lineHeight: 160,
-    fontWeight: weights.regular,
-    color: colors.track,
-  },
-  back: {
-    position: 'absolute',
-    left: 18,
-    width: 34,
-    height: 34,
-    borderRadius: 17,
-    backgroundColor: 'rgba(255,255,255,0.22)',
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  backPaper: { backgroundColor: colors.screen },
-  caption: { position: 'absolute', left: spacing.gutter, right: spacing.gutter, bottom: 24 },
-  // Low on the page, in the evening light.
-  captionPaper: { bottom: 40 },
-  dayPill: {
-    alignSelf: 'flex-start',
-    backgroundColor: 'rgba(255,255,255,0.22)',
-    borderRadius: radii.pill,
-    paddingVertical: 5,
-    paddingHorizontal: 12,
-    marginBottom: 14,
-  },
-  dayPillPaper: { backgroundColor: colors.todayPillBg },
-  dayPillText: { color: colors.white, fontSize: 13, fontWeight: weights.semibold },
-  title: { ...type.display, color: colors.white },
-  subtitle: { fontSize: 16, color: 'rgba(255,255,255,0.92)', marginTop: 11 },
-  panel: { paddingHorizontal: spacing.gutter, paddingTop: 20 },
-  motto: { ...type.greeting },
-  dateLine: { ...type.meta, marginTop: 4 },
-  cheered: { flexDirection: 'row', alignItems: 'center', gap: 12, marginTop: 16 },
-  cheeredText: { ...type.meta, color: colors.muted, flex: 1 },
+  root: { flex: 1, backgroundColor: palette.birch, paddingHorizontal: layout.gutter },
+  card: { flex: 1 },
+  center: { textAlign: 'center' },
+  wallArea: { flex: 1, justifyContent: 'center', marginTop: space.s16 },
+  columns: { flexDirection: 'row', justifyContent: 'center', alignItems: 'flex-end', gap: space.s16 },
+  // Tall enough for the steam to rise behind the number without crossing the title.
+  numberArea: { alignItems: 'center', justifyContent: 'flex-end', height: 140, marginTop: space.s16 },
+  sub: { marginTop: space.s8 },
+  share: { marginTop: space.s24 },
+  done: { marginTop: space.s8 },
 });

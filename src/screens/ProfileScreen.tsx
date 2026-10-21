@@ -1,194 +1,190 @@
 import React from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
-import { colors, radii, spacing, shadows } from '../theme/tokens';
-import { type, weights } from '../theme/typography';
-import { AvatarRing } from '../components/AvatarRing';
-import { ChevronRight, CogIcon, MapPin } from '../components/Icons';
-import { FadeInView } from '../components/FadeInView';
-import { Screen } from '../components/Screen';
-import { SectionHeader } from '../components/SectionHeader';
-import { useView } from '../state/AppState';
-import { workoutSourceLabels, workoutSummary, workoutTypeLabels } from '../data/workouts';
+import { LinearGradient } from 'expo-linear-gradient';
 import { MainTabScreenProps } from '../navigation/types';
+import { useApp, useView } from '../state/AppState';
+import { ProfileView } from '../state/buildView';
+import { APP_ICONS, TIMER_FACES } from '../state/look';
+import { depth, gradients, layout, palette, radii, space } from '../theme/tokens';
+import { maxFontScale, type } from '../theme/typography';
+import { Arrive } from '../components/Arrive';
+import { Avatar } from '../components/Avatar';
+import { Card } from '../components/Card';
+import { FixedDigits } from '../components/FixedDigits';
+import { Icon, IconName } from '../components/Icon';
+import { ListGroup, ListRow } from '../components/ListRow';
+import { NoticeToast } from '../components/NoticeToast';
+import { Screen } from '../components/Screen';
+import { Bone } from '../components/Skeleton';
+import { TextAction } from '../components/TextAction';
 
+/**
+ * Me (spec, section 3): your name and family with Edit profile, a 2 x 2 grid
+ * (weeks in a row, longest, sessions this month, hours in the heat this year),
+ * favorite type and place, your last three sessions, badges at 4, 8, 12, 26
+ * and 52 weeks, the Plus rows only when plus_enabled, and the gear to Settings.
+ */
 export function ProfileScreen({ navigation }: MainTabScreenProps<'Me'>) {
   const view = useView();
-  const me = view.me;
-  const profile = view.profile;
+  const { refresh, look } = useApp();
+  const p = view.profile;
+  // With Plus the rows say what's picked; without it, they say these come with Plus.
+  const plusValue = view.plus.active ? undefined : 'Plus';
+  const faceName = view.plus.active ? TIMER_FACES.find((f) => f.id === look.timerFace)?.name : 'Plus';
+  const iconName = view.plus.active ? APP_ICONS.find((i) => i.id === look.appIcon)?.name : 'Plus';
+  const loading = view.status === 'loading';
 
   return (
-    <Screen>
-      <View style={styles.topBar}>
-        <Pressable onPress={() => navigation.navigate('Settings')} hitSlop={10} accessibilityLabel="Settings">
-          <CogIcon />
-        </Pressable>
-      </View>
-
-      <FadeInView style={styles.identity}>
-        <AvatarRing member={me} size={64} />
-        <View style={{ flex: 1 }}>
-          <Text style={styles.name}>{me.name}</Text>
-          <Text style={styles.location}>{profile.subtitle}</Text>
-          <Pressable
-            onPress={() => navigation.navigate('EditProfile')}
-            accessibilityRole="button"
-            accessibilityLabel="Edit profile"
-            style={styles.editPill}
-          >
-            <Text style={styles.editText}>Edit profile</Text>
-          </Pressable>
-        </View>
-      </FadeInView>
-
-      <FadeInView delay={60} style={styles.section}>
-        <View style={styles.statsCard}>
-          {profile.stats.map((s, i) => (
-            <View
-              key={s.label}
-              style={[styles.statCell, i % 2 === 0 && styles.cellRight, i < 2 && styles.cellBottom]}
-            >
-              <Text style={styles.statLabel}>{s.label}</Text>
-              <Text style={styles.statValue}>
-                {s.value}
-                {s.unit ? <Text style={styles.statUnit}> {s.unit}</Text> : null}
+    <View style={styles.root}>
+      <Screen onRefresh={refresh} contentStyle={styles.content}>
+        <Arrive index={0}>
+          <View style={styles.top}>
+            <Avatar name={p.name} color={view.me.color} photoUri={typeof p.photoUri === 'string' ? p.photoUri : null} size={64} accessible />
+            <View style={styles.who}>
+              <Text style={type.title} maxFontSizeMultiplier={maxFontScale.title} accessibilityRole="header" numberOfLines={2}>
+                {p.name}
               </Text>
+              <Text style={type.bodySmall}>{p.familyName}</Text>
             </View>
-          ))}
-        </View>
-      </FadeInView>
-
-      <FadeInView delay={90} style={styles.section}>
-        <Pressable
-          onPress={() => navigation.navigate('Map', { memberId: me.id })}
-          accessibilityRole="button"
-          accessibilityLabel="Your map"
-          style={styles.mapRow}
-        >
-          <MapPin size={20} color={colors.inkSoft} />
-          <View style={{ flex: 1 }}>
-            <Text style={styles.mapTitle}>Your map</Text>
-            <Text style={styles.mapSub}>Every route you’ve recorded, on one map</Text>
-          </View>
-          <ChevronRight />
-        </Pressable>
-      </FadeInView>
-
-      <FadeInView delay={120} style={styles.section}>
-        <SectionHeader title="Recent workouts" titleColor={colors.ink} style={styles.sectionHead} />
-        {profile.recentWorkouts.length === 0 ? (
-          <Text style={styles.empty}>Your workouts show up here once you log one.</Text>
-        ) : null}
-        {profile.recentWorkouts.map((w, i) => (
-          <Pressable
-            key={w.id}
-            onPress={() => navigation.navigate('WorkoutDetail', { workoutId: w.id })}
-            accessibilityRole="button"
-            accessibilityLabel={`${workoutTypeLabels[w.type]} ${w.when}`}
-            style={[styles.workoutRow, i < profile.recentWorkouts.length - 1 && styles.workoutBorder]}
-          >
-            <AvatarRing member={view.members[w.memberId] ?? me} size={34} />
-            <View style={{ flex: 1 }}>
-              <Text style={styles.workoutWhen}>{w.when}</Text>
-              <Text style={styles.workoutMeta}>
-                {workoutSummary(w)} · {workoutSourceLabels[w.source]}
-              </Text>
-            </View>
-          </Pressable>
-        ))}
-      </FadeInView>
-
-      <FadeInView delay={160} style={styles.section}>
-        <SectionHeader title="Milestones" titleColor={colors.ink} style={styles.sectionHead} />
-        {profile.milestones.length === 0 ? (
-          <Text style={styles.empty}>Your first one is 7 days in a row.</Text>
-        ) : null}
-        <View style={styles.milestones}>
-          {profile.milestones.map((n) => (
-            <Pressable
-              key={n}
-              style={styles.msCol}
-              accessibilityRole="button"
-              accessibilityLabel={`${n} day milestone`}
-              onPress={() => navigation.navigate('Milestone', { kind: 'personal', days: n })}
-            >
-              <View style={styles.msCircle}>
-                <Text style={styles.msNumber}>{n}</Text>
-              </View>
-              <Text style={styles.msLabel}>days</Text>
+            <Pressable onPress={() => navigation.navigate('Settings')} style={styles.gear} accessibilityRole="button" accessibilityLabel="Settings" hitSlop={space.s8}>
+              <Icon name="gear" size={26} color={palette.smoke} />
             </Pressable>
-          ))}
-        </View>
-      </FadeInView>
-    </Screen>
+          </View>
+          <TextAction label="Edit profile" onPress={() => navigation.navigate('EditProfile')} size="bodySmall" style={styles.edit} />
+        </Arrive>
+
+        <Arrive index={1}>
+          <View style={styles.grid}>
+            {p.stats.map((s) => (
+              <Card key={s.key} style={styles.stat} padding={space.s16}>
+                {loading ? (
+                  <Bone width={48} height={38} />
+                ) : (
+                  <View style={styles.statValue}>
+                    <FixedDigits value={s.value} variant="title" color={palette.coal} accessibilityLabel={`${s.value}${s.unit ? ` ${s.unit}` : ''}`} />
+                    {s.unit ? <Text style={[type.label, styles.unit]}>{s.unit}</Text> : null}
+                  </View>
+                )}
+                <Text style={[type.label, styles.statLabel]}>{s.label}</Text>
+              </Card>
+            ))}
+          </View>
+        </Arrive>
+
+        <Arrive index={2}>
+          {p.favoriteType || p.favoritePlace ? (
+            <ListGroup inset="leading" style={styles.block}>
+              {[
+                ...(p.favoriteType ? [<ListRow key="type" title={p.favoriteType} subtitle="Favorite type" leading={<Mark name="traditional" />} />] : []),
+                ...(p.favoritePlace ? [<ListRow key="place" title={p.favoritePlace} subtitle="Favorite place" leading={<Mark name="family" />} />] : []),
+              ]}
+            </ListGroup>
+          ) : null}
+
+          <Text style={[type.caption, styles.label]} accessibilityRole="header">
+            Your last sessions
+          </Text>
+          {p.recent.length ? (
+            <ListGroup>
+              {p.recent.map((c) => (
+                <ListRow
+                  key={c.id}
+                  title={c.details}
+                  subtitle={[c.when, c.pending ? 'Waiting to send' : c.place].filter(Boolean).join(' · ')}
+                  onPress={() => navigation.navigate('SessionDetail', { sessionId: c.id })}
+                />
+              ))}
+            </ListGroup>
+          ) : (
+            <Card>
+              <Text style={type.bodySmall}>{loading ? 'Loading your sessions' : 'Your sessions show here once you’ve logged one.'}</Text>
+            </Card>
+          )}
+        </Arrive>
+
+        <Arrive index={3}>
+          <Text style={[type.caption, styles.label]} accessibilityRole="header">
+            Badges
+          </Text>
+          <Card>
+            <Badges badges={p.badges} onOpen={(weeks) => navigation.navigate('Milestone', { kind: 'personal', weeks })} />
+          </Card>
+
+          {p.plusRows ? (
+            <ListGroup inset="leading" style={styles.block}>
+              <ListRow title="Heat log" leading={<Mark name="thermometer" />} value={plusValue} valueTone="quiet" onPress={() => navigation.navigate('HeatLog')} />
+              <ListRow title="Timer face" leading={<Mark name="timer" />} value={faceName} valueTone="quiet" onPress={() => navigation.navigate('TimerFace')} />
+              <ListRow title="App icon" leading={<Mark name="stone" />} value={iconName} valueTone="quiet" onPress={() => navigation.navigate('AppIcon')} />
+            </ListGroup>
+          ) : null}
+        </Arrive>
+      </Screen>
+      <NoticeToast />
+    </View>
+  );
+}
+
+function Mark({ name }: { name: IconName }) {
+  return (
+    <View style={styles.mark}>
+      <Icon name={name} size={22} color={palette.smoke} />
+    </View>
+  );
+}
+
+/** Five stones: lit once your longest streak reaches them. A lit one opens its card. */
+function Badges({ badges, onOpen }: { badges: ProfileView['badges']; onOpen: (weeks: number) => void }) {
+  return (
+    <View style={styles.badges}>
+      {badges.map((b) => (
+        <Pressable
+          key={b.weeks}
+          onPress={b.earned ? () => onOpen(b.weeks) : undefined}
+          disabled={!b.earned}
+          style={styles.badge}
+          accessibilityRole={b.earned ? 'button' : 'text'}
+          accessibilityLabel={`${b.label}, ${b.earned ? 'earned' : 'not yet'}`}
+        >
+          <View style={[styles.disc, b.earned ? styles.discOn : styles.discOff]}>
+            {b.earned ? (
+              <LinearGradient
+                colors={[gradients.emberButton[0].color, gradients.emberButton[1].color, gradients.emberButton[2].color]}
+                locations={[0, 0.55, 1]}
+                style={StyleSheet.absoluteFill}
+              />
+            ) : null}
+            <Text style={[type.headingStrong, b.earned ? styles.numOn : styles.numOff]} allowFontScaling={false}>
+              {b.weeks}
+            </Text>
+          </View>
+          <Text style={type.label}>weeks</Text>
+        </Pressable>
+      ))}
+    </View>
   );
 }
 
 const styles = StyleSheet.create({
-  topBar: { alignItems: 'flex-end', paddingHorizontal: spacing.gutter, paddingTop: 2 },
-  identity: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 15,
-    paddingHorizontal: spacing.gutter,
-    paddingTop: 2,
-  },
-  name: { ...type.stat, fontSize: 27, lineHeight: 30 },
-  location: { ...type.meta, marginTop: 2 },
-  editPill: {
-    alignSelf: 'flex-start',
-    marginTop: 9,
-    backgroundColor: colors.white,
-    borderRadius: radii.pill,
-    ...shadows.card,
-    paddingVertical: 5,
-    paddingHorizontal: 14,
-  },
-  editText: { ...type.meta, fontWeight: weights.semibold, color: colors.inkSoft },
-  section: { paddingHorizontal: spacing.gutter, marginTop: 24 },
-  sectionHead: { marginBottom: 4 },
-  statsCard: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    backgroundColor: colors.card,
-    borderRadius: radii.card,
-    ...shadows.card,
-  },
-  statCell: { width: '50%', padding: 14 },
-  cellRight: { borderRightWidth: 1, borderRightColor: colors.divider },
-  cellBottom: { borderBottomWidth: 1, borderBottomColor: colors.divider },
-  statLabel: { ...type.meta, color: colors.muted },
-  statValue: { ...type.stat, marginTop: 3 },
-  statUnit: { fontFamily: undefined, fontSize: 13, fontWeight: weights.medium, color: colors.faint2 },
-  mapRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 12,
-    backgroundColor: colors.card,
-    borderRadius: radii.card,
-    ...shadows.card,
-    paddingHorizontal: 14,
-    paddingVertical: 12,
-  },
-  mapTitle: { fontSize: 15, fontWeight: weights.semibold, color: colors.ink },
-  mapSub: { ...type.meta, marginTop: 1 },
-  workoutRow: { flexDirection: 'row', alignItems: 'center', gap: 12, paddingVertical: 10 },
-  workoutBorder: { borderBottomWidth: 1, borderBottomColor: colors.divider },
-  workoutWhen: { fontSize: 15, fontWeight: weights.semibold, color: colors.ink },
-  workoutMeta: { ...type.meta, marginTop: 1 },
-  empty: { ...type.body, marginTop: 6 },
-  milestones: { flexDirection: 'row', gap: 16, marginTop: 4 },
-  msCol: { alignItems: 'center', gap: 6 },
-  msCircle: {
-    width: 56,
-    height: 56,
-    borderRadius: 28,
-    borderWidth: 1.5,
-    borderColor: 'transparent',
-    backgroundColor: colors.card,
-    ...shadows.card,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  msNumber: { ...type.stat, fontSize: 24, lineHeight: 26 },
-  msLabel: { ...type.meta, color: colors.faint2 },
+  root: { flex: 1 },
+  content: { paddingHorizontal: layout.gutter, paddingBottom: space.s40 },
+  top: { flexDirection: 'row', alignItems: 'center', gap: space.s16, paddingHorizontal: space.s8, paddingTop: space.s12 },
+  who: { flex: 1 },
+  gear: { width: layout.touch, height: layout.touch, alignItems: 'center', justifyContent: 'center', alignSelf: 'flex-start' },
+  edit: { alignSelf: 'flex-start', marginLeft: space.s8, marginTop: space.s8 },
+  grid: { flexDirection: 'row', flexWrap: 'wrap', gap: space.s12, marginTop: space.s20 },
+  // One height for all four, so a label that wraps doesn't make its row taller than the other.
+  stat: { width: '47%', flexGrow: 1, minHeight: 120 },
+  statValue: { flexDirection: 'row', alignItems: 'baseline', gap: space.s4 },
+  unit: { color: palette.smoke },
+  statLabel: { marginTop: space.s4 },
+  block: { marginTop: space.s16 },
+  label: { marginTop: space.s32, marginBottom: space.s8, paddingHorizontal: space.s8 },
+  mark: { width: 38, height: 38, borderRadius: radii.round, backgroundColor: palette.aspen, alignItems: 'center', justifyContent: 'center' },
+  badges: { flexDirection: 'row', justifyContent: 'space-between' },
+  badge: { alignItems: 'center', gap: space.s4 },
+  disc: { width: 52, height: 52, borderRadius: radii.round, overflow: 'hidden', alignItems: 'center', justifyContent: 'center' },
+  discOn: { boxShadow: depth.button },
+  discOff: { backgroundColor: palette.aspen, boxShadow: depth.sunk },
+  numOn: { color: palette.steam },
+  numOff: { color: palette.smoke },
 });

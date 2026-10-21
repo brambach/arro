@@ -1,3 +1,5 @@
+Written for Arro, before it became Saunafam.
+
 # Arro refactor plan
 
 From the product review (positioning, design, UX, onboarding), October 2026.
