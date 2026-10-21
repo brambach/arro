@@ -45,6 +45,7 @@ DENO_NO_PACKAGE_JSON=1 deno test --allow-read=supabase/functions supabase/functi
 | M16 | done (branch `saunafam/review`) | `design/recordings/saunafam/m16/` (16 clips), `design/screenshots/saunafam/review/` (one per screen, 42), `docs/saunafam/review/` (6 stills, 2 clips), `src/dev/FpsProbe.tsx` | Every motion moment recorded on one fresh Debug build of the merged app, watched frame by frame, frame rates probed. Six fixes, each re-recorded. Jest 385/385 in 30 suites, lint 0. See "M16: self-review" below |
 | M17 | done (feat/saunafam) | `REPORT.md` (copy at `/tmp/luna-arro/REPORT-saunafam.md`), commit "Build 9" (`ios.buildNumber` 9) | PR #24 is the build 9 PR; no separate `release/build-9` PR. Not done items are listed in the report |
 | Shots | done (feat/saunafam) | `design/app-store/screenshots/6.9/`, `6.3/`, the new stills in `INDEX.md`, `/tmp/luna-arro/REPORT-saunafam-shots.md` | After M17: the App Store sets retaken with a plain battery, no "The Y" and family rows that don't cut off; the Plus sheet fixed at the large text sizes; expired invite stills |
+| Polish | done (feat/saunafam) | `.claude/skills/verify-saunafam/`, `/tmp/luna-arro/verify-run/`, `/tmp/luna-arro/REPORT-saunafam-polish.md` | After Shots: no "The Y" anywhere, "Log yesterday's" whole at AX5, and a verification skill for driving the app in the simulator. See "Polish (21 October)" below |
 
 ## M5: app data layer
 
@@ -1476,3 +1477,34 @@ exact size with no alpha.
   ("yesterday'" / "s"). It was like that before. It's the shared `ListRow`,
   used across Settings too, so I left it for its own change.
 
+## Polish (21 October)
+
+- "The Y" is gone. The log form's place placeholder reads "Home, Gym sauna",
+  and so do the privacy policy (app and site), the review notes, the copy doc
+  and the spec. Test inputs use Bathhouse. `PLACE_EXAMPLES` had no callers and
+  is deleted. Older entries above still mention "The Y" as history.
+- `ListRow` from AX1 up (`fontScale >= 1.6`): the leading icon goes above the
+  text and the text gets the row's full width, so "Log yesterday's" on Today
+  wraps between words at AX5 instead of breaking "yesterday'" / "s". The
+  hairline starts at the text's edge to match. Family members gets the same
+  layout. The default size and XXXL are unchanged. The first try (`7ba61c5`,
+  flex wrap) didn't work in the simulator; `819acd3` makes it a column.
+- `.claude/skills/verify-saunafam/`: a skill for agents to build the dev
+  client, launch it on the preview family, tap by on-screen text through
+  `/tmp/m10tools/click` and `drag`, switch text sizes and take screenshots. Its
+  feature map covers onboarding, logging a session, the timer, family, the
+  Plus sheet, the expired invite and Dynamic Type. DevDriver has a new
+  dev-only `draft` op for onboarding's text fields.
+
+**Proof:** one end to end run of the skill on the iPhone 17 Pro, 43 shots in
+`/tmp/luna-arro/verify-run/` (one folder per flow), and
+`verify-run/log-yesterday/compare.png` (before and after at the default size
+and AX5). Retaken stills: `today-dynamic-type-2.png`; new:
+`family-members-dynamic-type.png`.
+
+**Checks:** typecheck and lint clean, Jest 30 suites and 385 tests, pgTAP 11
+files and 403 tests, `deno check` clean, Deno tests 48, `check-design` and
+`check-contrast` (39 of 39) clean, `npx expo export --platform ios` succeeds,
+`node scripts/app-store-shots.mjs` 12 of 12. The App Store set wasn't
+retaken: it's shot at the default size, where nothing changed, and the
+placeholder only shows on an empty place field.

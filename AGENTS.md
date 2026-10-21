@@ -84,6 +84,9 @@ DENO_NO_PACKAGE_JSON=1 deno test --allow-read=supabase/functions supabase/functi
 npx expo export --platform ios       # bundle sanity check, not in CI
 ```
 
+To drive the app in the simulator and take screenshots as proof, use the
+`verify-saunafam` skill (`.claude/skills/verify-saunafam/SKILL.md`).
+
 - CI pins Supabase CLI 2.121.0, Node 22, Deno 2.x.
 - After changing migrations locally: `supabase db reset` re-applies them all
   from scratch, then `supabase test db`. `supabase start` brings up the full
