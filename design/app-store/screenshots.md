@@ -2,8 +2,8 @@
 
 Six framed, captioned screenshots for the App Store, rendered by
 `scripts/app-store-shots.mjs` from simulator captures (spec, Definition of
-done, "Designed screenshot set", and milestone M14). The script belongs to the
-app track. This file is the plan and Apple's rules it has to follow.
+done, "Designed screenshot set", and milestone M14). This file is the plan,
+Apple's rules it has to follow, and how to rebuild the set.
 
 ## What Apple requires (checked 20 October 2026)
 
@@ -74,13 +74,91 @@ Sam, Maya and Jo in "Sunday sauna". No real places.
 Optional seventh, once Plus is live: a cedar wall, "Make the wall your own."
 Spec Default: leave the set at six.
 
-## How to capture
+## The set (built in M14)
 
-- From the dev build's Prototype preview (the "Sunday sauna" sample family),
-  in the simulator: `xcrun simctl io <udid> screenshot <file>`.
-- Clean status bar first: `xcrun simctl status_bar <udid> override --time 9:41
-  --batteryState charged --batteryLevel 100 --cellularBars 4`.
-- Real-looking session times (mornings and evenings).
-- Photos: sample or generated images only, no real people.
-- Before uploading, check each screen matches the build being submitted
+| Size | Folder | Pixels | From |
+|---|---|---|---|
+| 6.9 inch | `design/app-store/screenshots/6.9/` | 1320 x 2868 | iPhone 17 Pro Max simulator |
+| 6.3 inch | `design/app-store/screenshots/6.3/` | 1206 x 2622 | iPhone 17 Pro simulator |
+
+Files `1-timer.png` to `6-milestone.png`, in upload order. Upload the 6.9 set
+to "iPhone with Dynamic Island (large display)" and the 6.3 set to "iPhone
+with Dynamic Island (medium display)". The raw captures they're built from are
+in `design/app-store/screenshots/raw/6.9/` and `raw/6.3/`.
+
+Each one: birch background with the app's faint slats and warm corner, the
+caption in Fraunces Soft SemiBold (char, two lines set by hand), the capture
+in a dark device frame, and the wordmark above the first caption only. No
+ember in the captions: the app screens bring their own.
+
+## How to regenerate
+
+Only the frames and captions changed (new caption, spacing, frame):
+
+```bash
+node scripts/app-store-shots.mjs
+```
+
+It reads the raw captures, renders each shot as SVG with resvg, flattens it to
+RGB and writes it. Then it reads every file back and fails (exit 1) if a
+capture or an output isn't the exact size or has an alpha channel.
+
+New captures (the app changed):
+
+1. No `.env.local` in the checkout, so the dev build runs on the preview
+   family. Start Metro with the dev driver on its own port:
+
+   ```bash
+   EXPO_PUBLIC_DEV_DRIVER=1 EXPO_PUBLIC_DEV_DRIVER_URL=http://localhost:8098 \
+     CI=1 npx expo start --port 8085 --clear
+   ```
+
+2. Boot the two simulators with the dev client installed (`xcrun simctl
+   install <udid> <path to the Debug-iphonesimulator Arro.app>`). Run one
+   simulator at a time: both apps poll the same driver, so terminate the app
+   on the other one first.
+3. Capture, then render:
+
+   ```bash
+   node scripts/app-store/capture.mjs 6.9 <iPhone 17 Pro Max udid>
+   node scripts/app-store/capture.mjs 6.3 <iPhone 17 Pro udid>
+   node scripts/app-store/capture.mjs 6.3 <udid> 5-feed   # one shot again
+   node scripts/app-store-shots.mjs
+   ```
+
+`capture.mjs` needs no taps. It turns off the dev client's first-run menu and
+floating Tools button (its `EXDevMenu*` defaults), sets the status bar to 9:41
+with full bars and battery, launches the app on Metro and drives it through
+`src/dev/DevDriver.tsx`:
+
+| Shot | State |
+|---|---|
+| 1-timer | A traditional 15 minute timer set to 14:32 just before the shot. The app is relaunched in a made-up time zone whose clock reads 9:41 PM at that moment, so "Time to cool off at 9:41 PM" agrees with the 9:41 status bar. It retries if the clock misses |
+| 2-today | The `family` scenario (8 weeks together, 2 of 3), scrolled so the streak card and the whole family list show (scroll 128 pt on 6.3, 0 on 6.9) |
+| 3-week | Week tab: the wall with Maya's frost-blue freeze |
+| 4-log | Log form: 25 min, Lake cabin, 185°F, cold plunge, Maya and Jo picked, scrolled to "Sat with someone?" |
+| 5-feed | Feed scrolled to the shared Lake cabin session, with a photo, Sam's cheer and two comments |
+| 6-milestone | The family milestone card at 12 weeks, after the wall has built |
+
+The photo on the feed card is drawn by `scripts/app-store/sample-photo.mjs`
+(a lake at dusk from a dock, no people, no real place) and served to the app
+by the capture script. The dev-only `photo` command puts it on the preview's
+shared session (`setDevSharedPhoto` in `src/data/preview.ts`, a no-op in a
+release build).
+
+Metro's file watcher in a `/tmp` worktree can miss edits. If a capture doesn't
+show a code change, restart Metro with `--clear`.
+
+## Known compromises
+
+- **"Three people picked":** the preview family is Sam, Maya and Jo, so the
+  form shows two others picked (three people in the session). Picking three
+  others needs a fourth member; the 3-person cap is unit tested (D8.10).
+- **Status bar:** 9:41 with the charging battery, as specified. The preview's
+  own clock is Thursday 4:10 PM ("Good afternoon, Sam"); a status bar without
+  AM or PM doesn't contradict it.
+- **Truncation:** "Yesterday · 25 min with Maya a..." on Today's family rows is
+  how the app lays that line out at these widths. Not changed here.
+- **"The Y"** is one of the preview's sample place chips on the log form.
+- Before uploading, check each screen still matches the build being submitted
   (Guideline 2.3.3: screenshots show the app in use).
