@@ -2,6 +2,7 @@ import React, { memo, useCallback, useEffect, useRef, useState } from 'react';
 import { AccessibilityInfo, AppState as RNAppState, Image, Pressable, ScrollView, StyleSheet, Text, useWindowDimensions, View } from 'react-native';
 import Animated, {
   FadeIn,
+  useAnimatedReaction,
   useAnimatedStyle,
   useSharedValue,
   withDelay,
@@ -81,6 +82,9 @@ import { LogSessionSheet } from './LogSessionScreen';
 /** Words that change with the phase fade in rather than snap. */
 const swap = FadeIn.duration(timing.utility.duration);
 
+/** The door counts as shut when every edge is this close to the screen's (pt): past it, it no longer reads as moving. */
+const SHUT_PT = 2;
+
 /** How bright the numerals stay while the clock is paused. */
 const PAUSED_NUMERALS = 0.72;
 
@@ -156,6 +160,41 @@ export function TimerScreen({ navigation, route }: RootStackScreenProps<'Timer'>
   // The numerals dim a little while the heat clock is paused (cooling off).
   const paused = useSharedValue(1);
 
+  // The status bar turns light when the door's top edge has covered its text,
+  // read on the UI thread so it neither sits white on birch nor dark on char
+  // (and without the bar's own fade, which held the simulator's compositor for
+  // two or three frames mid-move). -1 until the morph starts.
+  const barAt = useSharedValue(-1);
+  const lightBar = useCallback(() => StatusBar.setStyle('light', false), []);
+  // The medium haptic plays on the frame the door is shut: every edge within
+  // SHUT_PT of the screen's, read from the frames the UI thread actually drew,
+  // so a stall on either thread can't pull them apart. (The spring's own end
+  // comes about 400 ms later, as it creeps the last fraction of a point.)
+  const thudArmed = useSharedValue(false);
+  useAnimatedReaction(
+    () =>
+      thudArmed.value &&
+      doorX.value <= SHUT_PT &&
+      doorY.value <= SHUT_PT &&
+      doorX.value + doorW.value >= W - SHUT_PT &&
+      doorY.value + doorH.value >= H - SHUT_PT,
+    (shut, was) => {
+      if (shut && !was) {
+        thudArmed.set(false);
+        scheduleOnRN(haptics.timerStart);
+      }
+    },
+  );
+  useAnimatedReaction(
+    () => barAt.value >= 0 && doorY.value <= barAt.value,
+    (covered, was) => {
+      if (covered && !was) {
+        barAt.set(-1);
+        scheduleOnRN(lightBar);
+      }
+    },
+  );
+
   // The door moves once the room is on screen (the stack's transitionEnd): a
   // first frame that took long to draw would otherwise eat the start of the move.
   const [onScreen, setOnScreen] = useState(false);
@@ -173,10 +212,12 @@ export function TimerScreen({ navigation, route }: RootStackScreenProps<'Timer'>
   useEffect(() => {
     if (reduceMotion === null || !onScreen || opened.current) return;
     opened.current = true;
-    const land = () => {
+    // `buzz`: the medium haptic with it. The morph plays it from the door's own
+    // frames instead (thudArmed), so it lands on the frame the door does.
+    const land = (buzz: boolean) => {
       if (started && startAt) app.startTimer({ at: new Date(startAt) }).catch(() => undefined);
       setLanded(true);
-      if (started) haptics.timerStart();
+      if (started && buzz) haptics.timerStart();
       checkStaleRef.current();
     };
     if (!morph) {
@@ -191,7 +232,7 @@ export function TimerScreen({ navigation, route }: RootStackScreenProps<'Timer'>
       face.set(withTiming(1, timing.utility));
       const t = setTimeout(() => {
         StatusBar.setStyle('light', true);
-        land();
+        land(true);
       }, timing.utility.duration);
       return () => clearTimeout(t);
     }
@@ -202,6 +243,9 @@ export function TimerScreen({ navigation, route }: RootStackScreenProps<'Timer'>
       'worklet';
       if (done) v.set(to);
     };
+    // The status bar and the haptic follow the door on the UI thread (see below).
+    barAt.set(insets.top * 0.25);
+    if (started) thudArmed.set(true);
     doorX.set(withSpring(0, spring, exact(doorX, 0)));
     doorY.set(withSpring(0, spring, exact(doorY, 0)));
     doorW.set(withSpring(W, spring, exact(doorW, W)));
@@ -211,12 +255,8 @@ export function TimerScreen({ navigation, route }: RootStackScreenProps<'Timer'>
     ember.set(withTiming(0, moments.doorCloses.room));
     // The room's contents settle in once the door has closed behind you.
     face.set(withDelay(springTouchdownMs(spring), withTiming(1, timing.settle)));
-    const t = setTimeout(land, springTouchdownMs(spring));
-    const bar = setTimeout(() => StatusBar.setStyle('light', true), springTouchdownMs(spring) / 2);
-    return () => {
-      clearTimeout(t);
-      clearTimeout(bar);
-    };
+    const t = setTimeout(() => land(false), springTouchdownMs(spring));
+    return () => clearTimeout(t);
     // Opens once.
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [reduceMotion, onScreen]);
@@ -231,8 +271,20 @@ export function TimerScreen({ navigation, route }: RootStackScreenProps<'Timer'>
   }));
   // The room inside the door stays put on screen while the door opens over it.
   const insideStyle = useAnimatedStyle(() => ({ transform: [{ translateX: -doorX.value }, { translateY: -doorY.value }] }));
-  const emberStyle = useAnimatedStyle(() => ({ opacity: ember.value }));
-  const labelStyle = useAnimatedStyle(() => ({ opacity: Math.max(0, ember.value * 3 - 2) }));
+  // The ember face is drawn once at the button's size and stretched with a
+  // transform: expo-linear-gradient repaints on the CPU whenever its size
+  // changes, which cost about one frame in three while the door grew (M16).
+  const fromW = origin?.width || 1;
+  const fromH = origin?.height || 1;
+  const emberStyle = useAnimatedStyle(() => ({
+    opacity: ember.value,
+    transform: [{ scaleX: doorW.value / fromW }, { scaleY: doorH.value / fromH }],
+  }));
+  // The label stays its own size, centered on the door, and is gone within the first third.
+  const labelStyle = useAnimatedStyle(() => ({
+    opacity: ember.value * Math.max(0, ember.value * 3 - 2),
+    transform: [{ translateX: (doorW.value - fromW) / 2 }],
+  }));
   const faceStyle = useAnimatedStyle(() => ({ opacity: face.value * room.value }));
   const settleStyle = useAnimatedStyle(() => ({ opacity: 1 - settle.value }));
   const numeralStyle = useAnimatedStyle(() => ({
@@ -450,17 +502,19 @@ export function TimerScreen({ navigation, route }: RootStackScreenProps<'Timer'>
           <LoylyBurst burstKey={burst} width={W} height={H} />
         </Animated.View>
         {origin && fromEmber && started ? (
-          <Animated.View style={[StyleSheet.absoluteFill, emberStyle]}>
-            <LinearGradient
-              colors={[gradients.emberButton[0].color, gradients.emberButton[1].color, gradients.emberButton[2].color]}
-              locations={[gradients.emberButton[0].offset, gradients.emberButton[1].offset, gradients.emberButton[2].offset]}
-              style={StyleSheet.absoluteFill}
-            />
-            <Animated.View style={[styles.doorLabel, { height: origin.height }, labelStyle]}>
+          <>
+            <Animated.View style={[styles.doorEmber, { width: origin.width, height: origin.height }, emberStyle]}>
+              <LinearGradient
+                colors={[gradients.emberButton[0].color, gradients.emberButton[1].color, gradients.emberButton[2].color]}
+                locations={[gradients.emberButton[0].offset, gradients.emberButton[1].offset, gradients.emberButton[2].offset]}
+                style={StyleSheet.absoluteFill}
+              />
+            </Animated.View>
+            <Animated.View style={[styles.doorLabel, { width: origin.width, height: origin.height }, labelStyle]}>
               <Icon name="timer" size={22} color={palette.steam} />
               <Text style={[type.bodyStrong, styles.steam]}>Start a session</Text>
             </Animated.View>
-          </Animated.View>
+          </>
         ) : null}
       </Animated.View>
 
@@ -704,10 +758,10 @@ function TargetPanel({
 
 const styles = StyleSheet.create({
   door: { position: 'absolute', overflow: 'hidden', borderCurve: 'continuous' },
+  doorEmber: { position: 'absolute', left: 0, top: 0, transformOrigin: 'left top' },
   doorLabel: {
     position: 'absolute',
     left: 0,
-    right: 0,
     top: 0,
     flexDirection: 'row',
     alignItems: 'center',
