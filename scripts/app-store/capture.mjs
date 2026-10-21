@@ -80,8 +80,8 @@ function shoot(name) {
  * Feed starts at the shared session with the photo.
  */
 const SCROLL = {
-  '6.9': { today: 100, log: 1000, feed: 372 },
-  '6.3': { today: 150, log: 1000, feed: 372 },
+  '6.9': { today: 100, log: 950, feed: 372 },
+  '6.3': { today: 150, log: 950, feed: 372 },
 };
 if (!SCROLL[size]) throw new Error(`size must be ${Object.keys(SCROLL).join(' or ')}`);
 
