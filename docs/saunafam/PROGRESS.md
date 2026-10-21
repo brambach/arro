@@ -35,6 +35,7 @@ DENO_NO_PACKAGE_JSON=1 deno test --allow-read=supabase/functions supabase/functi
 | M3 | done (db track) | `supabase/migrations/20261021000004_session_social.sql`, `20261021000005_saunafam_pushes.sql`, `supabase/tests/database/saunafam_push.test.sql` (59 tests), `design/copy/notifications.md` | pgTAP 371/371 |
 | M4 | done (db track) | `supabase/functions/remove-member/index.ts`, `delete-account/index.ts` (comments), `supabase/drafts/build10_cleanup.sql` | `deno check` clean. The cleanup draft was run inside a rolled-back transaction on the local database and goes through |
 | M15-server | done (db track) | `supabase/migrations/20261021000006_saunafam_plus.sql`, `supabase/tests/database/plus.test.sql` (32 tests), `supabase/functions/revenuecat-webhook/`, `supabase/functions/sync-plus/`, `supabase/functions/_shared/plus.ts`, `delete-account` dry run, `docs/saunafam/API.md` | pgTAP 403/403 across 11 files. Deno: 48 tests pass. App half of M15 isn't this track |
+| M15 | done, switched off (branch `saunafam/plus`) | `design/screenshots/saunafam/INDEX.md` ("Saunafam Plus", 46 screenshots), `design/recordings/saunafam/plus-preview-flow.mov`, `src/state/__tests__/plusFlow.test.ts`, `plusNever.test.ts`, `plusExtras.test.ts`, `design/copy/app-copy.md` ("Saunafam Plus") | Jest 382/382 in 29 suites. StoreKit recording not possible here (see M15 below). See M15 below |
 | M5 | done (branch `saunafam/app`) | `src/state/__tests__/*.test.ts(x)`, `docs/saunafam/DATA-LAYER.md` | Jest 197/197 in 13 suites. Typecheck clean, lint clean in `src/state` and `src/data`. See M5 below |
 | M13 | done (branch `saunafam/site`) | `design/screenshots/saunafam/site/`, `design/screenshots/saunafam/invite-link-preview.png`, `design/recordings/saunafam/site-first-load.mp4`, `design/lighthouse/*.json`, `site/worker.test.mjs` | Lighthouse 100/100/100/100 on all four pages, CLS 0. See M13 below |
 | M12 docs | done (branch `saunafam/docs`) | `README.md`, `AGENTS.md`, `AUDIT.md` (note), the "Written for Arro" line on `design/market-research.md`, `paid-plan.md`, `refactor-plan.md`, `visual-direction.md`, `Arro-Spec.html`, `Arro.dc.html`, `design/app-store/icon-options.md` | Docs half of section 6 only. `CLAUDE.md` is just `@AGENTS.md`, so unchanged. See "M12 and M14 docs" below |
@@ -677,7 +678,7 @@ Open.
   an aspen tray, from `checkBeforeDelete()`.
 - D10.6 The wall row shows only with plus_enabled (spec: "Woods and faces don't
   appear at all" while it's off). The try-on and "Leave a tip" open the `Plus`
-  route; `PlusSeamScreen` stands in until M15 replaces it, same route name and
+  route; `PlusSeamScreen` stood in until M15 replaced it (now `PlusSheetScreen`), same route name and
   params (`{ focus: 'woods' | 'tips' | 'everyWeek' | 'poster' }`).
 - D10.7 Settings' Plus quiet lines (ended, Apple couldn't renew for the payer,
   a plan from someone who left ending within a week) come from
@@ -1133,3 +1134,148 @@ touch. `node scripts/check-design.mjs` clean on the touched files.
 - The app is still named "Arro" on iOS's sheets and banners (the rename is M12),
   and `app.json`'s photo string still says Arro and workouts (M12).
 
+
+## M15: Plus, switched off
+
+Built on branch `saunafam/plus` (worktree `/tmp/luna-arro/wt-plus`), on top of
+the DB track's server half (migration 0006, `revenuecat-webhook`, `sync-plus`,
+the `delete-account` dry run). Ships with `app_config.plus_enabled = false`:
+with it off, no Plus row, lock, wood, face, icon or card exists anywhere, and
+`react-native-purchases` is never loaded or configured.
+
+**What's in it**
+- `react-native-purchases` 10.15.0 and `expo-alternate-app-icons` 8.0.0
+  (commit f88343d), the alternate icons Night stone, Cedar and Lake in
+  `app.json`, and `ios-storekit/Saunafam.storekit` with the five products.
+- `src/state/purchases.ts`: `PreviewPurchases` (succeed, fail, cancel, pending,
+  nothing to restore, offline, and a delay for captures), `RevenueCatPurchases`
+  over the SDK (prices from the `default` offering only; error codes mapped to
+  cancelled, pending, offline and failed), and `PurchasesSwitch`, the one
+  object AppState keeps: the fake until `plus_enabled` is on and the build has
+  `EXPO_PUBLIC_REVENUECAT_IOS_KEY`, then RevenueCat, configured once.
+- `src/state/plusFlow.ts`: the sheet's state machine (all 16 states plus "two
+  payers"), `buyWith` and `restoreWith` (set the family attribute, buy, then
+  sync-plus and family_plus), and every Plus string (`PLUS_COPY`).
+- `src/screens/PlusSheetScreen.tsx` replaces M10's `PlusSeamScreen` (same route
+  and params, plus `wood`, `face` and `icon`). A 90% birch sheet over the
+  screen (`overScreen`, so the screen shows through), the close mark top
+  right from the first frame, the "Preview, no real purchase" tag in its fixed
+  header. The family's real wall in the wood picked, four wood swatches (the
+  400 ms crossfade, a slat at a time), the feature list, flat price tiles, one
+  ember button (it shows three waiting dots while the App Store or the server
+  works), Not now as plain text, the small print, Restore purchases, Terms
+  (Apple's standard EULA) and Privacy, the sign-off and the tip jar. A
+  purchase landing re-grains the wall once over 900 ms, a slat at a time, with
+  the success haptic as the last one finishes (`moments.plusLanded`,
+  `haptics.plusLanded`). While finishing it asks the server every 4 s and says
+  it can be closed after 20 s.
+- Try-on: The wall (M10's, now passing the wood on), `TimerFaceScreen` (a small
+  room with the face at 12:40 of 15) and `AppIconScreen` (a home screen close
+  up). Buying from a try-on keeps what was tried.
+- Timer faces: `src/components/TimerDial.tsx`. Löyly is M8's dotted arc; Coal
+  is a glowing ring on soot with warm numerals; Brass is a brass-bezeled
+  cream dial to 60 minutes with an ember wedge to the target, a minute hand at
+  the heat time and an ember seconds hand, hung above the numerals. Picked per
+  person (`saunafam.look.v1`, `src/state/look.ts`).
+- App icons: `src/state/appIcon.ts` over `expo-alternate-app-icons`. Seen
+  working in the Debug build: iOS's "You have changed the icon" alert showed
+  the Night stone and Lake icons, and the icon went back to the default when
+  Plus ended.
+- Every week (`EveryWeekScreen`, `family_week_history` with 520 weeks, which the
+  server clamps to 12 without Plus), the Heat log (`HeatLogScreen`,
+  `src/state/heatLog.ts`, from the family's sessions), the wall poster
+  (`WallPoster`, 1800 x 2400, columns of 13 weeks, saved or printed through the
+  share sheet), and the Founding family's brass nail on the first slat of the
+  wall and the poster.
+- The quiet card on Week now also stays away after a missed week, while you're
+  on a break, and next to a milestone (`afterLoss`, `celebrating` in
+  `nagCardState`). `plusMayShow` and `NEVER_PLUS_PLACES` in `src/state/plus.ts`
+  list where Plus may ever appear.
+- Preview scenarios `plusMine` (you pay yearly), `plusFounding` (40 weeks),
+  `plusLapsed`, and `archive` on every scenario (every week and session).
+- Dev only: driver ops `plusStore`, `emitArg` and the Plus screens' dev events;
+  `SubScreen` scrolls for captures like `Screen` does.
+
+**Checks:** `npm run typecheck` clean. `npm run lint`: 0 problems in `src`.
+`npm test`: 29 suites, 382 tests (new: `plusFlow` 29, `plusNever` 35,
+`plusExtras` 11). `node scripts/check-design.mjs` clean. `node
+scripts/check-contrast.mjs`: 39 of 39 pairs (6 new: Coal numerals and small
+caps on soot, the Brass dial figures, the try-on home screen label, the
+preview tag). `deno check` clean; `deno test` 48 passed. No SQL changed, so
+pgTAP wasn't rerun. The dash check on `src`, `design/copy`, `design/app-store`,
+`app.json` and `site/public` finds nothing.
+
+**Proof**
+- Screenshots: `design/screenshots/saunafam/INDEX.md`, section "Saunafam Plus":
+  `plus-01-loading.png` to `plus-16-preview-label.png` for the 16 states, the
+  tip jar, try-on for a wood, a face and an icon, the two timer faces in the
+  room, Every week, the Heat log with and without Plus, the poster, the quiet
+  card, Settings and Me.
+- Recording: `design/recordings/saunafam/plus-preview-flow.mov` (40 s, 1.3 MB):
+  the sheet rising over Today, trying alder, charred pine and cedar, a
+  cancelled purchase, a failed one, Ask to Buy, Founding family bought (waiting
+  dots, finishing, the wall re-graining, the thank-you), then a restore on a
+  fresh family. Watched at 8 to 12 fps: the sheet's spring overshot and showed
+  a sliver of the screen under it, so the tall sheet now carries 40 pt of
+  itself below the edge.
+- Tests: `src/state/__tests__/plusFlow.test.ts` (every state against
+  `PreviewPurchases`, restore's three results, tips, prices only from the
+  offering, RevenueCat's offering and error mapping against a fake SDK, the
+  switch), `plusNever.test.ts` (the never-shown list, three ways: the rule, the
+  views built from the preview scenarios, and the source of every screen that
+  must never reach Plus), `plusExtras.test.ts`.
+
+**Decisions**
+- D15.1 Text on the picked price tile is steam, not the spec's birch: steam on
+  ember is the pair `check-contrast` already passes at 15/600 (the button's).
+- D15.2 The feature list shows titles only; the row you came from also shows
+  its line. With six two-line rows the prices fell a whole screen below the
+  fold.
+- D15.3 Purchasing and Finishing up keep the button at full color with three
+  waiting dots (`SolidButton` `busy`, `moments.waiting`), instead of the
+  disabled look, which reads as "you can't".
+- D15.4 The sheet's own wood swatches only preview; they never save. Buying
+  from The wall, Timer face or App icon keeps what was being tried on.
+- D15.5 The Heat log without Plus blurs made-up numbers (`sampleHeatLog`), not
+  the family's, and says they're an example.
+- D15.6 The Heat log is worked out on the phone from the sessions table (the
+  spec allows device checks for the visual extras). "Your best run" is the
+  family's longest streak. Longest sessions are alphabetical by name.
+- D15.7 The Founding family nail sits on the bottom slat of Week's wall (the
+  oldest of the 12 shown) and on the poster's first week.
+- D15.8 When Plus ends, the app icon goes back to the default (iOS shows its
+  own alert), like the wall goes back to birch. Faces and icons stay picked on
+  the phone, so they come back with Plus.
+- D15.9 A preview purchase or restore that finishes after its scenario was
+  swapped out changes nothing (a generation counter in AppState). Found when a
+  slow restore from one capture turned Plus on in the next.
+- D15.10 With Plus off, build 9 never configures RevenueCat, so App Privacy's
+  Purchase History can wait for the Plus version (`design/app-store/app-privacy.md`).
+- D15.11 Debug build of my own on the iPhone 17 simulator
+  (`ios/build/dd`, `xcodebuild -configuration Debug -sdk iphonesimulator`),
+  Metro on 8083, the capture driver on 8093 (`EXPO_PUBLIC_DEV_DRIVER_URL`).
+
+**Not done or not verified**
+- The StoreKit configuration test (`plus-storekit.mov`) isn't possible here.
+  RevenueCat's SDK needs a project API key before it will load offerings or
+  buy anything, and that key only comes from the RevenueCat dashboard (off
+  limits); RevenueCat's own Test Store needs the dashboard too. A StoreKit
+  file also only applies when the app runs from Xcode's scheme, not from
+  `simctl launch`. `plus-preview-flow.mov` records the preview flow against
+  `PreviewPurchases`: yearly cancelled, failed and Ask to Buy, Founding family
+  bought, and a restore. A completed yearly purchase is in the screenshots
+  (`plus-07-finishing.png`, `plus-08-success.png`), not the recording. Part 2
+  of the spec's sandbox test plan is for Bryce.
+- Nothing ran against RevenueCat or a live Supabase: `RevenueCatPurchases` is
+  tested against a fake SDK, and sync-plus and family_plus only through types
+  and the DB track's tests.
+- Haptics (the landing, tips) can't be felt on the simulator; timing is in
+  code.
+- The re-grain on landing is subtle by design (same wood, new grain, 900 ms);
+  Bryce should look at it on a phone.
+- The App Store listing, privacy label, review notes and the privacy page's
+  RevenueCat paragraph were already written by the docs track (M14 docs,
+  M13); M15 only answered the open RevenueCat-at-launch question.
+- VoiceOver wasn't run end to end on the new screens; labels and roles are set
+  in code.
+- Dynamic Type at the largest sizes wasn't captured for the Plus screens.

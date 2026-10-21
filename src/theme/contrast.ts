@@ -1,4 +1,4 @@
-import { alpha, memberNames, memberPalette, onMember, palette } from './tokens';
+import { alpha, faces, homeScreen, memberNames, memberPalette, onMember, palette } from './tokens';
 
 /**
  * Every text and background pair the design uses, with the smallest text that
@@ -63,6 +63,13 @@ export const textPairs: TextPair[] = [
   { fg: alpha.steam72, bg: p.char, over: p.char, use: 'an unpicked chip in the room', size: 15, weight: 600 },
   // The log sheet (M8), birch.
   { fg: p.char, bg: p.aspen, use: 'sauna tile names on aspen', size: 15, weight: 600 },
+  // Plus (M15): the Coal timer face, the Brass dial, the app icon try-on.
+  { fg: faces.coal.numerals, bg: faces.coal.soot, use: 'Coal face numerals', size: 34, weight: 400 },
+  { fg: alpha.steam62, bg: faces.coal.soot, over: faces.coal.soot, use: 'small caps in the Coal room', size: 12, weight: 600 },
+  { fg: alpha.steam72, bg: faces.coal.soot, over: faces.coal.soot, use: '"Time to cool off" in the Coal room', size: 15, weight: 400 },
+  { fg: faces.brass.ink, bg: faces.brass.dial, use: 'Brass dial figures (60, 15, 30, 45)', size: 14, weight: 600 },
+  { fg: palette.steam, bg: homeScreen[1].color, use: '"Saunafam" under the icon on the try-on home screen', size: 13, weight: 400 },
+  { fg: palette.smoke, bg: palette.aspen, use: '"Preview, no real purchase" tag on the Plus sheet', size: 12, weight: 600 },
   // Avatars: initials on every member color.
   ...memberPalette.map(
     (color, i): TextPair => ({

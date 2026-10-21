@@ -1,5 +1,5 @@
-import React from 'react';
-import { KeyboardAvoidingView, Platform, Pressable, ScrollView, StyleSheet, Text, useWindowDimensions, View } from 'react-native';
+import React, { useEffect, useRef } from 'react';
+import { DeviceEventEmitter, KeyboardAvoidingView, Platform, Pressable, ScrollView, StyleSheet, Text, useWindowDimensions, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { layout, palette, space } from '../theme/tokens';
 import { maxFontScale, type } from '../theme/typography';
@@ -33,6 +33,13 @@ export function SubScreen({ title, lead, onBack, modal, footer, children }: Prop
   // At the largest Dynamic Type sizes the footer scrolls with the content instead of covering it.
   const { fontScale } = useWindowDimensions();
   const inline = fontScale >= 1.35;
+  // Dev builds with the capture driver (src/dev/DevDriver.tsx) can scroll it, as Screen does.
+  const scrollRef = useRef<ScrollView>(null);
+  useEffect(() => {
+    if (!__DEV__ || process.env.EXPO_PUBLIC_DEV_DRIVER !== '1') return;
+    const sub = DeviceEventEmitter.addListener('devScroll', (y: number) => scrollRef.current?.scrollTo({ y, animated: false }));
+    return () => sub.remove();
+  }, []);
   const actions = footer ? (
     <Settle index={2} style={[styles.footer, { paddingBottom: insets.bottom + space.s16 }, inline && styles.footerInline]}>
       {footer}
@@ -45,6 +52,7 @@ export function SubScreen({ title, lead, onBack, modal, footer, children }: Prop
         {modal ? <CloseButton onPress={onBack} /> : <BackButton onPress={onBack} />}
       </View>
       <ScrollView
+        ref={scrollRef}
         keyboardShouldPersistTaps="handled"
         showsVerticalScrollIndicator={false}
         contentContainerStyle={[styles.body, { paddingBottom: footer && !inline ? space.s24 : insets.bottom + space.s40 }]}

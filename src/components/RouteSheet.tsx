@@ -66,7 +66,8 @@ export const RouteSheet = forwardRef<RouteSheetHandle, Props>(function RouteShee
       <Animated.View
         style={[
           styles.sheet,
-          height ? { height, paddingBottom: 0, paddingHorizontal: 0, paddingTop: space.s16 + layout.touch } : { paddingBottom: Math.max(insets.bottom, space.s16) + space.s16 },
+          // A little extra below, out of sight, so the spring's overshoot never shows a gap under it.
+          height ? { height: height + space.s40, marginBottom: -space.s40, paddingBottom: space.s40, paddingHorizontal: 0, paddingTop: space.s16 + layout.touch } : { paddingBottom: Math.max(insets.bottom, space.s16) + space.s16 },
           card,
         ]}
         accessibilityLabel={accessibilityLabel}
