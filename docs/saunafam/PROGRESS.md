@@ -41,6 +41,7 @@ DENO_NO_PACKAGE_JSON=1 deno test --allow-read=supabase/functions supabase/functi
 | M12 docs | done (branch `saunafam/docs`) | `README.md`, `AGENTS.md`, `AUDIT.md` (note), the "Written for Arro" line on `design/market-research.md`, `paid-plan.md`, `refactor-plan.md`, `visual-direction.md`, `Arro-Spec.html`, `Arro.dc.html`, `design/app-store/icon-options.md` | Docs half of section 6 only. `CLAUDE.md` is just `@AGENTS.md`, so unchanged. See "M12 and M14 docs" below |
 | M14 docs | done (branch `saunafam/docs`) | `design/app-store/listing.md`, `app-privacy.md`, `review-notes.md`, `screenshots.md`, `support.md`, `testflight.md`, `hosting.md`, `README.md`; `design/copy/app-copy.md` (skeleton) | Listing, age rating, privacy labels, products. Not the screenshot script (`scripts/` is the app track). Apple screenshot sizes changed: see below |
 | M14 shots | done (branch `saunafam/shots`) | `design/app-store/screenshots/6.9/`, `6.3/`, `raw/`, `scripts/app-store-shots.mjs`, `scripts/app-store/capture.mjs` | Six framed, captioned screenshots at 1320 x 2868 and 1206 x 2622, size and alpha checked by the script. See "M14: App Store screenshots" below |
+| M16 | done (branch `saunafam/review`) | `design/recordings/saunafam/m16/` (16 clips), `design/screenshots/saunafam/review/` (one per screen, 42), `docs/saunafam/review/` (6 stills, 2 clips), `src/dev/FpsProbe.tsx` | Every motion moment recorded on one fresh Debug build of the merged app, watched frame by frame, frame rates probed. Six fixes, each re-recorded. Jest 385/385 in 30 suites, lint 0. See "M16: self-review" below |
 
 ## M5: app data layer
 
@@ -1279,3 +1280,105 @@ pgTAP wasn't rerun. The dash check on `src`, `design/copy`, `design/app-store`,
 - VoiceOver wasn't run end to end on the new screens; labels and roles are set
   in code.
 - Dynamic Type at the largest sizes wasn't captured for the Plus screens.
+
+## M16: self-review
+
+Built on branch `saunafam/review` (worktree `/tmp/luna-arro/wt-review`), from
+the tip of `feat/saunafam` with every app milestone merged (3286f99). One fresh
+Debug build of the merged app: `npx expo prebuild --platform ios`, then
+`xcodebuild -configuration Debug -sdk iphonesimulator` into `ios/build/dd`,
+on the iPhone 17 Pro simulator `9F9A7E15` (iOS 26.5) only. Metro on 8086, my
+own driver server on 8096 (`EXPO_PUBLIC_DEV_DRIVER_URL`), no `.env.local`, so
+the app ran on the local preview family. No taps: everything went through the
+dev driver.
+
+**How it was checked**
+- Recordings: `xcrun simctl io recordVideo --codec hevc`, then frames pulled
+  with ffmpeg into labelled contact sheets (real timestamps), frame gaps from
+  ffprobe, and for the door a per-frame trace of its top edge.
+- Frame rates: `src/dev/FpsProbe.tsx` (new, dev only, mounted with the
+  driver). It counts UI-thread frames (Reanimated's frame callback) and JS
+  frames (requestAnimationFrame) between two driver commands, and logs the
+  rate, the dropped 60 Hz frames and when each gap fell. Those are the two
+  numbers the Perf Monitor graphs; the probe gives them exactly instead of
+  read off an overlay. Debug build, so JS numbers are pessimistic.
+- `simctl recordVideo` only writes a frame when the screen changes, and it
+  sometimes drops a stretch on its own (M9 saw it after a sheet closes; so did
+  this run). Where the recorder and the probe disagreed, the probe and the
+  frames either side decided.
+- Haptics can't be felt on the simulator. Each one was logged with a
+  timestamp during the runs (a temporary log, removed) and lined up with the
+  frames.
+
+**The moments.** Clips are in `design/recordings/saunafam/m16/` (H.264, 604
+wide). "UI" and "JS" are the probe's dropped 60 Hz frames over the run.
+
+| Moment | Recording | What I saw | What I fixed | Frames (probe) |
+|---|---|---|---|---|
+| Cold-start splash | `splash-cold.mp4` | Plain birch, wisps at 0, stone at 400, wordmark at 700, lift and fade at 1200 ms, Welcome settling in under the lifting mark. No white frame, no ghosted mark | Nothing | UI 59.4 fps, 2 dropped, both in one 51 ms gap as the native splash hides, before the wisps move. JS 4 (Welcome mounting under the exit) |
+| Today's first paint (returning) | `today-first-paint.mp4` | The 400 ms fade from birch, then greeting, slat, Start, family 70 ms apart, the 8 rolling in | Nothing | UI 58.9 fps, 4 dropped, all before or on the first frame of the fade (still invisible). JS 1 |
+| Starting the timer (the door) | `timer-start.mp4`, `timer-start-before-fix.mp4` | About one UI frame in three dropped while the door grew (27 fps on the probe). Then two or three held frames mid-move. The haptic on a timer, not the landing | Bisected: the ember face's gradient repainted on the CPU every frame (expo-linear-gradient redraws on every size change). Now drawn at the button's size and stretched with a transform. The status bar's animated switch held the compositor: it now switches without a fade, from the UI thread, once the door's edge has covered its text. The haptic fires from a UI-thread reaction when every edge is within 2 pt of the screen | Before: UI 54.3 fps, 16 dropped. After: UI 59.0 fps, 3 dropped, all in one gap at the route's mount while the door still sits on the button; one held recorder frame at the status bar switch (was 2 to 3). Tap to first door frame about 200 ms in Debug |
+| 5-minute tick | `timer-tick-loyly.mp4` | Numerals to 5:00, the warmer glow step, the light tick in the same render as the 5:00 | Nothing | UI 60.0 fps, 0 dropped. JS drops once a second (the room's per-second redraw), not on the UI thread |
+| Throw löyly | `timer-tick-loyly.mp4` | Wisps rise, billow and fade, no jumps. Soft haptic one stagger (90 ms) after the tap, as the first wisp shows | Nothing | UI 60.0 fps, 0 dropped |
+| Finishing a session | `timer-finish.mp4` | Glow cools, numerals settle, the room lightens as the sheet rises; success haptic as the glow lands | Nothing | UI 58.9 fps, 4 dropped: one gap as Done is pressed (before anything moves), one as the sheet's lower fields mount (sheet at rest) |
+| Saving (the check-in) | `checkin.mp4` | The dot ignited about 700 ms after the sheet had gone. Two success haptics, 930 ms apart | Today held the new week for a page sheet's 400 ms dismissal, but the log sheet finishes its own slide before going back: it now marks when it's gone and Today skips the wait. The sheet leaves the save haptic to the dot when it closes onto Today and lights a new dot (tested) | UI 60.0 fps, 0 dropped. Dot now starts about 300 ms after the sheet has gone |
+| Week kept (spark burst) | `week-kept.mp4` | Dot ignites (success at its peak), a beat, the slat fills edge to edge, sparks with the second success as it's full, then "Week kept, together" | Nothing beyond the check-in fix | UI 60.0 fps, 0 dropped |
+| Milestone wall | `milestone.mp4` | Wall builds from the bottom, the 12 lands with the overshoot as the top slat touches down, heavy then success 184 ms apart, steam behind. The card stood empty for about 350 ms first | The wall waited for transitionEnd, about 550 ms after mount. It now starts 250 ms (`moments.milestoneWall.cardFade`) after the transition starts. (A shorter `animationDuration` was tried first: a full-screen modal ignores it, measured, reverted.) | UI 59.0 fps, 4 dropped: the mount, and one as the wall starts. Card-to-first-slat about 250 ms |
+| Tabs | `tabs-and-stack.mp4` | Instant switch, then each tab's one settle arrival on its first visit; no blank frames | Nothing | UI 59.2 fps, 8 dropped, all on the first visit to Week, Feed and Me (their first mount); second visits 0 |
+| Stack push and pop | `tabs-and-stack.mp4` | SessionDetail's slide lost about 3 frames as it started | Bisected to the Backdrop's haze (two SVG gradients bigger than the screen, drawn on the main thread on every screen's first frame). It's now a pre-rendered image (`scripts/render-backdrop-haze.mjs`), the same to within one color level | SessionDetail push: 3 dropped before, 2 after. Pop: 1 before, 0 after. Settings push: 2 |
+| Log sheet | `sheets.mp4` | Rises over Today with Today under the scrim, slides away on close | Nothing | UI 4 dropped: the mount, and one as the form discards |
+| Nudge | `sheets.mp4` | Over Today, Today under the scrim | Nothing | UI 0 dropped |
+| PastWeek | `sheets.mp4` | Over Week, Week under the scrim | Nothing | UI 2 dropped, one gap at close |
+| Plus sheet | `sheet-plus.mp4` | Over Today, Today under the scrim, the close mark from the first frame. (With Plus off the route refuses to open, as designed; recorded on `plusEnabled`) | Nothing | UI 3 dropped, one gap at mount |
+| Splash, Reduce Motion | `reduce-motion-splash.mp4` | Finished mark, hold, crossfade. Mid-fade the wordmark doubled and the stone dimmed, then Welcome's mark sat 8 pt higher | Under Reduce Motion Welcome's mark doesn't lift, and the splash keeps its mark at full strength while only its birch fades, so the crossfade is between two identical marks | UI 0 dropped after the first frame |
+| Timer, Reduce Motion | `reduce-motion-timer-start.mp4`, `reduce-motion-timer-finish.mp4` | A 240 ms crossfade in, no morph; finish crossfades to the sheet and back to Today; the dot crossfades on and still plays the save haptic | Nothing | Start: UI 2 dropped (mount). Finish: UI 2 |
+| Milestone, Reduce Motion | `reduce-motion-milestone.mp4` | The wall popped in whole a frame after the card had faded in | The finished wall and number are there from the first frame, fading in with the card | UI 1 dropped (mount) |
+
+**Haptics against the frames** (not felt; timed from the logs and the frames)
+
+| Moment | Haptic | Fires | Call site |
+|---|---|---|---|
+| timer start | medium | the frame every door edge is within 2 pt of the screen (about 590 to 700 ms in) | `TimerScreen.tsx`, the `thudArmed` reaction |
+| 5-minute tick | light | the render that shows the new mark | `TimerScreen.tsx`, the `mark` effect |
+| löyly | soft | 90 ms after the tap, the first wisp | `TimerScreen.tsx`, `throwLoyly` |
+| finish | success | as the glow lands cool (700 ms), the room starts lightening | `TimerScreen.tsx`, `finish` |
+| save | success | the new dot's overshoot peak; at the sheet's close only when no dot lights on Today | `EmberDots.tsx` (`onIgnitePeak`), `LogSessionScreen.tsx` |
+| week kept | success | the slat's fill completes, with the sparks | `WeekHero.tsx`, `onFilled` |
+| milestone | heavy, then success 180 ms later | the number's overshoot peak | `MilestoneScreen.tsx` |
+
+**Screenshots:** `design/screenshots/saunafam/review/`, one per screen, no dev
+chrome (the capture script's dev menu switches), status bar 9:41, battery
+discharging at 100. Listed in `design/screenshots/saunafam/INDEX.md`.
+
+**Review set:** `docs/saunafam/review/`: six stills (Welcome, Today, the timer,
+Week, the milestone, Feed) and two clips (`timer-start.mp4`, `week-kept.mp4`).
+
+**Checks:** `npm run typecheck` clean. `npm run lint` 0 problems. `npm test`:
+30 suites, 385 tests (new: `closesOntoToday.test.ts`, one more in
+`useShownWhenFocused.test.tsx`). `node scripts/check-design.mjs` clean.
+`node scripts/check-contrast.mjs`: 39 of 39 pairs. No SQL or edge functions
+changed, so pgTAP and Deno weren't rerun.
+
+**Not done or not verified**
+- Haptics weren't felt: the simulator has no Taptic Engine. Their timing is
+  checked against the frames, as above.
+- The dev client shows its "Downloading" bar before the splash on every cold
+  start in Debug; the splash clips are trimmed to start after it. The native
+  splash handoff wasn't seen in a Release build (none allowed here; M7 has one).
+- The Perf Monitor overlay itself wasn't used. Under the new architecture its
+  JS graph hangs off the bridge, and turning it on needs a tap in the dev
+  menu. The probe reads the same two rates.
+- About a third of the way through, the Mac went into battery maintenance
+  sleep and ran this session in short dark wakes (`pmset -g log`). Runs from
+  then on were noisier: one milestone run showed 20 dropped frames that an
+  A/B in the same conditions put down to the machine, not the code. Numbers in
+  the table are from runs before that, or A/B'd after it.
+- The first timer open after an install dropped frames that never repeated
+  (the simulator compiling the room's shaders, probably). Not seen on device.
+- The first visit to each tab and each push still costs one to three UI frames
+  at mount in this Debug build; the wall-line SVG in the Backdrop is the next
+  candidate if a Release build on a phone shows it too.
+- The check-in still waits about 300 ms after the sheet has gone, and the
+  milestone wall about 250 ms after the card is in: both are the Debug build's
+  JS work. Worth checking in a Release build.
+- Nothing ran on a physical phone or at 120 Hz.

@@ -221,3 +221,53 @@ and `plus-08-success-wall.png` show the top.
 - `plus-settings-from-maya.png`: the Saunafam Plus row reads "Plus, from Maya"
 - `plus-settings-lapsed.png`: the quiet line after a plan ends
 - `plus-me-rows.png`, `plus-me-rows-plus.png`: Me's Heat log, Timer face and App icon rows, without and with Plus
+
+## Self-review: every screen on the merged build (M16)
+
+In `review/`. One Debug simulator build of the merged app (iPhone 17 Pro, iOS
+26.5, 1206 x 2622), the preview family on its own clock, status bar 9:41 with
+the battery discharging at 100, no dev menu or Tools button. Captured through
+the dev driver, no taps. Scenario `family` unless noted.
+
+- `01-welcome.png`: Welcome, the mark where the splash leaves it, Start a family, I have an invite, Sign in
+- `onboarding-join-code.png`: Enter your code (preview code filled)
+- `onboarding-invite-preview.png`: You're invited, Sunday sauna, 3 people
+- `onboarding-sign-in.png`: Sign in, first name empty, Continue waiting
+- `onboarding-name-family.png`: Name your family, empty, Continue waiting
+- `onboarding-rhythm.png`: Your rhythm, 3 a week, 10 minutes, week starts on Sunday off
+- `onboarding-meet-family.png`: Meet Sunday sauna, Maya and Jo, 8 weeks together
+- `onboarding-photo.png`: Add a photo, Choose a photo, Skip for now
+- `onboarding-how-it-works.png`: How the streak works, the rules list
+- `onboarding-invite.png`: Invite your family, the code and link, Who's it for?
+- `onboarding-reminders.png`: Remind me if I'm behind, Thu and Sat at 6:30 PM
+- `onboarding-notifications.png`: Hear from your family?, Turn on notifications, Not now
+- `02-today.png`: Today, 8 weeks together, Week 9 slat at 2 of 3, Start a session, the family list
+- `03-week.png`: Week, the wall with Maya's freeze, this week's days, the family
+- `04-feed.png`: Feed, Maya's session and the shared one with cheers and comments
+- `05-me.png`: Me, your numbers, favorite type and place, your last sessions
+- `06-timer.png`: The timer room 12:43 into a 15 minute traditional round
+- `07-log-session.png`: Log a session over Today, Today under the scrim
+- `08-session-detail.png`: The shared session with comments and quick replies
+- `09-edit-session.png`: Edit session, minutes, type, cold plunge, place, note
+- `10-nudge.png`: Cheer Jo on, over Today under the scrim
+- `11-past-week.png`: Week of Oct 12, over Week under the scrim
+- `12-milestone.png`: The 12-week milestone, wall built, number and steam
+- `13-settings.png`: Settings
+- `14-family-rules.png`: Family rules, as the founder
+- `15-take-break.png`: Take a break, the three lengths
+- `16-family-members.png`: Family members, Sam, Maya and Jo
+- `17-streak-rules.png`: Streak rules
+- `18-notifications.png`: Notifications, not asked yet, reminders off, Weekend check-in on
+- `19-apple-health.png`: Apple Health, off
+- `20-about.png`: About, version 1.0.0 (9)
+- `21-invite.png`: Invite someone, the code and Send invite
+- `22-edit-profile.png`: Edit profile, name and photo
+- `23-plus-sheet.png`: The Plus sheet over Today, preview tag (`plusEnabled`)
+- `24-wall.png`: The wall, birch picked, Plus woods to try on (`plusEnabled`)
+- `25-timer-face.png`: Timer face, Löyly picked (`plusEnabled`)
+- `26-app-icon.png`: App icon, Löyly picked (`plusEnabled`)
+- `27-every-week.png`: Every week, the whole wall by month (`plusEnabled`)
+- `28-heat-log.png`: Heat log without Plus, the blurred example (`plusEnabled`)
+- `29-poster.png`: The wall poster (`plusEnabled`)
+- `30-update-required.png`: Time to update (`updateRequired`; the dev-only Leave the preview shows under it)
+- `31-cant-reach.png`: This build can't reach Saunafam (the release-only screen, opened by its dev route)
