@@ -48,12 +48,14 @@ export function ListRow({
   const { fontScale } = useWindowDimensions();
   const large = fontScale >= 1.3;
   const lines = large ? undefined : 1;
+  // At the accessibility sizes the leading icon goes above the text, so a long word like "yesterday’s" gets the whole width and never breaks inside.
+  const stacked = leading != null && fontScale >= ACCESSIBILITY_SCALE;
 
   const content = (
-    <View style={[styles.row, { minHeight: subtitle ? layout.row : layout.rowCompact }, style]}>
+    <View style={[styles.row, stacked && styles.stacked, { minHeight: subtitle ? layout.row : layout.rowCompact }, style]}>
       <Animated.View style={[StyleSheet.absoluteFill, styles.wash, wash]} pointerEvents="none" />
       {leading ? <View>{leading}</View> : null}
-      <View style={styles.text}>
+      <View style={[styles.text, stacked && styles.stackedText]}>
         <Text style={type.bodyStrong} numberOfLines={lines}>
           {title}
         </Text>
@@ -125,12 +127,15 @@ export function ListGroup({
   style?: StyleProp<ViewStyle>;
 }) {
   const rows = Children.toArray(children).filter(isValidElement);
+  // Stacked rows start their text at the row's edge, so the hairline does too.
+  const { fontScale } = useWindowDimensions();
+  const leadingInset = inset === 'leading' && fontScale < ACCESSIBILITY_SCALE;
   return (
     <Card padding={0} style={style}>
       <View style={styles.clip}>
         {rows.map((row, i) => (
           <Fragment key={row.key ?? i}>
-            {i > 0 ? <View style={[styles.hairline, { marginLeft: inset === 'leading' ? space.s72 : space.s20 }]} /> : null}
+            {i > 0 ? <View style={[styles.hairline, { marginLeft: leadingInset ? space.s72 : space.s20 }]} /> : null}
             {row}
           </Fragment>
         ))}
@@ -138,6 +143,9 @@ export function ListGroup({
     </Card>
   );
 }
+
+/** iOS's first accessibility text size (AX1) is about 1.65 times the default. */
+const ACCESSIBILITY_SCALE = 1.6;
 
 const styles = StyleSheet.create({
   row: {
@@ -148,7 +156,9 @@ const styles = StyleSheet.create({
     paddingVertical: space.s8,
   },
   wash: { backgroundColor: alpha.press },
+  stacked: { flexWrap: 'wrap', alignItems: 'flex-start', paddingVertical: space.s12 },
   text: { flex: 1, minWidth: 0 },
+  stackedText: { flexBasis: '100%' },
   value: { color: palette.smoke },
   quiet: { color: palette.stone },
   kept: { color: palette.moss, fontWeight: '600' },
