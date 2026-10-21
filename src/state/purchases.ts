@@ -121,11 +121,19 @@ export class PreviewPurchases implements Purchases {
       case 'offline':
         return { status: 'offline' };
       case 'fail':
-        return { status: 'failed', message: 'The purchase didn’t go through.' };
-      default:
+        return { status: 'failed', message: 'The purchase didn’t go through. You haven’t been charged.' };
+      default: {
         if (!packageId.startsWith('tip_')) this.owned.add(packageId);
-        return { status: 'purchased', productId: PREVIEW_OFFERING[packageId === 'annual' ? 'annual' : 'lifetime']?.productId };
+        const pkg = [PREVIEW_OFFERING.annual, PREVIEW_OFFERING.lifetime, ...PREVIEW_OFFERING.tips].find((p) => p?.id === packageId);
+        return { status: 'purchased', productId: pkg?.productId };
+      }
     }
+  }
+
+  /** What restore would bring back: Founding family over yearly. */
+  ownedPlus(): 'saunafam.plus.annual' | 'saunafam.plus.lifetime' | null {
+    if (this.owned.has('lifetime')) return 'saunafam.plus.lifetime';
+    return this.owned.has('annual') ? 'saunafam.plus.annual' : null;
   }
 
   async restore(): Promise<RestoreResult> {
@@ -301,5 +309,66 @@ export function createPurchases(env?: PurchasesEnv): Purchases & { kind: Purchas
     return sdk ? new RevenueCatPurchases(sdk, env.apiKey, env.userId ?? null) : new PreviewPurchases();
   } catch {
     return new PreviewPurchases();
+  }
+}
+
+/**
+ * The one purchases object AppState keeps for the app's whole life. It starts
+ * as the preview fake and switches to RevenueCat once app_config says Plus is
+ * on and the build has a key (`update`). A Prototype preview scenario always
+ * uses the fake, whose behavior survives the switch.
+ */
+export class PurchasesSwitch implements Purchases {
+  readonly preview = new PreviewPurchases();
+  private store: Purchases | null = null;
+  private usePreview = true;
+
+  get kind(): PurchasesKind {
+    return this.usePreview || !this.store ? 'preview' : 'store';
+  }
+
+  private get active(): Purchases {
+    return this.usePreview || !this.store ? this.preview : this.store;
+  }
+
+  /** After app_config, a sign-in, or a preview scenario changes. RevenueCat is configured once at most. */
+  update(env: PurchasesEnv, forcePreview: boolean): void {
+    if (!this.store) {
+      const made = createPurchases(env);
+      if (made.kind === 'store') this.store = made;
+    }
+    this.usePreview = forcePreview || !this.store || !env.plusEnabled;
+  }
+
+  logIn(userId: string): Promise<void> {
+    return this.active.logIn(userId);
+  }
+  logOut(): Promise<void> {
+    return this.active.logOut();
+  }
+  getOffering(): Promise<PlusOffering | null> {
+    return this.active.getOffering();
+  }
+  setFamily(familyId: string): Promise<void> {
+    return this.active.setFamily(familyId);
+  }
+  purchase(packageId: PackageId): Promise<PurchaseResult> {
+    return this.active.purchase(packageId);
+  }
+  restore(): Promise<RestoreResult> {
+    return this.active.restore();
+  }
+}
+
+/** Loads react-native-purchases, or null in a build without the native module. */
+export function loadRevenueCat(): RevenueCatSdk | null {
+  try {
+    // Lazy, so nothing about RevenueCat loads while Plus is off.
+    // eslint-disable-next-line @typescript-eslint/no-require-imports
+    const mod = require('react-native-purchases') as typeof import('react-native-purchases');
+    const sdk: RevenueCatSdk = mod.default;
+    return sdk;
+  } catch {
+    return null;
   }
 }

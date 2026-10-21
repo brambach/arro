@@ -172,7 +172,8 @@ export interface PastWeekView {
 }
 
 export interface WeekView {
-  wall: { slats: Slat[]; wood: WallWood };
+  /** `nail`: a Founding family's brass nail on the first slat. */
+  wall: { slats: Slat[]; wood: WallWood; nail: boolean };
   numbers: { key: 'streak' | 'longest' | 'thisYear'; value: number; label: string }[];
   rows: FamilyRow[];
   /** Your Mon to Sun strip, under your own row. */
@@ -448,6 +449,48 @@ export function dayLetters(weekStartsOn: WeekStartsOn): string[] {
 /** "Mon, Wed and Sat" */
 function daysLabel(days: string[]): string {
   return joinNames(days.map((d) => WEEKDAY_SHORT[weekdayIndex(d)]));
+}
+
+/** Past weeks as wall slats, oldest first (Week's wall, Every week, the poster). */
+export function historySlats(history: PastWeekRow[], myId: MemberId): Slat[] {
+  const weeks = [...new Map(history.map((h) => [h.weekStart, h])).values()].sort((a, b) => a.weekStart.localeCompare(b.weekStart));
+  const mine = new Map(history.filter((h) => h.memberId === myId).map((h) => [h.weekStart, h]));
+  return weeks.map(
+    (h): Slat => ({
+      weekStart: h.weekStart,
+      state: h.familyState ?? 'solo',
+      freezeUsed: h.familyState === null ? mine.get(h.weekStart)?.status === 'frozen' : h.freezeUsed,
+      current: false,
+    }),
+  );
+}
+
+/** Past weeks as rows, newest first: "Week of Oct 5", "Kept", and who went. */
+export function pastWeekViews(history: PastWeekRow[], members: Record<MemberId, MemberView>, myId: MemberId): PastWeekView[] {
+  const pastByWeek = new Map<string, PastWeekRow[]>();
+  for (const h of history) pastByWeek.set(h.weekStart, [...(pastByWeek.get(h.weekStart) ?? []), h]);
+  return [...pastByWeek.entries()]
+    .sort((a, b) => b[0].localeCompare(a[0]))
+    .map(([weekStartKey, rows]) => {
+      const first = rows[0];
+      const mine = rows.find((r) => r.memberId === myId) ?? null;
+      const outcome = pastWeekOutcome(first.familyState, first.freezeUsed, mine?.status ?? null);
+      return {
+        weekStart: weekStartKey,
+        label: `Week of ${shortDate(weekStartKey)}: ${outcome}`,
+        title: `Week of ${shortDate(weekStartKey)}`,
+        outcome: outcome.charAt(0).toUpperCase() + outcome.slice(1),
+        state: first.familyState,
+        members: rows
+          .filter((r) => members[r.memberId])
+          .map((r) => ({
+            member: members[r.memberId],
+            status: pastStatusLabel(r.status, r.memberId === myId),
+            days: r.days,
+            daysLabel: daysLabel(r.days),
+          })),
+      };
+    });
 }
 
 /** Hours in the heat: "2.5" under 10, whole hours after. */
@@ -811,18 +854,7 @@ export function buildView(input: ViewInput): AppView {
   const historyWeeks = [...new Map(family.history.map((h) => [h.weekStart, h])).values()].sort((a, b) =>
     a.weekStart.localeCompare(b.weekStart),
   );
-  const myHistory = new Map(family.history.filter((h) => h.memberId === myId).map((h) => [h.weekStart, h]));
-  const slats: Slat[] = [
-    ...historyWeeks.map(
-      (h): Slat => ({
-        weekStart: h.weekStart,
-        state: h.familyState ?? 'solo',
-        freezeUsed: h.familyState === null ? myHistory.get(h.weekStart)?.status === 'frozen' : h.freezeUsed,
-        current: false,
-      }),
-    ),
-    { weekStart: ws, state: solo ? 'solo' : 'pending', freezeUsed: false, current: true },
-  ];
+  const slats: Slat[] = [...historySlats(family.history, myId), { weekStart: ws, state: solo ? 'solo' : 'pending', freezeUsed: false, current: true }];
   const letters = dayLetters(weekStartsOn);
   const myStrip: DayCell[] = weekDays(ws).map((d, i) => ({
     date: d,
@@ -831,30 +863,7 @@ export function buildView(input: ViewInput): AppView {
     isToday: d === today,
     future: d > today,
   }));
-  const pastByWeek = new Map<string, PastWeekRow[]>();
-  for (const h of family.history) pastByWeek.set(h.weekStart, [...(pastByWeek.get(h.weekStart) ?? []), h]);
-  const past: PastWeekView[] = [...pastByWeek.entries()]
-    .sort((a, b) => b[0].localeCompare(a[0]))
-    .map(([weekStartKey, rows]) => {
-      const first = rows[0];
-      const mine = rows.find((r) => r.memberId === myId) ?? null;
-      const outcome = pastWeekOutcome(first.familyState, first.freezeUsed, mine?.status ?? null);
-      return {
-        weekStart: weekStartKey,
-        label: `Week of ${shortDate(weekStartKey)}: ${outcome}`,
-        title: `Week of ${shortDate(weekStartKey)}`,
-        outcome: outcome.charAt(0).toUpperCase() + outcome.slice(1),
-        state: first.familyState,
-        members: rows
-          .filter((r) => members[r.memberId])
-          .map((r) => ({
-            member: members[r.memberId],
-            status: pastStatusLabel(r.status, r.memberId === myId),
-            days: r.days,
-            daysLabel: daysLabel(r.days),
-          })),
-      };
-    });
+  const past = pastWeekViews(family.history, members, myId);
   const plusOn = plusVisible(input.config);
   const familyWeeksKnown = historyWeeks.map((h) => ({ weekStart: h.weekStart, state: h.familyState }));
   const nag = nagCardState({
@@ -864,9 +873,17 @@ export function buildView(input: ViewInput): AppView {
     today,
     eligibleFrom: nagEligibleFrom(familyWeeksKnown, Math.max(s.longestStreak, s.weeksTogetherThisYear), today),
     memory: input.nag ?? EMPTY_NAG,
+    // No paywall after a loss: the last closed week wasn't kept, or you're on a break today.
+    afterLoss:
+      historyWeeks[historyWeeks.length - 1]?.familyState === 'broken' ||
+      family.pauses.some((p) => p.memberId === myId && p.startsOn <= today && p.endsOn >= today),
+    // Never next to a milestone card.
+    celebrating: input.milestones
+      ? !!dueMilestone(input.milestones, myId, { family: solo ? 0 : s.familyStreak, personal: myWeek.personalStreak })
+      : false,
   });
   const weekView: WeekView = {
-    wall: { slats, wood: family.plus.wallWood },
+    wall: { slats, wood: family.plus.wallWood, nail: plusOn && family.plus.active && family.plus.product === 'saunafam.plus.lifetime' },
     numbers: [
       // The streak sits big beside the wall with its own words; the other two are short labels under it.
       { key: 'streak', value: solo ? 0 : s.familyStreak, label: s.familyStreak === 1 && !solo ? 'week together' : 'weeks together' },

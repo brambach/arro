@@ -1,9 +1,9 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { Pressable, StyleProp, StyleSheet, Text, View, ViewStyle } from 'react-native';
-import Animated, { useAnimatedStyle, useSharedValue, withSpring, withTiming } from 'react-native-reanimated';
+import Animated, { cancelAnimation, useAnimatedStyle, useSharedValue, withDelay, withRepeat, withSpring, withTiming } from 'react-native-reanimated';
 import { LinearGradient } from 'expo-linear-gradient';
 import { alpha, depth, gradients, layout, palette, radii, space, Stop } from '../theme/tokens';
-import { distances, springs, timing } from '../theme/motion';
+import { distances, moments, springs, timing, useReduceMotion } from '../theme/motion';
 import { type } from '../theme/typography';
 
 /**
@@ -26,6 +26,12 @@ type Props = {
   style?: StyleProp<ViewStyle>;
   /** Stretch to the parent's width (the default) or hug the label. */
   fill?: boolean;
+  /**
+   * Waiting on something (the App Store): full color, not pressable, three
+   * small dots after the label light in turn. Not dimmed like `disabled`,
+   * which would read as "you can't".
+   */
+  busy?: boolean;
 };
 
 const colorsOf = (stops: Stop[]) => stops.map((s) => s.color) as [string, string, ...string[]];
@@ -41,6 +47,7 @@ export function SolidButton({
   accessibilityHint,
   style,
   fill = true,
+  busy = false,
 }: Props) {
   const pressed = useSharedValue(0);
   const scale = useSharedValue(1);
@@ -55,8 +62,8 @@ export function SolidButton({
       accessibilityRole="button"
       accessibilityLabel={title}
       accessibilityHint={accessibilityHint}
-      accessibilityState={{ disabled: !!disabled }}
-      disabled={disabled}
+      accessibilityState={{ disabled: !!disabled, busy }}
+      disabled={disabled || busy}
       onPress={onPress}
       onPressIn={() => {
         pressed.set(withTiming(1, timing.utility));
@@ -103,13 +110,40 @@ export function SolidButton({
           <Text style={[type.bodyStrong, styles.label]}>
             {title}
           </Text>
+          {busy ? <BusyDots /> : null}
         </View>
       </Animated.View>
     </Pressable>
   );
 }
 
+/** Three steam dots lighting in turn, while the button waits. */
+function BusyDots() {
+  return (
+    <View style={styles.dots} importantForAccessibility="no-hide-descendants">
+      {[0, 1, 2].map((i) => (
+        <BusyDot key={i} index={i} />
+      ))}
+    </View>
+  );
+}
+
+function BusyDot({ index }: { index: number }) {
+  const o = useSharedValue(0.35);
+  const reduceMotion = useReduceMotion();
+  useEffect(() => {
+    if (reduceMotion !== false) return;
+    const { duration, easing } = moments.waiting;
+    o.set(withDelay(index * moments.waiting.stagger, withRepeat(withTiming(1, { duration, easing }), -1, true)));
+    return () => cancelAnimation(o);
+  }, [index, o, reduceMotion]);
+  const s = useAnimatedStyle(() => ({ opacity: o.value }));
+  return <Animated.View style={[styles.dot, s]} />;
+}
+
 const styles = StyleSheet.create({
+  dots: { flexDirection: 'row', gap: space.s4 },
+  dot: { width: 5, height: 5, borderRadius: radii.round, backgroundColor: palette.steam },
   fill: { alignSelf: 'stretch' },
   hug: { alignSelf: 'center' },
   face: {

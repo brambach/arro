@@ -85,6 +85,8 @@ export const haptics = {
     play('heavy');
     setTimeout(() => play('success'), milestoneGapMs);
   },
+  /** Plus landed: as the last slat of the wall finishes re-graining. */
+  plusLanded: () => play('success'),
   /** Something didn't work (a save rolled back, an invite expired). */
   error: () => play('warning'),
 } as const;

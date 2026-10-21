@@ -2,7 +2,7 @@ import React, { useEffect } from 'react';
 import { StyleProp, StyleSheet, View, ViewStyle } from 'react-native';
 import Animated, { useAnimatedStyle, useSharedValue, withDelay, withSpring, withTiming } from 'react-native-reanimated';
 import { scheduleOnRN } from 'react-native-worklets';
-import { space, WoodName } from '../theme/tokens';
+import { depth, faces, radii, space, WoodName } from '../theme/tokens';
 import { moments, springTouchdownMs, timing, useReduceMotion } from '../theme/motion';
 import { Slat, SlatState } from './Slat';
 
@@ -27,13 +27,33 @@ type Props = {
   onSlatDown?: (index: number) => void;
   onBuilt?: () => void;
   onIgnitePeak?: () => void;
+  /**
+   * Added to every slat's grain seed. Changing it re-grains the wall once,
+   * slowly, one slat at a time from the bottom (Plus landing); `onRegrained`
+   * fires as the last slat finishes, for the success haptic.
+   */
+  grain?: number;
+  onRegrained?: () => void;
+  /** A Founding family's small brass nail, on the first slat. */
+  nail?: boolean;
   style?: StyleProp<ViewStyle>;
 };
 
 /** Slats per bench. */
 export const BENCH = 4;
 
-export function SlatWall({ weeks, wood = 'birch', slatHeight = 21, build = false, onSlatDown, onBuilt, onIgnitePeak, style }: Props) {
+export function SlatWall({ weeks, wood = 'birch', slatHeight = 21, build = false, onSlatDown, onBuilt, onIgnitePeak, grain = 0, onRegrained, nail = false, style }: Props) {
+  const reduceMotion = useReduceMotion();
+  const [regrainFrom] = React.useState(grain);
+  const regrained = grain !== regrainFrom;
+  useEffect(() => {
+    if (!regrained || !onRegrained) return;
+    const { duration, perSlat } = moments.plusLanded;
+    const t = setTimeout(onRegrained, reduceMotion ? duration : (weeks.length - 1) * perSlat + duration);
+    return () => clearTimeout(t);
+    // Once per new grain.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [grain]);
   return (
     <View style={[styles.wall, style]} accessibilityRole="summary">
       {weeks.map((w, i) => (
@@ -51,12 +71,28 @@ export function SlatWall({ weeks, wood = 'birch', slatHeight = 21, build = false
             dots={w.dots}
             wood={wood}
             height={slatHeight}
-            seed={i}
-            woodDelay={i * moments.plusWoodCrossfade.perSlat}
+            seed={i + grain}
+            woodDelay={i * (regrained ? moments.plusLanded.perSlat : moments.plusWoodCrossfade.perSlat)}
             onIgnitePeak={onIgnitePeak}
           />
+          {nail && i === 0 ? <Nail size={slatHeight} /> : null}
         </LandingSlat>
       ))}
+    </View>
+  );
+}
+
+/** A brass nail head on the slat's left end: lit from the upper left. */
+function Nail({ size }: { size: number }) {
+  const d = Math.max(6, Math.round(size * 0.36));
+  return (
+    <View
+      style={[styles.nail, { width: d, height: d, top: (size - d) / 2, left: size * 0.45 }]}
+      pointerEvents="none"
+      accessible
+      accessibilityLabel="Founding family nail"
+    >
+      <View style={styles.nailShine} />
     </View>
   );
 }
@@ -109,4 +145,6 @@ function LandingSlat({
 const styles = StyleSheet.create({
   wall: { flexDirection: 'column-reverse', gap: space.s4 },
   bench: { marginBottom: space.s12 },
+  nail: { position: 'absolute', borderRadius: radii.round, backgroundColor: faces.brass.bezel[2].color, boxShadow: depth.thumb, overflow: 'hidden' },
+  nailShine: { position: 'absolute', left: 1, top: 1, right: 2, bottom: 2, borderRadius: radii.round, backgroundColor: faces.brass.bezel[0].color },
 });

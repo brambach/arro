@@ -80,6 +80,13 @@ export interface NagInput {
   /** From nagEligibleFrom. */
   eligibleFrom: string | null;
   memory: NagMemory;
+  /**
+   * The family's last closed week wasn't kept, or you're on a break: no paywall
+   * after a loss, or on a screen about a missed week, a freeze or a break.
+   */
+  afterLoss?: boolean;
+  /** A milestone card or a week-kept celebration is due: never on those. */
+  celebrating?: boolean;
 }
 
 /**
@@ -90,6 +97,7 @@ export interface NagInput {
 export function nagCardState(input: NagInput): 'hidden' | 'showing' | 'new' {
   const { memory } = input;
   if (!input.plusEnabled || input.familyHasPlus || memory.off) return 'hidden';
+  if (input.afterLoss || input.celebrating) return 'hidden';
   if (daysBetween(input.joinedOn, input.today) < NAG_MIN_MEMBERSHIP_DAYS) return 'hidden';
   if (!input.eligibleFrom || input.today < input.eligibleFrom) return 'hidden';
   const last = memory.shows[memory.shows.length - 1];
@@ -142,4 +150,58 @@ export async function loadNagMemory(): Promise<Record<MemberId, NagMemory>> {
 
 export async function saveNagMemory(memory: Record<MemberId, NagMemory>): Promise<void> {
   await AsyncStorage.setItem(PLUS_NAG_KEY, JSON.stringify(memory));
+}
+
+/**
+ * Every place in the app, and whether anything about Plus (the sheet, the
+ * quiet card, a "Plus" label, a lock) may ever appear there (spec, "Never
+ * shown"). Screens that aren't allowed never import the Plus route or card;
+ * src/state/__tests__/plusNever.test.ts checks both this table and their source.
+ */
+export type PlusPlace =
+  | 'onboarding'
+  | 'joining'
+  | 'timer'
+  | 'logForm'
+  | 'afterSave'
+  | 'weekKept'
+  | 'milestone'
+  | 'missedWeek'
+  | 'freeze'
+  | 'break'
+  | 'nudge'
+  | 'push'
+  | 'localNotification'
+  | 'email'
+  | 'settings'
+  | 'wall'
+  | 'week'
+  | 'me';
+
+export const NEVER_PLUS_PLACES: readonly PlusPlace[] = [
+  'onboarding',
+  'joining',
+  'timer',
+  'logForm',
+  'afterSave',
+  'weekKept',
+  'milestone',
+  'missedWeek',
+  'freeze',
+  'break',
+  'nudge',
+  'push',
+  'localNotification',
+  'email',
+];
+
+/**
+ * Whether Plus may show at `place`. Only Settings, The wall, Week and Me, only
+ * with plus_enabled, and only when someone taps (`asked`), except Week's quiet
+ * card, which has its own cap (nagCardState).
+ */
+export function plusMayShow(place: PlusPlace, ctx: { plusEnabled: boolean; asked: boolean }): boolean {
+  if (!ctx.plusEnabled) return false;
+  if (NEVER_PLUS_PLACES.includes(place)) return false;
+  return ctx.asked || place === 'week';
 }

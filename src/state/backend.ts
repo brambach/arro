@@ -34,6 +34,7 @@ import {
 import { isSaunaType, recentPlaces } from '../data/saunas';
 import { addDays, dayKey, weekStart } from './dates';
 import { HISTORY_WEEKS } from './weeks';
+import type { HeatSession } from './heatLog';
 import { supabase } from './supabase';
 
 // ─── Errors ──────────────────────────────────────────────────────────────────
@@ -677,6 +678,31 @@ export async function fetchFamily(familyId: string, myMemberId: string, historyW
 /** Past weeks only, for "See every week" (Plus clamps the count on the server). */
 export async function fetchHistory(familyId: string, weeks: number): Promise<PastWeekRow[]> {
   return (check(await client().rpc('family_week_history', { p_family_id: familyId, p_weeks: weeks })) as HistoryRow[]).map(toPastWeek);
+}
+
+/**
+ * Every session in the family, lightly, for the Heat log (Plus): who, when,
+ * how long, what kind, where. Newest first, up to 5,000 rows.
+ */
+export async function fetchHeatSessions(memberIds: string[]): Promise<HeatSession[]> {
+  if (!memberIds.length) return [];
+  const rows = check(
+    await client()
+      .from('sessions')
+      .select('id, member_id, shared_id, local_date, duration_minutes, sauna_type, place')
+      .in('member_id', memberIds)
+      .order('started_at', { ascending: false })
+      .limit(5000),
+  ) as { id: string; member_id: string; shared_id: string | null; local_date: string; duration_minutes: number; sauna_type: string; place: string | null }[];
+  return rows.map((r) => ({
+    id: r.id,
+    memberId: r.member_id,
+    sharedId: r.shared_id,
+    localDate: r.local_date,
+    durationMinutes: r.duration_minutes,
+    saunaType: (isSaunaType(r.sauna_type) ? r.sauna_type : 'other') as SaunaType,
+    place: r.place,
+  }));
 }
 
 // ─── Sessions ────────────────────────────────────────────────────────────────

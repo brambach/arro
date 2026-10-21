@@ -30,7 +30,6 @@ import {
 import {
   arcProgress,
   fiveMinuteMark,
-  litDots,
   roomHeading,
   roomLine,
   roomSubheading,
@@ -45,7 +44,8 @@ import { Backdrop } from '../components/Backdrop';
 import { HeatGlow } from '../components/HeatGlow';
 import { LoylyBurst } from '../components/LoylyBurst';
 import { FixedDigits } from '../components/FixedDigits';
-import { TimerArc } from '../components/TimerArc';
+import { TimerDial, faceNumerals, faceRoom } from '../components/TimerDial';
+import type { TimerFace } from '../state/look';
 import { SolidButton } from '../components/SolidButton';
 import { TextAction } from '../components/TextAction';
 import { OptionChip } from '../components/OptionChip';
@@ -381,6 +381,7 @@ export function TimerScreen({ navigation, route }: RootStackScreenProps<'Timer'>
         onTarget={() => setPanel(true)}
         width={W}
         compact={big}
+        face={app.look.timerFace}
       />
 
       <Animated.View style={settleStyle}>
@@ -435,7 +436,7 @@ export function TimerScreen({ navigation, route }: RootStackScreenProps<'Timer'>
 
       <Animated.View style={[styles.door, doorStyle]} pointerEvents="none">
         <Animated.View style={[{ width: W, height: H }, insideStyle]}>
-          <View style={[StyleSheet.absoluteFill, styles.char]} />
+          <View style={[StyleSheet.absoluteFill, { backgroundColor: faceRoom(app.look.timerFace) }]} />
           <Backdrop tone="dark" seed={3} />
           <HeatGlow
             rise={reduceMotion === false}
@@ -542,6 +543,7 @@ function ClockFace({
   onTarget,
   width,
   compact,
+  face,
 }: {
   timer: TimerState;
   at: Date;
@@ -553,22 +555,34 @@ function ClockFace({
   width: number;
   /** Large text: no arc, just the numerals and the line under them. */
   compact: boolean;
+  /** The timer face (Plus): Löyly, Coal or Brass. */
+  face: TimerFace;
 }) {
   const [box, setBox] = useState({ w: width, h: 0 });
   // The mockup's ring is 0.4 of the screen's width; it shrinks only when the space does (large text).
   const radius = Math.min(width * 0.4, box.h / 2 - space.s16);
   const showArc = !compact && radius >= width * 0.3;
   const heat = heatMs(timer, at);
+  // Brass hangs a smaller clock above the numerals instead of around them.
+  const brass = face === 'brass' && showArc && box.h > 0;
+  const brassRadius = Math.min(width * 0.3, (box.h - space.s72 * 2) / 2);
   return (
     <View style={compact ? styles.clockCompact : styles.clockFace} onLayout={(e) => setBox({ w: e.nativeEvent.layout.width, h: e.nativeEvent.layout.height })}>
-      {box.h > 0 && showArc ? (
+      {box.h > 0 && showArc && !brass ? (
         <Animated.View style={[styles.arc, settleStyle]}>
-          <TimerArc radius={radius} lit={litDots(arcProgress(timer, at))} dim={cooling} />
+          <TimerDial face={face} radius={radius} progress={arcProgress(timer, at)} heatMs={heat} targetMinutes={timer.targetMinutes} dim={cooling} />
+        </Animated.View>
+      ) : null}
+      {brass ? (
+        <Animated.View style={settleStyle}>
+          <TimerDial face="brass" radius={brassRadius} progress={arcProgress(timer, at)} heatMs={heat} targetMinutes={timer.targetMinutes} dim={cooling} />
         </Animated.View>
       ) : null}
       {/* The ring centers on the figures, not on the figures and the line under them (the mockup). */}
-      <Animated.View style={[styles.numerals, numeralStyle]}>
+      <Animated.View style={[brass ? styles.numeralsUnder : styles.numerals, numeralStyle]}>
         <FixedDigits
+          variant={brass ? 'display' : 'timer'}
+          color={faceNumerals(face)}
           value={clock}
           accessibilityLabel={`${spokenClock(heat)} in the heat${cooling ? ', paused while you cool off' : ''}`}
         />
@@ -690,7 +704,6 @@ function TargetPanel({
 
 const styles = StyleSheet.create({
   door: { position: 'absolute', overflow: 'hidden', borderCurve: 'continuous' },
-  char: { backgroundColor: palette.char },
   doorLabel: {
     position: 'absolute',
     left: 0,
@@ -710,6 +723,7 @@ const styles = StyleSheet.create({
   clockFace: { flex: 1, alignItems: 'center', justifyContent: 'center', paddingTop: space.s16 },
   arc: { position: 'absolute' },
   numerals: { alignItems: 'center', marginTop: space.s40 },
+  numeralsUnder: { alignItems: 'center', marginTop: space.s8 },
   sub: { flexDirection: 'row', alignItems: 'center', gap: space.s8, paddingVertical: space.s4 },
   subText: { color: alpha.steam62 },
   line: { color: alpha.steam72, textAlign: 'center', paddingHorizontal: layout.inset },

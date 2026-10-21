@@ -68,5 +68,7 @@ export const momentSummary = [
   { moment: 'Week kept: 10 sparks', ms: '900', curve: 'burst', key: 'weekKept.sparks' },
   { moment: 'Milestone: a slat every 50 ms', ms: 'spring slat', curve: 'spring', key: 'milestoneWall' },
   { moment: 'Plus: wood crossfade per slat', ms: '400', curve: 'settle', key: 'plusWoodCrossfade' },
+  { moment: 'Waiting on the App Store: button dots', ms: '600, 200 apart', curve: 'breathe', key: 'waiting' },
+  { moment: 'Plus: a purchase re-grains the wall', ms: '900', curve: 'settle', key: 'plusLanded' },
   { moment: 'Throw löyly: wisps burst', ms: '1600', curve: 'burst', key: 'loylyBurst' },
 ] as const;

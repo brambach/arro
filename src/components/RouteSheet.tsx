@@ -22,11 +22,15 @@ type Props = {
   children: React.ReactNode;
   onClosed: () => void;
   accessibilityLabel: string;
+  /** A tall sheet (the Plus sheet, 90% of the screen): a fixed height, and it travels that far. */
+  height?: number;
+  /** A tall sheet's header, left of the close mark: it stays put while the content scrolls under it. */
+  header?: React.ReactNode;
 };
 
 const TRAVEL = 480;
 
-export const RouteSheet = forwardRef<RouteSheetHandle, Props>(function RouteSheet({ children, onClosed, accessibilityLabel }, ref) {
+export const RouteSheet = forwardRef<RouteSheetHandle, Props>(function RouteSheet({ children, onClosed, accessibilityLabel, height, header }, ref) {
   const insets = useSafeAreaInsets();
   const reduceMotion = useReduceMotion();
   const p = useSharedValue(0);
@@ -47,10 +51,11 @@ export const RouteSheet = forwardRef<RouteSheetHandle, Props>(function RouteShee
   useImperativeHandle(ref, () => ({ close }), [close]);
 
   const still = reduceMotion !== false;
+  const travel = height ?? TRAVEL;
   const scrim = useAnimatedStyle(() => ({ opacity: Math.min(1, p.value) }));
   const card = useAnimatedStyle(() => ({
     opacity: still ? p.value : 1,
-    transform: [{ translateY: still ? 0 : (1 - p.value) * TRAVEL }],
+    transform: [{ translateY: still ? 0 : (1 - p.value) * travel }],
   }));
 
   return (
@@ -59,12 +64,17 @@ export const RouteSheet = forwardRef<RouteSheetHandle, Props>(function RouteShee
         <Pressable style={StyleSheet.absoluteFill} onPress={close} accessibilityRole="button" accessibilityLabel="Close" />
       </Animated.View>
       <Animated.View
-        style={[styles.sheet, { paddingBottom: Math.max(insets.bottom, space.s16) + space.s16 }, card]}
+        style={[
+          styles.sheet,
+          height ? { height, paddingBottom: 0, paddingHorizontal: 0, paddingTop: space.s16 + layout.touch } : { paddingBottom: Math.max(insets.bottom, space.s16) + space.s16 },
+          card,
+        ]}
         accessibilityLabel={accessibilityLabel}
       >
         <Pressable onPress={close} style={styles.close} accessibilityRole="button" accessibilityLabel="Close" hitSlop={space.s8}>
           <Icon name="close" size={22} color={palette.smoke} />
         </Pressable>
+        {height ? <View style={styles.header}>{header}</View> : null}
         {children}
       </Animated.View>
     </View>
@@ -82,6 +92,7 @@ const styles = StyleSheet.create({
     paddingTop: space.s32,
     paddingHorizontal: layout.inset,
   },
+  header: { position: 'absolute', top: space.s16, left: layout.inset, right: space.s16 + layout.touch, height: layout.touch, justifyContent: 'center' },
   close: {
     position: 'absolute',
     top: space.s16,

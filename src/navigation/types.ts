@@ -2,6 +2,8 @@ import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 import type { CompositeScreenProps, NavigatorScreenParams } from '@react-navigation/native';
 import type { BottomTabScreenProps } from '@react-navigation/bottom-tabs';
 import type { TimerResult } from '../state/timer';
+import type { WallWood } from '../data/types';
+import type { AppIconName, TimerFace } from '../state/look';
 
 /** A frame on screen, in window coordinates. */
 export type DoorFrame = { x: number; y: number; width: number; height: number; radius: number; tone: 'ember' | 'char' };
@@ -37,10 +39,21 @@ export type RootStackParamList = {
   /** Settings > About. */
   About: undefined;
   /**
-   * The Plus sheet. M15 builds it; until then a placeholder screen stands in
-   * (src/screens/PlusSeamScreen.tsx). `focus` opens it at a section.
+   * The Plus sheet (src/screens/PlusSheetScreen.tsx). `focus` opens it at a
+   * feature or the tip jar. `wood`, `face` or `icon`: what was being tried on
+   * ("Keep this wood with Plus"), kept once the purchase lands.
    */
-  Plus: { focus?: PlusFocus } | undefined;
+  Plus: { focus?: PlusFocus; wood?: WallWood; face?: TimerFace; icon?: AppIconName } | undefined;
+  /** Me > Timer face: pick one, or try a Plus face on. */
+  TimerFace: undefined;
+  /** Me > App icon: pick one, or try a Plus icon on. */
+  AppIcon: undefined;
+  /** Week > See every week (Plus): the whole wall, back to the first week. */
+  EveryWeek: undefined;
+  /** Me > Heat log (Plus): the family's stats. Without Plus, a blurred preview. */
+  HeatLog: undefined;
+  /** Week > Print the wall (Plus): the wall poster, to save or print. */
+  Poster: undefined;
   /** app_config().min_ios_build is above this build: the only screen. */
   UpdateRequired: undefined;
   /** Dev builds only: the release-only "can't reach Saunafam" screen, for captures. */

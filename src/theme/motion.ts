@@ -136,6 +136,10 @@ export const moments = {
   },
   /** Plus: picking a wood crossfades the slats one at a time from the left. */
   plusWoodCrossfade: { duration: 400, easing: easing.settle, perSlat: 40 },
+  /** A button waiting on the App Store: its three dots light in turn. */
+  waiting: { duration: 600, easing: easing.breathe, stagger: 200 },
+  /** Plus: a purchase lands and the wall re-grains once, slowly, slat by slat. */
+  plusLanded: { duration: 900, easing: easing.settle, perSlat: 70 },
   /** "Throw löyly": a quick burst of wisps from the bottom. */
   loylyBurst: {
     duration: 1600,

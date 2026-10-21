@@ -357,6 +357,52 @@ export const stoneGlow = {
 
 
 /**
+ * The Plus timer faces (spec, Paid tier). Löyly is the free face: the dotted
+ * ember arc on char. Coal is direction B's ring on soot; Brass is direction
+ * C's clock, a brass bezel around a cream dial, hung in the same dark room.
+ */
+export const faces = {
+  coal: {
+    /** The room behind the Coal face. */
+    soot: '#141110',
+    /** The empty track of the ring. */
+    track: 'rgba(248,244,238,0.07)',
+    /** The ring, from its start to its hot end. */
+    ring: [
+      { offset: 0, color: '#8E3418' },
+      { offset: 0.6, color: '#D5592A' },
+      { offset: 1, color: '#FF8F4F' },
+    ],
+    /** The numerals: warm ash, a little gold. */
+    numerals: '#F3CFA4',
+    head: '#FFE1BF',
+  },
+  brass: {
+    bezel: [
+      { offset: 0, color: '#D9B272' },
+      { offset: 0.5, color: '#B08745' },
+      { offset: 1, color: '#7E5C2A' },
+    ],
+    /** The dial face. */
+    dial: '#F7F0E2',
+    dialEdge: '#E6D9C1',
+    /** Ticks, figures and the hand. */
+    ink: palette.char,
+    /** The wedge for the target, and the seconds hand. */
+    wedge: palette.ember,
+    wedgeOpacity: 0.78,
+    pin: '#B08745',
+  },
+} as const;
+
+/** The small tile behind each app icon choice, and the try-on's home screen. */
+export const homeScreen = [
+  { offset: 0, color: '#3E4A52' },
+  { offset: 0.55, color: '#5D5A55' },
+  { offset: 1, color: '#9A6B4A' },
+] satisfies Stop[];
+
+/**
  * Spacing: a 4 pt grid, and only these values. Padding, margin and gap take one
  * of these (`node scripts/check-design.mjs` checks).
  */

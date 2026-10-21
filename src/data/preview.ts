@@ -22,6 +22,7 @@ import {
   AppConfig,
   FamilyMember,
   FamilySnapshot,
+  PastWeekRow,
   Pause,
   PlusStatus,
   SaunaType,
@@ -51,6 +52,9 @@ export type PreviewScenarioId =
   | 'draft'
   | 'plusEnabled'
   | 'plusActive'
+  | 'plusMine'
+  | 'plusFounding'
+  | 'plusLapsed'
   | 'sundayStart'
   | 'updateRequired'
   | 'loading'
@@ -72,6 +76,9 @@ export const PREVIEW_SCENARIOS: { id: PreviewScenarioId; label: string }[] = [
   { id: 'draft', label: 'A session the server refused' },
   { id: 'plusEnabled', label: 'Plus switched on, quiet card due' },
   { id: 'plusActive', label: 'Plus, from Maya' },
+  { id: 'plusMine', label: 'Plus, you pay yearly' },
+  { id: 'plusFounding', label: 'Founding family, 40 weeks' },
+  { id: 'plusLapsed', label: 'Plus ended' },
   { id: 'sundayStart', label: 'Week starts on Sunday' },
   { id: 'updateRequired', label: 'Update required' },
   { id: 'loading', label: 'Loading, nothing cached' },
@@ -94,7 +101,17 @@ export interface PreviewScenario {
   drafts: SessionDraft[];
   /** Whether milestones up to now count as already shown (only "milestone" says no). */
   milestonesShown: boolean;
+  /** Every week and every session, for Every week, the Heat log and the poster. */
+  archive: PreviewArchive | null;
 }
+
+export interface PreviewArchive {
+  history: PastWeekRow[];
+  sessions: Session[];
+}
+
+/** The archive of the family buildFamily made last (each scenario builds one). */
+let lastArchive: PreviewArchive | null = null;
 
 // ─── The family ──────────────────────────────────────────────────────────────
 
@@ -275,6 +292,7 @@ function buildFamily(plan: Plan, now: Date, extra?: (f: FamilySnapshot) => void)
     pauses,
   };
   const weeks = computeWeeks(engineFamily, PREVIEW_ME, today);
+  lastArchive = { history: computeWeeks(engineFamily, PREVIEW_ME, today, 520).history, sessions: [...sessions] };
   const sorted = [...sessions].sort((a, b) => b.startedAt.localeCompare(a.startedAt));
   const lastWeek = addDays(ws0, -7);
   const mine = sorted.filter((s) => s.memberId === PREVIEW_ME);
@@ -369,6 +387,12 @@ function pendingEntry(now: Date): OutboxEntry {
 
 /** One scenario, built fresh. `realNow` drives the timer (which always runs on the real clock). */
 export function buildPreviewScenario(id: PreviewScenarioId, realNow: Date = new Date()): PreviewScenario {
+  lastArchive = null;
+  const scenario = buildScenario(id, realNow);
+  return { ...scenario, archive: scenario.family ? lastArchive : null };
+}
+
+function buildScenario(id: PreviewScenarioId, realNow: Date): PreviewScenario {
   const now = previewNow(realNow, id === 'mondayOpen');
   const base: PreviewScenario = {
     id,
@@ -382,6 +406,7 @@ export function buildPreviewScenario(id: PreviewScenarioId, realNow: Date = new 
     outbox: [],
     drafts: [],
     milestonesShown: true,
+    archive: null,
   };
   switch (id) {
     case 'loading':
@@ -473,6 +498,46 @@ export function buildPreviewScenario(id: PreviewScenarioId, realNow: Date = new 
             payerName: 'Maya',
             payerIsMe: false,
             wallWood: 'cedar',
+          };
+        }),
+      };
+    case 'plusMine':
+      return {
+        ...base,
+        config: { ...CONFIG, plusEnabled: true },
+        family: previewFamily(now, {}, (f) => {
+          f.plus = {
+            active: true,
+            product: 'saunafam.plus.annual',
+            status: 'active',
+            expiresAt: new Date(now.getTime() + 214 * 86_400_000).toISOString(),
+            payerName: 'Sam',
+            payerIsMe: true,
+            wallWood: 'charred_pine',
+          };
+        }),
+      };
+    case 'plusFounding':
+      return {
+        ...base,
+        config: { ...CONFIG, plusEnabled: true },
+        family: previewFamily(now, { pastWeeks: 40 }, (f) => {
+          f.plus = { active: true, product: 'saunafam.plus.lifetime', status: 'active', expiresAt: null, payerName: 'Sam', payerIsMe: true, wallWood: 'alder' };
+        }),
+      };
+    case 'plusLapsed':
+      return {
+        ...base,
+        config: { ...CONFIG, plusEnabled: true },
+        family: previewFamily(now, {}, (f) => {
+          f.plus = {
+            active: false,
+            product: 'saunafam.plus.annual',
+            status: 'expired',
+            expiresAt: new Date(now.getTime() - 17 * 86_400_000).toISOString(),
+            payerName: 'Maya',
+            payerIsMe: false,
+            wallWood: 'birch',
           };
         }),
       };

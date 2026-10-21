@@ -12,6 +12,7 @@ import { useApp, useView } from '../state/AppState';
 import { setDevOverrides, useDevOverrides } from '../state/devTools';
 import { HEALTH_COPY, useHealthSetting } from '../state/healthSettings';
 import { PreviewBehavior } from '../state/purchases';
+import type { RestoreOutcome } from '../state/plusFlow';
 import { PLUS_PAYER_WARNING, plusNotice, remindersValue, signOutBody } from '../state/settingsCopy';
 import { WOOD_NAMES } from './WallScreen';
 
@@ -50,7 +51,16 @@ export const SETTINGS_COPY = {
   nothingToRestore: 'No purchases found for this Apple ID.',
   restoreOffline: 'Couldn’t reach the App Store. Try again.',
   restoredElsewhere: 'Your family already had Plus, so nothing changed.',
+  restoring: 'Restoring...',
 };
+
+/** Restore's three results (spec, "Restore purchases"), and the two-payers case. */
+export function restoreLine(outcome: RestoreOutcome, family: string): string {
+  if (outcome === 'restored') return SETTINGS_COPY.restored(family);
+  if (outcome === 'alreadyHad') return SETTINGS_COPY.restoredElsewhere;
+  if (outcome === 'nothing') return SETTINGS_COPY.nothingToRestore;
+  return SETTINGS_COPY.restoreOffline;
+}
 
 const PURCHASE_BEHAVIORS: PreviewBehavior[] = ['succeed', 'fail', 'cancel', 'pending', 'nothingToRestore', 'offline'];
 
@@ -117,17 +127,8 @@ export function SettingsScreen({ navigation }: RootStackScreenProps<'Settings'>)
   };
 
   const restore = async () => {
-    setLine(null);
-    const result = await app.restorePurchases();
-    setLine(
-      result.status === 'restored'
-        ? SETTINGS_COPY.restored(view.familyName)
-        : result.status === 'restoredElsewhere'
-          ? SETTINGS_COPY.restoredElsewhere
-          : result.status === 'nothing'
-            ? SETTINGS_COPY.nothingToRestore
-            : SETTINGS_COPY.restoreOffline,
-    );
+    setLine(SETTINGS_COPY.restoring);
+    setLine(restoreLine(await app.restorePurchases(), view.familyName));
   };
 
   const notice = view.plus.visible ? plusNotice(view.plus, view.todayKey) : null;
