@@ -34,8 +34,11 @@ document.addEventListener('visibilitychange', () => root.classList.toggle('away'
 domReady.then(() => {
   const pauses = document.querySelectorAll('.pause');
   for (const pause of pauses) pause.addEventListener('click', () => {
-    const word = root.classList.toggle('still') ? 'play' : 'pause';
-    for (const p of pauses) p.firstChild.textContent = word;
+    const still = root.classList.toggle('still');
+    for (const p of pauses) {
+      p.firstChild.textContent = still ? 'play' : 'pause';
+      p.setAttribute('aria-pressed', still);
+    }
   });
   if (!('IntersectionObserver' in window)) return;
   const shown = new IntersectionObserver((entries) => {
@@ -55,12 +58,13 @@ domReady.then(() => {
   document.querySelectorAll('.slat').forEach((slat, i) => { slat.style.transitionDelay = `${i * 60}ms`; });
 });
 
-// Waitlist forms post with fetch and answer in place. 200 and 201 read the
-// same, so the page never says whether an email was already on the list.
+// Waitlist forms post with fetch and answer in place. The API answers every
+// signup 200 joined, so the page never says whether an email was already on
+// the list.
 // The error lines live once, in the page's #join-bad and #join-later (the
 // no-JS path shows those with :target).
 const SHARE = { title: 'Saunafam', text: 'Keep a sauna streak together.', url: 'https://saunafam.com' };
-const outcome = (status) => (status === 200 || status === 201 ? 'done' : status === 400 ? 'bad' : 'later');
+const outcome = (status) => (status === 200 ? 'done' : status === 400 ? 'bad' : 'later');
 
 domReady.then(() => {
   for (const form of document.querySelectorAll('form.join')) {
@@ -87,8 +91,10 @@ domReady.then(() => {
         form.querySelector('.join-done-title').focus();
         return;
       }
+      // Disabling the focused button dropped focus to <body>, so put it back.
       if (result === 'bad') email.setAttribute('aria-invalid', 'true');
       error.textContent = document.getElementById(`join-${result}`).textContent;
+      (result === 'bad' ? email : button).focus();
     });
 
     form.querySelector('.join-share').addEventListener('click', () => {
