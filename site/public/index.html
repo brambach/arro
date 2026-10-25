@@ -82,8 +82,17 @@
       </div>
     </section>
 
-    <section class="section loops" aria-label="The timer">
+    <section class="section loops" aria-labelledby="timer-title">
       <div class="wrap timer">
+        <div class="timer-copy">
+          <p class="caps">The timer</p>
+          <h2 id="timer-title" class="title">Close the door. We’ll keep time.</h2>
+          <ul class="lines">
+            <li>Tap start and the room goes dark and warm.</li>
+            <li>It counts up, never cuts you off, and tells you when to cool off.</li>
+            <li>Forgot to start it? Log it after.</li>
+          </ul>
+        </div>
         <div class="room" role="img" aria-label="The Saunafam timer in the dark heat room: 14 minutes 32 seconds into a 15 minute traditional session.">
           <div class="room-glow"></div>
           <div class="room-glow inner"></div>
@@ -97,7 +106,8 @@
           <p class="room-caps top">In the heat · Round 1</p>
           <div class="dial">
             <img class="arc" src="/art/arc.svg" alt="" width="440" height="440">
-            <p class="numerals"><span>1</span><span>4</span><span class="colon">:</span><span>3</span><span>2</span></p>
+            <i class="next"></i>
+            <p class="numerals"><span>1</span><span>4</span><span class="colon">:</span><span>3</span><span class="roll"><i>1<br>2</i></span></p>
             <p class="room-caps sub">Traditional · 15 min</p>
           </div>
           <p class="cool">Time to cool off at 7:24 PM</p>
@@ -109,8 +119,7 @@
 
     <section class="section" id="how" aria-labelledby="how-title">
       <div class="wrap">
-        <p class="caps">How it works</p>
-        <h2 id="how-title" class="title">Close the door. We’ll keep time.</h2>
+        <h2 id="how-title" class="caps">How it works</h2>
         <ol class="panels">
           <li class="panel card">
             <svg class="illo" viewBox="0 0 120 80" aria-hidden="true">
@@ -152,8 +161,8 @@
               <path d="M60 66S38 53 38 36.5A11.5 11.5 0 0 1 60 31a11.5 11.5 0 0 1 22 5.5C82 53 60 66 60 66z" fill="url(#hw-heart)"/>
               <path d="M45 37a6 6 0 0 1 6-5" stroke="#FFD9B5" stroke-opacity=".55" stroke-width="2.4" stroke-linecap="round" fill="none"/>
               <circle cx="22" cy="40" r="7" fill="#5F8794"/>
-              <circle cx="98" cy="40" r="7" fill="#B58A3C"/>
-              <circle cx="60" cy="14" r="7" fill="#7B6A93"/>
+              <circle cx="98" cy="40" r="7" fill="#7A4E2E"/>
+              <circle cx="60" cy="14" r="7" fill="#8A837A"/>
             </svg>
             <h3 class="heading">One streak for all of you.</h3>
             <p>When everyone keeps their week, the family streak grows by one. Nobody’s ranked, and nobody carries it alone.</p>
@@ -167,7 +176,7 @@
         <div class="wall-copy">
           <p class="caps">The wall</p>
           <h2 id="wall-title" class="title">Every week you keep adds a slat.</h2>
-          <p class="body-l">The streak is a wall of wooden slats, building up from the bottom. Every four weeks starts a new bench, so twelve weeks read as three.</p>
+          <p class="body-l">The streak is a wall of wooden slats, building up from the bottom. Every four weeks starts a new bench.</p>
           <p class="caption-line">Miss a week? Everyone has one freeze. Away? Take a break.</p>
         </div>
         <div class="wall-card card">
@@ -181,39 +190,34 @@
       </div>
     </section>
 
-    <section class="section" aria-labelledby="together-title">
+    <section class="section" aria-labelledby="together-title kind-title">
       <div class="wrap together-grid">
-        <div>
-          <p class="caps">Shared sessions</p>
+        <div class="together">
           <h2 id="together-title" class="title">Sat together?</h2>
           <p class="body-l">One of you logs it, and it counts for everyone in the room. Up to four people in one session.</p>
+          <article class="session card" aria-label="An example shared session">
+            <div class="session-head">
+              <span class="faces" aria-hidden="true"><i class="av lake">M</i><i class="av cedar">J</i><i class="av smoke">S</i></span>
+              <span class="when">Sunday, 6:10 PM</span>
+            </div>
+            <h3 class="session-title">Maya, Jo and Sam had a sauna together</h3>
+            <p class="session-meta">20 min · Traditional</p>
+            <ul class="session-weeks" aria-label="Their weeks after this session">
+              <li><span>Maya</span><span class="minis" aria-hidden="true"><i class="on"></i><i class="on"></i><i class="on"></i></span><span class="kept">Kept</span></li>
+              <li><span>Jo</span><span class="minis" aria-hidden="true"><i class="on"></i><i class="on"></i><i></i></span><span>2 of 3</span></li>
+              <li><span>Sam</span><span class="minis" aria-hidden="true"><i class="on"></i><i class="on"></i><i></i></span><span>2 of 3</span></li>
+            </ul>
+          </article>
         </div>
-        <article class="session card" aria-label="An example shared session">
-          <div class="session-head">
-            <span class="faces" aria-hidden="true"><i class="av lake">M</i><i class="av brass">J</i><i class="av heather">S</i></span>
-            <span class="when">Sunday, 6:10 PM</span>
-          </div>
-          <h3 class="session-title">Maya, Jo and Sam had a sauna together</h3>
-          <p class="session-meta">20 min · Traditional</p>
-          <ul class="session-weeks" aria-label="Their weeks after this session">
-            <li><span>Maya</span><span class="minis" aria-hidden="true"><i class="on"></i><i class="on"></i><i class="on"></i></span><span class="kept">Kept</span></li>
-            <li><span>Jo</span><span class="minis" aria-hidden="true"><i class="on"></i><i class="on"></i><i></i></span><span>2 of 3</span></li>
-            <li><span>Sam</span><span class="minis" aria-hidden="true"><i class="on"></i><i class="on"></i><i></i></span><span>2 of 3</span></li>
+        <div>
+          <h2 id="kind-title" class="title">Made for the people you love, not a leaderboard.</h2>
+          <ul class="kind">
+            <li><b>No rankings.</b> Nobody’s first and nobody’s last.</li>
+            <li><b>A missed week is never pinned on anyone.</b> If a week slips, Saunafam says the week slipped. It never says who.</li>
+            <li><b>Nudges are capped.</b> One a day and two a week at most.</li>
+            <li><b>No ads, no tracking.</b> Your sessions stay in your family.</li>
           </ul>
-        </article>
-      </div>
-    </section>
-
-    <section class="section" aria-labelledby="kind-title">
-      <div class="wrap">
-        <p class="caps">Kind by design</p>
-        <h2 id="kind-title" class="title">Made for the people you love, not a leaderboard.</h2>
-        <ul class="kind">
-          <li><h3 class="heading">No rankings</h3><p>Nobody’s first and nobody’s last. The streak belongs to all of you.</p></li>
-          <li><h3 class="heading">A missed week is never pinned on anyone</h3><p>If a week slips, Saunafam says the week slipped. It never says who.</p></li>
-          <li><h3 class="heading">Nudges are capped</h3><p>One a day and two a week at most, so a nudge stays a nudge.</p></li>
-          <li><h3 class="heading">No ads, no tracking</h3><p>No ads, no analytics, nothing sold. Your sessions stay in your family.</p></li>
-        </ul>
+        </div>
       </div>
     </section>
 

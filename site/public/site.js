@@ -42,21 +42,15 @@ domReady.then(() => {
   for (const section of document.querySelectorAll('.loops')) shown.observe(section);
 });
 
+// The timer card rolls to 14:32 and the wall's slats land, once each, the
+// first time each is half in view. With reduced motion the CSS never sets
+// a start state, so both already show their end.
 domReady.then(() => {
-  // The wall's slats land once, the first time it's on screen.
-  const wall = document.querySelector('.wall');
-  if (wall) {
-    if (reduce || !('IntersectionObserver' in window)) {
-      wall.classList.add('in');
-    } else {
-      const seen = new IntersectionObserver((entries) => {
-        if (!entries.some((e) => e.isIntersecting)) return;
-        seen.disconnect();
-        wall.classList.add('in');
-      }, { threshold: 0.35 });
-      seen.observe(wall);
-    }
-  }
+  const io = 'IntersectionObserver' in window && new IntersectionObserver((entries) => {
+    for (const e of entries) if (e.isIntersecting) { e.target.classList.add('in'); io.unobserve(e.target); }
+  }, { threshold: 0.5 });
+  for (const el of document.querySelectorAll('.dial, .wall')) io ? io.observe(el) : el.classList.add('in');
+  document.querySelectorAll('.slat').forEach((slat, i) => { slat.style.transitionDelay = `${i * 60}ms`; });
 });
 
 // Waitlist forms post with fetch and answer in place. 200 and 201 read the
