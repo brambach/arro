@@ -80,9 +80,10 @@ We never see your card details.
 If you join the waitlist on saunafam.com, we keep your email, whether you'd
 like to try the beta on TestFlight, which form you used and the date. We use
 them to send you one email when Saunafam is on the App Store, and a TestFlight
-invite if you asked for one. We don't keep your IP address or any details about
-your device or browser. To be taken off the list, write to
-support@saunafam.com.
+invite if you asked for one. Cloudflare, which hosts saunafam.com, sees your IP
+address while it serves the page and checks how often the form has been sent.
+We don't store your IP address or any details about your device or browser. To
+be taken off the list, write to support@saunafam.com.
 
 <!-- [TODO for Bryce: say whether waitlist emails are deleted after launch or kept for updates.] -->
 [TODO for Bryce: say whether waitlist emails are deleted after launch or kept for updates.]
@@ -101,7 +102,11 @@ support@saunafam.com.
     Apple's own privacy policy.
   - **RevenueCat** processes Saunafam Plus purchases. It receives your
     Saunafam user id and your Apple purchase history for Saunafam.
-- Nobody else, unless the law requires it. We don't sell your data.
+  - **Cloudflare** hosts saunafam.com and stores the waitlist in its D1
+    database. It sees visitors' IP addresses to serve the site and to limit how
+    often the waitlist form can be sent.
+- Nobody else sees your data, unless the law requires it. We don't sell your
+  data.
 
 ## If you used Arro
 
