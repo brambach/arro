@@ -1,0 +1,166 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="384" height="256" viewBox="0 0 384 256">
+<!--
+  Plate 1, the lake sauna, late afternoon. Grays only, white is paper.
+  HTML layers sit over the plate in percent of 384 x 256:
+    window (white hole): center x 55.73%, y 60.55%, w 4.17%, h 3.91%  (x 206 to 222, y 150 to 160)
+    stovepipe top (steam origin): x 59.38%, y 37.50%  (228, 96)
+-->
+<defs>
+  <linearGradient id="sky" x1="0" y1="0" x2="0" y2="1">
+    <stop offset="0" stop-color="#fff"/>
+    <stop offset="0.45" stop-color="#fafafa"/>
+    <stop offset="1" stop-color="#e2e2e2"/>
+  </linearGradient>
+  <linearGradient id="water" x1="0" y1="0" x2="0" y2="1">
+    <stop offset="0" stop-color="#8e8e8e"/>
+    <stop offset="0.35" stop-color="#626262"/>
+    <stop offset="1" stop-color="#3a3a3a"/>
+  </linearGradient>
+  <radialGradient id="glint" cx="0.84" cy="0.82" r="0.24">
+    <stop offset="0" stop-color="#fff" stop-opacity="0.75"/>
+    <stop offset="1" stop-color="#fff" stop-opacity="0"/>
+  </radialGradient>
+  <filter id="clouds" x="0" y="0" width="1" height="1">
+    <feTurbulence type="fractalNoise" baseFrequency="0.012 0.05" numOctaves="3" seed="4"/>
+    <feColorMatrix type="matrix" values="0 0 0 0 0  0 0 0 0 0  0 0 0 0 0  0 0 0 -2.4 1.25"/>
+  </filter>
+  <filter id="ripples" x="0" y="0" width="1" height="1">
+    <feTurbulence type="fractalNoise" baseFrequency="0.006 0.22" numOctaves="2" seed="9"/>
+    <feColorMatrix type="matrix" values="0 0 0 0 1  0 0 0 0 1  0 0 0 0 1  0 0 0 -4 1.9"/>
+  </filter>
+  <filter id="leaves" x="-0.1" y="-0.1" width="1.2" height="1.2">
+    <feTurbulence type="fractalNoise" baseFrequency="0.09" numOctaves="2" seed="3" result="n"/>
+    <feDisplacementMap in="SourceGraphic" in2="n" scale="12"/>
+  </filter>
+  <filter id="ragged" filterUnits="userSpaceOnUse" x="0" y="0" width="384" height="256">
+    <feTurbulence type="fractalNoise" baseFrequency="0.05" numOctaves="3" seed="7" result="n"/>
+    <feDisplacementMap in="SourceGraphic" in2="n" scale="34"/>
+    <feGaussianBlur stdDeviation="7"/>
+  </filter>
+  <mask id="edge" maskUnits="userSpaceOnUse" x="0" y="0" width="384" height="256">
+    <rect x="26" y="24" width="332" height="216" rx="6" fill="#fff" filter="url(#ragged)"/>
+  </mask>
+</defs>
+
+<rect width="384" height="256" fill="#fff"/>
+<g mask="url(#edge)">
+  <rect width="384" height="132" fill="url(#sky)"/>
+  <rect y="20" width="384" height="80" filter="url(#clouds)" opacity="0.5"/>
+
+  <!-- far hills and shore -->
+  <path d="M0 116 C40 104 70 100 110 108 C150 98 190 92 230 104 C270 96 320 98 384 110 L384 132 L0 132 Z" fill="#c0c0c0"/>
+  <path d="M0 124 L20 121 L26 116 L32 121 L60 119 L66 113 L72 120 L130 122 L250 123 L262 117 L268 122 L300 121 L306 115 L312 121 L384 122 L384 132 L0 132 Z" fill="#6e6e6e"/>
+
+  <!-- water -->
+  <rect y="130" width="384" height="126" fill="url(#water)"/>
+  <rect width="384" height="256" fill="url(#glint)"/>
+  <rect y="130" width="384" height="126" filter="url(#ripples)"/>
+  <path d="M0 131 H384" stroke="#fff" stroke-width="1"/>
+  <path d="M160 140 H260 M120 150 H200 M230 160 H330 M260 176 H360 M60 230 H140" stroke="#fff" stroke-width="1" opacity="0.6"/>
+
+  <!-- shore under the sauna -->
+  <path d="M0 168 C50 162 120 170 170 178 C210 182 250 186 268 194 C240 202 200 204 150 206 C90 210 40 214 0 220 Z" fill="#262626" filter="url(#leaves)"/>
+  <path d="M0 196 C60 192 120 200 180 204 C120 212 60 216 0 224 Z" fill="#0e0e0e"/>
+
+  <!-- birch grove: dark crowns, white trunks -->
+  <g filter="url(#leaves)" fill="#2c2c2c">
+    <ellipse cx="40" cy="70" rx="44" ry="40"/>
+    <ellipse cx="96" cy="58" rx="36" ry="38"/>
+    <ellipse cx="130" cy="96" rx="34" ry="30"/>
+    <ellipse cx="20" cy="132" rx="40" ry="40"/>
+    <ellipse cx="80" cy="126" rx="44" ry="34"/>
+    <ellipse cx="146" cy="140" rx="24" ry="22"/>
+  </g>
+  <g fill="#0c0c0c" filter="url(#leaves)">
+    <path d="M8 84 C20 76 40 90 54 104 C44 116 20 118 6 108 Z"/>
+    <path d="M80 86 C96 80 112 92 118 108 C104 112 90 108 80 100 Z"/>
+  </g>
+  <g fill="none" stroke="#fff" stroke-linecap="round">
+    <path d="M36 176 C35 140 38 110 42 60" stroke-width="3"/>
+    <path d="M70 172 C72 140 70 110 76 70" stroke-width="2.5"/>
+    <path d="M112 176 C110 150 114 124 112 96" stroke-width="2"/>
+    <path d="M140 178 C142 160 141 146 146 132" stroke-width="1.5"/>
+  </g>
+  <g stroke="#111" stroke-width="1">
+    <path d="M35 150 h2 M36 130 h3 M38 112 h2 M40 88 h2 M71 156 h2 M71 128 h2 M73 104 h2 M111 160 h2 M112 134 h2"/>
+  </g>
+
+  <!-- sauna: roof, walls, boards -->
+  <path d="M152 142 L198 108 L244 142 Z" fill="#202020"/>
+  <rect x="160" y="140" width="76" height="42" fill="#5c5c5c"/>
+  <path d="M164 141 V182 M170 141 V182 M176 141 V182 M182 141 V182 M188 141 V182 M194 141 V182 M200 141 V182 M206 141 V182 M212 141 V182 M218 141 V182 M224 141 V182 M230 141 V182" stroke="#3e3e3e" stroke-width="1"/>
+  <path d="M166 136 L198 113 L230 136 Z" fill="#6a6a6a"/>
+  <path d="M174 136 V126 M182 136 V120 M190 136 V115 M198 136 V113 M206 136 V115 M214 136 V120 M222 136 V126" stroke="#4a4a4a"/>
+  <path d="M150 143 L198 107 L246 143" fill="none" stroke="#111" stroke-width="3"/>
+
+  <!-- stovepipe -->
+  <rect x="226" y="98" width="4" height="26" fill="#111"/>
+  <rect x="224" y="96" width="8" height="3" fill="#111"/>
+
+  <!-- door and window -->
+  <rect x="172" y="152" width="16" height="30" fill="#0e0e0e"/>
+  <rect x="186" y="166" width="1" height="2" fill="#777"/>
+  <rect x="204" y="148" width="20" height="14" fill="#1a1a1a"/>
+  <rect x="206" y="150" width="16" height="10" fill="#fff"/>
+
+  <!-- towel rail and towels -->
+  <path d="M194 166 H234" stroke="#151515" stroke-width="1"/>
+  <rect x="196" y="167" width="6" height="11" fill="#fff"/>
+  <rect x="204" y="167" width="7" height="9" fill="#e6e6e6"/>
+  <rect x="213" y="167" width="6" height="12" fill="#fff"/>
+  <rect x="221" y="167" width="6" height="10" fill="#dcdcdc"/>
+  <rect x="213" y="172" width="6" height="1" fill="#999"/>
+
+  <!-- step and sandals -->
+  <rect x="158" y="182" width="84" height="5" fill="#d8d8d8"/>
+  <rect x="158" y="187" width="84" height="3" fill="#1e1e1e"/>
+  <g fill="#111">
+    <rect x="164" y="184" width="3" height="2"/><rect x="168" y="184" width="3" height="2"/>
+    <rect x="190" y="184" width="3" height="2"/><rect x="194" y="184" width="3" height="2"/>
+    <rect x="204" y="184" width="3" height="2"/><rect x="208" y="184" width="3" height="2"/>
+  </g>
+
+  <!-- jetty and ladder -->
+  <path d="M236 190 L330 190 L332 194 L236 196 Z" fill="#e0e0e0"/>
+  <path d="M236 196 L332 194 L332 196 L236 198 Z" fill="#202020"/>
+  <g stroke="#151515" stroke-width="2">
+    <path d="M252 197 V212 M276 196 V211 M300 196 V210 M326 195 V209"/>
+  </g>
+  <g stroke="#111" stroke-width="1">
+    <path d="M318 186 V214 M324 186 V214 M318 199 H324 M318 204 H324 M318 209 H324"/>
+  </g>
+  <path d="M244 214 h12 M268 213 h14 M294 212 h12 M316 216 h14" stroke="#e8e8e8"/>
+
+  <!-- foreground reeds -->
+  <g fill="none" stroke="#0a0a0a" stroke-linecap="round">
+    <path d="M300 256 C302 230 306 210 304 186" stroke-width="1.5"/>
+    <path d="M310 256 C312 228 318 208 322 180" stroke-width="1.5"/>
+    <path d="M322 256 C322 236 330 214 340 196" stroke-width="1.5"/>
+    <path d="M332 256 C334 226 336 200 336 170" stroke-width="2"/>
+    <path d="M344 256 C346 232 352 214 358 190" stroke-width="1.5"/>
+    <path d="M352 256 C350 230 346 206 348 176" stroke-width="1.5"/>
+    <path d="M296 256 C290 240 286 232 276 224" stroke-width="1.5"/>
+    <path d="M316 256 C320 244 330 238 346 232" stroke-width="1"/>
+    <path d="M10 256 C12 240 16 230 14 214" stroke-width="1.5"/>
+    <path d="M20 256 C22 236 28 222 34 210" stroke-width="1"/>
+    <path d="M30 256 C28 244 26 234 30 222" stroke-width="1"/>
+  </g>
+  <g fill="#0a0a0a">
+    <rect x="302" y="186" width="4" height="12" rx="2"/>
+    <rect x="334" y="170" width="4" height="13" rx="2"/>
+    <rect x="346" y="176" width="4" height="12" rx="2"/>
+    <rect x="12" y="214" width="3" height="10" rx="1.5"/>
+  </g>
+  <g fill="none" stroke="#0a0a0a" stroke-linecap="round" stroke-width="1">
+    <path d="M362 256 C364 230 366 210 370 188 M372 256 C370 236 374 216 380 200 M286 256 C286 244 284 236 280 228"/>
+    <path d="M306 236 C312 226 318 222 326 220 M326 240 C320 228 312 222 300 218 M340 232 C346 220 352 216 362 214 M354 238 C352 224 350 216 344 206"/>
+    <path d="M318 226 C326 214 330 210 338 208 M336 220 C334 210 328 204 320 200 M366 230 C372 220 376 218 384 216"/>
+  </g>
+  <g fill="#fff">
+    <path d="M320 256 C322 240 324 232 328 224 L329 225 C326 234 324 244 323 256 Z"/>
+    <path d="M342 256 C340 242 338 236 334 228 L335 227 C340 236 342 244 345 256 Z"/>
+  </g>
+  <path d="M276 256 C290 238 310 232 336 230 C356 230 372 234 384 236 V256 Z" fill="#0e0e0e" filter="url(#leaves)"/>
+  <path d="M0 256 C10 248 30 244 60 248 V256 Z" fill="#111"/>
+</g>
+</svg>

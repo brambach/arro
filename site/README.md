@@ -130,6 +130,7 @@ npm i --prefix /tmp/pw playwright && /tmp/pw/node_modules/.bin/playwright instal
 export NODE_PATH=/tmp/pw/node_modules
 node site/scenes/art.mjs                 # public/art/*.svg
 node site/scenes/render-og.mjs --icons   # og/*.png, and the temporary icons
+node site/scenes/plates.mjs              # public/art/plate-*.png, steam-*.png from scenes/plates/*.svg (needs python3 with Pillow)
 node site/scenes/capture.mjs all         # screenshots and the first-load recording (needs wrangler dev and ffmpeg)
 node site/scenes/link-preview.mjs        # design/screenshots/saunafam/invite-link-preview.png (needs wrangler dev)
 ```
