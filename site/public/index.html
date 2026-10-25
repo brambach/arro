@@ -23,6 +23,7 @@
   <link rel="icon" href="/favicon.ico" sizes="32x32">
   <link rel="icon" href="/favicon.svg" type="image/svg+xml">
   <link rel="apple-touch-icon" href="/apple-touch-icon.png">
+  <link rel="preload" as="image" href="/art/plate-1.png" fetchpriority="high">
   <link rel="preload" href="/fonts/fraunces-soft.woff2" as="font" type="font/woff2" crossorigin>
   <link rel="stylesheet" href="/styles.css">
   <script src="/site.js"></script>
@@ -38,7 +39,7 @@
   </header>
 
   <main id="main">
-    <section class="hero" aria-labelledby="hero-title">
+    <section class="hero loops" aria-labelledby="hero-title">
       <div class="wrap hero-grid">
         <div class="hero-copy">
           <h1 id="hero-title" class="display">Keep a sauna streak <span class="accent">together.</span></h1>
@@ -68,27 +69,40 @@
           <p class="fine">Coming soon for iPhone. One email when it’s out, and that’s it.</p>
         </div>
 
-        <div class="hero-room">
-          <div class="room" role="img" aria-label="The Saunafam timer in the dark heat room: 14 minutes 32 seconds into a 15 minute traditional session.">
-            <div class="room-glow"></div>
-            <div class="room-glow inner"></div>
-            <svg class="wisps" viewBox="0 0 390 844" preserveAspectRatio="none" fill="none">
-              <defs><filter id="wisp-blur" x="-50%" y="-10%" width="200%" height="120%"><feGaussianBlur stdDeviation="7"/></filter></defs>
-              <g filter="url(#wisp-blur)" stroke="#F8F4EE" stroke-linecap="round">
-                <path d="M133 844c-16-53 23-81 5-132s-27-71-5-115" stroke-width="16" stroke-opacity=".08"/>
-                <path d="M259 844c18-44-19-76-2-120s25-62 7-104" stroke-width="18" stroke-opacity=".07"/>
-              </g>
-            </svg>
-            <p class="room-caps top">In the heat · Round 1</p>
-            <div class="dial">
-              <img class="arc" src="/art/arc.svg" alt="" width="440" height="440">
-              <p class="numerals"><span>1</span><span>4</span><span class="colon">:</span><span>3</span><span>2</span></p>
-              <p class="room-caps sub">Traditional · 15 min</p>
-            </div>
-            <p class="cool">Time to cool off at 7:24 PM</p>
-            <p class="loyly"><svg viewBox="0 0 24 24" fill="none" stroke="#F8F4EE" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M3.5 14.5h8.5a3.8 3.8 0 0 1-8.5 0z" fill="rgba(248,244,238,.18)"/><path d="M12 14.5l8.5-8"/><path d="M6.4 10.4c-.9-1 .9-1.8 0-3M9.6 10.4c-.9-1 .9-1.8 0-3"/></svg>Throw löyly</p>
-            <p class="acts"><span class="dim">Cancel</span><span>Add a round</span><span>Done</span></p>
+        <figure class="plate-fig">
+          <div class="plate">
+            <img src="/art/plate-1.png" width="384" height="256" alt="A small wooden sauna on a lake shore, steam rising from the chimney and one window lit." fetchpriority="high" decoding="async">
+            <i class="glow"></i><i class="window"></i>
+            <img class="wisp w1" src="/art/steam-1.png" width="48" height="96" alt="">
+            <img class="wisp w2" src="/art/steam-2.png" width="48" height="96" alt="">
+            <img class="wisp w3" src="/art/steam-3.png" width="48" height="96" alt="">
           </div>
+          <figcaption class="fig"><span>fig. 1  the lake sauna, late afternoon</span><button class="pause" type="button"><span class="pause-word">pause</span><span class="vh"> the steam</span></button></figcaption>
+        </figure>
+      </div>
+    </section>
+
+    <section class="section loops" aria-label="The timer">
+      <div class="wrap timer">
+        <div class="room" role="img" aria-label="The Saunafam timer in the dark heat room: 14 minutes 32 seconds into a 15 minute traditional session.">
+          <div class="room-glow"></div>
+          <div class="room-glow inner"></div>
+          <svg class="wisps" viewBox="0 0 390 844" preserveAspectRatio="none" fill="none">
+            <defs><filter id="wisp-blur" x="-50%" y="-10%" width="200%" height="120%"><feGaussianBlur stdDeviation="7"/></filter></defs>
+            <g filter="url(#wisp-blur)" stroke="#F8F4EE" stroke-linecap="round">
+              <path d="M133 844c-16-53 23-81 5-132s-27-71-5-115" stroke-width="16" stroke-opacity=".08"/>
+              <path d="M259 844c18-44-19-76-2-120s25-62 7-104" stroke-width="18" stroke-opacity=".07"/>
+            </g>
+          </svg>
+          <p class="room-caps top">In the heat · Round 1</p>
+          <div class="dial">
+            <img class="arc" src="/art/arc.svg" alt="" width="440" height="440">
+            <p class="numerals"><span>1</span><span>4</span><span class="colon">:</span><span>3</span><span>2</span></p>
+            <p class="room-caps sub">Traditional · 15 min</p>
+          </div>
+          <p class="cool">Time to cool off at 7:24 PM</p>
+          <p class="loyly"><svg viewBox="0 0 24 24" fill="none" stroke="#F8F4EE" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M3.5 14.5h8.5a3.8 3.8 0 0 1-8.5 0z" fill="rgba(248,244,238,.18)"/><path d="M12 14.5l8.5-8"/><path d="M6.4 10.4c-.9-1 .9-1.8 0-3M9.6 10.4c-.9-1 .9-1.8 0-3"/></svg>Throw löyly</p>
+          <p class="acts"><span class="dim">Cancel</span><span>Add a round</span><span>Done</span></p>
         </div>
       </div>
     </section>
@@ -98,7 +112,7 @@
         <p class="caps">How it works</p>
         <h2 id="how-title" class="title">Close the door. We’ll keep time.</h2>
         <ol class="panels">
-          <li class="panel">
+          <li class="panel card">
             <svg class="illo" viewBox="0 0 120 80" aria-hidden="true">
               <defs>
                 <radialGradient id="hw-glow" cx=".5" cy=".5" r=".5"><stop offset="0" stop-color="#F7A45C" stop-opacity=".9"/><stop offset=".45" stop-color="#E0703A" stop-opacity=".4"/><stop offset="1" stop-color="#C9542A" stop-opacity="0"/></radialGradient>
@@ -112,7 +126,7 @@
             <h3 class="heading">Start the timer, or log it after.</h3>
             <p>Close the door and start the timer, or log a session once you’re home. Ten minutes or more counts.</p>
           </li>
-          <li class="panel">
+          <li class="panel card">
             <svg class="illo" viewBox="0 0 120 80" aria-hidden="true">
               <defs>
                 <linearGradient id="hw-aspen" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#E8DBC7"/><stop offset=".45" stop-color="#E2D3BD"/><stop offset="1" stop-color="#DAC9B0"/></linearGradient>
@@ -129,7 +143,7 @@
             <h3 class="heading">Three a week each.</h3>
             <p>Everyone aims for three sessions a week, whenever suits them. Your family can set its own rhythm, from two to five.</p>
           </li>
-          <li class="panel">
+          <li class="panel card">
             <svg class="illo" viewBox="0 0 120 80" aria-hidden="true">
               <defs>
                 <radialGradient id="hw-heart" cx=".4" cy=".3" r=".8"><stop offset="0" stop-color="#E0703A"/><stop offset=".6" stop-color="#C9542A"/><stop offset="1" stop-color="#9E3B1B"/></radialGradient>

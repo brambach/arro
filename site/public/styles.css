@@ -1,19 +1,14 @@
-/* saunafam.com in Direction A, Löyly: birch, stone and ember.
-   Tokens match the app's (design/saunafam-spec.md, section 2). Spacing uses
-   the 4 pt grid only: 4, 8, 12, 16, 20, 24, 32, 40, 56, 72.
-   Motion: one settle per screen (1100 ms, cubic-bezier(.22,1,.36,1)), played
-   once, transform and opacity only. Ambient loops are slow and named for
-   what they do (glow-breathe, steam-drift). Reduced motion shows everything
-   finished, with short crossfades only. */
+/* saunafam.com: birch, stone and ember. Tokens match the app's
+   (design/saunafam-spec.md, section 2); spacing on the 4 pt grid. Motion is
+   transform and opacity only; reduced motion shows every end state. */
 
 @font-face {
   font-family: "Fraunces";
   src: url("/fonts/fraunces-soft.woff2") format("woff2");
   font-weight: 400 600;
   font-style: normal;
-  /* Preloaded, so it's almost always there for the first paint. If it
-     isn't, the page keeps the fallback for this visit rather than swapping
-     and shifting the layout. That's what keeps CLS at 0. */
+  /* Preloaded. If it misses the first paint, the fallback stays for the
+     visit instead of swapping, so CLS stays 0. */
   font-display: optional;
 }
 /* A fallback sized close to Fraunces, for the rare visit that uses it. */
@@ -51,6 +46,7 @@
   --utility-ms: 240ms;
 
   --display: "Fraunces", "Fraunces fallback", Georgia, serif;
+  --mono: ui-monospace, "SF Mono", Menlo, Consolas, monospace;
   --sans: -apple-system, BlinkMacSystemFont, "SF Pro Text", "Segoe UI", system-ui, sans-serif;
 
   --lift: 0 0 0 0.5px rgba(34, 31, 28, 0.10), 0 1px 1.5px rgba(34, 31, 28, 0.05), 0 10px 28px -12px rgba(34, 31, 28, 0.20);
@@ -72,23 +68,6 @@ body {
   text-rendering: optimizeLegibility;
   overflow-x: hidden;
 }
-/* A soft warm haze over the slats, drifting slowly. */
-body::before {
-  content: "";
-  position: fixed;
-  inset: -12%;
-  z-index: -1;
-  pointer-events: none;
-  background:
-    radial-gradient(60% 40% at 82% 8%, rgba(242, 163, 94, 0.14), transparent 70%),
-    radial-gradient(55% 35% at 4% 58%, rgba(248, 244, 238, 0.6), transparent 70%);
-}
-.go body::before { animation: steam-drift 20s ease-in-out infinite alternate; }
-@keyframes steam-drift {
-  from { transform: translate3d(0, 0, 0); }
-  to { transform: translate3d(-3%, 2%, 0); }
-}
-
 h1, h2, h3, p, ol, ul, figure { margin: 0; }
 ol, ul { padding: 0; list-style: none; }
 img, svg { display: block; }
@@ -109,7 +88,7 @@ a { color: inherit; }
 .skip:focus { top: 16px; }
 
 /* Type: one scale. */
-.display, .title, .heading, .wordmark, .wall-count, .numerals, .session-title, .code-big, .join-done-title {
+.display, .title, .heading, .wordmark, .wall-count, .numerals, .session-title, .code-big, .join-done-title, .prose h2 {
   font-family: var(--display);
   font-variation-settings: "SOFT" 100, "WONK" 0;
   font-optical-sizing: auto;
@@ -182,18 +161,65 @@ a { color: inherit; }
   background: var(--steam); color: var(--char); font: 400 17px/24px var(--sans);
 }
 
-/* Hero */
-.hero { padding: 32px 0 56px; }
+/* Hero. Plate 1 shows at whole-number scales only (1 CSS px per dot, 2 from
+   768 px wide) so its dots stay even. From 1120 px it bleeds off the right
+   edge, clipped by the hero. */
+.hero { padding: 32px 0 56px; overflow: hidden; }
 .hero-grid { display: grid; gap: 40px; align-items: center; }
 .hero-copy .display { max-width: 11ch; }
 .hero-copy .lede { margin-top: 20px; max-width: 30em; }
 .accent { color: var(--coal); }
 .hero-copy .fine { margin-top: 16px; }
-.hero-room { display: flex; justify-content: center; }
-@media (min-width: 960px) {
-  .hero { padding: 56px 0 72px; }
-  .hero-grid { grid-template-columns: 1fr auto; gap: 72px; }
+.plate { position: relative; width: 384px; height: 256px; margin-left: calc(50% - 192px); }
+.plate img { width: 100%; height: 100%; image-rendering: pixelated; }
+@media (min-width: 768px) { .plate { width: 768px; height: 512px; margin-left: calc(50% - 384px); } }
+@media (min-width: 960px) { .hero { padding: 56px 0 72px; } }
+@media (min-width: 1120px) {
+  .hero-grid { grid-template-columns: minmax(0, 440px) minmax(0, 1fr); gap: 48px; }
+  .plate { margin-left: 0; }
 }
+
+/* Window and steam sit over the plate in percent of its 384 x 256 dots
+   (see scenes/plates/plate-1.svg). Without JS or with reduced motion they
+   show their end state. */
+.plate i, .plate .wisp { position: absolute; pointer-events: none; }
+.window { left: 57.8125%; top: 58.59375%; width: calc(100% / 24); height: 3.90625%; background: var(--ember); }
+.glow {
+  left: 47.395833%; top: 48.046875%; width: 25%; height: 25%;
+  background: radial-gradient(closest-side, rgba(242, 163, 94, 0.75), rgba(242, 163, 94, 0));
+}
+.plate .wisp { left: 54.6875%; bottom: 65.234375%; width: 12.5%; height: 37.5%; opacity: 0.6; transform: translate3d(0, -25%, 0); }
+.fig { display: flex; flex-wrap: wrap; align-items: center; gap: 0 8px; font: 12px/16px var(--mono); text-transform: lowercase; color: var(--smoke); }
+.fig span { white-space: pre; }
+.pause { display: none; min-height: 44px; padding: 0 4px; border: 0; background: none; color: inherit; font: inherit; cursor: pointer; }
+.pause::before { content: "\b7  " / ""; white-space: pre; }
+@media (max-width: 379px) { .pause::before { content: none; } }
+.pause-word { text-decoration: underline; text-underline-offset: 3px; }
+
+@media (prefers-reduced-motion: no-preference) {
+  .js .pause { display: block; }
+  .js .glow { opacity: 0; }
+  .js .plate .wisp { opacity: 0; transform: none; }
+  .lit .glow { opacity: 1; transition: opacity var(--settle-ms) var(--settle); animation: glow-breathe 6s ease-in-out var(--settle-ms) infinite; }
+  .lit .plate .wisp { animation: steam-drift 16s linear 300ms infinite backwards; }
+  .lit .plate .w2 { animation-duration: 18s; animation-delay: 5.6s; }
+  .lit .plate .w3 { animation-duration: 20s; animation-delay: 11s; }
+  .go .room-glow { animation: heat-breathe 6s ease-in-out 1.1s infinite; }
+  .go .room-glow.inner { animation-delay: 1.6s; }
+}
+@keyframes glow-breathe { 50% { opacity: 0.85; } }
+@keyframes steam-drift {
+  from { opacity: 0; transform: translate3d(0, 0, 0); }
+  12% { opacity: 0.9; }
+  to { opacity: 0; transform: translate3d(6%, -64%, 0); }
+}
+@keyframes heat-breathe {
+  0%, 100% { opacity: 0.55; }
+  50% { opacity: 0.75; }
+}
+/* The pause button (html.still), a hidden tab (html.away) and a section
+   off screen (.off) all hold every ambient loop where it is. */
+:is(.still, .away, .off) :is(.glow, .plate .wisp, .room-glow) { animation-play-state: paused; }
 
 /* The waitlist form. Fields and the success message share one grid cell
    and crossfade, so nothing below moves. The no-JS post lands on /thanks/,
@@ -217,8 +243,8 @@ a { color: inherit; }
 .check { display: flex; gap: 12px; align-items: flex-start; min-height: 44px; padding: 12px 0; cursor: pointer; }
 .check input { flex: none; width: 20px; height: 20px; margin: 2px 0 0; accent-color: var(--ember-deep); }
 .join .button { width: 100%; margin-top: 8px; }
-.hp { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
-.join-done-title { font: 560 24px/28px var(--display); letter-spacing: -0.3px; }
+.hp, .vh { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
+.join-done-title, .session-title, .prose h2 { font-size: 24px; line-height: 28px; font-weight: 560; letter-spacing: -0.3px; }
 .join-done > * + * { margin-top: 8px; }
 .join-done p { color: var(--smoke); }
 .join-done .join-done-title { color: var(--char); }
@@ -231,6 +257,7 @@ a { color: inherit; }
 /* The dark heat room at 14:32, a lifted card built in HTML, CSS and SVG.
    Sizes inside are in container units of a 390 pt wide screen, so it
    scales as one piece and never reflows. */
+.timer { display: flex; justify-content: center; }
 .room {
   container-type: inline-size;
   position: relative;
@@ -255,12 +282,6 @@ a { color: inherit; }
   left: 8cqw; right: 8cqw; bottom: -54cqw; height: 102cqw;
   background: radial-gradient(closest-side, rgba(242, 163, 94, 0.75), rgba(242, 163, 94, 0.25) 55%, rgba(242, 163, 94, 0));
   opacity: 0.72;
-}
-.go .room-glow { animation: glow-breathe 6s ease-in-out infinite; animation-delay: 1.1s; }
-.go .room-glow.inner { animation-delay: 1.6s; }
-@keyframes glow-breathe {
-  0%, 100% { opacity: 0.55; }
-  50% { opacity: 0.75; }
 }
 .wisps { position: absolute; inset: 0; width: 100%; height: 100%; }
 .room-caps {
@@ -304,7 +325,7 @@ a { color: inherit; }
 
 .panels { display: grid; gap: 16px; margin-top: 32px; }
 @media (min-width: 960px) { .panels { grid-template-columns: repeat(3, 1fr); gap: 20px; } }
-.panel { background: var(--steam); border-radius: 24px; box-shadow: var(--lift); padding: 24px; }
+.panel { padding: 24px; }
 .panel .illo { width: 120px; height: 80px; margin: 0 0 20px -8px; }
 .panel p { margin-top: 8px; color: var(--smoke); }
 
@@ -373,7 +394,7 @@ a { color: inherit; }
 .av + .av { margin-left: -8px; }
 .av.lake { background: var(--m-lake); } .av.brass { background: var(--m-brass); } .av.heather { background: var(--m-heather); }
 .when { font-size: 13px; line-height: 18px; color: var(--smoke); }
-.session-title { margin-top: 20px; font-size: 24px; line-height: 28px; font-weight: 560; letter-spacing: -0.3px; }
+.session-title { margin-top: 20px; }
 .session-meta { margin-top: 8px; font-size: 15px; line-height: 21px; color: var(--smoke); }
 .session-weeks { margin-top: 20px; border-top: 0.5px solid rgba(190, 168, 136, 0.7); }
 .session-weeks li { display: flex; align-items: center; gap: 12px; height: 48px; border-bottom: 0.5px solid rgba(190, 168, 136, 0.55); font-size: 15px; }
@@ -424,7 +445,7 @@ a { color: inherit; }
 .doc-head .lede { margin-top: 16px; }
 .doc-head .meta { margin-top: 12px; color: var(--smoke); font-size: 15px; }
 .prose { margin-top: 40px; }
-.prose h2 { font-family: var(--display); font-variation-settings: "SOFT" 100, "WONK" 0; font-size: 24px; line-height: 28px; font-weight: 560; letter-spacing: -0.3px; margin: 40px 0 12px; }
+.prose h2 { margin: 40px 0 12px; }
 .prose h3 { font-size: 17px; line-height: 24px; font-weight: 600; margin: 24px 0 4px; }
 .prose p, .prose li { color: #3A3632; }
 .prose p + p { margin-top: 12px; }
@@ -468,7 +489,6 @@ a { color: inherit; }
   html { scroll-behavior: auto; }
   .js .settle, .js .wall .slat { transform: none; }
   .js.go .settle, .js .wall.in .slat { transition: opacity var(--utility-ms) ease-out; transition-delay: 0ms; }
-  .go body::before, .go .room-glow, .go .room-glow.inner { animation: none; }
   .button, .faq summary::before, .faq summary::after { transition: none; }
   .join-body > * { transition-duration: var(--utility-ms); }
   .join-done, .join.done .join-fields { transform: none; }

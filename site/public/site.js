@@ -1,27 +1,45 @@
 // Loaded in <head>, before the first paint. Marks the page as running JS so
-// the settle can start from its still frame, then waits for the fonts and
-// one painted frame before anything moves.
+// the settle and the window can start from their still frame.
 const root = document.documentElement;
 root.classList.add('js');
 
 const reduce = matchMedia('(prefers-reduced-motion: reduce)').matches;
 
-// .go starts the join and 404 settle and the ambient loops. Nothing moves
-// until the fonts are ready (or 1.5 s has passed, so a slow font never
-// holds the page). Then wait for a painted frame, hold for a beat, and go.
+// Nothing moves until the fonts are ready and plate 1 is decoded, or 1.5 s
+// has passed, so a slow font or image never holds the page. Then two
+// frames, and html.lit lights the window and starts the steam. html.go
+// starts the join and 404 settle a beat later.
 const HOLD_MS = 200;
-const fontsReady = Promise.race([
-  document.fonts ? document.fonts.ready : Promise.resolve(),
-  new Promise((resolve) => setTimeout(resolve, 1500)),
-]);
 const domReady = new Promise((resolve) => {
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', resolve, { once: true });
   else resolve();
 });
-Promise.all([fontsReady, domReady]).then(() => {
+Promise.race([
+  Promise.all([
+    document.fonts && document.fonts.ready,
+    domReady.then(() => document.querySelector('.plate img')?.decode().catch(() => {})),
+  ]),
+  new Promise((resolve) => setTimeout(resolve, 1500)),
+]).then(() => {
   requestAnimationFrame(() => requestAnimationFrame(() => {
+    root.classList.add('lit');
     setTimeout(() => root.classList.add('go'), reduce ? 0 : HOLD_MS);
   }));
+});
+
+// Ambient loops hold still while paused (html.still), while the tab is
+// hidden (html.away) and while their section is off screen (.off).
+document.addEventListener('visibilitychange', () => root.classList.toggle('away', document.hidden));
+domReady.then(() => {
+  const pause = document.querySelector('.pause');
+  pause?.addEventListener('click', () => {
+    pause.firstChild.textContent = root.classList.toggle('still') ? 'play' : 'pause';
+  });
+  if (!('IntersectionObserver' in window)) return;
+  const shown = new IntersectionObserver((entries) => {
+    for (const e of entries) e.target.classList.toggle('off', !e.isIntersecting);
+  });
+  for (const section of document.querySelectorAll('.loops')) shown.observe(section);
 });
 
 domReady.then(() => {
