@@ -40,3 +40,46 @@ domReady.then(() => {
     }
   }
 });
+
+// Waitlist forms post with fetch and answer in place. 200 and 201 read the
+// same, so the page never says whether an email was already on the list.
+// The error lines live once, in the page's #join-bad and #join-later (the
+// no-JS path shows those with :target).
+const SHARE = { title: 'Saunafam', text: 'Keep a sauna streak together.', url: 'https://saunafam.com' };
+const outcome = (status) => (status === 200 || status === 201 ? 'done' : status === 400 ? 'bad' : 'later');
+
+domReady.then(() => {
+  for (const form of document.querySelectorAll('form.join')) {
+    const { email, beta } = form.elements;
+    const button = form.querySelector('[type=submit]');
+    const error = form.querySelector('.join-error');
+    const copied = form.querySelector('.join-copied');
+
+    form.addEventListener('submit', async (event) => {
+      event.preventDefault();
+      const body = new URLSearchParams(new FormData(form));
+      button.disabled = true;
+      error.textContent = '';
+      email.removeAttribute('aria-invalid');
+      let result = 'later';
+      try {
+        const res = await fetch(form.action, { method: 'POST', body, headers: { Accept: 'application/json' } });
+        result = outcome(res.status);
+      } catch {}
+      button.disabled = false;
+      if (result === 'done') {
+        form.querySelector('.join-beta').hidden = !beta.checked;
+        form.classList.add('done');
+        form.querySelector('.join-done-title').focus();
+        return;
+      }
+      if (result === 'bad') email.setAttribute('aria-invalid', 'true');
+      error.textContent = document.getElementById(`join-${result}`).textContent;
+    });
+
+    form.querySelector('.join-share').addEventListener('click', () => {
+      if (navigator.share) return navigator.share(SHARE).catch(() => {});
+      navigator.clipboard?.writeText(SHARE.url).then(() => { copied.textContent = 'Link copied'; }, () => {});
+    });
+  }
+});

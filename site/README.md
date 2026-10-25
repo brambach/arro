@@ -12,13 +12,14 @@ The look is Direction A, Löyly (birch, stone and ember), from
 
 | URL | File | What it is |
 | --- | --- | --- |
-| `/` | `public/index.html` | Landing page: hero with the heat room card, how it works, the wall, sat together, kind by design, FAQ |
+| `/` | `public/index.html` | Landing page: hero with the waitlist form and the heat room card, how it works, the wall, sat together, kind by design, FAQ |
 | `/privacy/` | `public/privacy/index.html` | Privacy policy, the same text as `design/app-store/privacy-policy.md`. App Store Connect's Privacy Policy URL |
 | `/support/` | `public/support/index.html` | FAQ, help and the contact email. App Store Connect's Support URL |
 | `/join/<code>` | `public/join/index.html`, filled in by `worker.js` | For someone who's been sent an invite. Shows the code large, with a Get the app button |
+| `/thanks/` | `public/thanks/index.html` | Where a waitlist post without JS lands. The same copy for a new email and one already on the list |
 | anything else | `public/404.html` | Not found |
 
-`/privacy`, `/support` and `/join` without the slash redirect to the slashed
+`/privacy`, `/support`, `/thanks` and `/join` without the slash redirect to the slashed
 URL (`html_handling: auto-trailing-slash`).
 
 If the policy changes, change `design/app-store/privacy-policy.md` and the
@@ -26,13 +27,25 @@ HTML together. Update the "Last updated" date on the day it's deployed.
 
 ## The TestFlight link (placeholder)
 
-There's no public TestFlight link yet, so every **Join the TestFlight** and
-**Get the app** button points at
-`mailto:support@saunafam.com?subject=TestFlight%20invite`, which at least
-reaches Bryce. Each of those links carries `data-testflight`. When the
-public link exists, replace the `href` on every `[data-testflight]` link
-(in `public/index.html` twice and `public/join/index.html` once) with it,
-and later with the App Store link.
+There's no public TestFlight link yet, so the join page's **Get the app**
+button points at `mailto:support@saunafam.com?subject=TestFlight%20invite`,
+which at least reaches Bryce. It carries `data-testflight`. When the public
+link exists, replace the `href` on that `[data-testflight]` link in
+`public/join/index.html` with it, and later with the App Store link. The
+home page has no TestFlight link: it asks for an email instead, with a box
+to tick for the beta.
+
+## The waitlist form
+
+Each `form.join` on the home page posts to `/api/waitlist`. With JS,
+`site.js` sends it with `fetch` and shows the answer in place: the button
+dims while it sends, then the success message crossfades in, or an error
+appears under the field. A 201 (joined) and a 200 (already on the list)
+show the same message, so the page never says whether an email was on the
+list. The error copy lives once, in the `#join-bad` and `#join-later` lines
+in the page. Without JS the form posts normally and the Worker answers with
+a 303 to `/thanks/`, `/#join-bad` or `/#join-later`, and CSS shows the
+matching line with `:target`. The hidden `website` field is the honeypot.
 
 ## worker.js
 
@@ -81,7 +94,7 @@ That's the only way to see the hostname redirects locally, because
   land once, 50 ms apart, the first time it's on screen. Ambient loops
   (`glow-breathe` in the heat room, `steam-drift` on the haze) start with
   `.go`. With reduced motion everything is shown finished, with 240 ms
-  crossfades and no loops.
+  crossfades and no loops. It also runs the waitlist forms (see above).
 - `public/fonts/fraunces-soft.woff2`: Fraunces, soft cut (SOFT 100, WONK 0),
   weight 400 to 600 and optical size kept variable, Latin subset, 35 KB.
   Preloaded on every page, `font-display: optional` so a late font never

@@ -33,6 +33,7 @@
   <header class="site-header">
     <div class="wrap">
       <a class="wordmark" href="/" aria-label="Saunafam home">saunafam</a>
+      <a class="header-link" href="#join">Join the waitlist</a>
     </div>
   </header>
 
@@ -40,12 +41,31 @@
     <section class="hero" aria-labelledby="hero-title">
       <div class="wrap hero-grid">
         <div class="hero-copy">
-          <h1 id="hero-title" class="display">Keep a sauna streak together.</h1>
-          <p class="lede">A weekly sauna streak for your family or your sauna crew. Everyone goes when they can. You keep it together.</p>
-          <div class="cta-row">
-            <a class="button" href="mailto:support@saunafam.com?subject=TestFlight%20invite" data-testflight>Join the TestFlight</a>
-          </div>
-          <p class="fine">Free for iPhone, in beta on TestFlight.</p>
+          <h1 id="hero-title" class="display">Keep a sauna streak <span class="accent">together.</span></h1>
+          <p class="lede">A weekly sauna streak for your family or your sauna crew. Everyone goes when they can, and you keep it together.</p>
+          <form class="join" id="join" method="post" action="/api/waitlist">
+            <div class="join-body">
+              <div class="join-fields">
+                <label class="join-label" for="join-hero-email">Your email</label>
+                <input class="field" id="join-hero-email" type="email" name="email" autocomplete="email" inputmode="email" required aria-describedby="join-hero-error">
+                <p class="join-error" id="join-hero-error" aria-live="polite"></p>
+                <p class="join-target" id="join-bad">That email doesn’t look quite right.</p>
+                <p class="join-target" id="join-later">Something went wrong on our end. Try again in a minute, or write to <a href="mailto:support@saunafam.com">support@saunafam.com</a>.</p>
+                <label class="check"><input type="checkbox" name="beta" value="1"><span>I’d like to try the beta on TestFlight before then</span></label>
+                <input type="hidden" name="source" value="hero">
+                <div class="hp" aria-hidden="true"><label for="join-hero-website">Leave this field empty</label><input id="join-hero-website" type="text" name="website" tabindex="-1" autocomplete="off"></div>
+                <button class="button" type="submit">Join the waitlist</button>
+              </div>
+              <div class="join-done">
+                <p class="join-done-title" tabindex="-1">You’re on the list.</p>
+                <p>We’ll write once, when Saunafam is on the App Store.</p>
+                <p class="join-beta" hidden>We’ll send a TestFlight invite as soon as there’s room.</p>
+                <button class="link-button join-share" type="button">Send it to your sauna crew</button>
+                <p class="join-copied" aria-live="polite"></p>
+              </div>
+            </div>
+          </form>
+          <p class="fine">Coming soon for iPhone. One email when it’s out, and that’s it.</p>
         </div>
 
         <div class="hero-room">
@@ -221,7 +241,7 @@
     <section class="closing" aria-labelledby="closing-title">
       <div class="wrap">
         <h2 id="closing-title" class="title">Your sauna crew is waiting.</h2>
-        <a class="button" href="mailto:support@saunafam.com?subject=TestFlight%20invite" data-testflight>Join the TestFlight</a>
+        <a class="button" href="#join">Join the waitlist</a>
       </div>
     </section>
   </main>

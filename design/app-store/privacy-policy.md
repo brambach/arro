@@ -75,6 +75,18 @@ If you buy Saunafam Plus, Apple handles the payment. RevenueCat, our purchase
 processor, tells us which Apple purchases you've made so your family gets Plus.
 We never see your card details.
 
+## Waitlist
+
+If you join the waitlist on saunafam.com, we keep your email, whether you'd
+like to try the beta on TestFlight, which form you used and the date. We use
+them to send you one email when Saunafam is on the App Store, and a TestFlight
+invite if you asked for one. We don't keep your IP address or any details about
+your device or browser. To be taken off the list, write to
+support@saunafam.com.
+
+<!-- [TODO for Bryce: say whether waitlist emails are deleted after launch or kept for updates.] -->
+[TODO for Bryce: say whether waitlist emails are deleted after launch or kept for updates.]
+
 ## Who sees your data
 
 - **Your family.** Only the people in your family see your name, color, photo,

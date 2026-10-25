@@ -109,7 +109,7 @@ a { color: inherit; }
 .skip:focus { top: 16px; }
 
 /* Type: one scale. */
-.display, .title, .heading, .wordmark, .wall-count, .numerals, .session-title, .code-big {
+.display, .title, .heading, .wordmark, .wall-count, .numerals, .session-title, .code-big, .join-done-title {
   font-family: var(--display);
   font-variation-settings: "SOFT" 100, "WONK" 0;
   font-optical-sizing: auto;
@@ -144,11 +144,11 @@ a { color: inherit; }
 }
 .wordmark.small { font-size: 24px; line-height: 28px; }
 .site-nav { display: flex; gap: 20px; }
-.site-nav a, .site-footer nav a {
+.site-nav a, .site-footer nav a, .header-link {
   font-size: 15px; line-height: 21px; font-weight: 600; text-decoration: none; color: var(--char);
   padding: 12px 0;
 }
-.site-nav a:hover, .site-footer nav a:hover { text-decoration: underline; text-underline-offset: 4px; }
+.site-nav a:hover, .site-footer nav a:hover, .header-link:hover { text-decoration: underline; text-underline-offset: 4px; }
 .site-nav a[aria-current="page"] { color: var(--coal); }
 
 .site-footer { padding: 56px 0 40px; border-top: 1px solid rgba(211, 193, 166, 0.7); margin-top: 72px; }
@@ -173,6 +173,7 @@ a { color: inherit; }
 }
 .button:hover { background: var(--coal); }
 .button:active { background: var(--coal); transform: scale(0.98); }
+.button:disabled { background: var(--ember-deep); opacity: 0.6; transform: none; cursor: default; }
 .night .button:hover { background: var(--ember-deep); transform: translate3d(0, -2px, 0); }
 .night .button:active { background: var(--ember-deep); transform: scale(0.98); }
 
@@ -186,13 +187,46 @@ a { color: inherit; }
 .hero-grid { display: grid; gap: 40px; align-items: center; }
 .hero-copy .display { max-width: 11ch; }
 .hero-copy .lede { margin-top: 20px; max-width: 30em; }
-.cta-row { display: flex; flex-wrap: wrap; align-items: center; gap: 16px 24px; margin-top: 32px; }
+.accent { color: var(--coal); }
 .hero-copy .fine { margin-top: 16px; }
 .hero-room { display: flex; justify-content: center; }
 @media (min-width: 960px) {
   .hero { padding: 56px 0 72px; }
   .hero-grid { grid-template-columns: 1fr auto; gap: 72px; }
 }
+
+/* The waitlist form. Fields and the success message share one grid cell
+   and crossfade, so nothing below moves. The no-JS post lands on /thanks/,
+   /#join-bad or /#join-later, and :target shows the matching line. */
+.join { position: relative; max-width: 440px; margin-top: 32px; }
+.join-body { display: grid; }
+.join-body > * {
+  grid-area: 1 / 1;
+  transition: opacity 400ms var(--settle), transform 400ms var(--settle), visibility 400ms;
+}
+.join-done { opacity: 0; visibility: hidden; transform: translate3d(0, 8px, 0); }
+.join.done .join-fields { opacity: 0; visibility: hidden; transform: translate3d(0, -8px, 0); }
+/* Visible at once, not after the fade, so site.js can move focus into it. */
+.join.done .join-done { opacity: 1; visibility: visible; transform: none; transition-property: opacity, transform; }
+.join-label { display: block; margin-bottom: 8px; font-weight: 600; }
+.join .field { display: block; width: 100%; }
+.join-error, .join-target { color: var(--coal); font-weight: 600; }
+.join-error:not(:empty), .join-target { margin-top: 8px; }
+.join-target { display: none; }
+.join-target:target { display: block; }
+.check { display: flex; gap: 12px; align-items: flex-start; min-height: 44px; padding: 12px 0; cursor: pointer; }
+.check input { flex: none; width: 20px; height: 20px; margin: 2px 0 0; accent-color: var(--ember-deep); }
+.join .button { width: 100%; margin-top: 8px; }
+.hp { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
+.join-done-title { font: 560 24px/28px var(--display); letter-spacing: -0.3px; }
+.join-done > * + * { margin-top: 8px; }
+.join-done p { color: var(--smoke); }
+.join-done .join-done-title { color: var(--char); }
+.link-button {
+  min-height: 44px; padding: 0; border: 0; background: none; cursor: pointer;
+  font: 600 17px/24px var(--sans); color: var(--coal); text-decoration: underline; text-underline-offset: 4px;
+}
+.join-copied { font-size: 15px; }
 
 /* The dark heat room at 14:32, a lifted card built in HTML, CSS and SVG.
    Sizes inside are in container units of a 390 pt wide screen, so it
@@ -436,4 +470,6 @@ a { color: inherit; }
   .js.go .settle, .js .wall.in .slat { transition: opacity var(--utility-ms) ease-out; transition-delay: 0ms; }
   .go body::before, .go .room-glow, .go .room-glow.inner { animation: none; }
   .button, .faq summary::before, .faq summary::after { transition: none; }
+  .join-body > * { transition-duration: var(--utility-ms); }
+  .join-done, .join.done .join-fields { transform: none; }
 }
