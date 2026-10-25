@@ -1,16 +1,16 @@
 <svg xmlns="http://www.w3.org/2000/svg" width="48" height="96" viewBox="0 0 48 96">
 <defs>
   <linearGradient id="fade" x1="0" y1="1" x2="0" y2="0">
-    <stop offset="0" stop-color="#fff" stop-opacity="0"/>
-    <stop offset="0.25" stop-color="#fff"/>
-    <stop offset="0.7" stop-color="#fff" stop-opacity="0.6"/>
+    <stop offset="0" stop-color="#fff" stop-opacity="0.3"/>
+    <stop offset="0.08" stop-color="#fff"/>
+    <stop offset="0.45" stop-color="#fff" stop-opacity="0.7"/>
     <stop offset="1" stop-color="#fff" stop-opacity="0"/>
   </linearGradient>
   <mask id="m" maskUnits="userSpaceOnUse" x="0" y="0" width="48" height="96"><rect width="48" height="96" fill="url(#fade)"/></mask>
-  <filter id="soft" x="-0.5" y="-0.2" width="2" height="1.4"><feGaussianBlur stdDeviation="3.5"/></filter>
+  <filter id="soft" x="-0.5" y="-0.2" width="2" height="1.4"><feGaussianBlur stdDeviation="2.2"/></filter>
 </defs>
 <rect width="48" height="96" fill="#fff"/>
-<g mask="url(#m)">
-  <path d="M24 92 C18 78 30 70 26 58 C22 46 14 40 20 28 C24 20 30 16 28 6" fill="none" stroke="#8a8a8a" stroke-width="9" stroke-linecap="round" filter="url(#soft)"/>
+<g mask="url(#m)" fill="#6a6a6a" filter="url(#soft)">
+  <path d="M22 94 C20 84 26 76 24 66 C22 56 14 48 16 36 C18 24 26 16 22 4 L38 4 C42 18 32 26 33 38 C34 50 30 60 30 70 C30 80 27 86 26 94 Z"/>
 </g>
 </svg>
