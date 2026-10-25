@@ -36,7 +36,15 @@ and later with the App Store link.
 
 ## worker.js
 
-Runs before the files (`assets.run_worker_first`):
+Runs first for pages and the API, and never for the asset paths listed in
+`assets.run_worker_first` in `wrangler.jsonc`: `art/`, `fonts/`, `og/`,
+`licenses/`, `styles.css`, `site.js` and the icons. Cloudflare serves those
+straight from the assets store, so they're free and don't count toward the
+daily Worker request limit. A new page is covered without any change. A new
+asset folder (say `public/plates/`) has to be added to that list as a `!`
+pattern, or `node --test site/assets.test.mjs` fails.
+
+For pages and `/join/...`:
 
 - `arrofamily.com` and `www.arrofamily.com`, any path: 301 to
   `https://saunafam.com` with the same path and query. That keeps build 8
@@ -48,6 +56,13 @@ Runs before the files (`assets.run_worker_first`):
   `twitter:title` and `og:url` (HTMLRewriter), so link previews in
   iMessage show the code without running JS. `/join/<code>/` and the old
   `/join/?code=<code>` redirect to it.
+
+Because the Worker skips the asset paths, an asset on `www.saunafam.com`
+or `arrofamily.com` (say `arrofamily.com/styles.css`) is served as is, not
+redirected, and `http://saunafam.com/styles.css` isn't upgraded to https by
+the Worker. Every link that matters is a page or `/join/...`, and those
+still redirect. Turn on the zone's **Always Use HTTPS** at deploy time so
+plain http asset requests are upgraded too.
 
 `node --test site/worker.test.mjs` checks every redirect with a fake request.
 That's the only way to see the hostname redirects locally, because
@@ -138,7 +153,9 @@ hostnames are in use, remove them from the old Worker in the dashboard (or
 `npx wrangler delete --name arrofamily`) and deploy again. I haven't tried
 this against the live account. The first deploy creates DNS records and certificates for
 `saunafam.com` and `www.saunafam.com` (`custom_domain: true`); it fails if
-either already has a DNS record, so check the zone first. Then:
+either already has a DNS record, so check the zone first. In the
+saunafam.com zone, turn on SSL/TLS, Edge Certificates, **Always Use HTTPS**
+(see "worker.js" above). Then:
 
 ```sh
 for p in / /privacy/ /support/ /join/ABC23456; do curl -s -o /dev/null -w "%{http_code} $p\n" https://saunafam.com$p; done
