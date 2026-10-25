@@ -95,7 +95,7 @@ be taken off the list, write to support@saunafam.com.
   only. Photos are stored privately and shared with your family through links
   that expire.
 - **The services that run Saunafam**, each on our behalf and for nothing else:
-  - **Supabase** stores Saunafam's data, on servers in the United States.
+  - **Supabase** stores the app's data, on servers in the United States.
   - **Expo** delivers push notifications. It receives your push token and the
     notification's text, and passes them to Apple.
   - **Apple** handles Sign in with Apple, Apple Health and notifications, under
