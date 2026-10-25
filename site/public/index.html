@@ -40,7 +40,7 @@
 
   <main id="main">
     <section class="hero loops" aria-labelledby="hero-title">
-      <div class="wrap hero-grid">
+      <div class="wrap split">
         <div class="hero-copy">
           <h1 id="hero-title" class="display">Keep a sauna streak <span class="accent">together.</span></h1>
           <p class="lede">A weekly sauna streak for your family or your sauna crew. Everyone goes when they can, and you keep it together.</p>
@@ -256,10 +256,39 @@
       </div>
     </section>
 
-    <section class="closing" aria-labelledby="closing-title">
-      <div class="wrap">
-        <h2 id="closing-title" class="title">Your sauna crew is waiting.</h2>
-        <a class="button" href="#join">Join the waitlist</a>
+    <section class="closing night loops" aria-labelledby="closing-title">
+      <div class="wrap split">
+        <div>
+          <h2 id="closing-title" class="title">Your sauna crew is waiting.</h2>
+          <form class="join" method="post" action="/api/waitlist">
+            <div class="join-body">
+              <div class="join-fields">
+                <label class="join-label" for="closing-email">Your email</label>
+                <input class="field" id="closing-email" type="email" name="email" autocomplete="email" inputmode="email" required aria-describedby="closing-error">
+                <p class="join-error" id="closing-error" aria-live="polite"></p>
+                <label class="check"><input type="checkbox" name="beta" value="1"><span>I’d like to try the beta on TestFlight before then</span></label>
+                <input type="hidden" name="source" value="closing">
+                <div class="hp" aria-hidden="true"><label for="closing-website">Leave this field empty</label><input id="closing-website" type="text" name="website" tabindex="-1" autocomplete="off"></div>
+                <button class="button" type="submit">Join the waitlist</button>
+              </div>
+              <div class="join-done">
+                <p class="join-done-title" tabindex="-1">You’re on the list.</p>
+                <p>We’ll write once, when Saunafam is on the App Store.</p>
+                <p class="join-beta" hidden>We’ll send a TestFlight invite as soon as there’s room.</p>
+                <button class="link-button join-share" type="button">Send it to your sauna crew</button>
+                <p class="join-copied" aria-live="polite"></p>
+              </div>
+            </div>
+          </form>
+        </div>
+
+        <figure class="plate-fig">
+          <div class="plate">
+            <img src="/art/plate-2.png" width="384" height="256" alt="The same sauna after dark, its window glowing." loading="lazy" decoding="async">
+            <i class="glow"></i><i class="window"></i>
+          </div>
+          <figcaption class="fig"><span>fig. 2  same sauna, after dark</span><button class="pause" type="button"><span class="pause-word">pause</span><span class="vh"> the glow</span></button></figcaption>
+        </figure>
       </div>
     </section>
   </main>

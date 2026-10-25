@@ -27,13 +27,15 @@ Promise.race([
   }));
 });
 
-// Ambient loops hold still while paused (html.still), while the tab is
+// Ambient loops hold still while paused (html.still, set by any plate's
+// pause button, so one press stills every loop on the page), while the tab is
 // hidden (html.away) and while their section is off screen (.off).
 document.addEventListener('visibilitychange', () => root.classList.toggle('away', document.hidden));
 domReady.then(() => {
-  const pause = document.querySelector('.pause');
-  pause?.addEventListener('click', () => {
-    pause.firstChild.textContent = root.classList.toggle('still') ? 'play' : 'pause';
+  const pauses = document.querySelectorAll('.pause');
+  for (const pause of pauses) pause.addEventListener('click', () => {
+    const word = root.classList.toggle('still') ? 'play' : 'pause';
+    for (const p of pauses) p.firstChild.textContent = word;
   });
   if (!('IntersectionObserver' in window)) return;
   const shown = new IntersectionObserver((entries) => {

@@ -66,8 +66,18 @@
     <path d="M262 202 v14 M286 202 v12 M310 202 v13 M332 202 v12" stroke="#262626" stroke-width="2"/>
   </g>
 
-  <!-- dark foreground water -->
+  <!-- dark foreground water, broken into ripple bands so it isn't one even speckle -->
   <path fill="#1c1c1c" d="M96 256 L100 246 L124 244 L130 240 L168 241 L176 236 L214 238 L232 232 L258 234 L270 228 L300 230 L318 222 L346 224 L360 216 L384 214 L384 256 Z"/>
+  <g fill="#060606">
+    <path d="M0 238 C30 235 58 239 84 236 C96 235 104 238 112 240 C90 243 60 241 34 244 C20 245 8 243 0 244 Z"/>
+    <path d="M0 250 C24 248 40 251 62 249 C80 248 92 252 100 256 L0 256 Z"/>
+    <path d="M150 232 C172 230 196 233 214 231 C222 231 226 233 228 235 C206 237 180 236 156 237 Z"/>
+    <path d="M118 212 C130 210 142 212 150 214 C140 216 128 216 118 215 Z"/>
+    <path d="M196 248 C220 246 248 248 272 245 C290 244 300 247 306 250 C280 253 240 252 200 253 Z"/>
+    <path d="M58 222 C74 220 92 222 104 225 C90 227 72 226 58 226 Z"/>
+  </g>
+  <path fill="none" stroke="#a8a8a8" stroke-width="2" d="M4 232h18 M26 232h6 M70 244h22 M96 244h5 M164 244h20 M188 244h8 M236 240h14 M128 254h16"/>
+  <path fill="none" stroke="#fff" stroke-width="1" stroke-dasharray="7 3 2 4 12 3" d="M0 224.5h60 M120 233.5h48 M40 247.5h70 M170 250.5h44 M232 254.5h50 M150 220.5h40"/>
 
   <!-- bank under the trees and the sauna -->
   <path fill="#303030" d="M0 176 C20 172 46 176 70 174 C100 172 130 178 150 182 C170 184 200 186 230 186 L262 188 L266 194 L240 196 L200 197 L160 197 L120 199 L80 198 L40 200 L0 199 Z"/>
@@ -75,6 +85,10 @@
 
   <path fill="none" stroke="#fff" stroke-width="1" d="M8 206.5h22 M44 209.5h10 M70 205.5h34 M118 208.5h16 M22 216.5h14 M56 221.5h26 M100 215.5h12 M134 219.5h10 M10 228.5h18 M84 231.5h8 M168 230.5h20 M196 226.5h8 M240 222.5h12 M150 238.5h14 M48 240.5h22 M226 246.5h18 M130 249.5h8 M262 240.5h10 M294 236.5h8"/>
   <path fill="none" stroke="#9a9a9a" stroke-width="1" d="M30 212.5h30 M112 224.5h20 M60 234.5h16 M180 236.5h24 M100 241.5h14"/>
+
+  <!-- dark woods behind the trunks, so the white trunks read top to bottom -->
+  <path fill="#1a1a1a" d="M0 96 C20 92 50 98 80 96 C100 96 120 100 134 104 L136 116 L140 114 L141 128 L145 126 L144 140 L149 138 L147 152 L152 151 L150 162 L156 163 L153 172 L160 174 L160 190 L0 190 Z"/>
+  <path fill="none" stroke="#5e5e5e" stroke-width="1" d="M8 150.5h4 M20 136.5h3 M44 160.5h5 M52 142.5h3 M84 152.5h4 M90 132.5h3 M110 166.5h4 M140 150.5h3 M116 144.5h2 M10 172.5h5 M78 170.5h3"/>
 
   <!-- birch crowns: drooping leaf masses, sunlit patches, hanging strands -->
   <g fill="#383838">
@@ -94,7 +108,7 @@
     <path d="M120 100 C123 99 125 102 123 105 C121 106 119 103 120 100 Z"/>
   </g>
   <path fill="none" stroke="#1c1c1c" stroke-width="1" d="M14 112 q-1 8 0 14 M4 118 q1 10 -1 16 M40 122 q-1 8 1 12 M50 128 q0 10 -2 16 M62 152 q1 6 0 10 M76 146 q-1 8 1 12 M92 140 q1 8 0 10 M102 132 q0 8 -1 12 M116 136 q1 8 0 12 M126 124 q1 8 0 14 M18 144 q0 6 1 10"/>
-  <path fill="#565656" d="M0 162 C6 156 14 160 18 154 C24 150 32 156 38 152 C46 148 52 156 60 154 C68 150 76 158 84 156 C92 152 100 158 108 158 C116 156 124 162 132 164 C138 166 142 172 146 180 L146 186 L0 186 Z"/>
+  <path fill="#1e1e1e" d="M0 162 C6 156 14 160 18 154 C24 150 32 156 38 152 C46 148 52 156 60 154 C68 150 76 158 84 156 C92 152 100 158 108 158 C116 156 124 162 132 164 C138 166 142 172 146 180 L146 186 L0 186 Z"/>
 
   <!-- birch trunks, white with bark marks -->
   <g fill="#fff">
@@ -159,11 +173,14 @@
   </g>
 
   <!-- jetty, posts and ladder -->
+  <path fill="#000" d="M254 184 L338 183.5 L339 197 L254 198 Z"/>
   <path fill="#fff" d="M256 186 L336 185.5 L337 191 L256 192 Z"/>
-  <path fill="#0c0c0c" d="M256 192 L337 191 L337 194 L256 195 Z"/>
-  <path fill="none" stroke="#181818" stroke-width="2" d="M264 194 v14 M288 194 v12 M312 193 v13 M334 193 v12"/>
-  <path fill="none" stroke="#fff" stroke-width="1" d="M260 208.5h8 M284 206.5h8 M308 206.5h8 M330 205.5h8"/>
-  <path fill="none" stroke="#101010" stroke-width="1" d="M292.5 180 V212 M297.5 180 V212 M292 183.5h6 M292 197.5h6 M292 202.5h6 M292 207.5h6"/>
+  <path fill="none" stroke="#000" stroke-width="1" d="M276.5 186v6 M298.5 186v6 M318.5 186v5"/>
+  <path fill="#000" d="M262 194 h5 v16 h-5 Z M286 194 h5 v14 h-5 Z M310 193 h5 v15 h-5 Z M332 193 h5 v14 h-5 Z"/>
+  <path fill="none" stroke="#fff" stroke-width="1" d="M263.5 195 v13 M287.5 195 v11 M311.5 194 v12 M333.5 194 v11"/>
+  <path fill="none" stroke="#fff" stroke-width="1" stroke-dasharray="3 2" d="M258 212.5h12 M282 210.5h12 M306 210.5h12 M328 209.5h12"/>
+  <path fill="none" stroke="#000" stroke-width="3" d="M292.5 178 V214 M298.5 178 V214"/>
+  <path fill="none" stroke="#fff" stroke-width="1" d="M292.5 178 V214 M298.5 178 V214 M293 183.5h5 M293 189.5h5 M293 197.5h5 M293 203.5h5 M293 209.5h5"/>
 
   <path fill="none" stroke="#fff" stroke-width="1" d="M304 200.5h40 M316 204.5h56 M300 209.5h30 M340 211.5h36 M310 216.5h22 M352 219.5h24"/>
 

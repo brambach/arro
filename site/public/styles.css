@@ -147,9 +147,9 @@ a { color: inherit; }
   background: var(--steam); color: var(--char); font: 400 17px/24px var(--sans);
 }
 
-/* Plate 1 shows at whole-number scales only, so its dots stay even. */
+/* Plates show at whole-number scales only, so its dots stay even. */
 .hero { padding: 32px 0 56px; overflow: hidden; }
-.hero-grid { display: grid; gap: 40px; align-items: center; }
+.split { display: grid; gap: 40px; align-items: center; }
 .hero-copy .display { max-width: 11ch; }
 .hero-copy .lede { margin-top: 20px; max-width: 30em; }
 .accent { color: var(--coal); }
@@ -159,7 +159,7 @@ a { color: inherit; }
 @media (min-width: 768px) { .plate { width: 768px; height: 512px; margin-left: calc(50% - 384px); } }
 @media (min-width: 960px) { .hero { padding: 56px 0 72px; } }
 @media (min-width: 1120px) {
-  .hero-grid { grid-template-columns: minmax(0, 440px) minmax(0, 1fr); gap: 48px; }
+  .split { grid-template-columns: minmax(0, 440px) minmax(0, 1fr); gap: 48px; }
   .plate { margin-left: 0; }
 }
 
@@ -411,9 +411,13 @@ a { color: inherit; }
 .faq details[open] summary::after { transform: rotate(0deg); opacity: 0; }
 .faq details p { padding: 0 40px 24px 0; color: var(--smoke); }
 
-/* Closing */
-.closing { padding: 56px 0 0; text-align: center; }
-.closing .title { margin: 0 auto 32px; max-width: 16ch; }
+/* Closing: the same paper at night. Coal fails on char, so night text,
+   links and errors are birch, secondary text ash. */
+.night { background: var(--char); color: var(--birch); }
+.closing { padding: 72px 0; overflow: hidden; }
+.closing .title { max-width: 12ch; }
+.night :is(.join-error, .link-button, .join-done .join-done-title) { color: var(--birch); }
+.night :is(.join-done p, .fig) { color: var(--ash); }
 
 /* Doc pages: privacy, support, join, 404 */
 .doc { padding: 32px 0 0; }

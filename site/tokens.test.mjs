@@ -49,6 +49,13 @@ test("every palette pair meets its WCAG threshold", (t) => {
   for (const r of rows) assert.ok(r.ratio >= r.min, `${r.fg} on ${r.bg} is ${r.ratio.toFixed(2)}, needs ${r.min}`);
 });
 
+test("night text, links and errors use a color that passes on char", () => {
+  const rule = css.match(/\n\.night :is\([^)]*\.join-error[^)]*\)\s*\{([^}]*)\}/)?.[1];
+  assert.ok(rule, "a .night rule colors .join-error");
+  const fg = rule.match(/color:\s*var\(--([\w-]+)\)/)[1];
+  assert.ok(contrast(tokens[fg], tokens.char) >= TEXT, `--${fg} on char needs ${TEXT}`);
+});
+
 test("the button is a flat ember-deep fill", () => {
   const rule = css.match(/\n\.button\s*\{([^}]*)\}/)[1];
   assert.match(rule, /background:\s*var\(--ember-deep\);/);
