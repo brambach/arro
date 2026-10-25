@@ -40,12 +40,16 @@ to tick for the beta.
 Each `form.join` on the home page posts to `/api/waitlist`. With JS,
 `site.js` sends it with `fetch` and shows the answer in place: the button
 dims while it sends, then the success message crossfades in, or an error
-appears under the field. A 201 (joined) and a 200 (already on the list)
-show the same message, so the page never says whether an email was on the
-list. The error copy lives once, in the `#join-bad` and `#join-later` lines
+appears under the field. A new email, one already on the list and a filled
+honeypot all get the same answer, a 200 with `{"status":"joined"}` or a 303
+to `/thanks/`, so neither the API nor the page says whether an email was on
+the list. The error copy lives once, in the `#join-bad` and `#join-later` lines
 in the page. Without JS the form posts normally and the Worker answers with
-a 303 to `/thanks/`, `/#join-bad` or `/#join-later`, and CSS shows the
-matching line with `:target`. The hidden `website` field is the honeypot.
+a 303 to `/thanks/`, `/#join-bad` or `/#join-later` (a relative `Location`),
+and CSS shows the matching line with `:target`. The hidden `hp_field_x`
+field is the honeypot, named so autofill leaves it alone. A post needs a
+`Content-Length` (411 without one) and at most 2048 bytes of body (413),
+counted as the body is read, whatever the header says.
 
 ## worker.js
 
@@ -87,13 +91,14 @@ That's the only way to see the hostname redirects locally, because
   layout, the heat room card and the wall. Spacing sticks to 4, 8, 12, 16,
   20, 24, 32, 40, 56 and 72.
 - `public/site.js`, in `<head>`: the first load. It marks the page `.js`
-  before the first paint, waits for the fonts and a painted frame, holds
-  200 ms, then adds `.go`. On the join and 404 pages that plays one settle,
+  before the first paint, waits for the fonts and plate 1 (or 1.5 s) and a
+  painted frame, adds `.lit`, then `.go` 200 ms later. On the join and 404 pages that plays one settle,
   1100 ms, `cubic-bezier(0.22, 1, 0.36, 1)`, transform and opacity only.
   The home hero is in the first paint and never moves. The wall's 12 slats
-  land once, 50 ms apart, the first time it's on screen. Ambient loops
-  (`glow-breathe` in the heat room, `steam-drift` on the haze) start with
-  `.go`. With reduced motion everything is shown finished, with 240 ms
+  land once, 60 ms apart, the first time it's on screen. The plate's
+  ambient loops (`glow-breathe` on the window glow, `steam-drift` on the
+  haze) start with `.lit`, and `heat-breathe` in the heat room with `.go`.
+  With reduced motion everything is shown finished, with 240 ms
   crossfades and no loops. It also runs the waitlist forms (see above).
 - `public/fonts/fraunces-soft.woff2`: Fraunces, soft cut (SOFT 100, WONK 0),
   weight 400 to 600 and optical size kept variable, Latin subset, 35 KB.

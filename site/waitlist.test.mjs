@@ -1,6 +1,3 @@
-// Tests for waitlist.js.
-// Run: node --test site/waitlist.test.mjs
-
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { parseSignup, handleWaitlist } from './waitlist.js';
@@ -83,18 +80,19 @@ test('parseSignup rejects a missing source', () => {
 });
 
 test('parseSignup returns bot when the honeypot is filled, even with a good email', () => {
-  assert.deepEqual(parse({ email: 'jo@example.com', source: 'hero', website: 'x' }), { ok: true, bot: true });
+  assert.deepEqual(parse({ email: 'jo@example.com', source: 'hero', hp_field_x: 'x' }), { ok: true, bot: true });
 });
 
 test('parseSignup returns bot when the honeypot is filled and the rest is junk', () => {
-  assert.deepEqual(parse({ website: 'https://example.com' }), { ok: true, bot: true });
+  assert.deepEqual(parse({ hp_field_x: 'https://example.com' }), { ok: true, bot: true });
 });
 
 test('parseSignup ignores an empty honeypot', () => {
-  assert.deepEqual(parse({ email: 'jo@example.com', source: 'closing', website: '' }), signup('jo@example.com', false, 'closing'));
+  assert.deepEqual(parse({ email: 'jo@example.com', source: 'closing', hp_field_x: '' }), signup('jo@example.com', false, 'closing'));
 });
 
-// A fake D1 that keeps one row per email, like the real primary key, and
+// A fake D1 that keeps one row per email, like the real primary key: a
+// duplicate INSERT throws unless it says ON CONFLICT(email) DO NOTHING. It
 // records every statement it runs.
 function fakeDb({ fail = false } = {}) {
   const rows = new Map();
@@ -104,7 +102,10 @@ function fakeDb({ fail = false } = {}) {
     if (fail) throw new Error('D1_ERROR: database is locked');
     if (sql.startsWith('INSERT')) {
       const [email, wantsBeta, source] = params;
-      if (rows.has(email)) return { meta: { changes: 0 } };
+      if (rows.has(email)) {
+        if (sql.includes('ON CONFLICT(email) DO NOTHING')) return { meta: { changes: 0 } };
+        throw new Error('D1_ERROR: UNIQUE constraint failed: waitlist.email: SQLITE_CONSTRAINT');
+      }
       rows.set(email, { wantsBeta, source });
       return { meta: { changes: 1 } };
     }
@@ -151,20 +152,20 @@ async function readJson(res) {
   return res.json();
 }
 
-test('a new email gives 201 joined and one row', async () => {
+test('a new email gives 200 joined and one row', async () => {
   const e = env();
   const res = await handleWaitlist(post(good), e);
-  assert.equal(res.status, 201);
+  assert.equal(res.status, 200);
   assert.deepEqual(await readJson(res), { status: 'joined' });
   assert.deepEqual([...e.DB.rows], [['jo@example.com', { wantsBeta: 0, source: 'hero' }]]);
 });
 
-test('the same email again gives 200 already, no second row and no update', async () => {
+test('the same email again gives 200 joined, no second row and no update', async () => {
   const e = env();
   await handleWaitlist(post(good), e);
   const res = await handleWaitlist(post({ ...good, source: 'closing' }), e);
   assert.equal(res.status, 200);
-  assert.deepEqual(await readJson(res), { status: 'already' });
+  assert.deepEqual(await readJson(res), { status: 'joined' });
   assert.equal(e.DB.rows.size, 1);
   assert.equal(e.DB.rows.get('jo@example.com').source, 'hero');
   assert.deepEqual(e.DB.statements.map((s) => s.sql.split(' ')[0]), ['INSERT', 'INSERT']);
@@ -175,7 +176,7 @@ test('the same email again with beta=1 sets wants_beta', async () => {
   await handleWaitlist(post(good), e);
   const res = await handleWaitlist(post({ ...good, beta: '1' }), e);
   assert.equal(res.status, 200);
-  assert.deepEqual(await readJson(res), { status: 'already' });
+  assert.deepEqual(await readJson(res), { status: 'joined' });
   assert.deepEqual(e.DB.statements.at(-1), {
     sql: 'UPDATE waitlist SET wants_beta = 1 WHERE email = ?1',
     params: ['jo@example.com'],
@@ -186,18 +187,38 @@ test('the same email again with beta=1 sets wants_beta', async () => {
 test('a new email with beta=1 is stored with wants_beta 1 in one statement', async () => {
   const e = env();
   const res = await handleWaitlist(post({ ...good, beta: '1' }), e);
-  assert.equal(res.status, 201);
+  assert.equal(res.status, 200);
   assert.equal(e.DB.statements.length, 1);
   assert.equal(e.DB.rows.get('jo@example.com').wantsBeta, 1);
 });
 
 test('a filled honeypot gives 200 joined and writes nothing', async () => {
   const e = env();
-  const res = await handleWaitlist(post({ ...good, website: 'x' }), e);
+  const res = await handleWaitlist(post({ ...good, hp_field_x: 'x' }), e);
   assert.equal(res.status, 200);
   assert.deepEqual(await readJson(res), { status: 'joined' });
   assert.equal(e.DB.statements.length, 0);
 });
+
+/** Everything a caller can see in a response. */
+async function snapshot(res) {
+  return { status: res.status, headers: [...res.headers], body: await res.text() };
+}
+
+for (const json of [true, false]) {
+  test(`${json ? 'JS' : 'form'} post: a new email, a listed email and a bot get byte-identical answers`, async () => {
+    const answers = [
+      await handleWaitlist(post(good, { json }), env()),
+      await handleWaitlist(post(good, { json }), env(listed())),
+      await handleWaitlist(post({ ...good, hp_field_x: 'x' }, { json }), env()),
+    ];
+    const [fresh, already, bot] = await Promise.all(answers.map(snapshot));
+    assert.deepEqual(already, fresh);
+    assert.deepEqual(bot, fresh);
+    if (json) assert.deepEqual([fresh.status, fresh.body], [200, '{"status":"joined"}']);
+    else assert.deepEqual([fresh.status, fresh.body, answers[0].headers.get('Location')], [303, '', '/thanks/']);
+  });
+}
 
 test('a bad email gives 400 invalid_email and writes nothing', async () => {
   const e = env();
@@ -239,12 +260,24 @@ test('a JSON body gives 415 unsupported', async () => {
   assert.equal(e.WAITLIST_LIMIT.keys.length, 0);
 });
 
-test('form encoding with a charset parameter is accepted', async () => {
-  const res = await handleWaitlist(post(good, { type: `${FORM}; charset=UTF-8` }), env());
-  assert.equal(res.status, 201);
+for (const type of [`${FORM}; charset=UTF-8`, 'Application/X-WWW-Form-Urlencoded; charset=UTF-8']) {
+  test(`Content-Type ${type} is accepted`, async () => {
+    const e = env();
+    const res = await handleWaitlist(post(good, { type }), e);
+    assert.equal(res.status, 200);
+    assert.ok(e.DB.rows.has('jo@example.com'));
+  });
+}
+
+test('a missing Content-Length gives 411 length_required', async () => {
+  const e = env();
+  const res = await handleWaitlist(post(good, { length: null }), e);
+  assert.equal(res.status, 411);
+  assert.deepEqual(await readJson(res), { status: 'length_required' });
+  assert.equal(e.WAITLIST_LIMIT.keys.length, 0);
 });
 
-for (const [name, length] of [['missing', null], ['over 2048', '2049'], ['non-numeric', 'abc']]) {
+for (const [name, length] of [['over 2048', '2049'], ['non-numeric', 'abc']]) {
   test(`a ${name} Content-Length gives 413 too_large`, async () => {
     const e = env();
     const res = await handleWaitlist(post(good, { length }), e);
@@ -253,6 +286,47 @@ for (const [name, length] of [['missing', null], ['over 2048', '2049'], ['non-nu
     assert.equal(e.WAITLIST_LIMIT.keys.length, 0);
   });
 }
+
+/** The good fields plus an ignored `pad` field, encoded to exactly `bytes` bytes. */
+function padded(bytes) {
+  const base = new URLSearchParams({ ...good, pad: '' }).toString().length;
+  return { ...good, pad: 'a'.repeat(bytes - base) };
+}
+
+test('a body of exactly 2048 bytes is accepted', async () => {
+  const fields = padded(2048);
+  assert.equal(new URLSearchParams(fields).toString().length, 2048);
+  const e = env();
+  const res = await handleWaitlist(post(fields), e);
+  assert.equal(res.status, 200);
+  assert.ok(e.DB.rows.has('jo@example.com'));
+});
+
+test('a body of 2049 bytes gives 413 too_large', async () => {
+  const e = env();
+  const res = await handleWaitlist(post(padded(2049)), e);
+  assert.equal(res.status, 413);
+  assert.equal(e.WAITLIST_LIMIT.keys.length, 0);
+});
+
+test('a body longer than its Content-Length is cut at 2048 bytes and gives 413', async () => {
+  let sent = 0;
+  const chunk = new TextEncoder().encode('a'.repeat(1000));
+  const body = new ReadableStream({
+    pull(controller) {
+      sent += chunk.byteLength;
+      controller.enqueue(chunk);
+      if (sent >= 100_000) controller.close();
+    },
+  });
+  const headers = { 'Content-Type': FORM, 'Content-Length': '30', Accept: 'application/json' };
+  const e = env();
+  const res = await handleWaitlist(new Request(API, { method: 'POST', headers, body, duplex: 'half' }), e);
+  assert.equal(res.status, 413);
+  assert.deepEqual(await readJson(res), { status: 'too_large' });
+  assert.ok(sent < 10_000, `read ${sent} bytes`);
+  assert.equal(e.WAITLIST_LIMIT.keys.length, 0);
+});
 
 test('a D1 error gives 500 error and logs without the email', async (t) => {
   const logged = [];
@@ -275,11 +349,11 @@ function listed() {
 const formCases = [
   ['a new email', post(good, { json: false }), env, 303, '/thanks/'],
   ['an email already on the list', post(good, { json: false }), () => env(listed()), 303, '/thanks/'],
-  ['a filled honeypot', post({ ...good, website: 'x' }, { json: false }), env, 303, '/thanks/'],
+  ['a filled honeypot', post({ ...good, hp_field_x: 'x' }, { json: false }), env, 303, '/thanks/'],
   ['a bad email', post({ email: 'nope', source: 'hero' }, { json: false }), env, 303, '/#join-bad'],
   ['the limiter saying no', post(good, { json: false }), () => env(fakeDb(), fakeLimiter(false)), 303, '/#join-later'],
   ['a D1 error', post(good, { json: false }), () => env(fakeDb({ fail: true })), 303, '/#join-later'],
-  ['a missing Content-Length', post(good, { json: false, length: null }), env, 413, null],
+  ['a missing Content-Length', post(good, { json: false, length: null }), env, 411, null],
   ['a JSON body', post(good, { json: false, type: 'application/json' }), env, 415, null],
   ['GET', post({}, { json: false, method: 'GET', type: null }), env, 405, null],
 ];
@@ -290,7 +364,7 @@ for (const [name, req, makeEnv, status, page] of formCases) {
     const res = await handleWaitlist(req, makeEnv());
     assert.equal(res.status, status);
     if (page) {
-      assert.equal(res.headers.get('Location'), `https://saunafam.com${page}`);
+      assert.equal(res.headers.get('Location'), page);
     } else {
       assert.equal(res.headers.get('Location'), null);
       assert.equal(typeof (await readJson(res)).status, 'string');
@@ -301,7 +375,7 @@ for (const [name, req, makeEnv, status, page] of formCases) {
 test('worker.js sends POST /api/waitlist to the handler', async () => {
   const e = env();
   const res = await worker.fetch(post(good), e);
-  assert.equal(res.status, 201);
+  assert.equal(res.status, 200);
   assert.ok(e.DB.rows.has('jo@example.com'));
 });
 
