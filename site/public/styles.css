@@ -393,6 +393,10 @@ a { color: inherit; }
 .kind li { padding: 12px 0; color: var(--smoke); }
 .kind b { color: var(--char); }
 
+.note-body { max-width: 34em; }
+.note-sign { margin-top: 16px; font-family: var(--display); font-size: 22px; color: var(--char); }
+.note + .section { padding-top: 0; }
+
 /* FAQ */
 .faq-grid { display: grid; gap: 32px; }
 @media (min-width: 960px) { .faq-grid { grid-template-columns: 1fr 2fr; gap: 72px; } }
