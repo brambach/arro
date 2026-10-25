@@ -12,7 +12,7 @@ The look is Direction A, Löyly (birch, stone and ember), from
 
 | URL | File | What it is |
 | --- | --- | --- |
-| `/` | `public/index.html` | Landing page: hero with the heat room phone, how it works, the wall, sat together, kind by design, sauna types, FAQ |
+| `/` | `public/index.html` | Landing page: hero with the heat room card, how it works, the wall, sat together, kind by design, FAQ |
 | `/privacy/` | `public/privacy/index.html` | Privacy policy, the same text as `design/app-store/privacy-policy.md`. App Store Connect's Privacy Policy URL |
 | `/support/` | `public/support/index.html` | FAQ, help and the contact email. App Store Connect's Support URL |
 | `/join/<code>` | `public/join/index.html`, filled in by `worker.js` | For someone who's been sent an invite. Shows the code large, with a Get the app button |
@@ -56,16 +56,16 @@ That's the only way to see the hostname redirects locally, because
 ## Other files
 
 - `public/styles.css`: tokens (the Löyly palette, the type scale, motion),
-  layout, the phone and the wall. Spacing sticks to 4, 8, 12, 16, 20, 24,
-  32, 40, 56 and 72.
+  layout, the heat room card and the wall. Spacing sticks to 4, 8, 12, 16,
+  20, 24, 32, 40, 56 and 72.
 - `public/site.js`, in `<head>`: the first load. It marks the page `.js`
-  before the first paint (so the settle starts from a still frame), waits
-  for the fonts and a painted frame, holds 200 ms, then adds `.go`: one
-  settle, 1100 ms, `cubic-bezier(0.22, 1, 0.36, 1)`, transform and opacity
-  only. The headline is part of the still frame and never moves. The wall's
-  12 slats land once, 50 ms apart, the first time it's on screen. Ambient
-  loops (`glow-breathe` on the phone, `steam-drift` on the haze) start after
-  the settle. With reduced motion everything is shown finished, with 240 ms
+  before the first paint, waits for the fonts and a painted frame, holds
+  200 ms, then adds `.go`. On the join and 404 pages that plays one settle,
+  1100 ms, `cubic-bezier(0.22, 1, 0.36, 1)`, transform and opacity only.
+  The home hero is in the first paint and never moves. The wall's 12 slats
+  land once, 50 ms apart, the first time it's on screen. Ambient loops
+  (`glow-breathe` in the heat room, `steam-drift` on the haze) start with
+  `.go`. With reduced motion everything is shown finished, with 240 ms
   crossfades and no loops.
 - `public/fonts/fraunces-soft.woff2`: Fraunces, soft cut (SOFT 100, WONK 0),
   weight 400 to 600 and optical size kept variable, Latin subset, 35 KB.
@@ -74,8 +74,7 @@ That's the only way to see the hostname redirects locally, because
   by `scenes/fraunces.sh`. Licence in `public/licenses/Fraunces-OFL.txt`.
 - `public/art/`: `wall.svg` (the faint slat wall behind every page),
   `wall-dark.svg`, wood grain and frost for the slats and the timer's arc
-  at 14:32. Drawn by `scenes/art.mjs`. `icons.svg` is a sprite of the
-  sauna type marks (24 grid, 1.8 stroke), drawn by hand.
+  at 14:32. Drawn by `scenes/art.mjs`.
 - `public/og/home.png` and `og/join.png`: the 1200 x 630 social cards, used
   for `og:image` and `twitter:image` (`summary_large_image`). Rendered by
   `scenes/render-og.mjs` from `scenes/og/*.html`.

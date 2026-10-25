@@ -6,9 +6,9 @@ root.classList.add('js');
 
 const reduce = matchMedia('(prefers-reduced-motion: reduce)').matches;
 
-// The first settle. Nothing moves until the fonts are ready (or 1.5 s has
-// passed, so a slow font never holds the page). Then wait for a painted
-// frame, hold the still for a beat, and settle.
+// .go starts the join and 404 settle and the ambient loops. Nothing moves
+// until the fonts are ready (or 1.5 s has passed, so a slow font never
+// holds the page). Then wait for a painted frame, hold for a beat, and go.
 const HOLD_MS = 200;
 const fontsReady = Promise.race([
   document.fonts ? document.fonts.ready : Promise.resolve(),
@@ -34,9 +34,7 @@ domReady.then(() => {
       const seen = new IntersectionObserver((entries) => {
         if (!entries.some((e) => e.isIntersecting)) return;
         seen.disconnect();
-        // Wait for the first settle so two moves never overlap.
-        const land = () => wall.classList.add('in');
-        root.classList.contains('go') ? land() : setTimeout(land, 400);
+        wall.classList.add('in');
       }, { threshold: 0.35 });
       seen.observe(wall);
     }

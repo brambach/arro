@@ -129,7 +129,7 @@ a { color: inherit; }
   margin-bottom: 12px;
 }
 .lede, .body-l { font-size: 19px; line-height: 28px; color: var(--smoke); }
-.fine, .note { font-size: 15px; line-height: 21px; color: var(--smoke); }
+.fine { font-size: 15px; line-height: 21px; color: var(--smoke); }
 
 /* Header and footer. The wordmark is one element so it can become the
    outlined assets/brand/wordmark.svg later without touching anything else. */
@@ -144,9 +144,8 @@ a { color: inherit; }
   font-size: 15px; line-height: 21px; font-weight: 600; text-decoration: none; color: var(--char);
   padding: 12px 0;
 }
-.site-nav a:hover, .site-footer nav a:hover, .text-link:hover { text-decoration: underline; text-underline-offset: 4px; }
+.site-nav a:hover, .site-footer nav a:hover { text-decoration: underline; text-underline-offset: 4px; }
 .site-nav a[aria-current="page"] { color: var(--coal); }
-@media (max-width: 479px) { .site-nav a.hide-sm, .site-nav a[href="#how"] { display: none; } }
 
 .site-footer { padding: 56px 0 40px; border-top: 1px solid rgba(211, 193, 166, 0.7); margin-top: 72px; }
 .site-footer .wrap { display: flex; flex-wrap: wrap; align-items: center; gap: 16px 32px; }
@@ -157,7 +156,7 @@ a { color: inherit; }
   .site-footer nav { flex-direction: column; }
 }
 
-/* Buttons: solid soft rectangles. Secondary actions are plain ink text. */
+/* Buttons: solid soft rectangles. */
 .button {
   display: inline-flex; align-items: center; justify-content: center;
   min-height: 56px; padding: 0 24px; border-radius: 16px;
@@ -168,7 +167,6 @@ a { color: inherit; }
 }
 .button:hover { background: linear-gradient(180deg, #C8562C, #BC4D25 55%, #B04621); }
 .button:active { background: var(--coal); transform: scale(0.98); }
-.text-link { font-weight: 600; text-decoration: none; color: var(--char); padding: 12px 0; }
 
 /* Hero */
 .hero { padding: 32px 0 56px; }
@@ -177,37 +175,30 @@ a { color: inherit; }
 .hero-copy .lede { margin-top: 20px; max-width: 30em; }
 .cta-row { display: flex; flex-wrap: wrap; align-items: center; gap: 16px 24px; margin-top: 32px; }
 .hero-copy .fine { margin-top: 16px; }
-.hero-phone { display: flex; justify-content: center; }
+.hero-room { display: flex; justify-content: center; }
 @media (min-width: 960px) {
   .hero { padding: 56px 0 72px; }
   .hero-grid { grid-template-columns: 1fr auto; gap: 72px; }
 }
 
-/* The phone: the dark heat room at 14:32, built in HTML, CSS and SVG.
-   Sizes inside the screen are in container units of a 390 pt wide phone,
-   so it scales as one piece and never reflows. */
-.phone {
-  width: min(300px, 80vw);
-  padding: 10px;
-  border-radius: 52px;
-  background: linear-gradient(160deg, #3A3530, #1B1917 40%, #26221F);
-  box-shadow: inset 0 0 0 1.5px rgba(255, 255, 255, 0.08), 0 1px 2px rgba(34, 31, 28, 0.3), 0 40px 72px -32px rgba(34, 31, 28, 0.55);
-}
-@media (min-width: 768px) { .phone { width: 340px; border-radius: 58px; padding: 12px; } }
-@media (min-width: 1600px) { .phone { width: 380px; border-radius: 64px; } }
-.screen {
+/* The dark heat room at 14:32, a lifted card built in HTML, CSS and SVG.
+   Sizes inside are in container units of a 390 pt wide screen, so it
+   scales as one piece and never reflows. */
+.room {
   container-type: inline-size;
   position: relative;
+  width: min(320px, 80vw);
   aspect-ratio: 390 / 844;
-  border-radius: 42px;
+  border-radius: 32px;
   overflow: hidden;
   background: var(--char) url("/art/wall-dark.svg");
   background-size: 140cqw 2cqw;
+  box-shadow: 0 1px 2px rgba(34, 31, 28, 0.3), 0 40px 72px -32px rgba(34, 31, 28, 0.55);
   color: var(--steam);
   font-family: var(--sans);
 }
-@media (min-width: 768px) { .screen { border-radius: 46px; } }
-@media (min-width: 1600px) { .screen { border-radius: 52px; } }
+@media (min-width: 768px) { .room { width: 364px; } }
+@media (min-width: 1600px) { .room { width: 404px; } }
 .room-glow {
   position: absolute; left: -36cqw; right: -36cqw; bottom: -120cqw; height: 230cqw; border-radius: 50%;
   background: radial-gradient(closest-side, rgba(232, 112, 56, 1) 0%, rgba(214, 92, 44, 0.75) 30%, rgba(190, 74, 34, 0.32) 60%, rgba(160, 60, 28, 0.08) 82%, rgba(160, 60, 28, 0) 100%);
@@ -225,16 +216,6 @@ a { color: inherit; }
   50% { opacity: 0.75; }
 }
 .wisps { position: absolute; inset: 0; width: 100%; height: 100%; }
-.status {
-  position: absolute; top: 4cqw; left: 0; right: 0; height: 9cqw;
-  display: flex; align-items: center; justify-content: space-between; padding: 0 9cqw 0 12cqw;
-  font-size: 4cqw; font-weight: 600; letter-spacing: -0.1cqw;
-}
-.island { position: absolute; left: 50%; top: 0.6cqw; width: 30cqw; height: 8.4cqw; margin-left: -15cqw; border-radius: 5cqw; background: #000; }
-.bars { display: flex; align-items: flex-end; gap: 0.8cqw; height: 3cqw; }
-.bars b { width: 0.9cqw; background: var(--steam); border-radius: 0.3cqw; }
-.bars b:nth-child(1) { height: 1.2cqw; } .bars b:nth-child(2) { height: 1.8cqw; }
-.bars b:nth-child(3) { height: 2.4cqw; } .bars b:nth-child(4) { height: 3cqw; }
 .room-caps {
   font-size: 3.1cqw; line-height: 4.2cqw; font-weight: 600; letter-spacing: 0.22cqw; text-transform: uppercase;
   color: rgba(248, 244, 238, 0.66); text-align: center;
@@ -266,7 +247,6 @@ a { color: inherit; }
   display: flex; justify-content: space-between; font-size: 4.2cqw; font-weight: 600;
 }
 .acts .dim { color: rgba(248, 244, 238, 0.68); font-weight: 500; }
-.home-bar { position: absolute; bottom: 2cqw; left: 50%; width: 34cqw; height: 1.2cqw; margin-left: -17cqw; border-radius: 1cqw; background: var(--steam); }
 
 /* Sections */
 .section { padding: 56px 0; }
@@ -367,19 +347,6 @@ a { color: inherit; }
 .kind .heading { font-size: 20px; line-height: 24px; }
 .kind p { margin-top: 8px; color: var(--smoke); font-size: 15px; line-height: 21px; }
 
-/* Sauna types */
-.types { display: grid; grid-template-columns: repeat(2, 1fr); gap: 12px; margin-top: 32px; }
-@media (min-width: 768px) { .types { grid-template-columns: repeat(4, 1fr); gap: 16px; } }
-.types li {
-  display: flex; align-items: center; gap: 12px; min-height: 72px; padding: 16px;
-  border-radius: 16px; background: var(--steam); box-shadow: var(--lift);
-  font-weight: 600; font-size: 16px; line-height: 20px;
-}
-.types svg { width: 28px; height: 28px; flex: none; color: var(--coal); }
-.types .cold { background: linear-gradient(180deg, #6C94A1, var(--lake) 55%, #557C89); color: var(--steam); }
-.types .cold svg { color: var(--steam); }
-.section .note { margin-top: 20px; }
-
 /* FAQ */
 .faq-grid { display: grid; gap: 32px; }
 @media (min-width: 960px) { .faq-grid { grid-template-columns: 1fr 2fr; gap: 72px; } }
@@ -440,17 +407,15 @@ a { color: inherit; }
 .join-steps h2 { font-size: 17px; line-height: 24px; font-weight: 600; margin-top: 8px; }
 .join-steps p { color: var(--smoke); }
 
-/* First load: a still first frame, then one settle once the fonts are in.
-   html.js is set by site.js before the first paint; html.go when it's time
-   to move. The headline is part of the still frame and never moves. */
+/* First load on the join and 404 pages: a still first frame, then one
+   settle once the fonts are in. html.js is set by site.js before the first
+   paint; html.go when it's time to move. The home hero never moves. */
 .js .settle { opacity: 0; transform: translate3d(0, 16px, 0); }
 .js.go .settle {
   opacity: 1; transform: none;
   transition: opacity var(--settle-ms) var(--settle), transform var(--settle-ms) var(--settle);
 }
 .js.go .s2 { transition-delay: 70ms; }
-.js.go .s3 { transition-delay: 140ms; }
-.js.go .hero-phone.s2 { transition-delay: 140ms; }
 
 @media (prefers-reduced-motion: reduce) {
   html { scroll-behavior: auto; }
