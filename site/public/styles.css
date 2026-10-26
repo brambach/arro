@@ -42,6 +42,7 @@
 
   --lift: 0 0 0 0.5px rgba(34, 31, 28, 0.10), 0 1px 1.5px rgba(34, 31, 28, 0.05), 0 10px 28px -12px rgba(34, 31, 28, 0.20);
   --gutter: 20px;
+  --header-h: 72px;
 }
 
 *, *::before, *::after { box-sizing: border-box; }
@@ -104,7 +105,7 @@ a { color: inherit; }
 .lede, .body-l { font-size: 19px; line-height: 28px; color: var(--smoke); }
 .fine { font-size: 15px; line-height: 21px; color: var(--smoke); }
 
-.site-header .wrap { display: flex; align-items: center; justify-content: space-between; gap: 16px; height: 72px; }
+.site-header .wrap { display: flex; align-items: center; justify-content: space-between; gap: 16px; height: var(--header-h); }
 .wordmark {
   font-size: 28px; line-height: 32px; font-weight: 560; letter-spacing: -0.6px;
   text-decoration: none; color: var(--char);
@@ -153,18 +154,18 @@ a { color: inherit; }
 .hero-copy .lede { margin-top: 20px; max-width: 30em; }
 .accent { color: var(--coal); }
 .hero-copy .fine { margin-top: 16px; }
+@media (min-width: 600px) {
+  .hero { min-height: min(calc(100svh - var(--header-h)), 820px); display: grid; align-content: center; padding-block: 40px 88px; }
+  .hero-copy { max-width: 520px; margin-inline: auto; }
+  .hero-copy .display { max-width: none; font-size: 68px; line-height: 72px; letter-spacing: -1.7px; text-wrap: balance; }
+  .hero-copy .lede { max-width: none; text-wrap: pretty; }
+  .hero .join { max-width: none; }
+  .hero .join .button { margin-top: 24px; }
+}
 /* The plate shows at whole-number scales only, so its dots stay even. */
 .plate { position: relative; width: 384px; height: 256px; margin-left: calc(50% - 192px); }
 .plate img { width: 100%; height: 100%; image-rendering: pixelated; }
 @media (min-width: 768px) { .plate { width: 768px; height: 512px; margin-left: calc(50% - 384px); } }
-@media (min-width: 960px) {
-  .hero { padding: 56px 0 72px; }
-  .hero-copy { max-width: 600px; margin: 0 auto; text-align: center; }
-  .hero-copy .display { max-width: none; font-size: 68px; line-height: 72px; letter-spacing: -1.7px; text-wrap: balance; }
-  .hero-copy .lede { max-width: 46ch; margin-inline: auto; }
-  .hero .join { margin-inline: auto; text-align: left; }
-  .hero .join .button { margin-top: 24px; }
-}
 @media (min-width: 1120px) {
   .split { grid-template-columns: minmax(0, 440px) minmax(0, 1fr); gap: 48px; }
   .plate { margin-left: 0; }
