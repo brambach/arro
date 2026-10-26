@@ -75,6 +75,19 @@ If you buy Saunafam Plus, Apple handles the payment. RevenueCat, our purchase
 processor, tells us which Apple purchases you've made so your family gets Plus.
 We never see your card details.
 
+## Waitlist
+
+If you join the waitlist on saunafam.com, we keep your email, whether you'd
+like to try the beta on TestFlight, which form you used and the date. We use
+them to send you one email when Saunafam is on the App Store, and a TestFlight
+invite if you asked for one. Cloudflare, which hosts saunafam.com, sees your IP
+address while it serves the page and checks how often the form has been sent.
+We don't store your IP address or any details about your device or browser. To
+be taken off the list, write to support@saunafam.com.
+
+<!-- [TODO for Bryce: say whether waitlist emails are deleted after launch or kept for updates.] -->
+[TODO for Bryce: say whether waitlist emails are deleted after launch or kept for updates.]
+
 ## Who sees your data
 
 - **Your family.** Only the people in your family see your name, color, photo,
@@ -82,14 +95,18 @@ We never see your card details.
   only. Photos are stored privately and shared with your family through links
   that expire.
 - **The services that run Saunafam**, each on our behalf and for nothing else:
-  - **Supabase** stores Saunafam's data, on servers in the United States.
+  - **Supabase** stores the app's data, on servers in the United States.
   - **Expo** delivers push notifications. It receives your push token and the
     notification's text, and passes them to Apple.
   - **Apple** handles Sign in with Apple, Apple Health and notifications, under
     Apple's own privacy policy.
   - **RevenueCat** processes Saunafam Plus purchases. It receives your
     Saunafam user id and your Apple purchase history for Saunafam.
-- Nobody else, unless the law requires it. We don't sell your data.
+  - **Cloudflare** hosts saunafam.com and stores the waitlist in its D1
+    database. It sees visitors' IP addresses to serve the site and to limit how
+    often the waitlist form can be sent.
+- Nobody else sees your data, unless the law requires it. We don't sell your
+  data.
 
 ## If you used Arro
 

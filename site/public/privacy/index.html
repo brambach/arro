@@ -79,16 +79,22 @@
         <h2>Saunafam Plus</h2>
         <p>If you buy Saunafam Plus, Apple handles the payment. RevenueCat, our purchase processor, tells us which Apple purchases you’ve made so your family gets Plus. We never see your card details.</p>
 
+        <h2>Waitlist</h2>
+        <p>If you join the waitlist on saunafam.com, we keep your email, whether you’d like to try the beta on TestFlight, which form you used and the date. We use them to send you one email when Saunafam is on the App Store, and a TestFlight invite if you asked for one. Cloudflare, which hosts saunafam.com, sees your IP address while it serves the page and checks how often the form has been sent. We don’t store your IP address or any details about your device or browser. To be taken off the list, write to <a href="mailto:support@saunafam.com">support@saunafam.com</a>.</p>
+        <!-- [TODO for Bryce: say whether waitlist emails are deleted after launch or kept for updates.] -->
+        <p data-todo>[TODO for Bryce: say whether waitlist emails are deleted after launch or kept for updates.]</p>
+
         <h2>Who sees your data</h2>
         <p><strong>Your family.</strong> Only the people in your family see your name, color, photo, sessions, cheers, comments and breaks. Families are joined by invite code only. Photos are stored privately and shared with your family through links that expire.</p>
         <p><strong>The services that run Saunafam</strong>, each on our behalf and for nothing else:</p>
         <ul>
-          <li><strong>Supabase</strong> stores Saunafam’s data, on servers in the United States.</li>
+          <li><strong>Supabase</strong> stores the app’s data, on servers in the United States.</li>
           <li><strong>Expo</strong> delivers push notifications. It receives your push token and the notification’s text, and passes them to Apple.</li>
           <li><strong>Apple</strong> handles Sign in with Apple, Apple Health and notifications, under Apple’s own privacy policy.</li>
           <li><strong>RevenueCat</strong> processes Saunafam Plus purchases. It receives your Saunafam user id and your Apple purchase history for Saunafam.</li>
+          <li><strong>Cloudflare</strong> hosts saunafam.com and stores the waitlist in its D1 database. It sees visitors’ IP addresses to serve the site and to limit how often the waitlist form can be sent.</li>
         </ul>
-        <p>Nobody else, unless the law requires it. We don’t sell your data.</p>
+        <p>Nobody else sees your data, unless the law requires it. We don’t sell your data.</p>
 
         <h2>If you used Arro</h2>
         <p>Saunafam used to be Arro. Your account, family, members, colors and profile photo carried over. Arro’s workouts, cheers, comments and workout photos are hidden in Saunafam and will be deleted in a coming update.</p>

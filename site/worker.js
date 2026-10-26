@@ -1,6 +1,9 @@
 // Runs before the static files in public/ (assets.run_worker_first).
 // It sends old and alternate hostnames to https://saunafam.com, serves the
-// join page for /join/<code>, and hands everything else to the files.
+// join page for /join/<code>, takes waitlist posts at /api/waitlist, and
+// hands everything else to the files.
+
+import { handleWaitlist } from './waitlist.js';
 
 const APEX = 'saunafam.com';
 const OLD_HOSTS = new Set(['arrofamily.com', 'www.arrofamily.com']);
@@ -23,6 +26,10 @@ export default {
     // www and plain http go to the https apex, path and query kept.
     if (host === `www.${APEX}` || (host === APEX && url.protocol === 'http:')) {
       return redirect(`https://${APEX}${url.pathname}${url.search}`);
+    }
+
+    if (url.pathname === '/api/waitlist') {
+      return handleWaitlist(request, env);
     }
 
     // The old /join/?code=ABC23456 form becomes /join/ABC23456.

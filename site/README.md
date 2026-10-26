@@ -12,13 +12,14 @@ The look is Direction A, Löyly (birch, stone and ember), from
 
 | URL | File | What it is |
 | --- | --- | --- |
-| `/` | `public/index.html` | Landing page: hero with the heat room phone, how it works, the wall, sat together, kind by design, sauna types, FAQ |
+| `/` | `public/index.html` | Landing page: hero with the waitlist form and the heat room card, how it works, the wall, sat together, kind by design, FAQ |
 | `/privacy/` | `public/privacy/index.html` | Privacy policy, the same text as `design/app-store/privacy-policy.md`. App Store Connect's Privacy Policy URL |
 | `/support/` | `public/support/index.html` | FAQ, help and the contact email. App Store Connect's Support URL |
 | `/join/<code>` | `public/join/index.html`, filled in by `worker.js` | For someone who's been sent an invite. Shows the code large, with a Get the app button |
+| `/thanks/` | `public/thanks/index.html` | Where a waitlist post without JS lands. The same copy for a new email and one already on the list |
 | anything else | `public/404.html` | Not found |
 
-`/privacy`, `/support` and `/join` without the slash redirect to the slashed
+`/privacy`, `/support`, `/thanks` and `/join` without the slash redirect to the slashed
 URL (`html_handling: auto-trailing-slash`).
 
 If the policy changes, change `design/app-store/privacy-policy.md` and the
@@ -26,17 +27,41 @@ HTML together. Update the "Last updated" date on the day it's deployed.
 
 ## The TestFlight link (placeholder)
 
-There's no public TestFlight link yet, so every **Join the TestFlight** and
-**Get the app** button points at
-`mailto:support@saunafam.com?subject=TestFlight%20invite`, which at least
-reaches Bryce. Each of those links carries `data-testflight`. When the
-public link exists, replace the `href` on every `[data-testflight]` link
-(in `public/index.html` twice and `public/join/index.html` once) with it,
-and later with the App Store link.
+There's no public TestFlight link yet, so the join page's **Get the app**
+button points at `mailto:support@saunafam.com?subject=TestFlight%20invite`,
+which at least reaches Bryce. It carries `data-testflight`. When the public
+link exists, replace the `href` on that `[data-testflight]` link in
+`public/join/index.html` with it, and later with the App Store link. The
+home page has no TestFlight link: it asks for an email instead, with a box
+to tick for the beta.
+
+## The waitlist form
+
+Each `form.join` on the home page posts to `/api/waitlist`. With JS,
+`site.js` sends it with `fetch` and shows the answer in place: the button
+dims while it sends, then the success message crossfades in, or an error
+appears under the field. A new email, one already on the list and a filled
+honeypot all get the same answer, a 200 with `{"status":"joined"}` or a 303
+to `/thanks/`, so neither the API nor the page says whether an email was on
+the list. The error copy lives once, in the `#join-bad` and `#join-later` lines
+in the page. Without JS the form posts normally and the Worker answers with
+a 303 to `/thanks/`, `/#join-bad` or `/#join-later` (a relative `Location`),
+and CSS shows the matching line with `:target`. The hidden `hp_field_x`
+field is the honeypot, named so autofill leaves it alone. A post needs a
+`Content-Length` (411 without one) and at most 2048 bytes of body (413),
+counted as the body is read, whatever the header says.
 
 ## worker.js
 
-Runs before the files (`assets.run_worker_first`):
+Runs first for pages and the API, and never for the asset paths listed in
+`assets.run_worker_first` in `wrangler.jsonc`: `art/`, `fonts/`, `og/`,
+`licenses/`, `styles.css`, `site.js` and the icons. Cloudflare serves those
+straight from the assets store, so they're free and don't count toward the
+daily Worker request limit. A new page is covered without any change. A new
+asset folder (say `public/plates/`) has to be added to that list as a `!`
+pattern, or `node --test site/assets.test.mjs` fails.
+
+For pages and `/join/...`:
 
 - `arrofamily.com` and `www.arrofamily.com`, any path: 301 to
   `https://saunafam.com` with the same path and query. That keeps build 8
@@ -49,6 +74,13 @@ Runs before the files (`assets.run_worker_first`):
   iMessage show the code without running JS. `/join/<code>/` and the old
   `/join/?code=<code>` redirect to it.
 
+Because the Worker skips the asset paths, an asset on `www.saunafam.com`
+or `arrofamily.com` (say `arrofamily.com/styles.css`) is served as is, not
+redirected, and `http://saunafam.com/styles.css` isn't upgraded to https by
+the Worker. Every link that matters is a page or `/join/...`, and those
+still redirect. Turn on the zone's **Always Use HTTPS** at deploy time so
+plain http asset requests are upgraded too.
+
 `node --test site/worker.test.mjs` checks every redirect with a fake request.
 That's the only way to see the hostname redirects locally, because
 `wrangler dev` rewrites every request to one host.
@@ -56,17 +88,18 @@ That's the only way to see the hostname redirects locally, because
 ## Other files
 
 - `public/styles.css`: tokens (the Löyly palette, the type scale, motion),
-  layout, the phone and the wall. Spacing sticks to 4, 8, 12, 16, 20, 24,
-  32, 40, 56 and 72.
+  layout, the heat room card and the wall. Spacing sticks to 4, 8, 12, 16,
+  20, 24, 32, 40, 56, 64, 72 and 88.
 - `public/site.js`, in `<head>`: the first load. It marks the page `.js`
-  before the first paint (so the settle starts from a still frame), waits
-  for the fonts and a painted frame, holds 200 ms, then adds `.go`: one
-  settle, 1100 ms, `cubic-bezier(0.22, 1, 0.36, 1)`, transform and opacity
-  only. The headline is part of the still frame and never moves. The wall's
-  12 slats land once, 50 ms apart, the first time it's on screen. Ambient
-  loops (`glow-breathe` on the phone, `steam-drift` on the haze) start after
-  the settle. With reduced motion everything is shown finished, with 240 ms
-  crossfades and no loops.
+  before the first paint, waits for the fonts (or 1.5 s) and a
+  painted frame, adds `.lit`, then `.go` 200 ms later. On the join and 404 pages that plays one settle,
+  1100 ms, `cubic-bezier(0.22, 1, 0.36, 1)`, transform and opacity only.
+  The home hero is in the first paint and never moves. The wall's 12 slats
+  land once, 60 ms apart, the first time it's on screen. The closing
+  plate's window glow (`glow-breathe`) starts with `.lit`, and
+  `heat-breathe` in the heat room with `.go`.
+  With reduced motion everything is shown finished, with 240 ms
+  crossfades and no loops. It also runs the waitlist forms (see above).
 - `public/fonts/fraunces-soft.woff2`: Fraunces, soft cut (SOFT 100, WONK 0),
   weight 400 to 600 and optical size kept variable, Latin subset, 35 KB.
   Preloaded on every page, `font-display: optional` so a late font never
@@ -74,8 +107,7 @@ That's the only way to see the hostname redirects locally, because
   by `scenes/fraunces.sh`. Licence in `public/licenses/Fraunces-OFL.txt`.
 - `public/art/`: `wall.svg` (the faint slat wall behind every page),
   `wall-dark.svg`, wood grain and frost for the slats and the timer's arc
-  at 14:32. Drawn by `scenes/art.mjs`. `icons.svg` is a sprite of the
-  sauna type marks (24 grid, 1.8 stroke), drawn by hand.
+  at 14:32. Drawn by `scenes/art.mjs`.
 - `public/og/home.png` and `og/join.png`: the 1200 x 630 social cards, used
   for `og:image` and `twitter:image` (`summary_large_image`). Rendered by
   `scenes/render-og.mjs` from `scenes/og/*.html`.
@@ -103,6 +135,7 @@ npm i --prefix /tmp/pw playwright && /tmp/pw/node_modules/.bin/playwright instal
 export NODE_PATH=/tmp/pw/node_modules
 node site/scenes/art.mjs                 # public/art/*.svg
 node site/scenes/render-og.mjs --icons   # og/*.png, and the temporary icons
+node site/scenes/plates.mjs              # public/art/plate-*.png from scenes/plates/*.svg (needs python3 with Pillow)
 node site/scenes/capture.mjs all         # screenshots and the first-load recording (needs wrangler dev and ffmpeg)
 node site/scenes/link-preview.mjs        # design/screenshots/saunafam/invite-link-preview.png (needs wrangler dev)
 ```
@@ -139,7 +172,9 @@ hostnames are in use, remove them from the old Worker in the dashboard (or
 `npx wrangler delete --name arrofamily`) and deploy again. I haven't tried
 this against the live account. The first deploy creates DNS records and certificates for
 `saunafam.com` and `www.saunafam.com` (`custom_domain: true`); it fails if
-either already has a DNS record, so check the zone first. Then:
+either already has a DNS record, so check the zone first. In the
+saunafam.com zone, turn on SSL/TLS, Edge Certificates, **Always Use HTTPS**
+(see "worker.js" above). Then:
 
 ```sh
 for p in / /privacy/ /support/ /join/ABC23456; do curl -s -o /dev/null -w "%{http_code} $p\n" https://saunafam.com$p; done
