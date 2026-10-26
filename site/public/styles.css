@@ -151,16 +151,20 @@ a { color: inherit; }
 .hero { padding: 32px 0 56px; }
 .split { display: grid; gap: 40px; align-items: center; }
 .hero-copy .display { max-width: 11ch; }
-.hero-copy .lede { margin-top: 20px; max-width: 30em; }
+.hero-copy .lede { margin-top: 20px; max-width: 30em; text-wrap: pretty; }
 .accent { color: var(--coal); }
 .hero-copy .fine { margin-top: 16px; }
 @media (min-width: 600px) {
-  .hero { min-height: min(calc(100svh - var(--header-h)), 820px); display: grid; align-content: center; padding-block: 40px 88px; }
-  .hero-copy { max-width: 520px; margin-inline: auto; }
+  .hero { padding-block: 40px 64px; }
+  .hero-copy { max-width: 520px; }
   .hero-copy .display { max-width: none; font-size: 68px; line-height: 72px; letter-spacing: -1.7px; text-wrap: balance; }
-  .hero-copy .lede { max-width: none; text-wrap: pretty; }
+  .hero-copy .lede { max-width: none; }
   .hero .join { max-width: none; }
   .hero .join .button { margin-top: 24px; }
+}
+@media (min-width: 960px) {
+  .hero { min-height: min(calc(100svh - var(--header-h)), 820px); display: grid; align-content: center; padding-block: 40px 88px; }
+  .hero-copy { margin-inline: auto; }
 }
 /* The plate shows at whole-number scales only, so its dots stay even. */
 .plate { position: relative; width: 384px; height: 256px; margin-left: calc(50% - 192px); }

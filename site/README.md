@@ -89,7 +89,7 @@ That's the only way to see the hostname redirects locally, because
 
 - `public/styles.css`: tokens (the Löyly palette, the type scale, motion),
   layout, the heat room card and the wall. Spacing sticks to 4, 8, 12, 16,
-  20, 24, 32, 40, 56, 72 and 88.
+  20, 24, 32, 40, 56, 64, 72 and 88.
 - `public/site.js`, in `<head>`: the first load. It marks the page `.js`
   before the first paint, waits for the fonts (or 1.5 s) and a
   painted frame, adds `.lit`, then `.go` 200 ms later. On the join and 404 pages that plays one settle,
