@@ -91,13 +91,13 @@ That's the only way to see the hostname redirects locally, because
   layout, the heat room card and the wall. Spacing sticks to 4, 8, 12, 16,
   20, 24, 32, 40, 56 and 72.
 - `public/site.js`, in `<head>`: the first load. It marks the page `.js`
-  before the first paint, waits for the fonts and plate 1 (or 1.5 s) and a
+  before the first paint, waits for the fonts (or 1.5 s) and a
   painted frame, adds `.lit`, then `.go` 200 ms later. On the join and 404 pages that plays one settle,
   1100 ms, `cubic-bezier(0.22, 1, 0.36, 1)`, transform and opacity only.
   The home hero is in the first paint and never moves. The wall's 12 slats
-  land once, 60 ms apart, the first time it's on screen. The plate's
-  ambient loops (`glow-breathe` on the window glow, `steam-drift` on the
-  haze) start with `.lit`, and `heat-breathe` in the heat room with `.go`.
+  land once, 60 ms apart, the first time it's on screen. The closing
+  plate's window glow (`glow-breathe`) starts with `.lit`, and
+  `heat-breathe` in the heat room with `.go`.
   With reduced motion everything is shown finished, with 240 ms
   crossfades and no loops. It also runs the waitlist forms (see above).
 - `public/fonts/fraunces-soft.woff2`: Fraunces, soft cut (SOFT 100, WONK 0),
@@ -135,7 +135,7 @@ npm i --prefix /tmp/pw playwright && /tmp/pw/node_modules/.bin/playwright instal
 export NODE_PATH=/tmp/pw/node_modules
 node site/scenes/art.mjs                 # public/art/*.svg
 node site/scenes/render-og.mjs --icons   # og/*.png, and the temporary icons
-node site/scenes/plates.mjs              # public/art/plate-*.png, steam-*.png from scenes/plates/*.svg (needs python3 with Pillow)
+node site/scenes/plates.mjs              # public/art/plate-*.png from scenes/plates/*.svg (needs python3 with Pillow)
 node site/scenes/capture.mjs all         # screenshots and the first-load recording (needs wrangler dev and ffmpeg)
 node site/scenes/link-preview.mjs        # design/screenshots/saunafam/invite-link-preview.png (needs wrangler dev)
 ```

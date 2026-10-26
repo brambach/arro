@@ -5,10 +5,10 @@ root.classList.add('js');
 
 const reduce = matchMedia('(prefers-reduced-motion: reduce)').matches;
 
-// Nothing moves until the fonts are ready and plate 1 is decoded, or 1.5 s
-// has passed, so a slow font or image never holds the page. Then two
-// frames, and html.lit lights the window and starts the steam. html.go
-// starts the join and 404 settle a beat later.
+// Nothing moves until the page is parsed and the fonts are ready, or 1.5 s
+// has passed, so a slow font never holds the page. Then two frames, and
+// html.lit lights the window. html.go starts the join and 404 settle a
+// beat later.
 const HOLD_MS = 200;
 const domReady = new Promise((resolve) => {
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', resolve, { once: true });
@@ -17,7 +17,7 @@ const domReady = new Promise((resolve) => {
 Promise.race([
   Promise.all([
     document.fonts && document.fonts.ready,
-    domReady.then(() => document.querySelector('.plate img')?.decode().catch(() => {})),
+    domReady,
   ]),
   new Promise((resolve) => setTimeout(resolve, 1500)),
 ]).then(() => {
@@ -27,7 +27,7 @@ Promise.race([
   }));
 });
 
-// Ambient loops hold still while paused (html.still, set by any plate's
+// Ambient loops hold still while paused (html.still, set by the plate's
 // pause button, so one press stills every loop on the page), while the tab is
 // hidden (html.away) and while their section is off screen (.off).
 document.addEventListener('visibilitychange', () => root.classList.toggle('away', document.hidden));

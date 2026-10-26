@@ -25,14 +25,9 @@ const maxPlateBytes = 25_000;
 
 const birch = '#EFE6D8';
 const char = '#221F1C';
-const cedar = '#7A4E2E';
 
 const settings = {
-  'plate-1': { algo: 'atkinson', ink: cedar, paper: birch },
   'plate-2': { algo: 'atkinson', ink: birch, paper: char, invert: true },
-  'steam-1': { algo: 'bayer4', ink: cedar, paper: birch },
-  'steam-2': { algo: 'bayer4', ink: cedar, paper: birch },
-  'steam-3': { algo: 'bayer4', ink: cedar, paper: birch },
 };
 
 const names = readdirSync(sources).filter((f) => f.endsWith('.svg')).map((f) => f.slice(0, -4)).sort();

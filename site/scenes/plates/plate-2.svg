@@ -1,9 +1,9 @@
 <svg xmlns="http://www.w3.org/2000/svg" width="384" height="256" viewBox="0 0 384 256">
 <!--
-  Plate 2, the same sauna after dark. Plate 1's shapes with night fills.
+  Plate 2, the sauna after dark.
   Rendered with invert: black is the char paper, light becomes birch ink.
-  The window hole is in the same place as plate 1's (x 222 to 238, y 150 to 160),
-  so the same percent layers sit on it.
+  The .window and .glow layers in public/styles.css sit on the window hole
+  (x 222 to 238, y 150 to 160), in percent of 384 x 256.
 -->
 <defs>
   <linearGradient id="water" x1="0" y1="0" x2="0" y2="1">

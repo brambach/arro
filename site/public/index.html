@@ -23,7 +23,6 @@
   <link rel="icon" href="/favicon.ico" sizes="32x32">
   <link rel="icon" href="/favicon.svg" type="image/svg+xml">
   <link rel="apple-touch-icon" href="/apple-touch-icon.png">
-  <link rel="preload" as="image" href="/art/plate-1.png" fetchpriority="high">
   <link rel="preload" href="/fonts/fraunces-soft.woff2" as="font" type="font/woff2" crossorigin>
   <link rel="stylesheet" href="/styles.css">
   <script src="/site.js"></script>
@@ -39,8 +38,8 @@
   </header>
 
   <main id="main">
-    <section class="hero loops" aria-labelledby="hero-title">
-      <div class="wrap split">
+    <section class="hero" aria-labelledby="hero-title">
+      <div class="wrap">
         <div class="hero-copy">
           <h1 id="hero-title" class="display">Keep a sauna streak <span class="accent">together.</span></h1>
           <p class="lede">A weekly sauna streak for your family or your sauna crew. Everyone goes when they can, and you keep it together.</p>
@@ -68,17 +67,6 @@
           </form>
           <p class="fine">Coming soon for iPhone. One email when it’s out, and that’s it.</p>
         </div>
-
-        <figure class="plate-fig">
-          <div class="plate">
-            <img src="/art/plate-1.png" width="384" height="256" alt="A small wooden sauna on a lake shore, steam rising from the chimney and one window lit." fetchpriority="high" decoding="async">
-            <i class="glow"></i><i class="window"></i>
-            <img class="wisp w1" src="/art/steam-1.png" width="48" height="96" alt="">
-            <img class="wisp w2" src="/art/steam-2.png" width="48" height="96" alt="">
-            <img class="wisp w3" src="/art/steam-3.png" width="48" height="96" alt="">
-          </div>
-          <figcaption class="fig"><span>fig. 1  the lake sauna, late afternoon</span><button class="pause" type="button" aria-pressed="false"><span class="pause-word">pause</span><span class="vh"> the steam</span></button></figcaption>
-        </figure>
       </div>
     </section>
 
